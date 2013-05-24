@@ -1,3 +1,0 @@
-[console_scripts]
-userstats = userstats.process:main
-
