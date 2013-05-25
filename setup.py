@@ -3,20 +3,19 @@
 from setuptools import setup
 
 setup(
-    name='user_metrics',
+    name='wikimetrics',
     version='0.0.1',
     description='Wikipedia User Analysis Tool',
-    url='http://www.github.com/wikimedia/analytics-user-metrics',
+    url='http://www.github.com/wikimedia/analytics-wikimetrics',
     author='Dan Andreescu & Evan Rosen',
     author_email='dandreescu@wikimedia.org',
 
     packages = [
-        'user_metrics',
-        'user_metrics.api',
+        'wikimetrics',
     ],
     entry_points = {
         'console_scripts': [
-            'userstats = userstats.process:main',
+            'wikimetrics = wikimetrics.process:main',
         ]
     },
     install_requires=[
