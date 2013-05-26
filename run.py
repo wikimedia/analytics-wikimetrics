@@ -1,8 +1,7 @@
 #!/usr/bin/python
 
-import pprint as pp
-from pp import pprint
-from celery import Celery
+import pprint
+import celery
 from wikimetrics.metrics import RandomMetric
 from wikimetrics.models import Cohort, ConcatMetricsJob
 
@@ -17,7 +16,7 @@ def main():
     cohort = Cohort()
     aggregator = ConcatMetricsJob(cohort, [metric1, metric2])
     result = aggregator().apply_async()
-    pprint(result.get())
+    pprint.pprint(result.get())
     
 if __name__ == '__main__':
     main()

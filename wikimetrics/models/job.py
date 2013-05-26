@@ -40,7 +40,7 @@ class Job(Base):
 
 class JobNode(Job):
     def __init__(self, cohort, metrics):
-        super(job.Job, self).__init__()
+        super(job.JobNode, self).__init__()
     
     def __call__(self):
         child_task_group = group(child.subtask() for child in self.children)
@@ -51,4 +51,4 @@ class JobNode(Job):
 
 class JobLeaf(Job):
     def __init__(self, cohort, metrics):
-        super(job.Job, self).__init__()
+        super(job.JobLeaf, self).__init__()

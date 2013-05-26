@@ -10,7 +10,7 @@ __all__ = [
 @celery.task
 class ConcatMetricsJob(job.JobNode):
     def __init__(self, cohort, metrics):
-        super(job.JobNode, self).__init__()
+        super(job.ConcatMetricsJob, self).__init__()
         self.cohort = cohort
         self.metrics = metrics
         # Make sure that children are always Celery tasks with parameterless __call__
@@ -26,11 +26,12 @@ class ConcatMetricsJob(job.JobNode):
         return ConcatMetricsJob(cohort, metrics)
     
     def __call__(self):
-        super(job.JobNode, self).__call__()
+        # TODO: because python 2.* is annoying, talk to ops about python 3
+        super(job.ConcatMetricsJob, self).__call__()
     
     @celery.task
     def finish(self, *query_results):
-        super(job.JobNode, self).finish()
+        super(job.ConcatMetricsJob, self).finish()
         # we're done - record result
         for result in query_results:
             pprint.pprint(result)
