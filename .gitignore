@@ -2,3 +2,6 @@
 *swp
 *.csv
 *.json
+
+
+.coverage

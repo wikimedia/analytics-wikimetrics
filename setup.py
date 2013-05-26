@@ -21,5 +21,7 @@ setup(
     install_requires=[
        "sqlalchemy == 0.8.1",
        "flask == 0.9",
+       "nose == 1.3.0",
+       "celery == 3.0",
    ],
 )
