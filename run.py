@@ -15,7 +15,7 @@ def main():
     metric1 = RandomMetric()
     metric2 = RandomMetric()
     cohort = Cohort()
-    aggregator = ConcatMetricsJob(cohort, [metric1, metric2])
+    aggregator = ConcatMetricsJob.Task(cohort, [metric1, metric2])
     result = aggregator().apply_async()
     pprint.pprint(result.get())
     

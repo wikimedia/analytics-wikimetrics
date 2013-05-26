@@ -39,16 +39,17 @@ class Job(Base):
         return 'TODO: get user id from flask session'
 
 class JobNode(Job):
-    def __init__(self, cohort, metrics):
+    def __init__(self):
         super(JobNode, self).__init__()
     
     def __call__(self):
-        child_task_group = group(child.subtask() for child in self.children)
-        chord(child_task_group, self.finish).apply_async()
+        child_task_group = group(child.Task.subtask() for child in self.children)
+        aggregator_task = chord(child_task_group, self.finish.subtask())
+        return aggregator_task.get()
     
     def finish(self):
         pass
 
 class JobLeaf(Job):
-    def __init__(self, cohort, metrics):
+    def __init__(self):
         super(JobLeaf, self).__init__()
