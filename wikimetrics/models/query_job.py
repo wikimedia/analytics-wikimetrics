@@ -12,5 +12,5 @@ class QueryJob(job.JobLeaf):
     
     @celery.task
     def __call__(self):
-        super(job.QueryJob, self).__call__()
+        super(QueryJob, self).__call__()
         return self.metric(self.cohort)

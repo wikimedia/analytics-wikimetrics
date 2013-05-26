@@ -2,6 +2,7 @@
 
 import pprint
 import celery
+from celery import Celery
 from wikimetrics.metrics import RandomMetric
 from wikimetrics.models import Cohort, ConcatMetricsJob
 
