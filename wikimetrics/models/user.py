@@ -1,6 +1,9 @@
 from sqlalchemy import Column, Integer, String
+from wikimetrics.database import Base
 
-from usermetrics.database import Base
+__all__ = [
+    'User',
+]
 
 class User(Base):
     __tablename__ = 'user'
@@ -16,5 +19,4 @@ class User(Base):
         self.is_admin = is_admin
 
     def __repr__(self):
-        return '<User("{0}","{1}", "{2}")>'.format(self.username, self.email, self.is_admin)
-
+        return '<User("{0}")>'.format(self.id)

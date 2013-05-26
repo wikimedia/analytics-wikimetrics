@@ -1,10 +1,16 @@
 import job
+import celery
 
-class QueryJob(job.Job):
-    def __init__(self, cohort, metric, parent_job_id):
+__all__ = [
+    'QueryJob',
+]
+
+class QueryJob(job.JobLeaf):
+    def __init__(self, cohort, metric):
         self.cohort = cohort
         self.metric = metric
-        self.parent_job_id = parent_job_id
     
+    @celery.task
     def __call__(self):
         super(job.Job, self).__call__()
+        return self.metric(self.cohort)

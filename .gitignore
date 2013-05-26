@@ -4,5 +4,7 @@
 *.csv
 *.json
 
+*egg-info
+
 
 .coverage

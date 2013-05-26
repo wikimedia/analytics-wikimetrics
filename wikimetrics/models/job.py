@@ -1,8 +1,13 @@
-from sqlalchemy import Column, Integer, String, ForeignKey
-
-from usermetrics.database import Base
-
 import collections
+from sqlalchemy import Column, Integer, String, ForeignKey
+from wikimetrics.database import Base
+from celery import group, chord
+
+__all__ = [
+    'Job',
+    'JobNode',
+    'JobLeaf',
+]
 
 class JobStatus(object):
     CREATED = 'CREATED'
@@ -19,8 +24,7 @@ class Job(Base):
     result_id = Column(String(50))
     
     def __init__(self, parent_job_id=None):
-        self.user_id = get_user_id()
-        self.classpath = get_classpath()
+        self.user_id = 1#TODO: get_user_id()
         self.status = JobStatus.CREATED
         self.parent_job_id = parent_job_id
         self.result_id = None
@@ -28,17 +32,23 @@ class Job(Base):
     def __repr__(self):
         return '<Job("{0}")>'.format(self.id)
     
-    def __call__(self):
-        child_group = celery.Group(self.children)
-        celery.Chord(child_group, self.finish).apply_async()
-    
     def get_classpath(self):
         return str(type(self))
     
     def get_user_id(self):
         return 'TODO: get user id from flask session'
 
-class JobNode(object):
+class JobNode(Job):
+    def __init__(self, cohort, metrics):
+        super(job.Job, self).__init__()
     
-class JobLeaf(object):
+    def __call__(self):
+        child_task_group = group(child.subtask() for child in self.children)
+        chord(child_task_group, self.finish).apply_async()
     
+    def finish(self):
+        pass
+
+class JobLeaf(Job):
+    def __init__(self, cohort, metrics):
+        super(job.Job, self).__init__()
