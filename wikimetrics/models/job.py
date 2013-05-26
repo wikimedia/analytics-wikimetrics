@@ -4,7 +4,7 @@ from usermetrics.database import Base
 
 import collections
 
-class JobStatus:
+class JobStatus(object):
     CREATED = 'CREATED'
     STARTED = 'STARTED'
     FINISHED = 'FINISHED'
@@ -37,3 +37,8 @@ class Job(Base):
     
     def get_user_id(self):
         return 'TODO: get user id from flask session'
+
+class JobNode(object):
+    
+class JobLeaf(object):
+    
