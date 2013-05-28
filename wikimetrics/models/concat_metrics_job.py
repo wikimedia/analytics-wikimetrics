@@ -13,7 +13,7 @@ class ConcatMetricsJob(job.JobNode):
         self.cohort = cohort
         self.metrics = metrics
         # Make sure that children are always Celery tasks with parameterless __call__
-        self.children = [QueryJob.Task(cohort, metric) for metric in metrics]
+        self.children = [QueryJob(cohort, metric) for metric in metrics]
         # TODO self.save()
     
     def __reduce__(self):
@@ -24,16 +24,9 @@ class ConcatMetricsJob(job.JobNode):
         # TODO: get job, create cohort and metrics
         return ConcatMetricsJob(cohort, metrics)
     
-    def __call__(self):
-        # TODO: because python 2.* is annoying, talk to ops about python 3
-        super(ConcatMetricsJob, self).__call__()
-    
     @celery.task
     def finish(self, query_results):
-        super(ConcatMetricsJob, self).finish()
         # we're done - record result
         for result in query_results:
             pprint.pprint(result)
         self.status = JobStatus.FINISHED
-
-ConcatMetricsJob.Task = celery.task(ConcatMetricsJob)

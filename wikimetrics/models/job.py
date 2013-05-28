@@ -1,4 +1,5 @@
 import collections
+import celery
 from sqlalchemy import Column, Integer, String, ForeignKey
 from wikimetrics.database import Base
 from celery import group, chord
@@ -24,10 +25,14 @@ class Job(Base):
     result_id = Column(String(50))
     
     def __init__(self, parent_job_id=None):
-        self.user_id = 1#TODO: get_user_id()
+        self.user_id = self.get_user_id()
         self.status = JobStatus.CREATED
         self.parent_job_id = parent_job_id
         self.result_id = None
+    
+    @celery.task
+    def run(self):
+        pass
     
     def __repr__(self):
         return '<Job("{0}")>'.format(self.id)
@@ -42,11 +47,15 @@ class JobNode(Job):
     def __init__(self):
         super(JobNode, self).__init__()
     
-    def __call__(self):
-        child_task_group = group(child.Task.subtask() for child in self.children)
-        aggregator_task = chord(child_task_group, self.finish.subtask())
+    def child_tasks(self):
+        return group(child.run.subtask() for child in self.children)
+    
+    @celery.task
+    def run(self):
+        aggregator_task = chord(child_tasks(), self.finish.subtask())
         return aggregator_task.get()
     
+    @celery.task
     def finish(self):
         pass
 

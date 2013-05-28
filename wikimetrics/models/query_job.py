@@ -10,9 +10,6 @@ class QueryJob(job.JobLeaf):
         self.cohort = cohort
         self.metric = metric
     
-    def __call__(self):
-        super(QueryJob, self).__call__()
+    @celery.task
+    def run(self):
         return self.metric(self.cohort)
-
-# TODO: class decorator
-QueryJob.Task = celery.task(QueryJob)
