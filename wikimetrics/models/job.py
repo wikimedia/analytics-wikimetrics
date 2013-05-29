@@ -53,7 +53,7 @@ class JobNode(Job):
     @celery.task
     def run(self):
         aggregator_task = chord(child_tasks(), self.finish.subtask())
-        return aggregator_task.get()
+        return aggregator_task.delay()
     
     @celery.task
     def finish(self):

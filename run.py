@@ -3,16 +3,24 @@
 
 import pprint
 from queue import celery
+from celery import group, chord
 from wikimetrics.metrics import RandomMetric
-from wikimetrics.models import Cohort, ConcatMetricsJob
+from wikimetrics.models import Cohort, ConcatMetricsJob, QueryJob
 
 def main():
     metric1 = RandomMetric()
     metric2 = RandomMetric()
     cohort = Cohort()
-    job = ConcatMetricsJob(cohort, [metric1, metric2])
-    result = job.run.delay(job)
-    pprint.pprint(result.get())
+    
+    q1 = QueryJob(cohort, metric1)
+    q2 = QueryJob(cohort, metric2)
+    
+    c1 = ConcatMetricsJob(cohort, [metric1, metric2])
+    
+    g = group(q1.run.s(q1), q2.run.s(q2))
+    c = chord(g)(c1.finish.s(c1))
+    
+    print c.get()
 
 
 if __name__ == '__main__':
