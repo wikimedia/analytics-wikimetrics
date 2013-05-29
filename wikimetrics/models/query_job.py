@@ -1,5 +1,5 @@
 import job
-from celery import celery
+from queue import celery
 
 __all__ = [
     'QueryJob',

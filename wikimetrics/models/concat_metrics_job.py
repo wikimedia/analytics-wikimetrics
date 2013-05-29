@@ -1,5 +1,5 @@
 import job
-from celery import celery
+from queue import celery
 import pprint
 from query_job import QueryJob
 
@@ -16,9 +16,10 @@ class ConcatMetricsJob(job.JobNode):
         self.children = [QueryJob(cohort, metric) for metric in metrics]
         # TODO self.save()
     
-    def __reduce__(self):
-        # TODO: pickle self.cohort and self.metrics
-        pass
+    ## NOTE: this will be used by celery if we implement it, so we must take care
+    #def __reduce__(self):
+        ## TODO: pickle self.cohort and self.metrics
+        #pass
     
     def from_db(job_id):
         # TODO: get job, create cohort and metrics

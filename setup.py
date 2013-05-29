@@ -1,7 +1,6 @@
 #!/usr/bin/python
 
 from setuptools import setup
-from celery import Celery
 
 setup(
     name='wikimetrics',
@@ -21,14 +20,3 @@ setup(
        "celery-with-redis",
    ],
 )
-
-
-class Configuration(object):
-    # celery configuration
-    CELERY_BROKER_URL = 'redis://localhost:6379/0'
-    CELERY_RESULT_BACKEND = 'redis://localhost:6379/0'
-    CELERY_TASK_RESULT_EXPIRES=3600
-    CELERY_DISABLE_RATE_LIMITS = True
-
-celery = Celery('wikimetrics', include=['wikimetrics'])
-celery.config_from_object(Configuration)
