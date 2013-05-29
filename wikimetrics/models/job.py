@@ -48,12 +48,12 @@ class JobNode(Job):
         super(JobNode, self).__init__()
     
     def child_tasks(self):
-        return group(child.run.subtask() for child in self.children)
+        return group(child.run.s(child) for child in self.children)
     
     @celery.task
     def run(self):
-        aggregator_task = chord(child_tasks(), self.finish.subtask())
-        return aggregator_task.delay()
+        children_then_finish = chord(child_tasks())(self.finish.s())
+        children_then_finish.get()
     
     @celery.task
     def finish(self):

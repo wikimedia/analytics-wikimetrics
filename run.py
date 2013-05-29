@@ -12,15 +12,15 @@ def main():
     metric2 = RandomMetric()
     cohort = Cohort()
     
-    q1 = QueryJob(cohort, metric1)
-    q2 = QueryJob(cohort, metric2)
+    # NOTE: these next five lines work, yay!
+    #q1 = QueryJob(cohort, metric1)
+    #q2 = QueryJob(cohort, metric2)
+    #g = group(q1.run.s(q1), q2.run.s(q2))
+    #c = chord(g)(c1.finish.s())
+    #print c.get()
     
     c1 = ConcatMetricsJob(cohort, [metric1, metric2])
-    
-    g = group(q1.run.s(q1), q2.run.s(q2))
-    c = chord(g)(c1.finish.s(c1))
-    
-    print c.get()
+    c1.run.delay(c1)
 
 
 if __name__ == '__main__':

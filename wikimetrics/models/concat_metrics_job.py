@@ -26,8 +26,7 @@ class ConcatMetricsJob(job.JobNode):
         return ConcatMetricsJob(cohort, metrics)
     
     @celery.task
-    def finish(self, query_results):
+    def finish(query_results):
         # we're done - record result
         for result in query_results:
             pprint.pprint(result)
-        self.status = JobStatus.FINISHED
