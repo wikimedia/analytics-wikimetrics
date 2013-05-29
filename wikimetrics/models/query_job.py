@@ -1,5 +1,5 @@
 import job
-import celery
+from celery import celery
 
 __all__ = [
     'QueryJob',

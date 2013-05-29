@@ -1,5 +1,5 @@
 import job
-import celery
+from celery import celery
 import pprint
 from query_job import QueryJob
 
@@ -12,7 +12,7 @@ class ConcatMetricsJob(job.JobNode):
         super(ConcatMetricsJob, self).__init__()
         self.cohort = cohort
         self.metrics = metrics
-        # Make sure that children are always Celery tasks with parameterless __call__
+        # TODO enforce children always have a run @celery.task
         self.children = [QueryJob(cohort, metric) for metric in metrics]
         # TODO self.save()
     

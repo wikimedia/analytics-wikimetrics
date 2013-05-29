@@ -1,8 +1,8 @@
 import collections
-import celery
 from sqlalchemy import Column, Integer, String, ForeignKey
 from wikimetrics.database import Base
-from celery import group, chord
+from setup import celery
+from setup.celery import group, chord
 
 __all__ = [
     'Job',
