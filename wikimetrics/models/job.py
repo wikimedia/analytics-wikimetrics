@@ -3,11 +3,13 @@ from sqlalchemy import Column, Integer, String, ForeignKey
 from wikimetrics.database import Base
 from queue import celery
 from celery import group, chord
+from flask_utils import get_user_id
 
 __all__ = [
     'Job',
     'JobNode',
     'JobLeaf',
+    'JobStatus',
 ]
 
 class JobStatus(object):
@@ -24,11 +26,16 @@ class Job(Base):
     status = Column(String(100))
     result_id = Column(String(50))
     
-    def __init__(self, parent_job_id=None):
-        self.user_id = self.get_user_id()
-        self.status = JobStatus.CREATED
+    def __init__(self,
+            user_id = None,
+            status = JobStatus.CREATED,
+            parent_job_id = None,
+            result_id = None,
+        ):
+        self.user_id = user_id or get_user_id()
+        self.status = status
         self.parent_job_id = parent_job_id
-        self.result_id = None
+        self.result_id = result_id
     
     # FIXME: calling ConcatMetricsJob().run uses this run instead of the JobNode one
     #@celery.task
@@ -40,9 +47,6 @@ class Job(Base):
     
     def get_classpath(self):
         return str(type(self))
-    
-    def get_user_id(self):
-        return 'TODO: get user id from flask session'
 
 class JobNode(Job):
     def __init__(self):

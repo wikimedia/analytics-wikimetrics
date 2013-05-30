@@ -12,7 +12,10 @@ class CohortWikiUser(Base):
     wiki_user_id = Column(Integer(50))
     cohort_id = Column(Integer(50))
 
-    def __init__(self, wiki_user_id, cohort_id):
+    def __init__(self,
+            wiki_user_id = None,
+            cohort_id = None,
+        ):
         self.wiki_user_id = wiki_user_id
         self.cohort_id = cohort_id
 

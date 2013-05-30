@@ -3,7 +3,14 @@ from wikimetrics.database import Base
 
 __all__ = [
     'User',
+    'UserRole',
 ]
+
+class UserRole(object):
+    ADMIN = 'ADMIN'
+    USER_WITH_NDA = 'USER_WITH_NDA'
+    USER_WITHOUT_NDA = 'USER_WITHOUT_NDA'
+    GUEST = 'GUEST'
 
 class User(Base):
     __tablename__ = 'user'
@@ -13,10 +20,14 @@ class User(Base):
     email = Column(String(254))
     role = Column(String(50))
 
-    def __init__(self, username, email, is_admin):
+    def __init__(self,
+            username = None,
+            email = None,
+            role = UserRole.GUEST,
+        ):
         self.username = username
         self.email = email
-        self.is_admin = is_admin
+        self.role = role
 
     def __repr__(self):
         return '<User("{0}")>'.format(self.id)

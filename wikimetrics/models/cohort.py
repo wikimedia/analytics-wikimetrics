@@ -18,12 +18,12 @@ class Cohort(Base):
     public = Column(Boolean)
     
     def __init__(self,
-            name=None,
-            description=None,
-            default_project=None,
-            created=None,
-            enabled=None,
-            public=None
+            name = None,
+            description = None,
+            default_project = None,
+            created = None,
+            enabled = True,
+            public = False
         ):
         self.name = name
         self.description = description
