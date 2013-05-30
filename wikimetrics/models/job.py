@@ -30,9 +30,10 @@ class Job(Base):
         self.parent_job_id = parent_job_id
         self.result_id = None
     
-    @celery.task
-    def run(self):
-        pass
+    # FIXME: calling ConcatMetricsJob().run uses this run instead of the JobNode one
+    #@celery.task
+    #def run(self):
+        #pass
     
     def __repr__(self):
         return '<Job("{0}")>'.format(self.id)
@@ -52,7 +53,7 @@ class JobNode(Job):
     
     @celery.task
     def run(self):
-        children_then_finish = chord(child_tasks())(self.finish.s())
+        children_then_finish = chord(self.child_tasks())(self.finish.s())
         children_then_finish.get()
     
     @celery.task
