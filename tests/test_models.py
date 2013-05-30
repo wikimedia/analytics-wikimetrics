@@ -8,7 +8,11 @@ def setup():
 def teardown():
     pass
 
+# TODO: put these in a class and call setup / teardown more elegantly
 setup()
+#***********
+# Mapping tests for our custom tables
+#***********
 
 def test_job_maps_correctly_to_db():
     j = Job(status=JobStatus.CREATED)
@@ -19,8 +23,11 @@ def test_job_maps_correctly_to_db():
     get_j = session.query(Job).filter_by(id=j.id).first()
     assert_true(get_j.status == JobStatus.CREATED)
     
-    del j
+    session.delete(j)
     session.commit()
+    
+    get_j = session.query(Job).filter_by(id=j.id).first()
+    assert_true(get_j is None)
 
 
 def test_user_maps_correctly_to_db():
@@ -33,8 +40,11 @@ def test_user_maps_correctly_to_db():
     assert_true(get_u.username == 'Dan')
     assert_true(get_u.role == UserRole.GUEST)
     
-    del u
+    session.delete(u)
     session.commit()
+    
+    get_u = session.query(User).filter_by(id=u.id).first()
+    assert_true(get_u is None)
 
 
 def test_wikiuser_maps_correctly_to_db():
@@ -46,8 +56,11 @@ def test_wikiuser_maps_correctly_to_db():
     get_wu = session.query(WikiUser).filter_by(id=wu.id).first()
     assert_true(get_wu.mediawiki_username == 'Milimetric')
     
-    del wu
+    session.delete(wu)
     session.commit()
+
+    get_wu = session.query(WikiUser).filter_by(id=wu.id).first()
+    assert_true(get_wu is None)
 
 
 def test_cohort_maps_correctly_to_db():
@@ -59,8 +72,11 @@ def test_cohort_maps_correctly_to_db():
     get_c = session.query(Cohort).filter_by(id=c.id).first()
     assert_true(get_c.name == 'Test')
     
-    del c
+    session.delete(c)
     session.commit()
+    
+    get_c = session.query(Cohort).filter_by(id=c.id).first()
+    assert_true(get_c is None)
 
 
 def test_cohort_wikiuser_maps_correctly_to_db():
@@ -78,10 +94,17 @@ def test_cohort_wikiuser_maps_correctly_to_db():
     assert_true(get_cwu.wiki_user_id == wu.id)
     assert_true(get_cwu.cohort_id == c.id)
     
-    del c
-    del wu
-    del cwu
+    session.delete(c)
+    session.delete(wu)
+    session.delete(cwu)
     session.commit()
+    
+    get_cwu = session.query(CohortWikiUser).filter_by(id=cwu.id).first()
+    assert_true(get_cwu is None)
+
+#***********
+# Mapping tests for mediawiki tables
+#***********
 
 
 teardown()
