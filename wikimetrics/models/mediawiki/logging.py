@@ -1,6 +1,10 @@
 from sqlalchemy import Column, Integer, Boolean, DateTime, String
 from wikimetrics.database import MediawikiBase
 
+__all__ = [
+    'Logging',
+]
+
 class Logging(MediawikiBase):
     __tablename__ = 'logging'
     

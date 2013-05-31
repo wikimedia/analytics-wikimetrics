@@ -15,22 +15,7 @@ class Cohort(Base):
     created = Column(DateTime)
     changed = Column(DateTime)
     enabled = Column(Boolean)
-    public = Column(Boolean)
-    
-    def __init__(self,
-            name = None,
-            description = None,
-            default_project = None,
-            created = None,
-            enabled = True,
-            public = False
-        ):
-        self.name = name
-        self.description = description
-        self.default_project = default_project
-        self.created = created
-        self.enabled = enabled
-        self.public = public
+    public = Column(Boolean, default=False)
     
     
     def __repr__(self):

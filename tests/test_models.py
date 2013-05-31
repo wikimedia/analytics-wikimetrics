@@ -14,8 +14,8 @@ setup()
 # Mapping tests for our custom tables
 #***********
 
-def test_job_maps_correctly_to_db():
-    j = Job(status=JobStatus.CREATED)
+def test_job():
+    j = Job()
     session = Session()
     session.add(j)
     session.commit()
@@ -30,7 +30,7 @@ def test_job_maps_correctly_to_db():
     assert_true(get_j is None)
 
 
-def test_user_maps_correctly_to_db():
+def test_user():
     u = User(username='Dan')
     session = Session()
     session.add(u)
@@ -47,7 +47,7 @@ def test_user_maps_correctly_to_db():
     assert_true(get_u is None)
 
 
-def test_wikiuser_maps_correctly_to_db():
+def test_wikiuser():
     wu = WikiUser(mediawiki_username='Milimetric')
     session = Session()
     session.add(wu)
@@ -63,7 +63,7 @@ def test_wikiuser_maps_correctly_to_db():
     assert_true(get_wu is None)
 
 
-def test_cohort_maps_correctly_to_db():
+def test_cohort():
     c = Cohort(name='Test')
     session = Session()
     session.add(c)
@@ -71,6 +71,7 @@ def test_cohort_maps_correctly_to_db():
     
     get_c = session.query(Cohort).filter_by(id=c.id).first()
     assert_true(get_c.name == 'Test')
+    assert_true(get_c.public == False)
     
     session.delete(c)
     session.commit()
@@ -79,7 +80,7 @@ def test_cohort_maps_correctly_to_db():
     assert_true(get_c is None)
 
 
-def test_cohort_wikiuser_maps_correctly_to_db():
+def test_cohort_wikiuser():
     c = Cohort()
     wu = WikiUser()
     session = Session()
@@ -105,6 +106,7 @@ def test_cohort_wikiuser_maps_correctly_to_db():
 #***********
 # Mapping tests for mediawiki tables
 #***********
+#def test__mediawiki_logging
 
 
 teardown()
