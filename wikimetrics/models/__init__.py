@@ -1,3 +1,4 @@
+from mediawiki import *
 from cohort import *
 from cohort_wikiuser import *
 from concat_metrics_job import *

@@ -1,5 +1,5 @@
 from nose.tools import *
-from wikimetrics.database import init_db, Session
+from wikimetrics.database import init_db, Session, MediawikiSession
 from wikimetrics.models import *
 
 def setup():
@@ -106,7 +106,32 @@ def test_cohort_wikiuser():
 #***********
 # Mapping tests for mediawiki tables
 #***********
-#def test__mediawiki_logging
+def test_mediawiki_logging():
+    session = MediawikiSession()
+    row = session.query(Logging).filter_by(log_id=1).first()
+    
+    assert_true(row.log_user_text == 'Reedy')
+
+
+def test_mediawiki_user():
+    session = MediawikiSession()
+    row = session.query(MediawikiUser).filter_by(user_id=2).first()
+    
+    assert_true(row.user_name == '12.222.101.118')
+
+
+def test_mediawiki_page():
+    session = MediawikiSession()
+    row = session.query(Page).filter_by(page_id=1).first()
+    
+    assert_true(row.page_title == 'Main_Page')
+
+
+def test_mediawiki_revision():
+    session = MediawikiSession()
+    row = session.query(Revision).filter_by(rev_id=10).first()
+    
+    assert_true(row.rev_user_text == 'Platonides')
 
 
 teardown()

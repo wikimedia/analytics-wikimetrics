@@ -14,7 +14,7 @@ engine = create_engine('sqlite:///:memory:', echo=True)
 Session = sessionmaker(bind=engine)
 Base = declarative_base()
 
-mediawiki_engine = create_engine('sqlite:///:memory:', echo=True)
+mediawiki_engine = create_engine('mysql://test:test@localhost/mediawiki', echo=True)
 MediawikiSession = sessionmaker(bind=mediawiki_engine)
 MediawikiBase = declarative_base()
 
