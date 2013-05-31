@@ -20,13 +20,13 @@ def test_job():
     session.add(j)
     session.commit()
     
-    get_j = session.query(Job).filter_by(id=j.id).first()
+    get_j = session.query(Job).get(j.id)
     assert_true(get_j.status == JobStatus.CREATED)
     
     session.delete(j)
     session.commit()
     
-    get_j = session.query(Job).filter_by(id=j.id).first()
+    get_j = session.query(Job).get(j.id)
     assert_true(get_j is None)
 
 
@@ -36,14 +36,14 @@ def test_user():
     session.add(u)
     session.commit()
     
-    get_u = session.query(User).filter_by(id=u.id).first()
+    get_u = session.query(User).get(u.id)
     assert_true(get_u.username == 'Dan')
     assert_true(get_u.role == UserRole.GUEST)
     
     session.delete(u)
     session.commit()
     
-    get_u = session.query(User).filter_by(id=u.id).first()
+    get_u = session.query(User).get(u.id)
     assert_true(get_u is None)
 
 
@@ -53,13 +53,13 @@ def test_wikiuser():
     session.add(wu)
     session.commit()
     
-    get_wu = session.query(WikiUser).filter_by(id=wu.id).first()
+    get_wu = session.query(WikiUser).get(wu.id)
     assert_true(get_wu.mediawiki_username == 'Milimetric')
     
     session.delete(wu)
     session.commit()
 
-    get_wu = session.query(WikiUser).filter_by(id=wu.id).first()
+    get_wu = session.query(WikiUser).get(wu.id)
     assert_true(get_wu is None)
 
 
@@ -69,14 +69,14 @@ def test_cohort():
     session.add(c)
     session.commit()
     
-    get_c = session.query(Cohort).filter_by(id=c.id).first()
+    get_c = session.query(Cohort).get(c.id)
     assert_true(get_c.name == 'Test')
     assert_true(get_c.public == False)
     
     session.delete(c)
     session.commit()
     
-    get_c = session.query(Cohort).filter_by(id=c.id).first()
+    get_c = session.query(Cohort).get(c.id)
     assert_true(get_c is None)
 
 
@@ -91,7 +91,7 @@ def test_cohort_wikiuser():
     cwu = CohortWikiUser(wiki_user_id=wu.id, cohort_id=c.id)
     session.add(cwu)
     session.commit()
-    get_cwu = session.query(CohortWikiUser).filter_by(id=cwu.id).first()
+    get_cwu = session.query(CohortWikiUser).get(cwu.id)
     assert_true(get_cwu.wiki_user_id == wu.id)
     assert_true(get_cwu.cohort_id == c.id)
     
@@ -100,7 +100,7 @@ def test_cohort_wikiuser():
     session.delete(cwu)
     session.commit()
     
-    get_cwu = session.query(CohortWikiUser).filter_by(id=cwu.id).first()
+    get_cwu = session.query(CohortWikiUser).get(cwu.id)
     assert_true(get_cwu is None)
 
 #***********
@@ -108,28 +108,28 @@ def test_cohort_wikiuser():
 #***********
 def test_mediawiki_logging():
     session = MediawikiSession()
-    row = session.query(Logging).filter_by(log_id=1).first()
+    row = session.query(Logging).get(1)
     
     assert_true(row.log_user_text == 'Reedy')
 
 
 def test_mediawiki_user():
     session = MediawikiSession()
-    row = session.query(MediawikiUser).filter_by(user_id=2).first()
+    row = session.query(MediawikiUser).get(2)
     
     assert_true(row.user_name == '12.222.101.118')
 
 
 def test_mediawiki_page():
     session = MediawikiSession()
-    row = session.query(Page).filter_by(page_id=1).first()
+    row = session.query(Page).get(1)
     
     assert_true(row.page_title == 'Main_Page')
 
 
 def test_mediawiki_revision():
     session = MediawikiSession()
-    row = session.query(Revision).filter_by(rev_id=10).first()
+    row = session.query(Revision).get(10)
     
     assert_true(row.rev_user_text == 'Platonides')
 
