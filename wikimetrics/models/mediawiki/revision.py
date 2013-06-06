@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, Boolean, DateTime, String
+from sqlalchemy import Column, Integer, Boolean, DateTime, String, ForeignKey
 from wikimetrics.database import MediawikiBase
 
 __all__ = [
@@ -9,10 +9,10 @@ class Revision(MediawikiBase):
     __tablename__ = 'revision'
     
     rev_id = Column(Integer, primary_key=True)
-    rev_page = Column(Integer)#ForeignKey('page')
+    rev_page = Column(Integer, ForeignKey('page'))
     rev_text_id = Column(Integer)
     rev_comment = Column(String(255))
-    rev_user = Column(Integer)#ForeignKey('user')
+    rev_user = Column(Integer, ForeignKey('user'))
     rev_user_text = Column(String(255))
     rev_timestamp = Column(DateTime)
     rev_minor_edit = Column(Boolean)
