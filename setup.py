@@ -16,6 +16,7 @@ setup(
        "sqlalchemy == 0.8.1",
        "flask == 0.9",
        "nose == 1.3.0",
+       "coverage == 3.6",
        "celery == 3.0",
        "celery-with-redis",
    ],

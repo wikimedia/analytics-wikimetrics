@@ -1,6 +1,6 @@
 from nose.tools import *
 from wikimetrics.database import init_db, Session, MediawikiSession
-from wikimetrics.metrics import RevertRateMetric
+from wikimetrics.metrics import RevertRate
 
 def setup():
     init_db()
