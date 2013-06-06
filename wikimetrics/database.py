@@ -14,7 +14,8 @@ engine = create_engine('sqlite:///:memory:', echo=True)
 Session = sessionmaker(bind=engine)
 Base = declarative_base()
 
-mediawiki_engine = create_engine('mysql://test:test@localhost/mediawiki', echo=True)
+#mediawiki_engine = create_engine('mysql://test:test@localhost/mediawiki', echo=True)
+mediawiki_engine = create_engine('sqlite:///:memory:', echo=True)
 MediawikiSession = sessionmaker(bind=mediawiki_engine)
 MediawikiBase = declarative_base()
 
@@ -22,3 +23,6 @@ MediawikiBase = declarative_base()
 def init_db():
     import wikimetrics.models
     Base.metadata.create_all(bind=engine)
+    
+    import wikimetrics.models.mediawiki
+    MediawikiBase.metadata.create_all(bind=mediawiki_engine)
