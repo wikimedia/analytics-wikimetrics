@@ -1,27 +1,20 @@
 from nose.tools import *
-from wikimetrics.database import init_db, Session, MediawikiSession
-from wikimetrics.metrics import RevertRate
+from fixtures import DatabaseTest
 
-def setup():
-    init_db()
-
-def teardown():
-    pass
-
-# TODO: put these in a class and call setup / teardown more elegantly
-setup()
+from wikimetrics.database import Session, MediawikiSession
+from wikimetrics.metrics import NamespaceEdits
 
 
-def test_finds_reverts():
-    assert_true(False)
-
-
-def test_reports_zero_correctly():
-    assert_true(False)
-
-
-def test_reports_undefined_correctly():
-    assert_true(False)
-
-
-teardown()
+class NamespaceEditsTest(DatabaseTest):
+    
+    
+    def test_finds_edits():
+        assert_true(False)
+    
+    
+    def test_reports_zero_edits():
+        assert_true(False)
+    
+    
+    def test_reports_undefined():
+        assert_true(False)
