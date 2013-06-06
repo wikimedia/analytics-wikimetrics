@@ -9,10 +9,10 @@ class Revision(MediawikiBase):
     __tablename__ = 'revision'
     
     rev_id = Column(Integer, primary_key=True)
-    rev_page = Column(Integer, ForeignKey('page'))
+    rev_page = Column(Integer, ForeignKey('page.page_id'))
     rev_text_id = Column(Integer)
     rev_comment = Column(String(255))
-    rev_user = Column(Integer, ForeignKey('user'))
+    rev_user = Column(Integer, ForeignKey('user.user_id'))
     rev_user_text = Column(String(255))
     rev_timestamp = Column(DateTime)
     rev_minor_edit = Column(Boolean)

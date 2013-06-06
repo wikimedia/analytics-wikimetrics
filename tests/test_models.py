@@ -4,9 +4,23 @@ from wikimetrics.models import *
 
 def setup():
     init_db()
+    
+    # create records for mediawiki tests
+    session = MediawikiSession()
+    session.add(MediawikiUser(user_id=2,user_name='12.222.101.118'))
+    session.add(Logging(log_id=1,log_user_text='Reedy'))
+    session.add(Page(page_id=1,page_title='Main_Page'))
+    session.add(Revision(rev_id=10,rev_user_text='Platonides'))
+    session.commit()
 
 def teardown():
-    pass
+    # delete records for mediawiki tests
+    session = MediawikiSession()
+    session.query(MediawikiUser).delete()
+    session.query(Logging).delete()
+    session.query(Page).delete()
+    session.query(Revision).delete()
+    session.commit()
 
 # TODO: put these in a class and call setup / teardown more elegantly
 setup()
