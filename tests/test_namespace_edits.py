@@ -6,15 +6,38 @@ from wikimetrics.metrics import NamespaceEdits
 
 
 class NamespaceEditsTest(DatabaseTest):
-    
+    def setUp(self):
+        super(NamespaceEditsTest, self).setUp()
+        mwSession = MediawikiSession()
+        #TODO: add data for metric to find
+        #mwSession.add(Revision(page_id=1,rev_user=
     
     def test_finds_edits():
-        assert_true(False)
+        session = Session()
+        cohort = session.query(Cohort).filter_by(name='test').one()
+        
+        metric = NamespaceEdits()
+        results = metric(cohort)
+        
+        assert_true(results['1'] == 2, 'Dan had not 2 edits')
+        assert_true(results['2'] == 3, 'Evan had not 3 edits')
     
     
     def test_reports_zero_edits():
-        assert_true(False)
+        session = Session()
+        cohort = session.query(Cohort).filter_by(name='test').one()
+        
+        metric = NamespaceEdits()
+        results = metric(cohort)
+        
+        assert_true(results['3'] == 0, 'Andrew had not 0 edits')
     
     
     def test_reports_undefined():
-        assert_true(False)
+        session = Session()
+        cohort = session.query(Cohort).filter_by(name='test').one()
+        
+        metric = NamespaceEdits()
+        results = metric(cohort)
+        
+        assert_true(results['4'] is None, 'Diederik had not undefined edits')
