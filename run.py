@@ -17,7 +17,7 @@ def main():
     q1.run.delay(q1)
     
     c1 = ConcatMetricsJob(cohort, [metric1, metric2])
-    return c1.run.delay(c1)
+    #return c1.run.delay(c1)
 
 
 if __name__ == '__main__':

@@ -1,7 +1,7 @@
 from nose.tools import *
 from fixtures import DatabaseTest
 
-from wikimetrics.database import Session, MediawikiSession
+from wikimetrics.database import Session, get_mw_session
 from wikimetrics.metrics import NamespaceEdits
 from wikimetrics.models import Cohort
 
@@ -9,7 +9,7 @@ from wikimetrics.models import Cohort
 class NamespaceEditsTest(DatabaseTest):
     def setUp(self):
         super(NamespaceEditsTest, self).setUp()
-        mwSession = MediawikiSession()
+        mwSession = get_mw_session('enwiki')
         #TODO: add data for metric to find
         #mwSession.add(Revision(page_id=1,rev_user=
     
