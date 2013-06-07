@@ -2,7 +2,7 @@ import unittest
 from nose.tools import *
 
 from queue import celery
-from wikimetrics.database import init_db, Session, MediawikiSession
+from wikimetrics.database import init_db, Session, get_mw_session
 from wikimetrics.models import *
 
 __all__ = [
@@ -18,7 +18,7 @@ class DatabaseTest(unittest.TestCase):
         init_db()
         
         # create records for mediawiki tests
-        mwSession = MediawikiSession()
+        mwSession = get_mw_session('enwiki')
         mwSession.add(MediawikiUser(user_id=2,user_name='12.222.101.118'))
         mwSession.add(Logging(log_id=1,log_user_text='Reedy'))
         mwSession.add(Page(page_id=1,page_title='Main_Page'))
@@ -85,7 +85,7 @@ class DatabaseTest(unittest.TestCase):
     def tearDown(self):
         
         # delete records
-        mwSession = MediawikiSession()
+        mwSession = get_mw_session('enwiki')
         mwSession.query(MediawikiUser).delete()
         mwSession.query(Logging).delete()
         mwSession.query(Page).delete()

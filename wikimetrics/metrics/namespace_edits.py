@@ -1,6 +1,5 @@
 from sqlalchemy import func
 from metric import Metric
-from wikimetrics.database import MediawikiSession
 from wikimetrics.models import *
 
 __all__ = [
@@ -9,9 +8,11 @@ __all__ = [
 
 class NamespaceEdits(Metric):
     
-    def __call__(self, cohort):
-        mwSession = MediawikiSession()
-        revisions_by_user = mwSession\
+    def __init__(self, namespaces=[0]):
+        self.namespaces = namespaces
+
+    def __call__(self, user_ids, session):
+        revisions_by_user = session\
             .query(Revision.rev_user, func.count(Revision.rev_id))\
             .join(Page)\
             .filter(Page.page_namespace == 0)\

@@ -1,5 +1,5 @@
 from tests.fixtures import DatabaseTest
-from wikimetrics.database import Session, MediawikiSession
+from wikimetrics.database import Session
 from wikimetrics.models import *
 from wikimetrics.metrics import *
 
