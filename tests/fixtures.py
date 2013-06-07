@@ -11,6 +11,8 @@ __all__ = [
 ]
 
 class DatabaseTest(unittest.TestCase):
+    def runTest(self):
+        pass
     
     def setUp(self):
         init_db()
@@ -53,7 +55,7 @@ class DatabaseTest(unittest.TestCase):
         test = Cohort(
             name='test',
         )
-        session.add_all([job, user, dan, evan, andrew, test])
+        session.add_all([job, user, dan, evan, andrew, diederik, test])
         session.commit()
         
         dan_in_test = CohortWikiUser(

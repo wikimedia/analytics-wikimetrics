@@ -10,12 +10,14 @@ __all__ = [
     'MediawikiSession',
 ]
 
-engine = create_engine('sqlite:///:memory:', echo=True)
+SQL_ECHO = True
+
+engine = create_engine('sqlite:///:memory:', echo=SQL_ECHO)
 Session = sessionmaker(bind=engine)
 Base = declarative_base()
 
 #mediawiki_engine = create_engine('mysql://test:test@localhost/mediawiki', echo=True)
-mediawiki_engine = create_engine('sqlite:///:memory:', echo=True)
+mediawiki_engine = create_engine('sqlite:///:memory:', echo=SQL_ECHO)
 MediawikiSession = sessionmaker(bind=mediawiki_engine)
 MediawikiBase = declarative_base()
 

@@ -67,3 +67,17 @@ class TestMappings(DatabaseTest):
         session = MediawikiSession()
         row = session.query(Revision).get(10)
         assert_true(row.rev_user_text == 'Platonides')
+    
+    
+    #***********
+    # Join tests
+    #***********
+    def test_cohort_members(self):
+        session = Session()
+        user_ids = session\
+            .query(WikiUser.mediawiki_userid)\
+            .join(CohortWikiUser)\
+            .filter(CohortWikiUser.cohort_id == 1)\
+            .all()
+        
+        assert_true(len(user_ids) == 4, "Cohort 1 should have 4 wiki users in it")
