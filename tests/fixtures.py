@@ -1,5 +1,5 @@
+import unittest
 from nose.tools import *
-from unittest import TestCase
 
 from queue import celery
 from wikimetrics.database import init_db, Session, MediawikiSession
@@ -7,9 +7,12 @@ from wikimetrics.models import *
 
 __all__ = [
     'DatabaseTest',
+    'QueueTest',
 ]
 
-class DatabaseTest(TestCase):
+class DatabaseTest(unittest.TestCase):
+    def runTest(self):
+        pass
     
     def setUp(self):
         init_db()
@@ -22,8 +25,15 @@ class DatabaseTest(TestCase):
         mwSession.add(Revision(rev_id=10,rev_user_text='Platonides'))
         mwSession.commit()
         
-        # create a test cohort
+        # create basic test records for non-mediawiki tests
         session = Session()
+        
+        j = Job()
+        session.add(j)
+        u = User(username='Dan')
+        session.add(u)
+        
+        # create a test cohort
         dan = WikiUser(
             mediawiki_username='Dan',
             mediawiki_userid=1,
@@ -51,20 +61,20 @@ class DatabaseTest(TestCase):
         session.commit()
         
         dan_in_test = CohortWikiUser(
-            wiki_user_id=dan.id(),
-            cohort_id=test.id()
+            wiki_user_id=dan.id,
+            cohort_id=test.id
         )
         evan_in_test = CohortWikiUser(
-            wiki_user_id=evan.id(),
-            cohort_id=test.id()
+            wiki_user_id=evan.id,
+            cohort_id=test.id
         )
         andrew_in_test = CohortWikiUser(
-            wiki_user_id=andrew.id(),
-            cohort_id=test.id()
+            wiki_user_id=andrew.id,
+            cohort_id=test.id
         )
         diederik_in_test = CohortWikiUser(
-            wiki_user_id=diederik.id(),
-            cohort_id=test.id()
+            wiki_user_id=diederik.id,
+            cohort_id=test.id
         )
         session.add_all([
             dan_in_test,
@@ -76,16 +86,22 @@ class DatabaseTest(TestCase):
     
     def tearDown(self):
         
-        # delete records for mediawiki tests
-        session = MediawikiSession()
-        session.query(MediawikiUser).delete()
-        session.query(Logging).delete()
-        session.query(Page).delete()
-        session.query(Revision).delete()
+        # delete records
+        mwSession = MediawikiSession()
+        mwSession.query(MediawikiUser).delete()
+        mwSession.query(Logging).delete()
+        mwSession.query(Page).delete()
+        mwSession.query(Revision).delete()
+        mwSession.commit()
+        
+        session = Session()
+        session.query(CohortWikiUser).delete()
+        session.query(WikiUser).delete()
+        session.query(Cohort).delete()
         session.commit()
 
 
-class QueueTest(TestCase):
+class QueueTest(unittest.TestCase):
     
     def setUp(self):
         celery.start()
