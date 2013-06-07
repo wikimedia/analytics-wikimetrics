@@ -11,8 +11,6 @@ __all__ = [
 ]
 
 class DatabaseTest(unittest.TestCase):
-    def runTest(self):
-        pass
     
     def setUp(self):
         init_db()
@@ -28,10 +26,8 @@ class DatabaseTest(unittest.TestCase):
         # create basic test records for non-mediawiki tests
         session = Session()
         
-        j = Job()
-        session.add(j)
-        u = User(username='Dan')
-        session.add(u)
+        job = Job()
+        user = User(username='Dan')
         
         # create a test cohort
         dan = WikiUser(
@@ -57,7 +53,7 @@ class DatabaseTest(unittest.TestCase):
         test = Cohort(
             name='test',
         )
-        session.add_all([dan, evan, andrew, test])
+        session.add_all([job, user, dan, evan, andrew, test])
         session.commit()
         
         dan_in_test = CohortWikiUser(
