@@ -1,0 +1,28 @@
+{% extends "layout.html" %}
+{% block body %}
+<ul class="breadcrumb">
+  <li><a href="{{ url_for('all_cohorts') }}">cohorts</a> <span class="divider">/</span></li>
+  <li class="active">{{c_str}}</li>
+</ul>
+<h2>{{c_str|safe}}</h2>
+{% if error %}<p class=error><strong>Error:</strong> {{ error }}{% endif %}
+<p>This page will include cohort description/metadata as well as a metric selector</p>
+<table class="table table-striped">
+<tbody>
+{% for metric in m_list %}
+<tr><td><a href="{{ url_for('all_cohorts') + c_str + '/' + metric }}">{{ metric }}</a></td><//tr>
+{% endfor %}
+</tbody>
+</table>
+
+{#
+<div>
+    <h4>Cohort members</h4>
+    (
+    {% for m in members %}
+    {{ m }},
+    {% endfor %}
+    )
+</div>
+#}
+{% endblock %}

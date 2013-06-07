@@ -1,0 +1,71 @@
+{% extends "layout.html" %}
+{% block body %}
+{% if error %}<p class="text-warning"><strong>Warning:</strong> {{ error }}</p>{% endif %}
+
+<div class="hero-unit">
+    <h1>User Metrics API</h1>
+    <p class="margin-top:2em">
+        Welcome to the Wikimedia Foundation's user metrics API homepage.
+        This API allows you to select a set of users, also known as a "cohort"
+        <span class="muted">
+            (for example, <a href="{{url_for('cohorts_index') + 'e3_donor_referral_thank_you_b'}}">all users who signed up via the Thank You campaign</a>)
+        </span>,
+        select a metric to be computed for each of these users
+        <span class="muted">
+            (for example, their <a href="{{ url_for('metrics_index') + 'revert_rate'}}">7-day revert rate</a>)
+        </span>
+        with optional parameters
+        <span class="muted">
+            (for example, a <a href="#">registration time range</a>)
+        </span>
+        and retrieve the response in JSON format.
+        </p>
+        <p>
+        You can also compute a single, aggregate value for the cohort
+        <span class="muted">
+            (like the <a href="#">mean revert rate</a> for these users)
+        </span>
+    </p>
+    <p class="margin-top:1em">
+        <a class="btn btn-primary btn-large" href="/about/">Learn more</a>
+    </p>
+</div>
+
+<div class="row-fluid">
+    <div class="span4">
+        <h4>List of <a href="{{url_for('cohorts_index')}}">cohorts</a></h4>
+        <form action="" method="post" class="form-inline">
+            <select name="selectCohort">
+                {# for cohort in cohort_data %}
+                <option value="{{cohort}}">{{cohort}}</option>
+                {% endfor #}
+            </select>
+            <input type="submit" value="Next" class="btn btn-primary" />
+        </form>
+    </div>
+    <div class="span4">
+        <h4>List of <a href="{{url_for('metrics_index')}}">metrics</a></h4>
+        <form action="#" method="post" class="form-inline">
+            <select name="selectMetric">
+                {# for metric in m_list %}
+                <option value="{{metric}}">{{metric}}</option>
+                {% endfor #}
+            </select>
+            <input type="submit" value="Next" class="btn btn-primary" />
+        </form>
+    </div>
+    <div class="span4">
+        <h4>Additional parameters</h4>
+        <ul>
+            <li>Date start - date_start</li>
+            <li>Date end - date_end</li>
+            <li>Aggregator function - aggregator</li>
+        </ul>
+    </div>
+</div>
+
+<div class="embed_p">
+    Choose a <a href="{{ url_for('cohorts_index') }}">Cohort</a>.<div class="v_space_sm"></div>
+    Check the <a href="{{ url_for('jobs_index') }}">Job Queue</a>.<div class="v_space_sm"></div>
+</div>
+{% endblock %}

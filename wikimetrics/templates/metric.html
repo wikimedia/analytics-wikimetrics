@@ -1,0 +1,19 @@
+{% extends "layout.html" %}
+{% block body %}
+<ul class="breadcrumb">
+  <li><a href="{{ url_for('all_metrics') }}">metrics</a> <span class="divider">/</span></li>
+  <li class="active">{{m_str}}</li>
+</ul>
+<h2>{{m_str|safe}}</h2>
+{% if error %}<p class=error><strong>Error:</strong> {{ error }}{% endif %}
+<p>This page will provide single metric documentation, a specification of metric parameters, and a selector to apply the metric to a given cohort.</p>
+  <h4>Apply this metric to a <a href="{{url_for('all_cohorts')}}">cohort</a> of users</h4>
+        <form action="{{url_for('all_cohorts')}}" method="post" class="form-inline">
+                <select name="selectCohort">
+                {% for cohort in cohort_data %}
+                <option value="{{cohort}}">{{cohort}}</option>
+                {% endfor %}
+                </select>
+                <input type="submit" value="Next" class="btn" />
+        </form>
+{% endblock %}
