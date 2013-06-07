@@ -1,3 +1,4 @@
-from metric import *
-from revert_rate import *
 from dummy import *
+from metric import *
+from namespace_edits import *
+from revert_rate import *

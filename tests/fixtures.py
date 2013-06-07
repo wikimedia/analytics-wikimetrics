@@ -94,6 +94,8 @@ class DatabaseTest(unittest.TestCase):
         session.query(CohortWikiUser).delete()
         session.query(WikiUser).delete()
         session.query(Cohort).delete()
+        session.query(User).delete()
+        session.query(Job).delete()
         session.commit()
 
 
