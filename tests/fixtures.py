@@ -5,6 +5,7 @@ __all__ = [
     'DatabaseTest',
     'QueueTest',
     'WebTest',
+    'QueueDatabaseTest',
 ]
 
 
@@ -108,18 +109,26 @@ class QueueTest(unittest.TestCase):
     
     def setUp(self):
         # TODO configure celery verbosity
-        celery_out = open(os.devnull, "w")
-        celery_cmd = ['/usr/bin/python', 'queue.py', 'worker']
-        self.celery_proc = subprocess.Popen(celery_cmd, stdout = celery_out, stderr = celery_out)
+        #celery_out = open(os.devnull, "w")
+        #celery_cmd = ['/usr/bin/python', 'queue.py', 'worker']
+        #self.celery_proc = subprocess.Popen(celery_cmd, stdout = celery_out, stderr = celery_out)
+        pass
     
     
     def tearDown(self):
-        self.celery_proc.send_signal(signal.SIGINT)
+        #self.celery_proc.send_signal(signal.SIGINT)
+        pass
 
 
 class QueueDatabaseTest(QueueTest, DatabaseTest):
-    pass
 
+    def setUp(self):
+        QueueTest.setUp(self)
+        DatabaseTest.setUp(self)
+
+    def tearDown(self):
+        QueueTest.tearDown(self)
+        DatabaseTest.tearDown(self)
 
 from wikimetrics import web
 class WebTest(unittest.TestCase):

@@ -3,7 +3,7 @@ from fixtures import DatabaseTest, QueueDatabaseTest
 
 from wikimetrics.database import Session, get_mw_session
 from wikimetrics.metrics import NamespaceEdits
-from wikimetrics.models import Cohort
+from wikimetrics.models import Cohort, MetricJob
 
 
 class NamespaceEditsDatabaseTest(DatabaseTest):
@@ -13,13 +13,13 @@ class NamespaceEditsDatabaseTest(DatabaseTest):
         #TODO: add data for metric to find
         #mwSession.add(Revision(page_id=1,rev_user=
     
-
+    
     def test_finds_edits(self):
         session = Session()
         cohort = session.query(Cohort).filter_by(name='test').one()
         
         metric = NamespaceEdits()
-        results = metric(cohort, session)
+        results = metric(list(cohort), session)
         
         assert_true(results is not None)
         assert_true(results['1'] == 2, 'Dan had not 2 edits')
@@ -31,7 +31,7 @@ class NamespaceEditsDatabaseTest(DatabaseTest):
         cohort = session.query(Cohort).filter_by(name='test').one()
         
         metric = NamespaceEdits()
-        results = metric(cohort, session)
+        results = metric(list(cohort), session)
         
         assert_true(results is not None)
         assert_true(results['3'] == 0, 'Andrew had not 0 edits')
@@ -42,7 +42,7 @@ class NamespaceEditsDatabaseTest(DatabaseTest):
         cohort = session.query(Cohort).filter_by(name='test').one()
         
         metric = NamespaceEdits()
-        results = metric(cohort, session)
+        results = metric(list(cohort), session)
         
         assert_true(results is not None)
         assert_true(results['4'] is None, 'Diederik had not undefined edits')
@@ -53,9 +53,13 @@ class NamesapceEditsFullTest(QueueDatabaseTest):
         session = Session()
         cohort = session.query(Cohort).filter_by(name='test').one()
 
-        metric = NameSpaceEdits()
-        metric_job = MetricJob(metric, cohort)
-        results = metric_job.get()
+        metric = NamespaceEdits()
+        project = 'enwiki'
+        metric_job = MetricJob(metric, list(cohort), project)
+        metric_run_res = metric_job.run(metric_job)
+        print 'metric_job.run(metric_job): %s' % metric_run_res
+        async_result = metric_run_res.delay()
+        results = async_result.get()
 
         assert_true(results is not None)
         assert_true(results['2'] == 3, 'Evan had not 3 edits, when run on queue')
@@ -66,7 +70,7 @@ class NamesapceEditsFullTest(QueueDatabaseTest):
         cohort = session.query(Cohort).filter_by(name='test').one()
 
         namespaces = [3]
-        metric = NameSpaceEdits(namespaces)
+        metric = NamespaceEdits(namespaces)
         metric_job = MetricJob(metric, cohort)
         results = metric_job.get()
 
@@ -79,7 +83,7 @@ class NamesapceEditsFullTest(QueueDatabaseTest):
         cohort = session.query(Cohort).filter_by(name='test').one()
 
         namespaces = []
-        metric = NameSpaceEdits(namespaces)
+        metric = NamespaceEdits(namespaces)
         metric_job = MetricJob(metric, cohort)
         results = metric_job.get()
 
