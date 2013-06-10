@@ -14,6 +14,41 @@ __all__ = [
     'get_mw_session',
 ]
 
+engine = create_engine('sqlite:///:memory:', echo=SQL_ECHO)
+Session = sessionmaker(engine)
+Base = declarative_base()
+MediawikiBase = declarative_base()
+
+
+def init_db():
+    import wikimetrics.models
+    Base.metadata.create_all(engine)
+
+
+def get_engine(project):
+    if project in MEDIAWIKI_ENGINES:
+        return MEDIAWIKI_ENGINES[project]
+    else:
+        engine = create_engine('sqlite:///:memory:', echo=SQL_ECHO)
+        MEDIAWIKI_ENGINES[project] = engine
+        return engine
+
+
+def get_mw_session(project):
+    if project in MEDIAWIKI_SESSIONMAKERS:
+        return MEDIAWIKI_SESSIONMAKERS[project]()
+    else:
+        engine = get_engine(project)
+        # TODO: this should probably check before calling create_all
+        import wikimetrics.models.mediawiki
+        MediawikiBase.metadata.create_all(engine)
+        
+        session_factory = sessionmaker(engine)
+        MEDIAWIKI_SESSIONMAKERS[project] = session_factory
+        # TODO: check whether we should return the class or instance
+        session = session_factory()
+        return session
+
 def get_project_host_map(usecache=True):
     cache_name = 'project_host_map.json'
     if not exists(cache_name) or not usecache:
@@ -31,53 +66,8 @@ def get_project_host_map(usecache=True):
         project_host_map = json.load(open(cache_name))
     return project_host_map
 
-PROJECT_HOST_MAP = get_project_host_map()
-
-engine = create_engine('sqlite:///:memory:', echo=SQL_ECHO)
-Session = sessionmaker(bind=engine)
-Base = declarative_base()
-MediawikiBase = declarative_base()
-
-#mediawiki_engine = create_engine('mysql://test:test@localhost/mediawiki', echo=True)
-# MediawikiSession = sessionmaker(bind=mediawiki_engine)
-#MEDIAWIKI_ENGINES = project : create_engine('sqlite:///:memory:', echo=SQL_ECHO)\
-        #for project, url in PROJECT_HOST_MAP.iteritems()}
-#MEDIAWIKI_SESSIONS = project : sessionmaker(bind=engine)\
-        #for project, engine in MEDIAWIKI_ENGINES.iteritems()}
 
 MEDIAWIKI_ENGINES = {}
 MEDIAWIKI_SESSIONMAKERS = {}
 TEST_PROJECTS = ['enwiki', 'arwiki']
-
-
-def get_engine(project):
-    if project in MEDIAWIKI_ENGINES:
-        return MEDIAWIKI_ENGINES[project]
-    else:
-        engine = create_engine('sqlite:///:memory:', echo=SQL_ECHO)
-        MEDIAWIKI_ENGINES[project] = engine
-        return engine
-
-
-def get_mw_session(project):
-    if project in MEDIAWIKI_SESSIONMAKERS:
-        return MEDIAWIKI_SESSIONMAKERS[project]()
-    else:
-        engine = get_engine(project)
-        session_factory = sessionmaker(bind=engine)
-        MEDIAWIKI_SESSIONMAKERS[project] = session_factory
-        # TODO: check whether we should return the class or instance
-        session = session_factory()
-        return session
-
-
-def init_db():
-    import wikimetrics.models
-    Base.metadata.create_all(bind=engine)
-    
-    # TODO: cleaner test switch which grabs TEST_WIKIS from a config
-    import wikimetrics.models.mediawiki
-    for project in TEST_PROJECTS:
-        MediawikiBase.metadata.create_all(bind=get_engine(project))
-
-
+PROJECT_HOST_MAP = get_project_host_map()
