@@ -108,3 +108,6 @@ class QueueTest(unittest.TestCase):
     
     def tearDown(self):
         pass
+
+class QueueDatabaseTest(QueueTest, DatabaseTest):
+    pass
