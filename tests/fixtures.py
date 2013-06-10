@@ -1,15 +1,15 @@
 import unittest
 from nose.tools import *
 
-from queue import celery
-from wikimetrics.database import init_db, Session, get_mw_session
-from wikimetrics.models import *
-
 __all__ = [
     'DatabaseTest',
     'QueueTest',
+    'WebTest',
 ]
 
+
+from wikimetrics.database import init_db, Session, get_mw_session
+from wikimetrics.models import *
 class DatabaseTest(unittest.TestCase):
     def runTest(self):
         pass
@@ -101,6 +101,7 @@ class DatabaseTest(unittest.TestCase):
         session.commit()
 
 
+from queue import celery
 class QueueTest(unittest.TestCase):
     
     def setUp(self):
@@ -108,3 +109,19 @@ class QueueTest(unittest.TestCase):
     
     def tearDown(self):
         pass
+
+
+from wikimetrics import web
+class WebTest(unittest.TestCase):
+    
+    def setUp(self):
+        self.app = web.app.test_client()
+    
+    def login(self, username, password):
+        return self.app.post('/login', data=dict(
+            username=username,
+            password=password
+        ), follow_redirects=True)
+    
+    def logout(self):
+        return self.app.get('/logout', follow_redirects=True)

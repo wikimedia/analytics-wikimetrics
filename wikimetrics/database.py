@@ -1,6 +1,7 @@
 import json
 from os.path import exists
 from urllib2 import urlopen
+from config import SQL_ECHO
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.ext.declarative import declarative_base
@@ -12,8 +13,6 @@ __all__ = [
     'init_db',
     'get_mw_session',
 ]
-
-SQL_ECHO = True
 
 def get_project_host_map(usecache=True):
     cache_name = 'project_host_map.json'
