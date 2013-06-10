@@ -1,0 +1,6 @@
+body { padding-top: 60px; padding-bottom: 60px; }
+.nav { width: 70%; }
+.nav li:last-child { color: #cacaca; float: right !important; }
+.nav li:last-child a { color: #0088cc; display: inline-block; }
+label.error { color: #af3333; }
+div.flash { margin: 4px 0 20px 0; }

@@ -1,8 +1,9 @@
 import collections
 from sqlalchemy import Column, Integer, String, ForeignKey
+from celery import group, chord
+
 from wikimetrics.database import Base
 from queue import celery
-from celery import group, chord
 
 __all__ = [
     'Job',

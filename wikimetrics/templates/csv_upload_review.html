@@ -1,0 +1,92 @@
+{% extends "layout.html" %}
+{% block body %}
+
+{% if invalid %}
+<h4>In-Valid Users</h4>
+<table class="table table-striped">
+    <thead>
+        <tr>
+            <th>Username</th>
+            <th>Project</th>
+            <th>Reason Invalid</th>
+        </tr>
+    </thead>
+    <tbody data-bind="foreach: invalid">
+        <tr>
+            <td><a data-bind="text: username, attr: {href: link}" target="_blank"></a></td>
+            <td data-bind="text: project"></td>
+            <td data-bind="text: reason_invalid"></td>
+        </tr>
+    </tbody>
+</table>
+
+<h5>Try uploading again after fixing the issues</h5>
+{% include "csv_upload_form.html" %}
+<!--form action="/uploads/cohort/validate" method="POST" class="form-horizontal">
+    <div class="form-actions">
+        <input type="submit" class="btn" value="Re-Check These Users"/>
+    </div>
+</form-->
+{% endif %}
+
+<hr/>
+
+{% if valid %}
+<h4>Valid Users</h4>
+<table class="table table-striped">
+    <thead>
+        <tr>
+            <th>Username</th>
+            <th>Project</th>
+        </tr>
+    </thead>
+    <tbody data-bind="foreach: valid">
+        <tr>
+            <td><a data-bind="text: username, attr: {href: link}" target="_blank"></a></td>
+            <td data-bind="text: project"></td>
+        </tr>
+    </tbody>
+</table>
+
+<form action="/uploads/cohort/finish" method="POST" class="form-horizontal finish-upload">
+    <div class="form-actions">
+        <input type="submit" class="btn btn-primary" value="{% if invalid %}Upload Only These Valid Users{% else %}Finish Upload{% endif %}"/>
+    </div>
+</form>
+{% endif %}
+
+
+<script src="//ajax.aspnetcdn.com/ajax/knockout/knockout-2.2.1.js"></script>
+<script>
+    var invalid = JSON.parse('{{ invalid_json | safe }}');
+    var valid = JSON.parse('{{ valid_json | safe }}');
+    var cohort_name = '{{ cohort_name }}';
+    var cohort_project = '{{ cohort_project }}';
+    $(document).ready(function(){
+        ko.applyBindings({
+            invalid: ko.observableArray(invalid),
+            valid: ko.observableArray(valid)
+        });
+
+        $('form.finish-upload').submit(function(event){
+            event.preventDefault();
+            event.stopPropagation();
+            
+            form = $(this);
+            $.ajax({
+                url: form.attr('action'),
+                type: 'post',
+                data: {
+                    users: JSON.stringify(valid),
+                    cohort_name: cohort_name,
+                    cohort_project: cohort_project
+                }
+            }).done(redirect);
+        });
+    });
+    
+    function redirect(to){
+        location.href = to;
+    };
+</script>
+{% endblock %}

@@ -1,0 +1,22 @@
+{% extends "layout.html" %}
+{% block body %}
+<h2>Metrics</h2>
+{% if error %}<p class=error><strong>Error:</strong> {{ error }}{% endif %}
+<p>The following is a list of available metrics:</p>
+<h3><a href="{{url_for('metric', metric='threshold')}}">threshold</a></h3>
+<p>measures whether a user reached a given level of activity within a specific amount of time.</p>
+<h3><a href="{{url_for('metric', metric='survival')}}">survival</a></h3>
+<p>measures a user's retention. A user is considered as "retained" or "surviving" if they continue editing after a time since a reference event (typically: account registration time).</p>
+<h3><a href="{{url_for('metric', metric='edit_rate')}}">edit rate</a></h3>
+<p>measures the rate of an editor's contributions during a given timespan</p>
+<h3><a href="{{url_for('metric', metric='revert_rate')}}">revert rate</a></h3>
+<p>measures the quality of a user's contributions expressed as the proportion of reverted edits within a given amount of time</p>
+<h3><a href="{{url_for('metric', metric='time_to_threshold')}}">time to threshold</a></h3>
+<p>measures how long it takes for a user to reach a given level of activity</p>
+<h3><a href="{{url_for('metric', metric='blocks')}}">block rate</a></h3>
+<p>represents whether the user has been blocked within a given amount of time</p>
+<h3><a href="{{url_for('metric', metric='bytes_added')}}">bytes added</a></h3>
+<p>measures the amount of content added, removed or modified by a user within a given amount of time</p>
+<h3><a href="{{url_for('metric', metric='namespace_edits')}}">namespace edits</a></h3>
+<p>measures the breakdown of an editor's contribution by namespace</p>
+{% endblock %}

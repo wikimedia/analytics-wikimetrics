@@ -7,5 +7,7 @@
 
 *egg-info
 
-
 .coverage
+
+# never commit this as it holds any server-specific settings like secret keys and passwords, etc.
+config_secret.py
