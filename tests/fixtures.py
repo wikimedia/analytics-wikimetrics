@@ -111,6 +111,10 @@ class QueueTest(unittest.TestCase):
         pass
 
 
+class QueueDatabaseTest(QueueTest, DatabaseTest):
+    pass
+
+
 from wikimetrics import web
 class WebTest(unittest.TestCase):
     
