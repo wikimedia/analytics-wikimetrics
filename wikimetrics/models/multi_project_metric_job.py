@@ -1,15 +1,15 @@
-from database import get_mw_session
+from ..database import get_mw_session
 import job
-from query_job import QueryJob
+from metric_job import MetricJob
 from queue import celery
 
 __all__ = [
-    'MutliProjectQueryJob',
+    'MultiProjectMetricJob',
 ]
 
-class MultiProjectQueryJob(job.JobNode):
+class MultiProjectMetricJob(job.JobNode):
     def __init__(self, cohort, metric):
-        super(MultiProjectQueryJob, self).__init__()
+        super(MultiProjectMetricJob, self).__init__()
         self.cohort = cohort
         self.metric = metric
         
@@ -17,7 +17,7 @@ class MultiProjectQueryJob(job.JobNode):
         for project, user_ids in cohort.group_by_project():
             session = get_mw_session(project)
             # note that user_ids is actually just an iterator
-            self.children.append(QueryJob(user_ids, session))
+            self.children.append(MetricJob(metric, user_ids, session))
 
 
     @celery.task

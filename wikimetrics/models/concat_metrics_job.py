@@ -1,7 +1,7 @@
 import job
 from queue import celery
 import pprint
-from query_job import QueryJob
+from metric_job import MetricJob
 
 __all__ = [
     'ConcatMetricsJob',
@@ -13,7 +13,7 @@ class ConcatMetricsJob(job.JobNode):
         self.cohort = cohort
         self.metrics = metrics
         # TODO enforce children always have a run @celery.task
-        self.children = [QueryJob(cohort, metric) for metric in metrics]
+        self.children = [MetricJob(cohort, metric) for metric in metrics]
         # TODO self.save()
     
     ## NOTE: this will be used by celery if we implement it, so we must take care

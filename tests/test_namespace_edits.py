@@ -19,7 +19,7 @@ class NamespaceEditsDatabaseTest(DatabaseTest):
         cohort = session.query(Cohort).filter_by(name='test').one()
         
         metric = NamespaceEdits()
-        results = metric(cohort)
+        results = metric(cohort, session)
         
         assert_true(results is not None)
         assert_true(results['1'] == 2, 'Dan had not 2 edits')
@@ -31,7 +31,7 @@ class NamespaceEditsDatabaseTest(DatabaseTest):
         cohort = session.query(Cohort).filter_by(name='test').one()
         
         metric = NamespaceEdits()
-        results = metric(cohort)
+        results = metric(cohort, session)
         
         assert_true(results is not None)
         assert_true(results['3'] == 0, 'Andrew had not 0 edits')
@@ -42,7 +42,7 @@ class NamespaceEditsDatabaseTest(DatabaseTest):
         cohort = session.query(Cohort).filter_by(name='test').one()
         
         metric = NamespaceEdits()
-        results = metric(cohort)
+        results = metric(cohort, session)
         
         assert_true(results is not None)
         assert_true(results['4'] is None, 'Diederik had not undefined edits')
@@ -54,8 +54,8 @@ class NamesapceEditsFullTest(QueueDatabaseTest):
         cohort = session.query(Cohort).filter_by(name='test').one()
 
         metric = NameSpaceEdits()
-        query_job = QueryJob(metric, cohort)
-        results = query_job.get()
+        metric_job = MetricJob(metric, cohort)
+        results = metric_job.get()
 
         assert_true(results is not None)
         assert_true(results['2'] == 3, 'Evan had not 3 edits, when run on queue')
@@ -67,8 +67,8 @@ class NamesapceEditsFullTest(QueueDatabaseTest):
 
         namespaces = [3]
         metric = NameSpaceEdits(namespaces)
-        query_job = QueryJob(metric, cohort)
-        results = query_job.get()
+        metric_job = MetricJob(metric, cohort)
+        results = metric_job.get()
 
         assert_true(results is not None)
         assert_true(results['2'] == 0, 'Evan had not 0 edits in namespaces %d, when run on queue')
@@ -80,8 +80,8 @@ class NamesapceEditsFullTest(QueueDatabaseTest):
 
         namespaces = []
         metric = NameSpaceEdits(namespaces)
-        query_job = QueryJob(metric, cohort)
-        results = query_job.get()
+        metric_job = MetricJob(metric, cohort)
+        results = metric_job.get()
 
         assert_true(results is not None)
         assert_true(results['2'] == 0, 'Evan had not 0 edits in namespaces %s, when run on queue')

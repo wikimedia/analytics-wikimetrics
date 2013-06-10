@@ -101,14 +101,20 @@ class DatabaseTest(unittest.TestCase):
         session.commit()
 
 
-from queue import celery
+import subprocess
+import os
+import signal
 class QueueTest(unittest.TestCase):
     
     def setUp(self):
-        celery.start()
+        # TODO configure celery verbosity
+        celery_out = open(os.devnull, "w")
+        celery_cmd = ['/usr/bin/python', 'queue.py', 'worker']
+        self.celery_proc = subprocess.Popen(celery_cmd, stdout = celery_out, stderr = celery_out)
+    
     
     def tearDown(self):
-        pass
+        self.celery_proc.send_signal(signal.SIGINT)
 
 
 class QueueDatabaseTest(QueueTest, DatabaseTest):

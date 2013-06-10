@@ -15,7 +15,7 @@ class NamespaceEdits(Metric):
         revisions_by_user = dict(session\
             .query(Revision.rev_user, func.count(Revision.rev_id))\
             .join(Page)\
-            .filter(Page.page_namespace == 0)\
+            .filter(Page.page_namespace in self.namespaces)\
             .filter(Revision.rev_user.in_(user_ids))\
             .group_by(Revision.rev_user)\
             .all())

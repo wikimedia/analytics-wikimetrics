@@ -46,7 +46,7 @@ MediawikiBase = declarative_base()
         #for project, engine in MEDIAWIKI_ENGINES.iteritems()}
 
 MEDIAWIKI_ENGINES = {}
-MEDIAWIKI_SESSIONS = {}
+MEDIAWIKI_SESSIONMAKERS = {}
 TEST_PROJECTS = ['enwiki', 'arwiki']
 
 
@@ -60,14 +60,14 @@ def get_engine(project):
 
 
 def get_mw_session(project):
-    if project in MEDIAWIKI_SESSIONS:
-        return MEDIAWIKI_SESSIONS[project]
+    if project in MEDIAWIKI_SESSIONMAKERS:
+        return MEDIAWIKI_SESSIONMAKERS[project]()
     else:
         engine = get_engine(project)
-        session_cls = sessionmaker(bind=engine)
-        session = session_cls()
-        MEDIAWIKI_SESSIONS[project] = session
+        session_factory = sessionmaker(bind=engine)
+        MEDIAWIKI_SESSIONMAKERS[project] = session_factory
         # TODO: check whether we should return the class or instance
+        session = session_factory()
         return session
 
 
