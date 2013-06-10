@@ -12,11 +12,15 @@ __all__ = [
 from wikimetrics.database import init_db, Session, get_mw_session
 from wikimetrics.models import *
 class DatabaseTest(unittest.TestCase):
+    
+    @classmethod
+    def setUpClass(self):
+        init_db()
+    
     def runTest(self):
         pass
     
     def setUp(self):
-        init_db()
         
         # create records for mediawiki tests
         mwSession = get_mw_session('enwiki')
