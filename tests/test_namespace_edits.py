@@ -1,7 +1,6 @@
 from nose.tools import *
 from fixtures import DatabaseTest, QueueDatabaseTest
 
-from wikimetrics.database import Session, get_mw_session
 from wikimetrics.metrics import NamespaceEdits
 from wikimetrics.models import Cohort, MetricJob
 
@@ -9,17 +8,15 @@ from wikimetrics.models import Cohort, MetricJob
 class NamespaceEditsDatabaseTest(DatabaseTest):
     def setUp(self):
         super(NamespaceEditsDatabaseTest, self).setUp()
-        mwSession = get_mw_session('enwiki')
         #TODO: add data for metric to find
         #mwSession.add(Revision(page_id=1,rev_user=
     
     
     def test_finds_edits(self):
-        session = Session()
-        cohort = session.query(Cohort).filter_by(name='test').one()
+        cohort = self.session.query(Cohort).filter_by(name='test').one()
         
         metric = NamespaceEdits()
-        results = metric(list(cohort), session)
+        results = metric(list(cohort), self.mwSession)
         
         assert_true(results is not None)
         assert_true(results['1'] == 2, 'Dan had not 2 edits')
@@ -27,22 +24,20 @@ class NamespaceEditsDatabaseTest(DatabaseTest):
     
     
     def test_reports_zero_edits(self):
-        session = Session()
-        cohort = session.query(Cohort).filter_by(name='test').one()
+        cohort = self.session.query(Cohort).filter_by(name='test').one()
         
         metric = NamespaceEdits()
-        results = metric(list(cohort), session)
+        results = metric(list(cohort), self.mwSession)
         
         assert_true(results is not None)
         assert_true(results['3'] == 0, 'Andrew had not 0 edits')
     
     
     def test_reports_undefined(self):
-        session = Session()
-        cohort = session.query(Cohort).filter_by(name='test').one()
+        cohort = self.session.query(Cohort).filter_by(name='test').one()
         
         metric = NamespaceEdits()
-        results = metric(list(cohort), session)
+        results = metric(list(cohort), self.mwSession)
         
         assert_true(results is not None)
         assert_true(results['4'] is None, 'Diederik had not undefined edits')
@@ -50,8 +45,7 @@ class NamespaceEditsDatabaseTest(DatabaseTest):
 class NamesapceEditsFullTest(QueueDatabaseTest):
 
     def test_namespace_edits(self):
-        session = Session()
-        cohort = session.query(Cohort).filter_by(name='test').one()
+        cohort = self.session.query(Cohort).filter_by(name='test').one()
 
         metric = NamespaceEdits()
         project = 'enwiki'
@@ -66,12 +60,11 @@ class NamesapceEditsFullTest(QueueDatabaseTest):
 
 
     def test_namespace_edits_namespace_filter(self):
-        session = Session()
-        cohort = session.query(Cohort).filter_by(name='test').one()
+        cohort = self.session.query(Cohort).filter_by(name='test').one()
 
         namespaces = [3]
         metric = NamespaceEdits(namespaces)
-        metric_job = MetricJob(metric, cohort)
+        metric_job = MetricJob(metric, list(cohort), project)
         results = metric_job.get()
 
         assert_true(results is not None)
@@ -79,12 +72,11 @@ class NamesapceEditsFullTest(QueueDatabaseTest):
 
 
     def test_namespace_edits_namespace_filter_no_namespace(self):
-        session = Session()
-        cohort = session.query(Cohort).filter_by(name='test').one()
+        cohort = self.session.query(Cohort).filter_by(name='test').one()
 
         namespaces = []
         metric = NamespaceEdits(namespaces)
-        metric_job = MetricJob(metric, cohort)
+        metric_job = MetricJob(metric, list(cohort), project)
         results = metric_job.get()
 
         assert_true(results is not None)

@@ -13,25 +13,22 @@ from wikimetrics.database import init_db, Session, get_mw_session
 from wikimetrics.models import *
 class DatabaseTest(unittest.TestCase):
     
-    @classmethod
-    def setUpClass(self):
-        init_db()
-    
     def runTest(self):
         pass
     
     def setUp(self):
+        init_db()
         
         # create records for mediawiki tests
-        mwSession = get_mw_session('enwiki')
-        mwSession.add(MediawikiUser(user_id=2,user_name='12.222.101.118'))
-        mwSession.add(Logging(log_id=1,log_user_text='Reedy'))
-        mwSession.add(Page(page_id=1,page_title='Main_Page'))
-        mwSession.add(Revision(rev_id=10,rev_user_text='Platonides'))
-        mwSession.commit()
+        self.mwSession = get_mw_session('enwiki')
+        self.mwSession.add(MediawikiUser(user_id=2,user_name='12.222.101.118'))
+        self.mwSession.add(Logging(log_id=1,log_user_text='Reedy'))
+        self.mwSession.add(Page(page_id=1,page_title='Main_Page'))
+        self.mwSession.add(Revision(rev_id=10,rev_user_text='Platonides'))
+        self.mwSession.commit()
         
         # create basic test records for non-mediawiki tests
-        session = Session()
+        self.session = Session()
         
         job = Job()
         user = User(username='Dan')
@@ -60,8 +57,8 @@ class DatabaseTest(unittest.TestCase):
         test = Cohort(
             name='test',
         )
-        session.add_all([job, user, dan, evan, andrew, diederik, test])
-        session.commit()
+        self.session.add_all([job, user, dan, evan, andrew, diederik, test])
+        self.session.commit()
         
         dan_in_test = CohortWikiUser(
             wiki_user_id=dan.id,
@@ -79,31 +76,30 @@ class DatabaseTest(unittest.TestCase):
             wiki_user_id=diederik.id,
             cohort_id=test.id
         )
-        session.add_all([
+        self.session.add_all([
             dan_in_test,
             evan_in_test,
             andrew_in_test,
             diederik_in_test
         ])
-        session.commit()
+        self.session.commit()
     
     def tearDown(self):
         
         # delete records
-        mwSession = get_mw_session('enwiki')
-        mwSession.query(MediawikiUser).delete()
-        mwSession.query(Logging).delete()
-        mwSession.query(Page).delete()
-        mwSession.query(Revision).delete()
-        mwSession.commit()
+        self.mwSession.query(MediawikiUser).delete()
+        self.mwSession.query(Logging).delete()
+        self.mwSession.query(Page).delete()
+        self.mwSession.query(Revision).delete()
+        self.mwSession.commit()
         
-        session = Session()
-        session.query(CohortWikiUser).delete()
-        session.query(WikiUser).delete()
-        session.query(Cohort).delete()
-        session.query(User).delete()
-        session.query(Job).delete()
-        session.commit()
+        self.session = Session()
+        self.session.query(CohortWikiUser).delete()
+        self.session.query(WikiUser).delete()
+        self.session.query(Cohort).delete()
+        self.session.query(User).delete()
+        self.session.query(Job).delete()
+        self.session.commit()
 
 
 import subprocess

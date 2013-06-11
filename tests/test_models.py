@@ -10,34 +10,29 @@ class TestMappings(DatabaseTest):
     #***********
 
     def test_job(self):
-        session = Session()
-        j = session.query(Job).get(1)
+        j = self.session.query(Job).get(1)
         assert_true(j.status == JobStatus.CREATED)
 
 
     def test_user(self):
-        session = Session()
-        u = session.query(User).get(1)
+        u = self.session.query(User).get(1)
         assert_true(u.username == 'Dan')
         assert_true(u.role == UserRole.GUEST)
 
 
     def test_wikiuser(self):
-        session = Session()
-        wu = session.query(WikiUser).get(1)
+        wu = self.session.query(WikiUser).get(1)
         assert_true(wu.mediawiki_username == 'Dan')
 
 
     def test_cohort(self):
-        session = Session()
-        c = session.query(Cohort).get(1)
+        c = self.session.query(Cohort).get(1)
         assert_true(c.name == 'test')
         assert_true(c.public == False)
 
 
     def test_cohort_wikiuser(self):
-        session = Session()
-        cwu = session.query(CohortWikiUser).get(1)
+        cwu = self.session.query(CohortWikiUser).get(1)
         assert_true(cwu.wiki_user_id == 1)
         assert_true(cwu.cohort_id == 1)
 
@@ -46,26 +41,22 @@ class TestMappings(DatabaseTest):
     # Mapping tests for mediawiki tables
     #***********
     def test_mediawiki_logging(self):
-        session = get_mw_session('enwiki')
-        row = session.query(Logging).get(1)
+        row = self.mwSession.query(Logging).get(1)
         assert_true(row.log_user_text == 'Reedy')
 
 
     def test_mediawiki_user(self):
-        session = get_mw_session('enwiki')
-        row = session.query(MediawikiUser).get(2)
+        row = self.mwSession.query(MediawikiUser).get(2)
         assert_true(row.user_name == '12.222.101.118')
 
 
     def test_mediawiki_page(self):
-        session = get_mw_session('enwiki')
-        row = session.query(Page).get(1)
+        row = self.mwSession.query(Page).get(1)
         assert_true(row.page_title == 'Main_Page')
 
 
     def test_mediawiki_revision(self):
-        session = get_mw_session('enwiki')
-        row = session.query(Revision).get(10)
+        row = self.mwSession.query(Revision).get(10)
         assert_true(row.rev_user_text == 'Platonides')
     
     
@@ -73,8 +64,7 @@ class TestMappings(DatabaseTest):
     # Join tests
     #***********
     def test_cohort_members(self):
-        session = Session()
-        user_ids = session\
+        user_ids = self.session\
             .query(WikiUser.mediawiki_userid)\
             .join(CohortWikiUser)\
             .filter(CohortWikiUser.cohort_id == 1)\
