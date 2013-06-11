@@ -19,14 +19,6 @@ class DatabaseTest(unittest.TestCase):
     def setUp(self):
         init_db()
         
-        # create records for mediawiki tests
-        self.mwSession = get_mw_session('enwiki')
-        self.mwSession.add(MediawikiUser(user_id=2,user_name='12.222.101.118'))
-        self.mwSession.add(Logging(log_id=1,log_user_text='Reedy'))
-        self.mwSession.add(Page(page_id=1,page_title='Main_Page'))
-        self.mwSession.add(Revision(rev_id=10,rev_user_text='Platonides'))
-        self.mwSession.commit()
-        
         # create basic test records for non-mediawiki tests
         self.session = Session()
         
@@ -83,6 +75,51 @@ class DatabaseTest(unittest.TestCase):
             diederik_in_test
         ])
         self.session.commit()
+        
+        # create records for enwiki tests
+        self.mwSession = get_mw_session('enwiki')
+        self.mwSession.add(MediawikiUser(user_id=1,user_name='Dan'))
+        self.mwSession.add(MediawikiUser(user_id=2,user_name='Evan'))
+        self.mwSession.add(MediawikiUser(user_id=3,user_name='Andrew'))
+        self.mwSession.add(Logging(log_id=1,log_user_text='Reedy'))
+        self.mwSession.add(Page(
+            page_id=1,
+            page_namespace=0,
+            page_title='Main_Page'
+        ))
+        # Dan edits
+        self.mwSession.add(Revision(
+            rev_id=1,
+            rev_page=1,
+            rev_user=1,
+            rev_comment='Dan edit 1'
+        ))
+        self.mwSession.add(Revision(
+            rev_id=2,
+            rev_page=1,
+            rev_user=1,
+            rev_comment='Dan edit 2'
+        ))
+        # Evan edits
+        self.mwSession.add(Revision(
+            rev_id=3,
+            rev_page=1,
+            rev_user=2,
+            rev_comment='Evan edit 1'
+        ))
+        self.mwSession.add(Revision(
+            rev_id=4,
+            rev_page=1,
+            rev_user=2,
+            rev_comment='Evan edit 2'
+        ))
+        self.mwSession.add(Revision(
+            rev_id=5,
+            rev_page=1,
+            rev_user=2,
+            rev_comment='Evan edit 3'
+        ))
+        self.mwSession.commit()
     
     def tearDown(self):
         

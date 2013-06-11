@@ -47,7 +47,7 @@ class TestMappings(DatabaseTest):
 
     def test_mediawiki_user(self):
         row = self.mwSession.query(MediawikiUser).get(2)
-        assert_true(row.user_name == '12.222.101.118')
+        assert_true(row.user_name == 'Evan')
 
 
     def test_mediawiki_page(self):
@@ -56,8 +56,8 @@ class TestMappings(DatabaseTest):
 
 
     def test_mediawiki_revision(self):
-        row = self.mwSession.query(Revision).get(10)
-        assert_true(row.rev_user_text == 'Platonides')
+        row = self.mwSession.query(Revision).get(1)
+        assert_true(row.rev_comment == 'Dan edit 1')
     
     
     #***********
