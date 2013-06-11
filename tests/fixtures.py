@@ -4,8 +4,8 @@ from nose.tools import *
 __all__ = [
     'DatabaseTest',
     'QueueTest',
-    'WebTest',
     'QueueDatabaseTest',
+    'WebTest',
 ]
 
 
@@ -110,7 +110,7 @@ class QueueTest(unittest.TestCase):
     def setUp(self):
         # TODO configure celery verbosity
         #celery_out = open(os.devnull, "w")
-        #celery_cmd = ['/usr/bin/python', 'queue.py', 'worker']
+        #celery_cmd = ['/usr/bin/python', 'queue.py', 'worker', '-l', 'debug']
         #self.celery_proc = subprocess.Popen(celery_cmd, stdout = celery_out, stderr = celery_out)
         pass
     

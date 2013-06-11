@@ -3,5 +3,5 @@ __all__ = [
 ]
 
 class Metric(object):
-    def __call__(self, cohort):
-        return {user:None for user in cohort}
+    def __call__(self, user_ids, project):
+        return {user:None for user in user_ids}

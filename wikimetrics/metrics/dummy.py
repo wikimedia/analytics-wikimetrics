@@ -7,6 +7,5 @@ __all__ = ['RandomMetric']
 logger = logging.getLogger(__name__)
 
 class RandomMetric(Metric):
-    def __call__(self, cohort):
-        logger.debug('globals(): %s', globals())
-        return {user:random.random() for user in cohort}
+    def __call__(self, user_ids, project):
+        return {user:random.random() for user in user_ids}

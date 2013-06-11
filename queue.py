@@ -9,5 +9,6 @@ if __name__ == '__main__':
     # TODO: Investigate if these really have to be imported here
     # for the queue to work
     from wikimetrics.models import ConcatMetricsJob
-    from wikimetrics.models import QueryJob
+    from wikimetrics.models import MultiProjectMetricJob
+    from wikimetrics.models import MetricJob
     celery.start()
