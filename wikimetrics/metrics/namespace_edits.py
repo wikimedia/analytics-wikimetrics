@@ -1,6 +1,9 @@
 from sqlalchemy import func
 from metric import Metric
 from wikimetrics.models import *
+import logging
+
+logger = logging.getLogger(__name__)
 
 __all__ = [
     'NamespaceEdits',
@@ -13,10 +16,11 @@ class NamespaceEdits(Metric):
 
     def __call__(self, user_ids, session):
         # directly construct dict from query results
+        logger.debug('user_ids: %s, namespaces: %s', user_ids, self.namespaces)
         revisions_by_user = dict(session\
             .query(Revision.rev_user, func.count(Revision.rev_id))\
             .join(Page)\
-            .filter(Page.page_namespace in self.namespaces)\
+            .filter(Page.page_namespace.in_(self.namespaces))\
             .filter(Revision.rev_user.in_(user_ids))\
             .group_by(Revision.rev_user)\
             .all())

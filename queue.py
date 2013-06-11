@@ -5,6 +5,16 @@ from celery import Celery
 celery = Celery('wikimetrics', include=['wikimetrics'])
 celery.config_from_object('config')
 
+def celery_is_alive():
+    try:
+        from celery.task.control import inspect
+        insp = inspect()
+        d = insp.stats()
+        if d:
+            return True
+    except IOError:
+        return False
+
 if __name__ == '__main__':
     # TODO: Investigate if these really have to be imported here
     # for the queue to work

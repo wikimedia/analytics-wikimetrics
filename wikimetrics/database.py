@@ -1,5 +1,6 @@
 import json
 from os.path import exists
+from os import remove
 from urllib2 import urlopen
 from config import SQL_ECHO
 from sqlalchemy import create_engine
@@ -14,7 +15,9 @@ __all__ = [
     'get_mw_session',
 ]
 
-engine = create_engine('sqlite:///:memory:', echo=SQL_ECHO)
+#engine_url = 'sqlite:///:memory:'
+engine_url = 'sqlite:///test.db'
+engine = create_engine(engine_url, echo=SQL_ECHO)
 Session = sessionmaker(engine)
 Base = declarative_base()
 MediawikiBase = declarative_base()
@@ -30,7 +33,9 @@ def get_mw_engine(project):
     if project in MEDIAWIKI_ENGINES:
         return MEDIAWIKI_ENGINES[project]
     else:
-        engine = create_engine('sqlite:///:memory:', echo=SQL_ECHO)
+        #engine_url = 'sqlite:///:memory:'
+        engine_url = 'sqlite:///{0}.db'.format(project)
+        engine = create_engine(engine_url, echo=SQL_ECHO)
         MEDIAWIKI_ENGINES[project] = engine
         return engine
 

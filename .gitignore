@@ -4,6 +4,7 @@
 *swo
 *.csv
 *.json
+*.db
 
 *egg-info
 
