@@ -1,5 +1,5 @@
 from tests.fixtures import DatabaseTest
-from wikimetrics.database import Session
+from wikimetrics.database import Session, get_mw_session
 from wikimetrics.models import *
 from wikimetrics.metrics import *
 
@@ -8,3 +8,5 @@ d.setUp()
 
 session = Session()
 c = session.query(Cohort).get(1)
+
+mwSession = get_mw_session('enwiki')
