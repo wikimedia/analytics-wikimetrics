@@ -12,6 +12,7 @@ class NamespaceEdits(Metric):
         self.namespaces = namespaces
 
     def __call__(self, user_ids, session):
+        # directly construct dict from query results
         revisions_by_user = dict(session\
             .query(Revision.rev_user, func.count(Revision.rev_id))\
             .join(Page)\

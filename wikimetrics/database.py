@@ -22,10 +22,11 @@ MediawikiBase = declarative_base()
 
 def init_db():
     import wikimetrics.models
+    import wikimetrics.models.mediawiki
     Base.metadata.create_all(engine)
 
 
-def get_engine(project):
+def get_mw_engine(project):
     if project in MEDIAWIKI_ENGINES:
         return MEDIAWIKI_ENGINES[project]
     else:
@@ -38,16 +39,15 @@ def get_mw_session(project):
     if project in MEDIAWIKI_SESSIONMAKERS:
         return MEDIAWIKI_SESSIONMAKERS[project]()
     else:
-        engine = get_engine(project)
+        engine = get_mw_engine(project)
         # TODO: this should probably check before calling create_all
         import wikimetrics.models.mediawiki
         MediawikiBase.metadata.create_all(engine)
         
-        session_factory = sessionmaker(engine)
-        MEDIAWIKI_SESSIONMAKERS[project] = session_factory
-        # TODO: check whether we should return the class or instance
-        session = session_factory()
-        return session
+        project_sessionmaker = sessionmaker(engine)
+        MEDIAWIKI_SESSIONMAKERS[project] = project_sessionmaker
+        project_session = project_sessionmaker()
+        return project_session
 
 def get_project_host_map(usecache=True):
     cache_name = 'project_host_map.json'

@@ -50,6 +50,7 @@ class NamesapceEditsFullTest(QueueDatabaseTest):
         metric = NamespaceEdits()
         job = MetricJob(metric, list(cohort), 'enwiki')
         results = job.run.delay(job).get()
+        print 'results: %s' % results
 
         assert_true(results is not None)
         assert_true(results[2] == 3, 'Evan had not 3 edits, when run on queue')
