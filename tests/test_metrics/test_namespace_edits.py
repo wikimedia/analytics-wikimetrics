@@ -1,5 +1,5 @@
 from nose.tools import *
-from fixtures import DatabaseTest, QueueDatabaseTest
+from tests.fixtures import DatabaseTest, QueueDatabaseTest
 
 from wikimetrics.metrics import NamespaceEdits
 from wikimetrics.models import Cohort, MetricJob
