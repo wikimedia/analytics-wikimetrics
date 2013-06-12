@@ -18,9 +18,8 @@ between tasks which have a partial ordering, but which should
 still be loosely coupled or asynchronous.  For example, if we want
 to compute the average of some metric for a cohort, it makes sense
 to first compute the metric and then take the average.  In this example
-both the task of computing the metric and taking the average would be
-Jobs, and the averaging task would register the task of computing the
-actual metric as its child.
+both steps would Jobs, and the averaging task would register the
+task of computing the actual metric as its child.
 
 Specifically, we distinguish between `JobLeaf` instances, which have no
 subjobs, and `JobNode` isntances, which require their children to be
