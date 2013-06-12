@@ -8,6 +8,9 @@ from wikimetrics.database import init_db
 
 
 def main():
+    """
+    Currently does nothing.
+    """
     pass
 
 

@@ -1,3 +1,8 @@
+"""
+This module deals with database connections, engine creation, and session creation.
+It exposes methods and variables according to SQLAlchemy best practices (hopefully).
+It has the ability to connect to multiple mediawiki databases.
+"""
 import json
 from os.path import exists
 from os import remove
@@ -24,12 +29,24 @@ MediawikiBase = declarative_base()
 
 
 def init_db():
+    """
+    Create tables for the wikimetrics database, as defined by children of the
+    declarative base "Base" in the wikimetrics.models module.
+    """
     import wikimetrics.models
-    import wikimetrics.models.mediawiki
     Base.metadata.create_all(engine)
 
 
 def get_mw_engine(project):
+    """
+    Based on the mediawiki project passed in, create a sqlalchemy engine.
+    
+    Parameters:
+        project : string name of the mediawiki project (for example: enwiki, commonswiki, arwiki)
+    
+    Returns:
+        new or cached sqlalchemy engine connected to the appropriate database.
+    """
     if project in MEDIAWIKI_ENGINES:
         return MEDIAWIKI_ENGINES[project]
     else:
@@ -41,6 +58,16 @@ def get_mw_engine(project):
 
 
 def get_mw_session(project):
+    """
+    Based on the mediawiki project passed in, create a sqlalchemy session.
+    
+    Parameters:
+        project : string name of the mediawiki project (for example: enwiki, commonswiki, arwiki)
+    
+    Returns:
+        new sqlalchemy session connected to the appropriate database.  As an optimization,
+        this method caches sqlalchemy session makers and creates sessions from those.
+    """
     if project in MEDIAWIKI_SESSIONMAKERS:
         return MEDIAWIKI_SESSIONMAKERS[project]()
     else:
@@ -56,6 +83,12 @@ def get_mw_session(project):
 
 
 def get_project_host_map(usecache=True):
+    """
+    Retrieves the list of mediawiki projects from noc.wikimedia.org.
+    
+    Parameters:
+        usecache    : defaults to True and uses a local cache if available
+    """
     cache_name = 'project_host_map.json'
     if not exists(cache_name) or not usecache:
         cluster_url_fmt = 'http://noc.wikimedia.org/conf/s%d.dblist'
