@@ -6,8 +6,10 @@ import pprint
 from wikimetrics.web import app
 from wikimetrics.database import init_db
 
+
 def main():
     pass
+
 
 if __name__ == '__main__':
     init_db()

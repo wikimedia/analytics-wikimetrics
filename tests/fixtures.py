@@ -11,6 +11,8 @@ __all__ = [
 
 from wikimetrics.database import init_db, Session, get_mw_session
 from wikimetrics.models import *
+
+
 class DatabaseTest(unittest.TestCase):
     
     def runTest(self):
@@ -78,47 +80,18 @@ class DatabaseTest(unittest.TestCase):
         
         # create records for enwiki tests
         self.mwSession = get_mw_session('enwiki')
-        self.mwSession.add(MediawikiUser(user_id=1,user_name='Dan'))
-        self.mwSession.add(MediawikiUser(user_id=2,user_name='Evan'))
-        self.mwSession.add(MediawikiUser(user_id=3,user_name='Andrew'))
-        self.mwSession.add(Logging(log_id=1,log_user_text='Reedy'))
-        self.mwSession.add(Page(
-            page_id=1,
-            page_namespace=0,
-            page_title='Main_Page'
-        ))
+        self.mwSession.add(MediawikiUser(user_id=1, user_name='Dan'))
+        self.mwSession.add(MediawikiUser(user_id=2, user_name='Evan'))
+        self.mwSession.add(MediawikiUser(user_id=3, user_name='Andrew'))
+        self.mwSession.add(Logging(log_id=1, log_user_text='Reedy'))
+        self.mwSession.add(Page(page_id=1, page_namespace=0, page_title='Main_Page'))
         # Dan edits
-        self.mwSession.add(Revision(
-            rev_id=1,
-            rev_page=1,
-            rev_user=1,
-            rev_comment='Dan edit 1'
-        ))
-        self.mwSession.add(Revision(
-            rev_id=2,
-            rev_page=1,
-            rev_user=1,
-            rev_comment='Dan edit 2'
-        ))
+        self.mwSession.add(Revision(rev_id=1, rev_page=1, rev_user=1, rev_comment='Dan edit 1'))
+        self.mwSession.add(Revision(rev_id=2, rev_page=1, rev_user=1, rev_comment='Dan edit 2'))
         # Evan edits
-        self.mwSession.add(Revision(
-            rev_id=3,
-            rev_page=1,
-            rev_user=2,
-            rev_comment='Evan edit 1'
-        ))
-        self.mwSession.add(Revision(
-            rev_id=4,
-            rev_page=1,
-            rev_user=2,
-            rev_comment='Evan edit 2'
-        ))
-        self.mwSession.add(Revision(
-            rev_id=5,
-            rev_page=1,
-            rev_user=2,
-            rev_comment='Evan edit 3'
-        ))
+        self.mwSession.add(Revision(rev_id=3, rev_page=1, rev_user=2, rev_comment='Evan edit 1'))
+        self.mwSession.add(Revision(rev_id=4, rev_page=1, rev_user=2, rev_comment='Evan edit 2'))
+        self.mwSession.add(Revision(rev_id=5, rev_page=1, rev_user=2, rev_comment='Evan edit 3'))
         self.mwSession.commit()
     
     def tearDown(self):
@@ -144,18 +117,19 @@ from os import devnull
 from signal import SIGINT
 from queue import celery_is_alive
 from time import sleep
+
+
 class QueueTest(unittest.TestCase):
     
     def setUp(self):
         # TODO configure celery verbosity
         celery_out = open(devnull, "w")
         celery_cmd = ['/usr/bin/python', 'queue.py', 'worker', '-l', 'debug']
-        self.celery_proc = Popen(celery_cmd, stdout = celery_out, stderr = celery_out)
+        self.celery_proc = Popen(celery_cmd, stdout=celery_out, stderr=celery_out)
 
         # wait until celery broker / worker is up
         while(not celery_is_alive()):
             sleep(0.5)
-    
     
     def tearDown(self):
         self.celery_proc.send_signal(SIGINT)
@@ -171,7 +145,10 @@ class QueueDatabaseTest(QueueTest, DatabaseTest):
         QueueTest.tearDown(self)
         DatabaseTest.tearDown(self)
 
+
 from wikimetrics import web
+
+
 class WebTest(unittest.TestCase):
     
     def setUp(self):

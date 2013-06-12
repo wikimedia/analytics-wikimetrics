@@ -11,7 +11,6 @@ class NamespaceEditsDatabaseTest(DatabaseTest):
         #TODO: add data for metric to find
         #mwSession.add(Revision(page_id=1,rev_user=
     
-    
     def test_finds_edits(self):
         cohort = self.session.query(Cohort).filter_by(name='test').one()
         
@@ -21,7 +20,6 @@ class NamespaceEditsDatabaseTest(DatabaseTest):
         assert_true(results is not None)
         assert_true(results[1] == 2, 'Dan had not 2 edits')
         assert_true(results[2] == 3, 'Evan had not 3 edits')
-    
     
     def test_reports_zero_edits(self):
         cohort = self.session.query(Cohort).filter_by(name='test').one()
@@ -46,7 +44,6 @@ class NamesapceEditsFullTest(QueueDatabaseTest):
         assert_true(results is not None)
         assert_true(results[2] == 3, 'Evan had not 3 edits, when run on queue')
     
-    
     def test_namespace_edits_namespace_filter(self):
         cohort = self.session.query(Cohort).filter_by(name='test').one()
         
@@ -57,7 +54,6 @@ class NamesapceEditsFullTest(QueueDatabaseTest):
         
         assert_true(results is not None)
         assert_true(results[2] == 0, 'Evan had not 0 edits in namespaces %d, when run on queue')
-    
     
     def test_namespace_edits_namespace_filter_no_namespace(self):
         cohort = self.session.query(Cohort).filter_by(name='test').one()

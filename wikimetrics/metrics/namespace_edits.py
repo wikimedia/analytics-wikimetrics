@@ -9,6 +9,7 @@ __all__ = [
     'NamespaceEdits',
 ]
 
+
 class NamespaceEdits(Metric):
     
     def __init__(self, namespaces=[0]):
@@ -17,15 +18,16 @@ class NamespaceEdits(Metric):
     def __call__(self, user_ids, session):
         # directly construct dict from query results
         logger.debug('user_ids: %s, namespaces: %s', user_ids, self.namespaces)
-        revisions_by_user = dict(session\
-            .query(Revision.rev_user, func.count(Revision.rev_id))\
-            .join(Page)\
-            .filter(Page.page_namespace.in_(self.namespaces))\
-            .filter(Revision.rev_user.in_(user_ids))\
-            .group_by(Revision.rev_user)\
-            .all())
+        revisions_by_user = dict(
+            session
+            .query(Revision.rev_user, func.count(Revision.rev_id))
+            .join(Page)
+            .filter(Page.page_namespace.in_(self.namespaces))
+            .filter(Revision.rev_user.in_(user_ids))
+            .group_by(Revision.rev_user)
+            .all()
+        )
         #return {user_id : r[1] for r in revisions_by_user}
         # make sure we return zero when user has no revisions
         # we could solve this with temporary tables in the future
-        return {user_id : revisions_by_user.get(user_id, 0) for user_id in user_ids}
-        
+        return {user_id: revisions_by_user.get(user_id, 0) for user_id in user_ids}
