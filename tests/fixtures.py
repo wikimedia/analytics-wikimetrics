@@ -18,8 +18,12 @@ class DatabaseTest(unittest.TestCase):
     def runTest(self):
         pass
     
-    def setUp(self):
+    @classmethod
+    def setUpClass(cls):
         init_db()
+        pass
+    
+    def setUp(self):
         
         # create basic test records for non-mediawiki tests
         self.session = Session()
@@ -112,27 +116,8 @@ class DatabaseTest(unittest.TestCase):
         self.session.commit()
 
 
-from subprocess import Popen
-from os import devnull
-from signal import SIGINT
-from queue import celery_is_alive
-from time import sleep
-
-
 class QueueTest(unittest.TestCase):
-    
-    def setUp(self):
-        # TODO configure celery verbosity
-        celery_out = open(devnull, "w")
-        celery_cmd = ['/usr/bin/python', 'queue.py', 'worker', '-l', 'debug']
-        self.celery_proc = Popen(celery_cmd, stdout=celery_out, stderr=celery_out)
-
-        # wait until celery broker / worker is up
-        while(not celery_is_alive()):
-            sleep(0.5)
-    
-    def tearDown(self):
-        self.celery_proc.send_signal(SIGINT)
+    pass
 
 
 class QueueDatabaseTest(QueueTest, DatabaseTest):

@@ -1,5 +1,5 @@
 from nose.tools import *
-from fixtures import QueueTest
+from tests.fixtures import QueueTest
 from wikimetrics.models import MetricJob
 from wikimetrics.metrics import RandomMetric
 
