@@ -7,7 +7,9 @@ __all__ = [
 ''' The SQL Query to find bytes added for a cohort:
 
  select sum(cast(r.rev_len as signed) - cast(coalesce(previous_r.rev_len, 0) as signed)) as net_sum
-        ,sum(abs(cast(r.rev_len as signed) - cast(coalesce(previous_r.rev_len, 0) as signed))) as abs_sum
+        ,sum(
+            abs(cast(r.rev_len as signed) - cast(coalesce(previous_r.rev_len, 0) as signed))
+        ) as abs_sum
         ,sum(case
             when cast(r.rev_len as signed) - cast(coalesce(previous_r.rev_len, 0) as signed) > 0
             then cast(r.rev_len as signed) - cast(coalesce(previous_r.rev_len, 0) as signed)
@@ -29,6 +31,8 @@ __all__ = [
     and r.rev_user in <<cohorts>>
 
 '''
+
+
 class BytesAdded(Metric):
     def __call__(self, cohort):
-        return {user:None for user in cohort}
+        return {user: None for user in cohort}

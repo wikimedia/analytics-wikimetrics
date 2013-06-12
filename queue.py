@@ -5,6 +5,7 @@ from celery import Celery
 celery = Celery('wikimetrics', include=['wikimetrics'])
 celery.config_from_object('config')
 
+
 def celery_is_alive():
     try:
         from celery.task.control import inspect
@@ -14,6 +15,7 @@ def celery_is_alive():
             return True
     except IOError:
         return False
+
 
 if __name__ == '__main__':
     # TODO: Investigate if these really have to be imported here

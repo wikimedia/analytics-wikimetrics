@@ -8,7 +8,7 @@ class AsyncTaskTest(QueueTest):
     
     def test_submit_task(self):
         metric = RandomMetric()
-        job = MetricJob(metric, [1,2], 'enwiki')
+        job = MetricJob(metric, [1, 2], 'enwiki')
         async_result = job.run.delay(job)
         sync_result = async_result.get()
         assert_true(
