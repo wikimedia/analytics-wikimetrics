@@ -11,11 +11,39 @@ __all__ = [
 
 
 class NamespaceEdits(Metric):
+    """
+    This class implements namespace edits logic.
+    An instance of the class is callable and will compute the number of edits
+    for each user in a passed-in list.
+    
+    This sql query was used as a starting point for the sqlalchemy query:
+    
+     select r.rev_user, r.count(*)
+       from revision r
+                inner join
+            page p      on p.page_id = r.rev_page
+      where r.rev_timestamp between [start] and [end]
+        and r.rev_user in ([parameterized])
+        and p.page_namespace in ([parameterized])
+      group by rev_user
+    """
     
     def __init__(self, namespaces=[0]):
+        """
+        Parameters:
+            namespaces  : list of namespaces to look for edits in
+        """
         self.namespaces = namespaces
 
     def __call__(self, user_ids, session):
+        """
+        Parameters:
+            user_ids    : list of mediawiki user ids to find edit for
+            session     : sqlalchemy session open on a mediawiki database
+        
+        Returns:
+            dictionary from user ids to the number of edit found.
+        """
         # directly construct dict from query results
         logger.debug('user_ids: %s, namespaces: %s', user_ids, self.namespaces)
         revisions_by_user = dict(
@@ -27,7 +55,6 @@ class NamespaceEdits(Metric):
             .group_by(Revision.rev_user)
             .all()
         )
-        #return {user_id : r[1] for r in revisions_by_user}
-        # make sure we return zero when user has no revisions
+        # TODO: make sure we return zero when user has no revisions
         # we could solve this with temporary tables in the future
         return {user_id: revisions_by_user.get(user_id, 0) for user_id in user_ids}

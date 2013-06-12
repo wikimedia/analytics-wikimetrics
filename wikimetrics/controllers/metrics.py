@@ -6,4 +6,7 @@ from wikimetrics import metrics
 
 @app.route('/metrics/')
 def metrics_index():
+    """
+    This flask endpoint returns a list of all metrics
+    """
     return str(inspect.getmembers(metrics, inspect.isclass))
