@@ -12,6 +12,7 @@ def setUp():
     # TODO configure celery verbosity
     celery_out = open(devnull, "w")
     celery_cmd = ['/usr/bin/python', 'queue.py', 'worker', '-l', 'debug']
+    global celery_proc
     celery_proc = Popen(celery_cmd, stdout=celery_out, stderr=celery_out)
 
     # wait until celery broker / worker is up
@@ -20,5 +21,6 @@ def setUp():
 
 
 def tearDown():
+    global celery_proc
     if celery_proc is not None:
         celery_proc.send_signal(SIGINT)
