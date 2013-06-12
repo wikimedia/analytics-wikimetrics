@@ -11,8 +11,20 @@ __all__ = [
 ]
 
 class Cohort(Base):
+    """
+    This class represents a list of users along with the project
+    on which their username exists.  Using sqlalchemy.declarative
+    It maps to the cohort table  which keeps metadata about the cohort,
+    however it is also home to a variety of conveneince functions
+    for interacting with the actual list of users in that cohort.
+      
+    Importantly, there is no guarantee that a cohort consist of users
+    from a single project.  To get the set of all users associated with
+    a single project within a cohort use Cohort.group_by_project.
+    """
+    
     __tablename__ = 'cohort'
-
+    
     id = Column(Integer, primary_key=True)
     name = Column(String(50))
     description = Column(String(254))
@@ -25,9 +37,10 @@ class Cohort(Base):
     
     def __repr__(self):
         return '<Cohort("{0}")>'.format(self.id)
-
-
+    
+    
     def __iter__(self):
+        """ returns list of user_ids """
         session = Session()
         tuples_with_ids = session\
             .query(WikiUser.mediawiki_userid)\
@@ -35,9 +48,23 @@ class Cohort(Base):
             .filter(CohortWikiUser.cohort_id == self.id)\
             .all()
         return (t[0] for t in tuples_with_ids)
-
-
+    
+    
     def group_by_project(self):
+        """
+        mimics the interface of itertools.groupby, with the
+        exception that the grouped items are simply user_ids
+        rather than complete user records
+        
+        Returns:
+            iterable of tuples of the form:
+                (project, <iterable_of_usernames>)
+        
+        this is useful for turning a project-heterogenous cohort
+        into a set of project-homogenous cohorts, which can be
+        analyzed using a single database connection
+        """
+        
         session = Session()
         user_id_projects = session\
             .query(WikiUser.mediawiki_userid, WikiUser.project)\
