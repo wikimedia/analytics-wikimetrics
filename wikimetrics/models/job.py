@@ -35,7 +35,11 @@ class JobStatus(object):
 
 class Job(Base):
     """
-    Base class for all jobs
+    Base class for all jobs.  Uses sqlalchemy.declarative to
+    map instance to `job` table.  This means that the database can be used
+    as a central server for persistent job status info.  Jobs are also
+    intended to be re-runnable from a serialized representation, using
+    the Job.from_db alternate constructor.
     """
     __tablename__ = 'job'
     
@@ -51,11 +55,25 @@ class Job(Base):
     #def run(self):
         #pass
     
+    @classmethod
+    def from_db(cls, job_id):
+        """
+        All `Job` subclasses should implement this to ensure that they
+        can be resumed from the database
+        """
+        pass
+
     def __repr__(self):
         return '<Job("{0}")>'.format(self.id)
     
     def get_classpath(self):
         return str(type(self))
+    
+    def run(self):
+        """
+        each job subclass should implement this method to do the
+        meat of the task """
+        pass
 
 class JobNode(Job):
     

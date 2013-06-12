@@ -6,6 +6,15 @@ __all__ = [
 ]
 
 class WikiUser(Base):
+    """
+    This class represents mediawiki users which compose
+    cohorts.  A user is defined as a username or user_id
+    along with the project name on which that user registered.
+    This class is mapped to the wiki_user table using
+    sqlalchemy.declarative
+    """
+    
+    
     __tablename__ = 'wiki_user'
     
     id = Column(Integer, primary_key=True)
