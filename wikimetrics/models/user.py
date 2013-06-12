@@ -13,6 +13,12 @@ class UserRole(object):
     GUEST = 'GUEST'
 
 class User(Base):
+    """
+    This class represent website users, who can have permissions
+    and cohort ownership. It is also mapped to the `user` table
+    using sqlalchemy.declarative
+    """
+    
     __tablename__ = 'user'
 
     id = Column(Integer, primary_key=True)

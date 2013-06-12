@@ -8,6 +8,14 @@ __all__ = [
 ]
 
 class MultiProjectMetricJob(job.JobNode):
+    """
+    A job responsbile for running a single metric on a potentially
+    project-heterogenous cohort. This just abstracts away the task
+    of grouping the cohort by project and calling a MetricJob on
+    each project-homogenous list of user_ids.
+    """
+    
+    
     def __init__(self, cohort, metric):
         super(MultiProjectMetricJob, self).__init__()
         self.cohort = cohort
