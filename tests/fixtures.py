@@ -32,48 +32,19 @@ class DatabaseTest(unittest.TestCase):
         user = User(username='Dan')
         
         # create a test cohort
-        dan = WikiUser(
-            mediawiki_username='Dan',
-            mediawiki_userid=1,
-            project='enwiki',
-        )
-        evan = WikiUser(
-            mediawiki_username='Evan',
-            mediawiki_userid=2,
-            project='enwiki',
-        )
-        andrew = WikiUser(
-            mediawiki_username='Andrew',
-            mediawiki_userid=3,
-            project='enwiki',
-        )
-        diederik = WikiUser(
-            mediawiki_username='Diederik',
-            mediawiki_userid=4,
-            project='enwiki',
-        )
-        test = Cohort(
-            name='test',
-        )
+        dan = WikiUser(mediawiki_username='Dan', mediawiki_userid=1, project='enwiki')
+        evan = WikiUser(mediawiki_username='Evan', mediawiki_userid=2, project='enwiki')
+        andrew = WikiUser(mediawiki_username='Andrew', mediawiki_userid=3, project='enwiki')
+        diederik = WikiUser(mediawiki_username='Diederik', mediawiki_userid=4, project='enwiki')
+        
+        test = Cohort(name='test')
         self.session.add_all([job, user, dan, evan, andrew, diederik, test])
         self.session.commit()
         
-        dan_in_test = CohortWikiUser(
-            wiki_user_id=dan.id,
-            cohort_id=test.id
-        )
-        evan_in_test = CohortWikiUser(
-            wiki_user_id=evan.id,
-            cohort_id=test.id
-        )
-        andrew_in_test = CohortWikiUser(
-            wiki_user_id=andrew.id,
-            cohort_id=test.id
-        )
-        diederik_in_test = CohortWikiUser(
-            wiki_user_id=diederik.id,
-            cohort_id=test.id
-        )
+        dan_in_test = CohortWikiUser(wiki_user_id=dan.id, cohort_id=test.id)
+        evan_in_test = CohortWikiUser(wiki_user_id=evan.id, cohort_id=test.id)
+        andrew_in_test = CohortWikiUser(wiki_user_id=andrew.id, cohort_id=test.id)
+        diederik_in_test = CohortWikiUser(wiki_user_id=diederik.id, cohort_id=test.id)
         self.session.add_all([
             dan_in_test,
             evan_in_test,
