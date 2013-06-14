@@ -1,5 +1,6 @@
 from sqlalchemy import Column, Integer, String
-from wikimetrics.database import Base
+from flask.ext.login import UserMixin
+from wikimetrics.database import Base, get_session
 
 __all__ = [
     'User',
@@ -7,12 +8,15 @@ __all__ = [
 ]
 
 class UserRole(object):
+    """
+    This is an enum class used to list the roles a User can have.
+    """
     ADMIN = 'ADMIN'
     USER_WITH_NDA = 'USER_WITH_NDA'
     USER_WITHOUT_NDA = 'USER_WITHOUT_NDA'
     GUEST = 'GUEST'
 
-class User(Base):
+class User(Base, UserMixin):
     """
     This class represents website users, who can have permissions
     and cohort ownership. It is also mapped to the `user` table
@@ -27,21 +31,17 @@ class User(Base):
     email = Column(String(254))
     role = Column(String(50), default=UserRole.GUEST)
     
-    # Flask-Login properties
-    authenticated = False
-    active = False
-
     def __repr__(self):
         return '<User("{0}")>'.format(self.id)
     
-    def is_authenticated(self):
-        return self.authenticated
-    
-    def is_active(self):
-        return self.active
-    
-    def is_anonymouse(self):
-        return not self.authenticated
+    @staticmethod
+    def get(session, user_id):
+        user = session.query(User).get(user_id)
+        return user
     
     def get_id(self):
+        """
+        Flask-Login needs a method by this name
+        to return a unicode id.
+        """
         return unicode(self.id)

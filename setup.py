@@ -19,7 +19,6 @@ setup(
         'coverage == 3.6',
         'celery == 3.0',
         'celery-with-redis',
-        'decorator == 3.4',
         'rauth == 0.5.4',
         'requests',
     ],
