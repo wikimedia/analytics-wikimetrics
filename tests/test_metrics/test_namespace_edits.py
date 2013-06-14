@@ -8,8 +8,6 @@ from wikimetrics.models import Cohort, MetricJob
 class NamespaceEditsDatabaseTest(DatabaseTest):
     def setUp(self):
         super(NamespaceEditsDatabaseTest, self).setUp()
-        #TODO: add data for metric to find
-        #mwSession.add(Revision(page_id=1,rev_user=
     
     def test_finds_edits(self):
         cohort = self.session.query(Cohort).filter_by(name='test').one()
