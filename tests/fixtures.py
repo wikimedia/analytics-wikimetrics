@@ -9,7 +9,7 @@ __all__ = [
 ]
 
 
-from wikimetrics.database import init_db, Session, get_mw_session
+from wikimetrics.database import init_db, get_session, get_mw_session
 from wikimetrics.models import *
 
 
@@ -26,7 +26,7 @@ class DatabaseTest(unittest.TestCase):
     def setUp(self):
         
         # create basic test records for non-mediawiki tests
-        self.session = Session()
+        self.session = get_session()
         
         job = Job()
         user = User(username='Dan')
@@ -78,7 +78,7 @@ class DatabaseTest(unittest.TestCase):
         self.mwSession.query(Revision).delete()
         self.mwSession.commit()
         
-        self.session = Session()
+        self.session = get_session()
         self.session.query(CohortWikiUser).delete()
         self.session.query(WikiUser).delete()
         self.session.query(Cohort).delete()
