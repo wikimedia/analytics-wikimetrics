@@ -15,8 +15,8 @@ from sqlalchemy.ext.declarative import declarative_base
 __all__ = [
     'Base',
     'MediawikiBase',
-    'Session',
     'init_db',
+    'get_session',
     'get_mw_session',
 ]
 
@@ -35,6 +35,10 @@ def init_db():
     """
     import wikimetrics.models
     Base.metadata.create_all(engine)
+
+
+def get_session():
+    return Session()
 
 
 def get_mw_engine(project):
