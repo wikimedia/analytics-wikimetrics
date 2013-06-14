@@ -4,3 +4,20 @@ body { padding-top: 60px; padding-bottom: 60px; }
 .nav li:last-child a { color: #0088cc; display: inline-block; }
 label.error { color: #af3333; }
 div.flash { margin: 4px 0 20px 0; }
+
+
+a.openid-logo {
+    display: inline-block;
+    background-color: #fff;
+    background-image: url(//cdn.sstatic.net/Img/openid/openid-logos.png?v=8);
+}
+a.openid-logo.google {
+    background-posiiton: -1px -1px;
+    width: 103px;
+    height: 63px;
+}
+a.openid-logo.twitter {
+    background-image: url(//dev.twitter.com/sites/default/files/images_documentation/sign-in-with-twitter-gray.png);
+    width: 158px;
+    height: 28px;
+}

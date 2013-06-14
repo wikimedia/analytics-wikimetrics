@@ -1,0 +1,21 @@
+{% extends "layout.html" %}
+{% block body %}
+<h2>Authenticate</h2>
+<p>To use Wiki Metrics, you must authenticate with one of the following services:</p>
+
+
+<ul class="unstyled">
+    <li>
+        <a  title="log in with Google"
+            href="{{ url_for('login_google') }}"
+            class="openid-logo google">
+        </a>
+    </li>
+    <li>
+        <a  title="log in with Twitter"
+            href="{{ url_for('login_twitter') }}"
+            class="openid-logo twitter">
+        </a>
+    </li>
+</ul>
+{% endblock %}

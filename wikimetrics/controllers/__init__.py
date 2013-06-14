@@ -9,6 +9,7 @@ both types of routes.
 At a future time, / could serve the index and routing could move client-side.
 """
 from home import *
+from authentication import *
 from metrics import *
 from cohorts import *
 from jobs import *
