@@ -17,9 +17,9 @@ We use a tree-based job model to represent the relationships
 between tasks which have a partial ordering, but which should
 still be loosely coupled or asynchronous.  For example, if we want
 to compute the average of some metric for a cohort, it makes sense
-to first compute the metric and then take the average.  In this example
-both steps would Jobs, and the averaging task would register the
-task of computing the actual metric as its child.
+to first compute the metric for each user and then take the average.
+In this example both steps would Jobs, and the averaging task would
+register the task of computing the actual metric as its child.
 
 Specifically, we distinguish between `JobLeaf` instances, which have no
 subjobs, and `JobNode` isntances, which require their children to be
@@ -60,6 +60,17 @@ class Job(Base):
         """
         All `Job` subclasses should implement this to ensure that they
         can be resumed from the database
+        
+        Parameters:
+            cls     : from_db is a class_method so it requires a class
+                      istance as it's first arg, so that it can be called
+                      with JobSubclass.form_db(job_id)
+            job_id  : primary key in the job table which can be used to
+                      locate the serialized information with which a new job
+                      can be created
+        
+        Returns:
+            a new instance of the Job() class which can be re-run
         """
         pass
 
@@ -72,7 +83,7 @@ class Job(Base):
     def run(self):
         """
         each job subclass should implement this method to do the
-        meat of the task """
+        meat of the task.  The return type can be anything"""
         pass
 
 class JobNode(Job):

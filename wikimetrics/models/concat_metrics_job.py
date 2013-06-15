@@ -13,6 +13,7 @@ class ConcatMetricsJob(job.JobNode):
     joins together the results from each metric into a suitable
     2-D representation.
     """
+
     
     def __init__(self, cohort, metrics):
         super(ConcatMetricsJob, self).__init__()
@@ -22,16 +23,6 @@ class ConcatMetricsJob(job.JobNode):
         self.children = [MetricJob(cohort, metric) for metric in metrics]
         # TODO self.save()
     
-    ## NOTE: this will be used by celery if we implement it, so we must take care
-    #def __reduce__(self):
-        ## TODO: pickle self.cohort and self.metrics
-        #pass
-    
-    
-    @classmethod
-    def from_db(job_id):
-        # TODO: get job, create cohort and metrics
-        return ConcatMetricsJob(cohort, metrics)
     
     @celery.task
     def finish(query_results):
