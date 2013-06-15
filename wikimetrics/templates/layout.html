@@ -28,22 +28,24 @@
                         <li><a href="#">About</a></li>
                         <li><a href="#">Contact</a></li>
                         <li class="pull-right">
-                            {# if current_user.is_authenticated() %}
-                            <em>Welcome {{ current_user.name }}</em> <a href="/logout">(logout)</a>
+                            {% if current_user.is_authenticated() %}
+                            <em>Welcome {{ current_user.username or current_user.email }}</em> <a href="/logout">(logout)</a>
                             {% else %}
                             <a href="/login">(login)</a>
-                            {% endif #}
+                            {% endif %}
                         </li>
                     </ul>
                 </div>
             </div>
         </div>
     </div>
-    <div class="container">
-        {# for message in get_flashed_messages() %}
-        <div class=flash>{{ message }}</div>
-        {% endfor #}
+    <ul class="unstyled">
+        {% for category, message in get_flashed_messages(with_categories=True) %}
+        <li class="flash {{category}}">{{ message }}</li>
+        {% endfor %}
+    </ul>
+    <section class="container">
         {% block body %}{% endblock %}
-    </div>
+    </section>
 </body>
 </html>

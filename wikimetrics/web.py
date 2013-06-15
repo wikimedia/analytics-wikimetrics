@@ -1,5 +1,5 @@
 from flask import Flask, redirect, request, session, url_for
-from flask.ext.login import LoginManager
+from flask.ext.login import LoginManager, current_user
 
 app = Flask('wikimetrics')
 app.config.from_object('config')
@@ -27,11 +27,10 @@ def default_to_private():
     Make authentication required by default,
     unless the endpoint requested has "is_public is True"
     """
-    login_valid = 'user' in session
+    if current_user.is_authenticated():
+        return
 
     if (request.endpoint and
-        not login_valid and
-        # TODO: put all login and static stuff on a separate "public" Blueprint
         not 'static' in request.endpoint and
         not getattr(app.view_functions[request.endpoint], 'is_public', False)
     ):
