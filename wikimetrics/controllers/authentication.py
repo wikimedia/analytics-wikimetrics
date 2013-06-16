@@ -66,7 +66,8 @@ def logout():
     Logs out the user.
     """
     db = get_session()
-    current_user.logout(db)
+    if type(current_user) is User:
+        current_user.logout(db)
     logout_user()
     return redirect(url_for('home_index'))
 

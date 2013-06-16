@@ -103,18 +103,33 @@ class QueueDatabaseTest(QueueTest, DatabaseTest):
 
 
 from wikimetrics import web
+from wikimetrics.models import User
+#from wikimetrics.database import get_session
+from flask.ext.login import login_user, logout_user, current_user
 
 
-class WebTest(unittest.TestCase):
+@web.app.route('/test_login')
+def test_login():
+    db = get_session()
+    user = User.get(db, 9)
+    if not user:
+        user = User(id=9, email='test@test.com')
     
-    def setUp(self):
-        self.app = web.app.test_client()
+    user.login(db)
+    login_user(user)
+    user.detach_from(db)
+
+
+class WebTest(DatabaseTest):
     
-    def login(self, username, password):
-        return self.app.post('/login', data=dict(
-            username=username,
-            password=password
-        ), follow_redirects=True)
+    @classmethod
+    def setUpClass(cls):
+        """
+        Creates a test flask environment.  Logs in a test user so tests on private urls work.
+        """
+        cls.app = web.app.test_client()
+        cls.app.get('/test_login')
     
-    def logout(self):
-        return self.app.get('/logout', follow_redirects=True)
+    @classmethod
+    def tearDownClass(cls):
+        cls.app.get('/logout')
