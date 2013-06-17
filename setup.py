@@ -23,8 +23,8 @@ setup(
         'celery-with-redis',
     ],
     entry_points={
-        'console_script': [
-            'wikimetrix = wikimetrics.run:main'
-            ]
-        }
+        'console_scripts': [
+            'wikimetrics = wikimetrics.run:main'
+        ]
+    }
 )
