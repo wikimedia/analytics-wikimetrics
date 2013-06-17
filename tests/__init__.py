@@ -16,7 +16,9 @@ def setUp():
     celery_proc = Popen(celery_cmd, stdout=celery_out, stderr=celery_out)
 
     # wait until celery broker / worker is up
-    while(not celery_is_alive()):
+    tries = 0
+    while(not celery_is_alive() and tries < 20):
+        tries += 1
         sleep(0.5)
 
 
