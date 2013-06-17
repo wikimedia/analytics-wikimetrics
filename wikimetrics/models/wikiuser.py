@@ -1,11 +1,11 @@
 from sqlalchemy import Column, Integer, String
-from wikimetrics.database import Base
+from wikimetrics.database import db
 
 __all__ = [
     'WikiUser',
 ]
 
-class WikiUser(Base):
+class WikiUser(db.WikimetricsBase):
     """
     This class represents mediawiki users which compose
     cohorts.  A user is defined as a username or user_id

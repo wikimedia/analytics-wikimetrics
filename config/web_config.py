@@ -1,15 +1,9 @@
-from config_secret import *
-
-BROKER_URL = 'redis://localhost:6379/0'
-CELERY_RESULT_BACKEND = 'redis://localhost:6379/0'
-CELERY_TASK_RESULT_EXPIRES = 3600
-CELERY_DISABLE_RATE_LIMITS = True
-
+# Flask Config
+SECRET_KEY = 'sw3lo(*A98ijwl3i3n&&JEK MSL IESKU* WSkl#iIREJSslsijsle ssie'
 DEBUG = True
 
-SQL_ECHO = False
-
 # Google OAuth2 config (except GOOGLE_CLIENT_SECRET which must be set in config_secret.py)
+GOOGLE_CLIENT_SECRET                = 'zKv0Qg7Zr6L3Q3CaWnIuVX4B'
 GOOGLE_BASE_URL                     = 'https://www.google.com/accounts/'
 GOOGLE_AUTH_URI                     = 'https://accounts.google.com/o/oauth2/auth'
 GOOGLE_TOKEN_URI                    = 'https://accounts.google.com/o/oauth2/token'

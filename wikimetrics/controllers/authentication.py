@@ -13,7 +13,7 @@ from sqlalchemy.orm.exc import NoResultFound, MultipleResultsFound
 from flask.ext.login import login_user, logout_user, current_user
 from flask.ext.oauth import OAuth
 from wikimetrics.web import app, login_manager, is_public
-from wikimetrics.database import get_session
+from wikimetrics.database import db
 from wikimetrics.models import User, UserRole
 
 
@@ -43,8 +43,8 @@ def load_user(user_id):
     """
     Callback required by Flask-Login.  Gets the User object from the database.
     """
-    db = get_session()
-    user = User.get(db, user_id)
+    db_session = db.get_session()
+    user = User.get(db_session, user_id)
     return user
 
 
@@ -65,9 +65,9 @@ def logout():
     """
     Logs out the user.
     """
-    db = get_session()
+    db_session = db.get_session()
     if type(current_user) is User:
-        current_user.logout(db)
+        current_user.logout(db_session)
     logout_user()
     return redirect(url_for('home_index'))
 
@@ -104,10 +104,10 @@ def auth_google(resp):
             email = userinfo['email']
             id = userinfo['id']
             
-            db = get_session()
+            db_session = db.get_session()
             user = None
             try:
-                user = db.query(User).filter_by(google_id = id).one()
+                user = db_session.query(User).filter_by(google_id = id).one()
             
             except NoResultFound:
                 user = User(
@@ -115,15 +115,15 @@ def auth_google(resp):
                     google_id=id,
                     role=UserRole.GUEST,
                 )
-                db.add(user)
-                db.commit()
+                db_session.add(user)
+                db_session.commit()
             
             except MultipleResultsFound:
                 return 'Multiple users found with your id!!! Contact Administrator'
             
-            user.login(db)
+            user.login(db_session)
             if login_user(user):
-                user.detach_from(db)
+                user.detach_from(db_session)
                 redirect_to = session.get('next') or url_for('home_index')
                 return redirect(redirect_to)
     

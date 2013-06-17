@@ -1,11 +1,11 @@
 from sqlalchemy import Column, Integer, ForeignKey
-from wikimetrics.database import Base
+from wikimetrics.database import db
 
 __all__ = [
     'CohortWikiUser',
 ]
 
-class CohortWikiUser(Base):
+class CohortWikiUser(db.WikimetricsBase):
     """
     Represents the join table between `cohort` and `wiki_user`
     tables.  Uses sqlalchemy.declarative to handle db mapping

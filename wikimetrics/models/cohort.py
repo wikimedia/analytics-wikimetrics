@@ -1,7 +1,7 @@
 import itertools
 from operator import itemgetter
 from sqlalchemy import Column, Integer, Boolean, DateTime, String
-from wikimetrics.database import Base, get_session
+from wikimetrics.database import db
 # TODO: there has to be a more elegant way of importing this
 from .wikiuser import WikiUser
 from .cohort_wikiuser import CohortWikiUser
@@ -10,7 +10,7 @@ __all__ = [
     'Cohort',
 ]
 
-class Cohort(Base):
+class Cohort(db.WikimetricsBase):
     """
     This class represents a list of users along with the project
     on which their username exists.  Using sqlalchemy.declarative
@@ -41,7 +41,7 @@ class Cohort(Base):
     
     def __iter__(self):
         """ returns list of user_ids """
-        session = get_session()
+        session = db.get_session()
         tuples_with_ids = session\
             .query(WikiUser.mediawiki_userid)\
             .join(CohortWikiUser)\
@@ -65,7 +65,7 @@ class Cohort(Base):
         analyzed using a single database connection
         """
         
-        session = get_session()
+        session = db.get_session()
         user_id_projects = session\
             .query(WikiUser.mediawiki_userid, WikiUser.project)\
             .join(CohortWikiUser)\

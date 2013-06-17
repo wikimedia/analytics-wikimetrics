@@ -2,7 +2,7 @@ import collections
 from sqlalchemy import Column, Integer, String, ForeignKey
 from celery import group, chord
 
-from wikimetrics.database import Base
+from wikimetrics.database import db
 from queue import celery
 
 __all__ = [
@@ -33,7 +33,7 @@ class JobStatus(object):
     STARTED = 'STARTED'
     FINISHED = 'FINISHED'
 
-class Job(Base):
+class Job(db.WikimetricsBase):
     """
     Base class for all jobs.  Uses sqlalchemy.declarative to
     map instance to `job` table.  This means that the database can be used

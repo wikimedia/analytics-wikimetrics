@@ -9,7 +9,7 @@ __all__ = [
 ]
 
 
-from wikimetrics.database import init_db, get_session, get_mw_session
+from wikimetrics.database import db
 from wikimetrics.models import *
 
 
@@ -18,15 +18,10 @@ class DatabaseTest(unittest.TestCase):
     def runTest(self):
         pass
     
-    @classmethod
-    def setUpClass(cls):
-        init_db()
-        pass
-    
     def setUp(self):
         
         # create basic test records for non-mediawiki tests
-        self.session = get_session()
+        self.session = db.get_session()
         
         job = Job()
         user = User(username='Dan')
@@ -54,7 +49,7 @@ class DatabaseTest(unittest.TestCase):
         self.session.commit()
         
         # create records for enwiki tests
-        self.mwSession = get_mw_session('enwiki')
+        self.mwSession = db.get_mw_session('enwiki')
         self.mwSession.add(MediawikiUser(user_id=1, user_name='Dan'))
         self.mwSession.add(MediawikiUser(user_id=2, user_name='Evan'))
         self.mwSession.add(MediawikiUser(user_id=3, user_name='Andrew'))
@@ -78,7 +73,7 @@ class DatabaseTest(unittest.TestCase):
         self.mwSession.query(Revision).delete()
         self.mwSession.commit()
         
-        self.session = get_session()
+        self.session = db.get_session()
         self.session.query(CohortWikiUser).delete()
         self.session.query(WikiUser).delete()
         self.session.query(Cohort).delete()
@@ -104,20 +99,20 @@ class QueueDatabaseTest(QueueTest, DatabaseTest):
 
 from wikimetrics import web
 from wikimetrics.models import User
-#from wikimetrics.database import get_session
+#from wikimetrics.database import db
 from flask.ext.login import login_user, logout_user, current_user
 
 
 @web.app.route('/test_login')
 def test_login():
-    db = get_session()
-    user = User.get(db, 9)
+    db_session = db.get_session()
+    user = User.get(db_session, 9)
     if not user:
         user = User(id=9, email='test@test.com')
     
-    user.login(db)
+    user.login(db_session)
     login_user(user)
-    user.detach_from(db)
+    user.detach_from(db_session)
 
 
 class WebTest(DatabaseTest):

@@ -1,5 +1,5 @@
 from sqlalchemy import Column, Integer, String, Boolean
-from wikimetrics.database import Base, get_session
+from wikimetrics.database import db
 
 __all__ = [
     'User',
@@ -12,7 +12,7 @@ class UserRole(object):
     USER_WITHOUT_NDA = 'USER_WITHOUT_NDA'
     GUEST = 'GUEST'
 
-class User(Base):
+class User(db.WikimetricsBase):
     """
     This class represents website users, who can have permissions
     and cohort ownership. It is also mapped to the `user` table
