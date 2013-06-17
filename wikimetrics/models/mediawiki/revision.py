@@ -1,11 +1,11 @@
 from sqlalchemy import Column, Integer, Boolean, DateTime, String, ForeignKey
-from wikimetrics.database import MediawikiBase
+from wikimetrics.database import db
 
 __all__ = [
     'Revision',
 ]
 
-class Revision(MediawikiBase):
+class Revision(db.MediawikiBase):
     __tablename__ = 'revision'
     
     rev_id = Column(Integer, primary_key=True)

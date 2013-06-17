@@ -15,6 +15,8 @@ def celery_is_alive():
             return True
     except IOError:
         return False
+    
+    return False
 
 
 if __name__ == '__main__':

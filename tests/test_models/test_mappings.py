@@ -1,5 +1,4 @@
 from nose.tools import *
-from wikimetrics.database import init_db, Session, get_mw_session
 from wikimetrics.models import *
 from tests.fixtures import *
 

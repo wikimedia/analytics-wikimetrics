@@ -1,11 +1,11 @@
 from sqlalchemy import Column, Integer, Boolean, DateTime, String
-from wikimetrics.database import MediawikiBase
+from wikimetrics.database import db
 
 __all__ = [
     'MediawikiUser',
 ]
 
-class MediawikiUser(MediawikiBase):
+class MediawikiUser(db.MediawikiBase):
     __tablename__ = 'user'
     
     user_id = Column(Integer, primary_key=True)

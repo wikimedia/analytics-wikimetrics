@@ -1,6 +1,6 @@
 import job
 from queue import celery
-from wikimetrics.database import get_mw_session
+from wikimetrics.database import db
 
 __all__ = [
     'MetricJob',
@@ -21,5 +21,5 @@ class MetricJob(job.JobLeaf):
     
     @celery.task
     def run(self):
-        session = get_mw_session(self.project)
+        session = db.get_mw_session(self.project)
         return self.metric(self.user_ids, session)
