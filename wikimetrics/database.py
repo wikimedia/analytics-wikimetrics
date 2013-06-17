@@ -20,6 +20,8 @@ __all__ = [
     'get_mw_session',
 ]
 
+db = Database()
+
 #engine_url = 'sqlite:///:memory:'
 engine_url = 'sqlite:///test.db'
 engine = create_engine(engine_url, echo=SQL_ECHO)
