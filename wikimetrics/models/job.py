@@ -2,8 +2,7 @@ import collections
 from sqlalchemy import Column, Integer, String, ForeignKey
 from celery import group, chord
 
-from wikimetrics.configurables import db
-from queue import celery
+from wikimetrics.configurables import db, queue
 
 __all__ = [
     'Job',
@@ -51,7 +50,7 @@ class Job(db.WikimetricsBase):
     
     
     # FIXME: calling ConcatMetricsJob().run uses this run instead of the JobNode one
-    #@celery.task
+    #@queue.task
     #def run(self):
         #pass
     
@@ -91,12 +90,12 @@ class JobNode(Job):
     def child_tasks(self):
         return group(child.run.s(child) for child in self.children)
     
-    @celery.task
+    @queue.task
     def run(self):
         children_then_finish = chord(self.child_tasks())(self.finish.s())
         children_then_finish.get()
     
-    @celery.task
+    @queue.task
     def finish(self):
         pass
 

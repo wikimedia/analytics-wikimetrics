@@ -1,2 +1,4 @@
 #!/usr/bin/python
-from configurables import *
+
+def main():
+    pass
