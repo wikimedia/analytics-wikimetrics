@@ -14,7 +14,6 @@ from sqlalchemy.ext.declarative import declarative_base
 from flask.config import Config
 
 __all__ = [
-    'db',
 ]
 
 
@@ -143,5 +142,3 @@ class Database(object):
         return project_host_map
 
 
-# Instantiate this so it's a singleton
-db = Database()

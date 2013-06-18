@@ -1,5 +1,5 @@
+from wikimetrics.configurables import queue
 import job
-from queue import celery
 import pprint
 from metric_job import MetricJob
 
@@ -19,12 +19,12 @@ class ConcatMetricsJob(job.JobNode):
         super(ConcatMetricsJob, self).__init__()
         self.cohort = cohort
         self.metrics = metrics
-        # TODO enforce children always have a run @celery.task
+        # TODO enforce children always have a run @queue.task
         self.children = [MetricJob(cohort, metric) for metric in metrics]
         # TODO self.save()
     
     
-    @celery.task
+    @queue.task
     def finish(query_results):
         # we're done - record result
         for result in query_results:

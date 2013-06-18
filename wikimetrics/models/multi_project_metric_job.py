@@ -1,7 +1,7 @@
 from wikimetrics.database import db
+from wikimetrics.configurables import queue
 import job
 from metric_job import MetricJob
-from queue import celery
 
 __all__ = [
     'MultiProjectMetricJob',
@@ -28,6 +28,6 @@ class MultiProjectMetricJob(job.JobNode):
             self.children.append(MetricJob(metric, user_ids, session))
 
 
-    @celery.task
+    @queue.task
     def finish(query_results):
         return reduce(dict.update, query_results, {})

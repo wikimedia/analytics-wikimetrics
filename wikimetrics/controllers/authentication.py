@@ -1,6 +1,5 @@
 import json
 import requests
-from config import *
 from flask import (
     render_template,
     redirect,
@@ -10,32 +9,37 @@ from flask import (
     flash,
 )
 from sqlalchemy.orm.exc import NoResultFound, MultipleResultsFound
-from flask.ext.login import login_user, logout_user, current_user
+from flask.ext.login import LoginManager, login_user, logout_user, current_user
 from flask.ext.oauth import OAuth
-from wikimetrics.web import app, login_manager, is_public
+from wikimetrics.web import app
 from wikimetrics.database import db
 from wikimetrics.models import User, UserRole
 
 
-oauth = OAuth()
-google = oauth.remote_app(
-    'google',
-    base_url=GOOGLE_BASE_URL,
-    authorize_url=GOOGLE_AUTH_URI,
-    request_token_url=None,
-    request_token_params={
-        'scope': GOOGLE_AUTH_SCOPE,
-        'response_type': 'code',
-    },
-    access_token_url=GOOGLE_TOKEN_URI,
-    access_token_method='POST',
-    access_token_params={
-        'grant_type':
-        'authorization_code'
-    },
-    consumer_key=GOOGLE_CLIENT_ID,
-    consumer_secret=GOOGLE_CLIENT_SECRET,
-)
+def is_public(to_decorate):
+    """
+    Marks a Flask endpoint as public (not requiring authentication).
+    """
+    def decorator(f):
+        f.is_public = True
+        return f
+    return decorator(to_decorate)
+
+
+@app.before_request
+def default_to_private():
+    """
+    Make authentication required by default,
+    unless the endpoint requested has "is_public is True"
+    """
+    if current_user.is_authenticated():
+        return
+
+    if (request.endpoint and
+        not 'static' in request.endpoint and
+        not getattr(app.view_functions[request.endpoint], 'is_public', False)
+    ):
+        return redirect(url_for('login'))
 
 
 @login_manager.user_loader
@@ -96,7 +100,7 @@ def auth_google(resp):
     if access_token:
         # TODO: is it better to store this in the database?
         session['access_token'] = access_token, ''
-        r = requests.get(GOOGLE_USERINFO_URI, headers={
+        r = requests.get(app.config['GOOGLE_USERINFO_URI'], headers={
             'Authorization': 'OAuth ' + access_token
         })
         if r.ok:

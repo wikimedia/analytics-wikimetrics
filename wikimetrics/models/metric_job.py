@@ -1,5 +1,5 @@
 import job
-from queue import celery
+from wikimetrics.configurables import queue
 from wikimetrics.database import db
 
 __all__ = [
@@ -19,7 +19,7 @@ class MetricJob(job.JobLeaf):
         self.user_ids = user_ids
         self.project = project
     
-    @celery.task
+    @queue.task
     def run(self):
         session = db.get_mw_session(self.project)
         return self.metric(self.user_ids, session)
