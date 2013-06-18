@@ -1,5 +1,4 @@
-from wikimetrics.database import db
-from wikimetrics.configurables import queue
+from wikimetrics.configurables import queue, db
 import job
 from metric_job import MetricJob
 

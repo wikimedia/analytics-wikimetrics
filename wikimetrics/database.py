@@ -20,9 +20,8 @@ __all__ = [
 class Database(object):
     """
     Basically a collection of all database related objects and methods.
-    Instantiated at the bottom of this file and meant to be a singleton called `db`.
-    You should not instantiate Database yourself, just do
-    `from wikimetrics.database import db`
+    Instantiated after configuration is done, in the wikimetrics.configurables module.
+    You should not instantiate this yourself, just do `from wikimetrics.configurables import db`
     """
     
     

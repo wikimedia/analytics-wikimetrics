@@ -1,7 +1,7 @@
 import itertools
 from operator import itemgetter
 from sqlalchemy import Column, Integer, Boolean, DateTime, String
-from wikimetrics.database import db
+from wikimetrics.configurables import db
 # TODO: there has to be a more elegant way of importing this
 from .wikiuser import WikiUser
 from .cohort_wikiuser import CohortWikiUser

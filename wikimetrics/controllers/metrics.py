@@ -1,6 +1,6 @@
 import inspect
 from flask import render_template, redirect, request
-from wikimetrics.web import app
+from wikimetrics.configurables import app
 from wikimetrics import metrics
 
 

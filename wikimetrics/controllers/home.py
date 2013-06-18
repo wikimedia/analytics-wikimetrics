@@ -1,7 +1,7 @@
 from flask import render_template, redirect, request
-from wikimetrics.web import app, is_public
-from wikimetrics.database import db
+from wikimetrics.configurables import app
 from wikimetrics.models import *
+from authentication import is_public
 
 
 @app.route('/')

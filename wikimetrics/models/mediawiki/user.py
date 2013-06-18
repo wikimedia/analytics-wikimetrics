@@ -1,5 +1,5 @@
 from sqlalchemy import Column, Integer, Boolean, DateTime, String
-from wikimetrics.database import db
+from wikimetrics.configurables import db
 
 __all__ = [
     'MediawikiUser',

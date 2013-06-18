@@ -9,7 +9,7 @@ __all__ = [
 ]
 
 
-from wikimetrics.database import db
+from wikimetrics.configurables import db
 from wikimetrics.models import *
 
 
@@ -99,7 +99,7 @@ class QueueDatabaseTest(QueueTest, DatabaseTest):
 
 from wikimetrics import web
 from wikimetrics.models import User
-#from wikimetrics.database import db
+#from wikimetrics.configurables import db
 from flask.ext.login import login_user, logout_user, current_user
 
 

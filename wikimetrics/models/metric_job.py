@@ -1,6 +1,5 @@
 import job
-from wikimetrics.configurables import queue
-from wikimetrics.database import db
+from wikimetrics.configurables import queue, db
 
 __all__ = [
     'MetricJob',

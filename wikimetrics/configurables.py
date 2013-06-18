@@ -28,6 +28,7 @@ def config_web(args):
     
     # set the root_path so it can be shared with Database
     # which uses the same config - flask.config.Config
+    global root_path
     root_path = app.config.root_path
 
 
@@ -36,6 +37,7 @@ def config_db(args):
     
     global db
     db = Database()
+    db.config.root_path = root_path
     db.config.from_pyfile(args.db_config)
     if args.override_config:
         db.config.from_pyfile(args.override_config)
@@ -54,15 +56,15 @@ def config_celery(args):
 
 
 def web(args):
-    config_db(args)
     config_web(args)
+    config_db(args)
     
     app.run()
 
 
 def test(args):
-    config_db(args)
     config_web(args)
+    config_db(args)
     config_celery(args)
     
     nose.run()
@@ -103,6 +105,11 @@ test_parser.add_argument('--db-config', '-d',
     help='Database config file',
     dest='db_config',
 )
+test_parser.add_argument('--celery-config', '-c',
+    default='config/celery_config.py',
+    help='Celery config file',
+    dest='celery_config',
+)
 
 web_parser = subparsers.add_parser('web', help='runs flask webserver')
 web_parser.set_defaults(func=web)
@@ -123,6 +130,11 @@ celery_parser.add_argument('--celery-config', '-c',
     default='config/celery_config.py',
     help='Celery config file',
     dest='celery_config',
+)
+celery_parser.add_argument('--db-config', '-d',
+    default='config/db_config.py',
+    help='Database config file',
+    dest='db_config',
 )
 
 args = parser.parse_args()

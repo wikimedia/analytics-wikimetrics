@@ -11,7 +11,7 @@ from flask import (
 from sqlalchemy.orm.exc import NoResultFound, MultipleResultsFound
 from flask.ext.login import LoginManager, login_user, logout_user, current_user
 from flask.ext.oauth import OAuth
-from wikimetrics.web import app
+from wikimetrics.configurables import app
 from wikimetrics.database import db
 from wikimetrics.models import User, UserRole
 

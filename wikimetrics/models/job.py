@@ -2,7 +2,7 @@ import collections
 from sqlalchemy import Column, Integer, String, ForeignKey
 from celery import group, chord
 
-from wikimetrics.database import db
+from wikimetrics.configurables import db
 from queue import celery
 
 __all__ = [
