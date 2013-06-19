@@ -1,7 +1,6 @@
 import pprint
 import logging
 import argparse
-import nose
 import sys
 import os
 
@@ -15,6 +14,7 @@ __all__ = [
     'app',
     'login_manager',
     'google',
+    'args'
 ]
 
 
@@ -93,88 +93,7 @@ def config_celery(args):
         queue.config_from_object(args.override_config)
 
 
-def web(args):
-    config_web(args)
-    config_db(args)
-    
-    app.run()
 
 
-def test(args):
-    config_web(args)
-    config_db(args)
-    config_celery(args)
-    
-    nose.run(module='tests')
 
 
-def celery(args):
-    config_db(args)
-    config_celery(args)
-    
-    from wikimetrics.models import ConcatMetricsJob
-    from wikimetrics.models import MultiProjectMetricJob
-    from wikimetrics.models import MetricJob
-    queue.start()
-
-
-parser = argparse.ArgumentParser('wikimetrics',
-    formatter_class=argparse.ArgumentDefaultsHelpFormatter,
-)
-parser.add_argument('--override-config', '-o',
-    default = None,
-    help='override config file',
-    dest='override_config',
-)
-subparsers = parser.add_subparsers(
-    dest='subparser_name',
-    title='subcommands',
-)
-
-test_parser = subparsers.add_parser('test', help='runs nosetests')
-test_parser.set_defaults(func=test)
-test_parser.add_argument('--web-config', '-w',
-    default='config/web_config.py',
-    help='Flask config file',
-    dest='web_config',
-)
-test_parser.add_argument('--db-config', '-d',
-    default='config/db_config.py',
-    help='Database config file',
-    dest='db_config',
-)
-test_parser.add_argument('--celery-config', '-c',
-    default='wikimetrics/config/celery_config.py',
-    help='Celery config file',
-    dest='celery_config',
-)
-
-web_parser = subparsers.add_parser('web', help='runs flask webserver')
-web_parser.set_defaults(func=web)
-web_parser.add_argument('--web-config', '-w',
-    default='config/web_config.py',
-    help='Flask config file',
-    dest='web_config',
-)
-web_parser.add_argument('--db-config', '-d',
-    default='config/db_config.py',
-    help='Database config file',
-    dest='db_config',
-)
-
-celery_parser = subparsers.add_parser('celery', help='runs celery broker and workers')
-celery_parser.set_defaults(func=celery)
-celery_parser.add_argument('--celery-config', '-c',
-    default='config/celery_config.py',
-    help='Celery config file',
-    dest='celery_config',
-)
-celery_parser.add_argument('--db-config', '-d',
-    default='config/db_config.py',
-    help='Database config file',
-    dest='db_config',
-)
-
-args = parser.parse_args()
-logger.info('running with arguments:\n%s', pprint.pformat(vars(args)))
-args.func(args)
