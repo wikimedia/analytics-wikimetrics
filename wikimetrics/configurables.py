@@ -24,7 +24,7 @@ root_path = ''
 def create_object_from_config_file(path):
     dir, fname = os.path.split(path)
     sys.path.insert(0, os.path.expanduser(dir))
-    return __import__(os.path.splitext(fname)[0])
+    return __import__(dir.replace('/','.') + '.' + os.path.splitext(fname)[0])
 
 
 def config_web(args):
@@ -144,7 +144,7 @@ test_parser.add_argument('--db-config', '-d',
     dest='db_config',
 )
 test_parser.add_argument('--celery-config', '-c',
-    default='/home/dan/projects/wikimetrics/wikimetrics/config/celery_config.py',
+    default='wikimetrics/config/celery_config.py',
     help='Celery config file',
     dest='celery_config',
 )
@@ -178,4 +178,3 @@ celery_parser.add_argument('--db-config', '-d',
 args = parser.parse_args()
 logger.info('running with arguments:\n%s', pprint.pformat(vars(args)))
 args.func(args)
-
