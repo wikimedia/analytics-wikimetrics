@@ -105,7 +105,7 @@ def test(args):
     config_db(args)
     config_celery(args)
     
-    nose.run()
+    nose.run(module='tests')
 
 
 def celery(args):

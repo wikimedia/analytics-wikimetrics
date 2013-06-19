@@ -1,7 +1,6 @@
 from subprocess import Popen
 from os import devnull
 from signal import SIGINT
-from queue import celery_is_alive
 from time import sleep
 
 
