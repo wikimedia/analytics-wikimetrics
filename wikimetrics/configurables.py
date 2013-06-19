@@ -14,7 +14,6 @@ __all__ = [
     'app',
     'login_manager',
     'google',
-    'args'
 ]
 
 

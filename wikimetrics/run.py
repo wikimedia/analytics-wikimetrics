@@ -1,6 +1,9 @@
 #!/usr/bin/python
-from configurables import app, queue
-import nose
+import argparse
+import logging
+import pprint
+from .configurables import config_web, config_db, config_celery
+logger = logging.getLogger(__name__)
 
 
 ##################################
@@ -55,6 +58,7 @@ test_parser.add_argument('--celery-config', '-c',
 def web(args):
     config_web(args)
     config_db(args)
+    config_celery(args)
 
 
 web_parser = subparsers.add_parser('web', help='runs flask webserver')
@@ -68,6 +72,11 @@ web_parser.add_argument('--db-config', '-d',
     default='config/db_config.py',
     help='Database config file',
     dest='db_config',
+)
+web_parser.add_argument('--celery-config', '-c',
+    default='wikimetrics/config/celery_config.py',
+    help='Celery config file',
+    dest='celery_config',
 )
 
 
@@ -98,27 +107,35 @@ celery_parser.add_argument('--db-config', '-d',
 
 
 ##################################
+# This runs at import time to prepare
+# wikimetrics.configurables
+##################################
+args = parser.parse_args()
+logger.info('running with arguments:\n%s', pprint.pformat(vars(args)))
+
+# runs the appropriate config function (web, celery, test)
+args.func(args)
+
+
+##################################
 # RUN methods
 ##################################
 def run_web():
+    from configurables import app
     app.run()
 
 
 def run_test():
+    import nose
     nose.run(module='tests')
 
 
 def run_celery():
+    from configurables import queue
     queue.start()
 
 
 def main():
-    args = parser.parse_args()
-    logger.info('running with arguments:\n%s', pprint.pformat(vars(args)))
-    
-    # runs the appropriate config function (web, celery, test)
-    args.func(args)
-    
     # runs the appropriate run function
     if args.command == 'web':
         run_web()
