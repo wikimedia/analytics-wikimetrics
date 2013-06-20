@@ -99,23 +99,25 @@ class QueueDatabaseTest(QueueTest, DatabaseTest):
 
 from wikimetrics.configurables import app
 from wikimetrics.models import User
-#from wikimetrics.configurables import db
 from flask.ext.login import login_user, logout_user, current_user
 
 
-@app.route('/test_login')
-def test_login():
-    db_session = db.get_session()
-    user = User.get(db_session, 9)
-    if not user:
-        user = User(id=9, email='test@test.com')
-    
-    user.login(db_session)
-    login_user(user)
-    user.detach_from(db_session)
+@app.route('/login-for-testing-only')
+def login_for_testing_only():
+    if app.config['DEBUG']:
+        user = User(
+            id=2,
+            email='test@test.com',
+        )
+        login_user(user)
 
 
 class WebTest(DatabaseTest):
+    """
+    Creates a test flask client from the normally configured app.
+    Makes sure that a user is authenticated as far as Flask-Login is concerned,
+    so that any private routes are still served for testing purposes.
+    """
     
     @classmethod
     def setUpClass(cls):
@@ -123,7 +125,7 @@ class WebTest(DatabaseTest):
         Creates a test flask environment.  Logs in a test user so tests on private urls work.
         """
         cls.app = app.test_client()
-        cls.app.get('/test_login')
+        cls.app.get('/login-for-testing-only')
     
     @classmethod
     def tearDownClass(cls):

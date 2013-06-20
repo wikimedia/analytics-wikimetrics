@@ -27,6 +27,7 @@ def run_celery():
     from .models import MetricJob
     queue.start()
 
+
 def setup_parser():
     parser = argparse.ArgumentParser('wikimetrics',
         formatter_class=argparse.ArgumentDefaultsHelpFormatter,
