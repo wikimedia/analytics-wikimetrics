@@ -65,7 +65,8 @@ def config_db(args):
     
     global db
     db = Database()
-    db.config = create_object_from_config_file(args.db_config)
+    db_config_obj = create_object_from_config_file(args.db_config)
+    db.config = db_config_obj.__dict__
     if args.override_config:
         config_override = create_object_from_config_file(args.override_config)
         db.config.__dict__.update(config_override.__dict__)

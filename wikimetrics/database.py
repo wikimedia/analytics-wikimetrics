@@ -13,6 +13,7 @@ from sqlalchemy.orm import sessionmaker
 from sqlalchemy.ext.declarative import declarative_base
 
 __all__ = [
+    'Database',
 ]
 
 
@@ -85,7 +86,7 @@ class Database(object):
             engine = self.get_mw_engine(project)
             # TODO: this should probably check before calling create_all
             import wikimetrics.models.mediawiki
-            MediawikiBase.metadata.create_all(engine)
+            self.MediawikiBase.metadata.create_all(engine)
             
             project_sessionmaker = sessionmaker(engine)
             self.mediawiki_sessionmakers[project] = project_sessionmaker

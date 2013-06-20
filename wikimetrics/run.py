@@ -38,7 +38,7 @@ def setup_parser():
     )
     parser.add_argument('mode',
         nargs='?',
-        default='import', 
+        default='import',
         choices=[
             'import',
             'web',
