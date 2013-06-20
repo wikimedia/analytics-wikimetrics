@@ -2,6 +2,7 @@ import pprint
 import logging
 import argparse
 import sys
+import imp
 import os
 
 
@@ -9,21 +10,17 @@ logger = logging.getLogger(__name__)
 
 
 __all__ = [
-    'db',
-    'queue',
     'app',
-    'login_manager',
+    'db',
     'google',
+    'login_manager',
+    'queue',
 ]
-
-
-root_path = ''
 
 
 def create_object_from_config_file(path):
     dir, fname = os.path.split(path)
-    sys.path.insert(0, os.path.expanduser(dir))
-    return __import__(dir.replace('/','.') + '.' + os.path.splitext(fname)[0])
+    return imp.load_source(os.path.splitext(fname)[0], path)
 
 
 def config_web(args):
@@ -37,17 +34,12 @@ def config_web(args):
     if args.override_config:
         app.config.from_pyfile(args.override_config)
     
-    # set the root_path so it can be shared with Database
-    # which uses the same config - flask.config.Config
-    global root_path
-    root_path = app.config.root_path
-    
     global login_manager
     login_manager = LoginManager()
     login_manager.init_app(app)
     
-    oauth = OAuth()
     global google
+    oauth = OAuth()
     google = oauth.remote_app(
         'google',
         base_url=app.config['GOOGLE_BASE_URL'],
@@ -69,22 +61,22 @@ def config_web(args):
 
 
 def config_db(args):
-    from wikimetrics.database import Database
+    from .database import Database
     
     global db
     db = Database()
-    db.config.root_path = root_path
-    db.config.from_pyfile(args.db_config)
+    db.config = create_object_from_config_file(args.db_config)
     if args.override_config:
-        db.config.from_pyfile(args.override_config)
+        config_override = create_object_from_config_file(args.override_config)
+        db.config.__dict__.update(config_override.__dict__)
 
 
 def config_celery(args):
     # TODO: move this into wikimetrics without breaking celery
     from celery import Celery
     
-    global queue
     # create and configure celery app
+    global queue
     queue = Celery('wikimetrics', include=['wikimetrics'])
     config_object = create_object_from_config_file(args.celery_config)
     queue.config_from_object(config_object)

@@ -23,7 +23,7 @@ def celery_is_alive():
 def setUp():
     # TODO configure celery verbosity
     celery_out = open(devnull, "w")
-    celery_cmd = ['python', 'queue.py', 'worker', '-l', 'debug']
+    celery_cmd = ['wikimetrics', 'celery']
     global celery_proc
     celery_proc = Popen(celery_cmd, stdout=celery_out, stderr=celery_out)
     

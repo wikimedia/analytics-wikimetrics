@@ -1,7 +1,7 @@
 import inspect
 from flask import render_template, redirect, request
-from wikimetrics.configurables import app
-from wikimetrics import metrics
+from ..configurables import app
+from .. import metrics
 
 
 @app.route('/metrics/')

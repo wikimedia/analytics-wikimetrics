@@ -1,6 +1,6 @@
 from flask import render_template, redirect, request
-from wikimetrics.configurables import app
-from wikimetrics.models import *
+from ..configurables import app
+from ..models import *
 from authentication import is_public
 
 

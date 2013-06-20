@@ -7,30 +7,6 @@ logger = logging.getLogger(__name__)
 
 
 
-def config_web_mode(args):
-    config_web(args)
-    config_db(args)
-    config_celery(args)
-
-
-def config_test_mode(args):
-    config_web(args)
-    config_db(args)
-    config_celery(args)
-
-
-def config_celery_mode(args):
-    config_db(args)
-    config_celery(args)
-
-
-def config_import_only_mode(args):
-    config_web(args)
-    config_db(args)
-    config_celery(args)
-    
-
-
 ##################################
 # RUN methods
 ##################################
@@ -46,9 +22,9 @@ def run_test():
 
 def run_celery():
     from configurables import queue
-    from wikimetrics.models import ConcatMetricsJob
-    from wikimetrics.models import MultiProjectMetricJob
-    from wikimetrics.models import MetricJob
+    from .models import ConcatMetricsJob
+    from .models import MultiProjectMetricJob
+    from .models import MetricJob
     queue.start()
 
 def setup_parser():
@@ -80,7 +56,7 @@ def setup_parser():
         dest='web_config',
     )
     parser.add_argument('--db-config', '-d',
-        default='config/db_config.py',
+        default='wikimetrics/config/db_config.py',
         help='Database config file',
         dest='db_config',
     )
@@ -104,17 +80,9 @@ pprint.pprint(vars(args))
 logger.info('running with arguments:\n%s', pprint.pformat(vars(args)))
 
 # runs the appropriate config function (web, celery, test)
-if args.mode == 'web':
-    print 'running config_web_mode'
-    config_web_mode(args)
-elif args.mode == 'test':
-    config_test_mode(args)
-elif args.mode == 'celery':
-    config_celery_mode(args)
-elif args.mode == 'import':
-    print 'running config_import_only'
-    config_import_only_mode(args)
-
+config_web(args)
+config_db(args)
+config_celery(args)
 
 
 

@@ -11,7 +11,6 @@ from urllib2 import urlopen
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.ext.declarative import declarative_base
-from flask.config import Config
 
 __all__ = [
 ]
@@ -21,7 +20,7 @@ class Database(object):
     """
     Basically a collection of all database related objects and methods.
     Instantiated after configuration is done, in the wikimetrics.configurables module.
-    You should not instantiate this yourself, just do `from wikimetrics.configurables import db`
+    You should not instantiate this yourself, just do `from .configurables import db`
     """
     
     
@@ -35,7 +34,6 @@ class Database(object):
         Initializes the empty engines and sessionmakers that support
         `get_session` and `get_mw_session`.
         """
-        self.config = Config('')
         self.WikimetricsBase = declarative_base()
         self.MediawikiBase = declarative_base()
 

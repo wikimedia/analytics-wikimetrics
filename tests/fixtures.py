@@ -97,13 +97,13 @@ class QueueDatabaseTest(QueueTest, DatabaseTest):
         DatabaseTest.tearDown(self)
 
 
-from wikimetrics import web
+from wikimetrics.configurables import app
 from wikimetrics.models import User
 #from wikimetrics.configurables import db
 from flask.ext.login import login_user, logout_user, current_user
 
 
-@web.app.route('/test_login')
+@app.route('/test_login')
 def test_login():
     db_session = db.get_session()
     user = User.get(db_session, 9)
@@ -122,7 +122,7 @@ class WebTest(DatabaseTest):
         """
         Creates a test flask environment.  Logs in a test user so tests on private urls work.
         """
-        cls.app = web.app.test_client()
+        cls.app = app.test_client()
         cls.app.get('/test_login')
     
     @classmethod

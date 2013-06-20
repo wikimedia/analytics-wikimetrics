@@ -1,5 +1,5 @@
 from flask import render_template, redirect, request
-from wikimetrics.configurables import app
+from ..configurables import app
 
 
 @app.route('/cohorts/')
