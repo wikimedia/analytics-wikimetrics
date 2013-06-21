@@ -102,15 +102,6 @@ from wikimetrics.models import User
 from flask.ext.login import login_user, logout_user, current_user
 
 
-@app.route('/login-for-testing-only')
-def login_for_testing_only():
-    if app.config['DEBUG']:
-        user = User(
-            id=2,
-            email='test@test.com',
-        )
-        login_user(user)
-
 
 class WebTest(DatabaseTest):
     """

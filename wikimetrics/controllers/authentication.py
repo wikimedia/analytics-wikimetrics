@@ -15,6 +15,7 @@ from ..configurables import app, db, login_manager, google
 from ..models import User, UserRole
 
 
+
 def is_public(to_decorate):
     """
     Marks a Flask endpoint as public (not requiring authentication).
@@ -22,8 +23,22 @@ def is_public(to_decorate):
     def decorator(f):
         f.is_public = True
         return f
+    
     return decorator(to_decorate)
 
+if app.config['DEBUG']:
+    # safeguard against exposing this route in production
+    @app.route('/login-for-testing-only')
+    def login_for_testing_only():
+        if app.config['DEBUG']:
+            user = User(
+                id=2,
+                email='test@test.com',
+            )
+            login_user(user)
+    print 'adding login-for-testing-only'
+else:
+    print 'not adding login-for-testing-only'
 
 @app.before_request
 def default_to_private():
@@ -46,6 +61,7 @@ def load_user(user_id):
     """
     Callback required by Flask-Login.  Gets the User object from the database.
     """
+    print 'calling load_user on user_id=%d' % user_id
     db_session = db.get_session()
     user = User.get(db_session, user_id)
     return user

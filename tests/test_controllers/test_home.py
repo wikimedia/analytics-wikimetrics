@@ -5,7 +5,7 @@ from tests.fixtures import *
 class TestHomeController(WebTest):
     
     def test_index(self):
-        response = self.app.get('/')
+        response = self.app.get('/', follow_redirects=True)
         assert_true(
             response._status_code == 200,
             '/ should get the home page'
