@@ -1,0 +1,51 @@
+{% extends "layout.html" %}
+{% block body %}
+<h2>Run Metrics on Cohorts</h2>
+<div>
+    <h3>Cohorts</h3>
+    <input class="search"/>
+    <hr/>
+    <div>
+        <ul class="unstyled" data-bind="foreach: cohorts">
+            <li>
+                <label>
+                    <input type="checkbox" data-bind="click: request.toggleCohort(id);"/>
+                    <span data-bind="text: name, attr: {title: description}"></span>
+                </label>
+            </li>
+        </ul>
+        <ul class="unstyled" data-bind="foreach: request.cohort">
+            <li>
+                <h5 data-bind="text: name"></h5>
+                <ul class="unstyled" data-bind="foreach: wikiusers">
+                    <li data-bind="text: name"></li>
+                </ul>
+            </li>
+        </ul>
+    </div>
+</div>
+<div>
+    <h3>Metrics</h3>
+    <input class="search"/>
+    <hr/>
+    <div>
+        <ul class="unstyled" data-bind="foreach: metrics">
+            <li>
+                <label data-bind="click: request.toggleMetric(id)">
+                    <input type="checkbox"/>
+                    <span data-bind="text: name, attr: {title: description}">
+                        <a href="#" data-bind="text: name"></a>
+                    </span>
+                </label>
+            </li>
+        </ul>
+        <div class="metric-configuration">
+        </div>
+    </div>
+</div>
+<div>
+    <ul class="unstyled" data-bind="foreach: responses">
+        <!-- template around responses[i].sampleData, based on responses[i].shape -->
+    </ul>
+</div>
+{% endblock %}
