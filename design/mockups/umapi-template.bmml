@@ -1,0 +1,46 @@
+<mockup version="1.0" skin="sketch" fontFace="Balsamiq Sans" measuredW="1176" measuredH="731" mockupW="1176" mockupH="731">
+  <controls>
+    <control controlID="5" controlTypeID="com.balsamiq.mockups::BrowserWindow" x="0" y="0" w="1176" h="731" measuredW="450" measuredH="400" zOrder="0" locked="true" isInGroup="-1">
+      <controlProperties>
+        <text>Wikimetrics%0Ahttp%3A//metrics.wikimedia.org/start_analysis</text>
+      </controlProperties>
+    </control>
+    <control controlID="6" controlTypeID="com.balsamiq.mockups::Component" x="3" y="75" w="1168" h="44" measuredW="1168" measuredH="44" zOrder="1" locked="false" isInGroup="-1">
+      <controlProperties>
+        <override controlID="0" x="0" y="0" w="1168" h="44"/>
+        <override controlID="1" x="14" y="7" w="181" h="27">
+          <text>Wikimetrics</text>
+        </override>
+        <override controlID="2" x="230" y="2" w="87" h="40">
+          <text>Cohorts</text>
+        </override>
+        <override controlID="3" x="315" y="2" w="87" h="40">
+          <text>Metrics</text>
+        </override>
+        <override controlID="4" x="399" y="2" w="87" h="40">
+          <text>Jobs</text>
+        </override>
+        <override controlID="5" x="484" y="2" w="87" h="40">
+          <text>About</text>
+        </override>
+        <override controlID="6" x="571" y="3" w="128" h="40"/>
+        <override controlID="7" x="922" y="3" w="105" h="40">
+          <text>Welcome%20user%20%28logout%29</text>
+        </override>
+        <override controlID="8" x="1027" y="3" w="128" h="40"/>
+        <override controlID="9" x="1027" y="3" w="10" h="37"/>
+        <override controlID="10" x="717" y="7" w="144" h="32">
+          <text>%7Bcolor%3A%23ffffff%7DSearch%7Bcolor%7D</text>
+        </override>
+        <override controlID="8:0" x="0" y="0" w="128" h="40"/>
+        <override controlID="-1"/>
+        <override controlID="8:1" x="108" y="14" w="16" h="16"/>
+        <override controlID="6:0" x="0" y="0" w="128" h="40">
+          <text>Dropdown</text>
+        </override>
+        <override controlID="6:1" x="108" y="14" w="16" h="16"/>
+        <src>./assets/Bootstrap.bmml#tb-navbar</src>
+      </controlProperties>
+    </control>
+  </controls>
+</mockup>

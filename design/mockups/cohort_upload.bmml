@@ -1,0 +1,61 @@
+<mockup version="1.0" skin="sketch" fontFace="Balsamiq Sans" measuredW="1177" measuredH="731" mockupW="1177" mockupH="731">
+  <controls>
+    <control controlID="5" controlTypeID="com.balsamiq.mockups::BrowserWindow" x="0" y="0" w="1177" h="731" measuredW="450" measuredH="400" zOrder="0" locked="true" isInGroup="-1">
+      <controlProperties>
+        <text>Wikimetrics%0Ahttp%3A//metrics.wikimedia.org/upload_cohort</text>
+      </controlProperties>
+    </control>
+    <control controlID="6" controlTypeID="com.balsamiq.mockups::TextInput" x="331" y="124" w="212" h="-1" measuredW="79" measuredH="26" zOrder="1" locked="false" isInGroup="-1"/>
+    <control controlID="7" controlTypeID="com.balsamiq.mockups::ComboBox" x="331" y="161" w="-1" h="-1" measuredW="212" measuredH="24" zOrder="2" locked="false" isInGroup="-1">
+      <controlProperties>
+        <text>Select%20project%20or%20specify%20in%20file</text>
+      </controlProperties>
+    </control>
+    <control controlID="8" controlTypeID="com.balsamiq.mockups::Button" x="331" y="204" w="93" h="27" measuredW="91" measuredH="27" zOrder="3" locked="false" isInGroup="-1">
+      <controlProperties>
+        <text>Choose%20File</text>
+      </controlProperties>
+    </control>
+    <control controlID="9" controlTypeID="com.balsamiq.mockups::TextArea" x="124" y="302" w="419" h="298" measuredW="200" measuredH="140" zOrder="4" locked="false" isInGroup="-1">
+      <controlProperties>
+        <text>File%20Format%0A%20%0AUser%20Metrics%20expects%20a%20CSV%20file%20with%20the%20following%20format%20%28the%20username%2C%20project%20header%20row%20is%20not%20required%29.%20Do%20pay%20special%20attention%20to%20the%20use%20of%20underscore%20in%20user%20names.%20Most%20user%20names%20do%20not%20have%20underscores%20but%20may%20be%20recorded%20that%20way%20in%20your%20file%20by%20people%20copying%20from%20a%20user%20page%20url.%20If%20those%20users%20show%20up%20as%20invalid%2C%20you%20may%20want%20to%20try%20them%20with%20spaces%20instead%20of%20underscores.%0A%20%0Ausername%2Cproject%0AEvan%20%28WMF%29%2Cen%0AMost%20Users%20Do%20Not%20Have%20Underscores%20In%20Their%20Names%2Cen%0AIf_This_Fails_try_replacing_underscores_with_spaces%2Cen%0A%20%0Ausername%3A%20straightforward%20utf-8%20encoded%20name%20or%20a%20user%20id.%0Aproject%3A%20the%20langauge%20or%20project%20code%20on%20which%20that%20username%20exists.</text>
+      </controlProperties>
+    </control>
+    <control controlID="10" controlTypeID="com.balsamiq.mockups::Label" x="240" y="124" w="-1" h="-1" measuredW="76" measuredH="21" zOrder="5" locked="false" isInGroup="-1">
+      <controlProperties>
+        <text>Cohort%20name</text>
+      </controlProperties>
+    </control>
+    <control controlID="11" controlTypeID="com.balsamiq.mockups::Label" x="246" y="163" w="-1" h="-1" measuredW="70" measuredH="21" zOrder="6" locked="false" isInGroup="-1">
+      <controlProperties>
+        <text>Wiki%20project</text>
+      </controlProperties>
+    </control>
+    <control controlID="12" controlTypeID="com.balsamiq.mockups::Label" x="265" y="204" w="-1" h="-1" measuredW="51" measuredH="21" zOrder="7" locked="false" isInGroup="-1">
+      <controlProperties>
+        <text>CSV%20File</text>
+      </controlProperties>
+    </control>
+    <control controlID="13" controlTypeID="com.balsamiq.mockups::Component" x="434" y="243" w="114" h="27" measuredW="114" measuredH="27" zOrder="8" locked="false" isInGroup="-1">
+      <controlProperties>
+        <override controlID="0" x="0" y="0" w="-1" h="-1">
+          <text>Upload%20CSV</text>
+        </override>
+        <src>./assets/Bootstrap.bmml#tb-btn-primary</src>
+      </controlProperties>
+    </control>
+    <control controlID="14" controlTypeID="com.balsamiq.mockups::Component" x="124" y="81" w="40" h="37" measuredW="40" measuredH="37" zOrder="9" locked="false" isInGroup="-1">
+      <controlProperties>
+        <override controlID="0" x="0" y="0" w="40" h="37">
+          <text>%7Bcolor%3A%23ffffff%7D1%7Bcolor%7D</text>
+        </override>
+        <src>./assets/Bootstrap.bmml#tb-badge-info</src>
+      </controlProperties>
+    </control>
+    <control controlID="15" controlTypeID="com.balsamiq.mockups::SubTitle" x="187" y="86" w="-1" h="-1" measuredW="156" measuredH="27" zOrder="10" locked="false" isInGroup="-1">
+      <controlProperties>
+        <text>Cohort%20Upload</text>
+      </controlProperties>
+    </control>
+  </controls>
+</mockup>
