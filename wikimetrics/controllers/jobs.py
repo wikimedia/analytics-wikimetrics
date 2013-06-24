@@ -9,3 +9,11 @@ def jobs_index():
     If the user is an admin, she has the option to see other users' jobs.
     """
     return 'jobs'
+
+
+@app.route('/jobs/create', methods=['GET'])
+def jobs_request():
+    """
+    Renders a page that facilitates kicking off a new job
+    """
+    return render_template('request.html')

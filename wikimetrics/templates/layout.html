@@ -6,9 +6,6 @@
 
 <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='css/bootstrap.css') }}">
 <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='css/site.css') }}">
-
-<script src="//ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js"></script>
-<script src="{{ url_for('static', filename='js/bootstrap.js') }}"></script>
 </head>
 <body>
     <div class="navbar navbar-inverse navbar-fixed-top">
@@ -41,11 +38,25 @@
     </div>
     <ul class="unstyled">
         {% for category, message in get_flashed_messages(with_categories=True) %}
-        <li class="flash {{category}}">{{ message }}</li>
+        <li class="flash text-{{category}}">{{ message }}</li>
         {% endfor %}
+        
+        {#
+        TODO: consider cool alternative alert:
+        
+        <li class="alert alert-{{category}}">
+            <button class="close" data-dismiss="alert">&times;</button>
+            <strong>Some Title</strong> {{ message }}
+        </li>
+        
+        #}
     </ul>
     <section class="container">
         {% block body %}{% endblock %}
     </section>
+    
+    <script src="//ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js"></script>
+    <script src="{{ url_for('static', filename='js/bootstrap.js') }}"></script>
+    {% block scripts %}{% endblock %}
 </body>
 </html>

@@ -1,51 +1,86 @@
 {% extends "layout.html" %}
 {% block body %}
-<h2>Run Metrics on Cohorts</h2>
-<div>
-    <h3>Cohorts</h3>
-    <input class="search"/>
-    <hr/>
-    <div>
+<h2>Create a Job</h2>
+<div class="well pick-cohorts">
+    <div class="navbar-inner">
+        <h3 class="pull-left">Pick Cohorts</h3>
+        <form class="navbar-search pull-right">
+            <input type="text" class="search-query" placeholder="find"/>
+        </form>
+    </div>
+    <div class="cohorts">
         <ul class="unstyled" data-bind="foreach: cohorts">
             <li>
                 <label>
-                    <input type="checkbox" data-bind="click: request.toggleCohort(id);"/>
+                    <input type="checkbox" data-bind="click: $root.toggleCohort"/>
                     <span data-bind="text: name, attr: {title: description}"></span>
                 </label>
             </li>
         </ul>
-        <ul class="unstyled" data-bind="foreach: request.cohort">
-            <li>
-                <h5 data-bind="text: name"></h5>
-                <ul class="unstyled" data-bind="foreach: wikiusers">
-                    <li data-bind="text: name"></li>
-                </ul>
-            </li>
-        </ul>
     </div>
 </div>
-<div>
-    <h3>Metrics</h3>
-    <input class="search"/>
-    <hr/>
-    <div>
-        <ul class="unstyled" data-bind="foreach: metrics">
+<div class="well pick-metrics">
+    <div class="navbar-inner">
+        <h3>Pick Metrics</h3>
+    </div>
+    <div class="tabbable tabs-left">
+        <ul class="nav nav-tabs" data-bind="foreach: metrics">
             <li>
-                <label data-bind="click: request.toggleMetric(id)">
-                    <input type="checkbox"/>
-                    <span data-bind="text: name, attr: {title: description}">
-                        <a href="#" data-bind="text: name"></a>
-                    </span>
-                </label>
+                <a data-bind="attr: {href: tabIdSelector}, text: name" data-toggle="tab">
+                </a>
             </li>
         </ul>
-        <div class="metric-configuration">
+        <div class="tab-content" data-bind="foreach: metrics">
+            <div class="tab-pane" data-bind="attr: {id: tabId}">
+                <label data-bind="click: $root.toggleMetric">
+                    <input type="checkbox"/>
+                    <span data-bind="text: 'compute ' + name, attr: {title: description}">
+                    </span>
+                </label>
+            </div>
         </div>
     </div>
 </div>
-<div>
-    <ul class="unstyled" data-bind="foreach: responses">
-        <!-- template around responses[i].sampleData, based on responses[i].shape -->
-    </ul>
+<div class="well sample-result">
+    <div class="navbar-inner">
+        <h3>Sample Result</h3>
+    </div>
+    <div class="tabbable">
+        <ul class="nav nav-tabs" data-bind="foreach: request().responses">
+            <li>
+                <a data-bind="attr: {href: tabIdSelector}, text: name"></a>
+            </li>
+        </ul>
+        <div class="tab-content" data-bind="foreach: request().responses">
+            <div class="tab-pane" data-bind="attr: {id: tabId}">
+                <table class="table-striped">
+                    <thead>
+                        <tr>
+                            <th>User Name</th>
+                            <th>User Id</th>
+                            <th>User Project</th>
+                            <th data-bind="text: metric().name"></th>
+                        </tr>
+                    </thead>
+                    <tbody data-bind="foreach: wikiusers">
+                        <tr>
+                            <td data-bind="text: mediawiki_username"></td>
+                            <td data-bind="text: mediawiki_userid"></td>
+                            <td data-bind="text: project"></td>
+                            <td class="blur-completely">123.45</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
 </div>
+<div class="form-actions">
+    <input class="btn btn-primary save pull-right" type="submit" value="Run Job"/>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="//ajax.aspnetcdn.com/ajax/knockout/knockout-2.2.1.js"></script>
+<script src="{{ url_for('static', filename='js/jobCreate.js') }}"></script>
 {% endblock %}

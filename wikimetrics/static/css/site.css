@@ -1,7 +1,7 @@
 body { padding-top: 60px; padding-bottom: 60px; }
-.nav { width: 70%; }
-.nav li:last-child { color: #cacaca; float: right !important; }
-.nav li:last-child a { color: #0088cc; display: inline-block; }
+.navbar-fixed-top .nav { width: 80%; }
+.navbar-fixed-top .nav li:last-child { color: #cacaca; float: right !important; }
+.navbar-fixed-top .nav li:last-child a { color: #0088cc; display: inline-block; }
 label.error { color: #af3333; }
 div.flash { margin: 4px 0 20px 0; }
 
@@ -21,3 +21,12 @@ a.openid-logo.twitter {
     width: 158px;
     height: 28px;
 }
+
+
+/* creating a new job */
+td.blur-completely { text-shadow: 0 0 20px rgba(0,0,0,0.6); color: transparent; }
+.pick-cohorts .navbar-search { margin: 16px 0 0 0; }
+.pick-cohorts .cohorts { margin: 14px 0 0 14px; max-height: 160px; overflow-x: hide; overflow-y: auto; }
+.pick-metrics { background-color: #fff; }
+.pick-metrics .tabbable { margin: 18px 0 0 0; }
+.sample-result {  }
