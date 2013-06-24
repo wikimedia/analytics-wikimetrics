@@ -30,13 +30,21 @@ def is_public(to_decorate):
 if app.config['DEBUG']:
     # safeguard against exposing this route in production
     @app.route('/login-for-testing-only')
+    @is_public
     def login_for_testing_only():
         if app.config['DEBUG']:
-            user = User(
-                id=2,
-                email='test@test.com',
-            )
+            db_session = db.get_session()
+            user = db_session.query(User).get(2)
+            if user is None: 
+                user = User(
+                    id=2,
+                    email='test@test.com',
+                )
+                db_session.add(user)
+                db_session.commit()
+            user.login(db_session) 
             login_user(user)
+            return ''
 
 
 @app.before_request
@@ -48,6 +56,8 @@ def default_to_private():
     if current_user.is_authenticated():
         return
     
+    # TODO: look into more systematic way of finding whether
+    # request is to status resource
     if (request.endpoint and
         not 'static' in request.endpoint and
         not getattr(app.view_functions[request.endpoint], 'is_public', False)

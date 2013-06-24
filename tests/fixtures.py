@@ -20,8 +20,10 @@ class DatabaseTest(unittest.TestCase):
     
     def setUp(self):
         
+        
         # create basic test records for non-mediawiki tests
         self.session = db.get_session()
+        self.mwSession = db.get_mw_session('enwiki')
         
         job = Job()
         user = User(username='Dan')
@@ -49,7 +51,6 @@ class DatabaseTest(unittest.TestCase):
         self.session.commit()
         
         # create records for enwiki tests
-        self.mwSession = db.get_mw_session('enwiki')
         self.mwSession.add(MediawikiUser(user_id=1, user_name='Dan'))
         self.mwSession.add(MediawikiUser(user_id=2, user_name='Evan'))
         self.mwSession.add(MediawikiUser(user_id=3, user_name='Andrew'))
@@ -110,14 +111,14 @@ class WebTest(DatabaseTest):
     so that any private routes are still served for testing purposes.
     """
     
-    @classmethod
-    def setUpClass(cls):
+    def setUp(self):
         """
         Creates a test flask environment.  Logs in a test user so tests on private urls work.
         """
-        cls.app = app.test_client()
-        cls.app.get('/login-for-testing-only')
+        DatabaseTest.setUp(self)
+        self.app = app.test_client()
+        self.app.get('/login-for-testing-only')
     
-    @classmethod
-    def tearDownClass(cls):
-        cls.app.get('/logout')
+    def tearDown(self):
+        DatabaseTest.tearDown(self)
+        self.app.get('/logout')
