@@ -26,6 +26,7 @@ def is_public(to_decorate):
     
     return decorator(to_decorate)
 
+
 if app.config['DEBUG']:
     # safeguard against exposing this route in production
     @app.route('/login-for-testing-only')
@@ -36,9 +37,7 @@ if app.config['DEBUG']:
                 email='test@test.com',
             )
             login_user(user)
-    print 'adding login-for-testing-only'
-else:
-    print 'not adding login-for-testing-only'
+
 
 @app.before_request
 def default_to_private():
@@ -48,12 +47,12 @@ def default_to_private():
     """
     if current_user.is_authenticated():
         return
-
+    
     if (request.endpoint and
         not 'static' in request.endpoint and
         not getattr(app.view_functions[request.endpoint], 'is_public', False)
     ):
-        return redirect(url_for('login'))
+        return redirect(url_for('login', next=url_for(request.endpoint)))
 
 
 @login_manager.user_loader
@@ -61,7 +60,7 @@ def load_user(user_id):
     """
     Callback required by Flask-Login.  Gets the User object from the database.
     """
-    print 'calling load_user on user_id=%d' % user_id
+    print 'calling load_user on user_id=%s' % user_id
     db_session = db.get_session()
     user = User.get(db_session, user_id)
     return user
