@@ -54,6 +54,7 @@ class Job(db.WikimetricsBase):
     #def run(self):
         #pass
     
+    
     @classmethod
     def from_db(cls, job_id):
         """

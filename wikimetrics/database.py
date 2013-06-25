@@ -17,6 +17,13 @@ __all__ = [
 ]
 
 
+class SerializableBase(object):
+    
+    def _asdict(self):
+        """ simplejson (used by flask.jsonify) looks for a method with this name """
+        return {c.name : getattr(self, c.name) for c in self.__table__.columns}
+
+
 class Database(object):
     """
     Basically a collection of all database related objects and methods.
@@ -35,8 +42,8 @@ class Database(object):
         Initializes the empty engines and sessionmakers that support
         `get_session` and `get_mw_session`.
         """
-        self.WikimetricsBase = declarative_base()
-        self.MediawikiBase = declarative_base()
+        self.WikimetricsBase = declarative_base(cls=SerializableBase)
+        self.MediawikiBase = declarative_base(cls=SerializableBase)
 
         self.wikimetrics_engine = None
         self.wikimetrics_sessionmaker = None

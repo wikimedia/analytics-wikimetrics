@@ -23,7 +23,6 @@ class DatabaseTest(unittest.TestCase):
         
         # create basic test records for non-mediawiki tests
         self.session = db.get_session()
-        self.mwSession = db.get_mw_session('enwiki')
         
         job = Job()
         user = User(username='Dan')
@@ -34,14 +33,17 @@ class DatabaseTest(unittest.TestCase):
         andrew = WikiUser(mediawiki_username='Andrew', mediawiki_userid=3, project='enwiki')
         diederik = WikiUser(mediawiki_username='Diederik', mediawiki_userid=4, project='enwiki')
         
-        test = Cohort(name='test')
-        self.session.add_all([job, user, dan, evan, andrew, diederik, test])
+        test_cohort = Cohort(name='test', enabled=True, public=True)
+        private_cohort = Cohort(name='test_private', enabled=True, public=False)
+        disabled_cohort = Cohort(name='test_disabled', enabled=False, public=True)
+        self.session.add_all([job, user, dan, evan, andrew, diederik,
+            test_cohort, private_cohort, disabled_cohort])
         self.session.commit()
         
-        dan_in_test = CohortWikiUser(wiki_user_id=dan.id, cohort_id=test.id)
-        evan_in_test = CohortWikiUser(wiki_user_id=evan.id, cohort_id=test.id)
-        andrew_in_test = CohortWikiUser(wiki_user_id=andrew.id, cohort_id=test.id)
-        diederik_in_test = CohortWikiUser(wiki_user_id=diederik.id, cohort_id=test.id)
+        dan_in_test = CohortWikiUser(wiki_user_id=dan.id, cohort_id=test_cohort.id)
+        evan_in_test = CohortWikiUser(wiki_user_id=evan.id, cohort_id=test_cohort.id)
+        andrew_in_test = CohortWikiUser(wiki_user_id=andrew.id, cohort_id=test_cohort.id)
+        diederik_in_test = CohortWikiUser(wiki_user_id=diederik.id, cohort_id=test_cohort.id)
         self.session.add_all([
             dan_in_test,
             evan_in_test,
@@ -49,6 +51,22 @@ class DatabaseTest(unittest.TestCase):
             diederik_in_test
         ])
         self.session.commit()
+        
+        # add jobs
+        job_created = Job(user_id=2, classpath='', status=JobStatus.CREATED, result_id=None)
+        job_started = Job(user_id=2, classpath='', status=JobStatus.STARTED, result_id=None)
+        job_started2 = Job(user_id=2, classpath='', status=JobStatus.STARTED, result_id=None)
+        job_finished = Job(user_id=2, classpath='', status=JobStatus.FINISHED, result_id=None)
+        self.session.add_all([
+            job_created,
+            job_started,
+            job_started2,
+            job_finished
+        ])
+        self.session.commit()
+        
+        
+        self.mwSession = db.get_mw_session('enwiki')
         
         # create records for enwiki tests
         self.mwSession.add(MediawikiUser(user_id=1, user_name='Dan'))

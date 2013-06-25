@@ -35,14 +35,14 @@ if app.config['DEBUG']:
         if app.config['DEBUG']:
             db_session = db.get_session()
             user = db_session.query(User).get(2)
-            if user is None: 
+            if user is None:
                 user = User(
                     id=2,
                     email='test@test.com',
                 )
                 db_session.add(user)
                 db_session.commit()
-            user.login(db_session) 
+            user.login(db_session)
             login_user(user)
             return ''
 

@@ -24,7 +24,7 @@ class TestMappings(DatabaseTest):
     def test_cohort(self):
         c = self.session.query(Cohort).get(1)
         assert_true(c.name == 'test')
-        assert_true(c.public is False)
+        assert_true(c.public is True)
     
     def test_cohort_wikiuser(self):
         cwu = self.session.query(CohortWikiUser).get(1)
