@@ -12,7 +12,7 @@ def metrics_index():
     """
     Renders a page with a list of all metrics.
     """
-    return jsonify(metric_classes.keys())
+    return jsonify(metrics=metric_classes.keys())
 
 
 @app.route('/metrics/configure/<string:name>', methods=['GET', 'POST'])

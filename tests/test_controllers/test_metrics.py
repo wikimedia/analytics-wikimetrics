@@ -1,3 +1,4 @@
+import json
 from nose.tools import *
 from tests.fixtures import *
 
@@ -11,9 +12,9 @@ class TestMetricsController(WebTest):
             200,
             '/metrics should return OK'
         )
-        assert_equal(
-            response.data,
-            """[('Metric', <class 'wikimetrics.metrics.metric.Metric'>), ('NamespaceEdits', <class 'wikimetrics.metrics.namespace_edits.NamespaceEdits'>), ('RandomMetric', <class 'wikimetrics.metrics.dummy.RandomMetric'>), ('RevertRate', <class 'wikimetrics.metrics.revert_rate.RevertRate'>)]""",
+        metrics_dictionary = json.loads(response.data)
+        assert_true(
+            'BytesAdded' in metrics_dictionary['metrics'],
             '/metrics should get this temporary, raw list of available metrics, response.data:\n{0}'\
                 .format(response.data)
         )
