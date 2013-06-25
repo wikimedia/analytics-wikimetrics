@@ -16,43 +16,33 @@ class TestJobsController(WebTest):
             '/jobs should get the list of jobs for the current user'
         )
     
-    def test_list(self):
+    def test_list_started(self):
         response = self.app.get('/jobs/list', follow_redirects=True)
-        expected = """{
-  "jobs": [
-    {
-      "status": "CREATED",
-      "classpath": "",
-      "user_id": 2,
-      "id": 2,
-      "result_id": null
-    },
-    {
-      "status": "STARTED",
-      "classpath": "",
-      "user_id": 2,
-      "id": 3,
-      "result_id": null
-    },
-    {
-      "status": "STARTED",
-      "classpath": "",
-      "user_id": 2,
-      "id": 4,
-      "result_id": null
-    },
-    {
-      "status": "FINISHED",
-      "classpath": "",
-      "user_id": 2,
-      "id": 5,
-      "result_id": null
-    }
-  ]
-}"""
+        parsed = json.loads(response.data)
         assert_equal(
-            response.data,
-            expected,
+            len(filter(lambda j : j['status'] == 'STARTED', parsed['jobs'])),
+            2,
+            '/jobs/list should return a list of job objects, but instead returned:\n{0}'\
+                .format(response.data)
+        )
+        
+    def test_list_created(self):
+        response = self.app.get('/jobs/list', follow_redirects=True)
+        parsed = json.loads(response.data)
+        assert_equal(
+            len(filter(lambda j : j['status'] == 'CREATED', parsed['jobs'])),
+            1,
+            '/jobs/list should return a list of job objects, but instead returned:\n{0}'\
+                .format(response.data)
+        )
+        
+        
+    def test_list_finished(self):
+        response = self.app.get('/jobs/list', follow_redirects=True)
+        parsed = json.loads(response.data)
+        assert_equal(
+            len(filter(lambda j : j['status'] == 'FINISHED', parsed['jobs'])),
+            1,
             '/jobs/list should return a list of job objects, but instead returned:\n{0}'\
                 .format(response.data)
         )

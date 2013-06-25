@@ -1,6 +1,6 @@
 import inspect
 from flask import render_template, redirect, request, jsonify
-from ..configurables import app
+from ..configurables import app, db
 from .. import metrics
 
 
@@ -13,6 +13,31 @@ def metrics_index():
     Renders a page with a list of all metrics.
     """
     return jsonify(metrics=metric_classes.keys())
+
+
+@app.route('/metrics/list/')
+def metrics_list():
+    """
+    Returns a JSON response of the format:
+    {'metrics' : [
+            {
+                'id'          : 1,
+                'name'        : MetricClassName
+                'label'       : 'Label',
+                'description' : 'This is a long description of what the metric does'
+            }
+        ]
+    }
+    """
+    records = []
+    for name, metric in inspect.getmembers(metrics, inspect.isclass):
+        records.append({
+            'name' : name,
+            'id'   : metric.id,
+            'label': metric.label,
+            'description' : metric.description
+        })
+    return jsonify(metrics=records)
 
 
 @app.route('/metrics/configure/<string:name>', methods=['GET', 'POST'])
@@ -39,3 +64,5 @@ def metrics_configure(name):
         action=request.url,
         submit_text='Save Configuration',
     )
+    
+#@app.route('')

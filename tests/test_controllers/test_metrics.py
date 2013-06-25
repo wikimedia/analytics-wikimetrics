@@ -23,3 +23,11 @@ class TestMetricsController(WebTest):
             -1,
             '/metrics should get the list of metrics'
         )
+    
+    def test_list(self):
+        response = self.app.get('/metrics/list/', follow_redirects=True)
+        parsed = json.loads(response.data)
+        assert_equal(
+            len(filter(lambda m : m['name'] == 'BytesAdded', parsed['metrics'])),
+            1,
+            'test. got: {0}'.format(parsed))
