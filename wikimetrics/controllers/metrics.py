@@ -15,7 +15,7 @@ def metrics_index():
     return jsonify(metric_classes.keys())
 
 
-@app.route('/metrics/configure/<string:name>')
+@app.route('/metrics/configure/<string:name>', methods=['GET', 'POST'])
 def metrics_configure(name):
     """
     Generic endpoint that renders an html form for a specific metric
@@ -24,7 +24,18 @@ def metrics_configure(name):
         name    : the name of the wikimetrics.metrics.Metric subclass desired
     
     Returns:
-        an html form that can be used to configure the specified metric
+        if validation passes or is a get, the form to edit the metric
+        if validation fails, the form with the relevant errors
     """
-    metric_form = metric_classes[name]()
-    return render_template('form.html', form=metric_form)
+    if request.method == 'POST':
+        metric_form = metric_classes[name](request.form)
+        metric_form.validate()
+    elif request.method == 'GET':
+        metric_form = metric_classes[name]()
+    
+    return render_template('form.html',
+        form=metric_form,
+        form_class='async',
+        action=request.url,
+        submit_text='Save Configuration',
+    )

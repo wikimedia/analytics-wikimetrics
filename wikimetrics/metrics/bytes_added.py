@@ -1,4 +1,5 @@
 from metric import Metric
+from flask.ext import wtf
 
 __all__ = [
     'BytesAdded',
@@ -45,6 +46,15 @@ class BytesAdded(Metric):
         and r.rev_timestamp between [start] and [end]
         and r.rev_user in ([parametrized])
     """
+    
+    start_date      = wtf.DateField()
+    end_date        = wtf.DateField()
+    namespace       = wtf.IntegerField(default=0)
+    positive_total  = wtf.BooleanField(default=True)
+    negative_total  = wtf.BooleanField(default=True)
+    absolute_total  = wtf.BooleanField(default=True)
+    net_total       = wtf.BooleanField(default=True)
+    
     def __call__(self, user_ids, session):
         """
         Parameters:
