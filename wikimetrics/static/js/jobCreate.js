@@ -1,7 +1,9 @@
 $(document).ready(function(){
     var viewModel = {
         cohorts: ko.observableArray([
+            // /cohorts/list
             {id: 1, name: 'Algeria Summer Teahouse', description: '', wikiusers: [
+                // /cohorts/detail/id
                 {mediawiki_username: 'Dan', mediawiki_userid: 1, project: 'enwiki'},
                 {mediawiki_username: 'Evan', mediawiki_userid: 2, project: 'enwiki'},
                 {mediawiki_username: 'Andrew', mediawiki_userid: 3, project: 'enwiki'},
@@ -64,10 +66,12 @@ $(document).ready(function(){
             return true;
         },
 
+        // /metrics/list
         metrics: ko.observableArray([
-            {name: 'Edits', id: 1, description: 'Edits made in a specified Namespace.' },
-            {name: 'Bytes Added', id: 2, description: 'Bytes Added through edits.' },
-            {name: 'Revert Rate', id: 3, description: 'Rate of reverted edits.' },
+            {name: 'NamespaceEdits', label: 'Edits', id: 1, description: 'Edits made in a specified Namespace.' },
+            // form for each metric: /metrics/configure/name
+            {name: 'BytesAdded', label: 'Bytes Added', id: 2, description: 'Bytes Added through edits.' },
+            {name: 'RevertRate', label: 'Revert Rate', id: 3, description: 'Rate of reverted edits.' },
         ]),
         toggleMetric: function(metric){
             console.log(metric.selected());
