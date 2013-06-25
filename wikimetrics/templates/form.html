@@ -1,0 +1,17 @@
+<form method="{{method}}" action="{{action}}">
+    {{ form.hidden_tag() }}
+    {% for f in form if f.label.text != 'Csrf Token' %}
+        <div>
+            {{ f.label }}
+            {{ f }}
+            {% if f.errors %}
+                <ul>
+                    {% for e in f.errors %}
+                    <li>{{ e }}</li>
+                    {% endfor %}
+                </ul>
+            {% endif %}
+        </div>
+    {% endfor %}
+    <button class="{{submit_class}}" type="submit" />{{submit_text}}</button>
+</form>

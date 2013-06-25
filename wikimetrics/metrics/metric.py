@@ -1,9 +1,11 @@
+from flask.ext import wtf
+
 __all__ = [
     'Metric',
 ]
 
 
-class Metric(object):
+class Metric(wtf.Form):
     """
     This class is the parent of all Metric implementations.
     Child implementations should be callable and should take in users

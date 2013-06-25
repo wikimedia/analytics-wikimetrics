@@ -56,13 +56,14 @@ def default_to_private():
     if current_user.is_authenticated():
         return
     
+    print request.endpoint
     # TODO: look into more systematic way of finding whether
     # request is to status resource
     if (request.endpoint and
         not 'static' in request.endpoint and
         not getattr(app.view_functions[request.endpoint], 'is_public', False)
     ):
-        return redirect(url_for('login', next=url_for(request.endpoint)))
+        return redirect(url_for('login', next=request.url))
 
 
 @login_manager.user_loader
