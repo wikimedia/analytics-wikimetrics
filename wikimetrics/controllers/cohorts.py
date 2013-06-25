@@ -23,3 +23,10 @@ def cohorts_list():
     cohorts = db_session.query(Cohort)\
                .filter_by(enabled = True, public = True).all()
     return jsonify(cohorts = cohorts)
+
+@app.route('/cohorts/detail/<int:id>')
+def cohort_detail(id):
+    db_session = db.get_session()
+    cohort = db_session.query(Cohort)\
+               .filter_by(enabled = True, public = True).get(id)
+    return jsonify(cohort)

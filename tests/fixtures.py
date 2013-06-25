@@ -25,7 +25,8 @@ class DatabaseTest(unittest.TestCase):
         self.session = db.get_session()
         
         job = Job()
-        user = User(username='Dan')
+        dan_user = User(username='Dan')
+        evan_user = User(username='Evan')
         
         # create a test cohort
         dan = WikiUser(mediawiki_username='Dan', mediawiki_userid=1, project='enwiki')
@@ -33,13 +34,26 @@ class DatabaseTest(unittest.TestCase):
         andrew = WikiUser(mediawiki_username='Andrew', mediawiki_userid=3, project='enwiki')
         diederik = WikiUser(mediawiki_username='Diederik', mediawiki_userid=4, project='enwiki')
         
+        # create cohorts
         test_cohort = Cohort(name='test', enabled=True, public=True)
         private_cohort = Cohort(name='test_private', enabled=True, public=False)
+        private_cohort2 = Cohort(name='test_private2', enabled=True, public=False)
         disabled_cohort = Cohort(name='test_disabled', enabled=False, public=True)
-        self.session.add_all([job, user, dan, evan, andrew, diederik,
-            test_cohort, private_cohort, disabled_cohort])
+        self.session.add_all([
+            job,
+            dan_user,
+            evan_user,
+            dan,
+            evan,
+            andrew,
+            diederik,
+            test_cohort,
+            private_cohort,
+            private_cohort2,
+            disabled_cohort])
         self.session.commit()
         
+        # create cohort membership
         dan_in_test = CohortWikiUser(wiki_user_id=dan.id, cohort_id=test_cohort.id)
         evan_in_test = CohortWikiUser(wiki_user_id=evan.id, cohort_id=test_cohort.id)
         andrew_in_test = CohortWikiUser(wiki_user_id=andrew.id, cohort_id=test_cohort.id)
@@ -51,6 +65,25 @@ class DatabaseTest(unittest.TestCase):
             diederik_in_test
         ])
         self.session.commit()
+        
+        
+        # create cohort ownership
+        dan_owns_test = CohortUser(user_id=dan_user.id, cohort_id=test_cohort.id,
+            role=CohortUserRole.OWNER)
+        evan_owns_private = CohortUser(user_id=evan_user.id, cohort_id=private_cohort.id,
+            role=CohortUserRole.OWNER)
+        evan_owns_private2 = CohortUser(user_id=evan_user.id, cohort_id=private_cohort2.id,
+            role=CohortUserRole.OWNER)
+        dan_views_private2 = CohortUser(user_id=evan_user.id, cohort_id=private_cohort2.id,
+            role=CohortUserRole.VIEWER)
+        self.session.add_all([
+            dan_owns_test,
+            evan_owns_private,
+            evan_owns_private2,
+            dan_views_private2
+        ])
+        self.session.commit()
+        
         
         # add jobs
         job_created = Job(user_id=2, classpath='', status=JobStatus.CREATED, result_id=None)
@@ -94,6 +127,7 @@ class DatabaseTest(unittest.TestCase):
         
         self.session = db.get_session()
         self.session.query(CohortWikiUser).delete()
+        self.session.query(CohortUser).delete()
         self.session.query(WikiUser).delete()
         self.session.query(Cohort).delete()
         self.session.query(User).delete()

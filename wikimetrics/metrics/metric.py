@@ -11,6 +11,12 @@ class Metric(wtf.Form):
     Child implementations should be callable and should take in users
     and return the metric computation results for each user.
     """
+    
+    id          = None # unique identifier for client-side use
+    label       = None # this will be displayed as the title of the metric-specific
+                       # tab in the request form
+    description = None # basic description of what the metric does 
+    
     def __call__(self, user_ids, session):
         """
         This is the __call__ signature any child implementations should follow.
@@ -22,4 +28,6 @@ class Metric(wtf.Form):
         Returns:
             dictionary from user ids to the metric results.
         """
+        
+        
         return {user: None for user in user_ids}

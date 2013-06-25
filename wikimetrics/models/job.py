@@ -28,8 +28,8 @@ metric would be a `JobLeaf`, whereas any aggregator would be a `JobNode`
 
 
 class JobStatus(object):
-    CREATED = 'CREATED'
-    STARTED = 'STARTED'
+    CREATED  = 'CREATED'
+    STARTED  = 'STARTED'
     FINISHED = 'FINISHED'
 
 class Job(db.WikimetricsBase):
