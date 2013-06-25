@@ -12,7 +12,7 @@
         <ul class="unstyled" data-bind="foreach: cohorts">
             <li>
                 <label>
-                    <input type="checkbox" data-bind="click: $root.toggleCohort"/>
+                    <input type="checkbox" data-bind="checked: selected, click: $root.toggleCohort"/>
                     <span data-bind="text: name, attr: {title: description}"></span>
                 </label>
             </li>
@@ -33,7 +33,7 @@
         <div class="tab-content" data-bind="foreach: metrics">
             <div class="tab-pane" data-bind="attr: {id: tabId}">
                 <label data-bind="click: $root.toggleMetric">
-                    <input type="checkbox"/>
+                    <input type="checkbox" data-bind="checked: selected"/>
                     <span data-bind="text: 'compute ' + name, attr: {title: description}">
                     </span>
                 </label>
@@ -45,7 +45,7 @@
     <div class="navbar-inner">
         <h3>Sample Result</h3>
     </div>
-    <div class="tabbable">
+    <div class="tabbable tabs-left">
         <ul class="nav nav-tabs" data-bind="foreach: request().responses">
             <li>
                 <a data-bind="attr: {href: tabIdSelector}, text: name"></a>
@@ -56,13 +56,13 @@
                 <table class="table-striped">
                     <thead>
                         <tr>
-                            <th>User Name</th>
-                            <th>User Id</th>
-                            <th>User Project</th>
-                            <th data-bind="text: metric().name"></th>
+                            <th>Name</th>
+                            <th>Id</th>
+                            <th>Project</th>
+                            <th data-bind="text: metric.name"></th>
                         </tr>
                     </thead>
-                    <tbody data-bind="foreach: wikiusers">
+                    <tbody data-bind="foreach: cohort.wikiusers">
                         <tr>
                             <td data-bind="text: mediawiki_username"></td>
                             <td data-bind="text: mediawiki_userid"></td>
