@@ -46,6 +46,11 @@ class BytesAdded(Metric):
         and r.rev_timestamp between [start] and [end]
         and r.rev_user in ([parametrized])
     """
+    show_in_ui  = True
+    id          = 'bytes-added'
+    label       = 'Bytes Added'
+    description = 'Compute different aggregations of the bytes contributed or removed from a\
+                   mediawiki project'
     
     start_date      = wtf.DateField()
     end_date        = wtf.DateField()

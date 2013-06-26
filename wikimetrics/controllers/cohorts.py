@@ -20,9 +20,10 @@ def cohorts_index():
 def cohorts_list():
     # TODO: add filtering by permission (this also needs db support)
     db_session = db.get_session()
-    cohorts = db_session.query(Cohort)\
+    cohorts = db_session.query(Cohort.id,Cohort.name,Cohort.description)\
                .join(CohortUser)\
                .join(User)\
+               .filter(User.id==current_user.id)\
                .filter(CohortUser.role.in_([CohortUserRole.OWNER,CohortUserRole.VIEWER]))\
                .filter(Cohort.enabled==True)\
                .all()

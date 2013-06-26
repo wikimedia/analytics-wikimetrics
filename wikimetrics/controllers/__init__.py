@@ -13,3 +13,4 @@ from authentication import *
 from metrics import *
 from cohorts import *
 from jobs import *
+from demo import *

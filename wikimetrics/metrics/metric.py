@@ -12,6 +12,7 @@ class Metric(wtf.Form):
     and return the metric computation results for each user.
     """
     
+    show_in_ui  = False
     id          = None # unique identifier for client-side use
     label       = None # this will be displayed as the title of the metric-specific
                        # tab in the request form

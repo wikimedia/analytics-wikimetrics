@@ -1,17 +1,21 @@
-<form class="{{form_class}}" method="POST" action="{{action}}">
+<form class="form-horizontal {{form_class}}" method="POST" action="{{action}}">
     {{ form.hidden_tag() }}
     {% for f in form if f.label.text != 'Csrf Token' %}
-        <div>
-            {{ f.label }}
-            {{ f }}
-            {% if f.errors %}
-                <ul>
-                    {% for e in f.errors %}
-                    <li>{{ e }}</li>
-                    {% endfor %}
-                </ul>
-            {% endif %}
+        <div class="control-group">
+            {{ f.label(class="control-label") }}
+            <div class="controls">
+                {{ f }}
+                {% if f.errors %}
+                    <ul class="unstyled">
+                        {% for e in f.errors %}
+                        <li class="text-error">{{ e }}</li>
+                        {% endfor %}
+                    </ul>
+                {% endif %}
+            </div>
         </div>
     {% endfor %}
-    <button class="btn btn-primary" type="submit" />{{submit_text}}</button>
+    <div class="form-actions">
+        <input class="btn btn-primary" type="submit" value="{{submit_text}}"/>
+    </div>
 </form>

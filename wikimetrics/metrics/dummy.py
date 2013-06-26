@@ -13,6 +13,12 @@ class RandomMetric(Metric):
     An instance of the class is callable and will return a random number for every
     user passed in.
     """
+    
+    show_in_ui  = False
+    id          = 'random'
+    label       = 'Random'
+    description = 'test metric, compute random numbers for all users in your cohort(s)'
+    
     def __call__(self, user_ids, session):
         """
         Parameters:

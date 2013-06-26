@@ -31,12 +31,13 @@ def metrics_list():
     """
     records = []
     for name, metric in inspect.getmembers(metrics, inspect.isclass):
-        records.append({
-            'name' : name,
-            'id'   : metric.id,
-            'label': metric.label,
-            'description' : metric.description
-        })
+        if metric.show_in_ui:
+            records.append({
+                'name' : name,
+                'id'   : metric.id,
+                'label': metric.label,
+                'description' : metric.description
+            })
     return jsonify(metrics=records)
 
 
@@ -64,5 +65,3 @@ def metrics_configure(name):
         action=request.url,
         submit_text='Save Configuration',
     )
-    
-#@app.route('')

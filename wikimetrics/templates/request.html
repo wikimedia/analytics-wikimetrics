@@ -26,17 +26,19 @@
     <div class="tabbable tabs-left">
         <ul class="nav nav-tabs" data-bind="foreach: metrics">
             <li>
-                <a data-bind="attr: {href: tabIdSelector}, text: name" data-toggle="tab">
+                <a data-bind="attr: {href: tabIdSelector}, text: label" data-toggle="tab">
                 </a>
             </li>
         </ul>
         <div class="tab-content" data-bind="foreach: metrics">
             <div class="tab-pane" data-bind="attr: {id: tabId}">
-                <label data-bind="click: $root.toggleMetric">
-                    <input type="checkbox" data-bind="checked: selected"/>
-                    <span data-bind="text: 'compute ' + name, attr: {title: description}">
+                <label>
+                    <input type="checkbox" data-bind="checked: selected, click: $root.toggleMetric"/>
+                    <span data-bind="text: description">
                     </span>
                 </label>
+                <div class="configure-metric-form" data-bind="attr: {id: tabId() + '-configure'}">
+                </div>
             </div>
         </div>
     </div>
@@ -59,7 +61,7 @@
                             <th>Name</th>
                             <th>Id</th>
                             <th>Project</th>
-                            <th data-bind="text: metric.name"></th>
+                            <th data-bind="text: metric.label"></th>
                         </tr>
                     </thead>
                     <tbody data-bind="foreach: cohort.wikiusers">

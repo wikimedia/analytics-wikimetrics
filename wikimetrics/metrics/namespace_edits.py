@@ -1,5 +1,7 @@
+from flask.ext import wtf
 from sqlalchemy import func
 from metric import Metric
+from bytes_added import BytesAdded
 from wikimetrics.models import *
 import logging
 
@@ -10,7 +12,7 @@ __all__ = [
 ]
 
 
-class NamespaceEdits(Metric):
+class NamespaceEdits(BytesAdded):
     """
     This class implements namespace edits logic.
     An instance of the class is callable and will compute the number of edits
@@ -27,6 +29,13 @@ class NamespaceEdits(Metric):
         and p.page_namespace in ([parameterized])
       group by rev_user
     """
+    
+    show_in_ui  = False
+    id          = 'edits'
+    label       = 'Edits'
+    description = 'Compute the number of edits in a specific namespace of a mediawiki project'
+    
+    namespace = wtf.IntegerField(default=0)
     
     def __init__(self, namespaces=[0]):
         """

@@ -1,3 +1,4 @@
+from flask.ext import wtf
 from metric import Metric
 
 __all__ = [
@@ -29,6 +30,16 @@ class RevertRate(Metric):
             )
       group by rev_user
     """
+    
+    show_in_ui  = True
+    id          = 'revert-rate'
+    label       = 'Revert Rate'
+    description = 'Compute the number of reverted edits in a mediawiki project'
+    
+    start_date  = wtf.DateField()
+    end_date    = wtf.DateField()
+    #namespace   = wtf.IntegerField(default=0)
+    
     def __call__(self, user_ids, session):
         """
         Parameters:
