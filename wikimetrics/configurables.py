@@ -73,7 +73,6 @@ def config_db(args):
 
 
 def config_celery(args):
-    # TODO: move this into wikimetrics without breaking celery
     from celery import Celery
     
     # create and configure celery app

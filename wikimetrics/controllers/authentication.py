@@ -57,8 +57,7 @@ def default_to_private():
         return
     
     print request.endpoint
-    # TODO: look into more systematic way of finding whether
-    # request is to status resource
+    # TODO: put static resources in a new Blueprint
     if (request.endpoint and
         not 'static' in request.endpoint and
         not getattr(app.view_functions[request.endpoint], 'is_public', False)
@@ -123,7 +122,6 @@ def auth_google(resp):
     """
     access_token = resp['access_token'] or request.args.get('code')
     if access_token:
-        # TODO: is it better to store this in the database?
         session['access_token'] = access_token, ''
         r = requests.get(app.config['GOOGLE_USERINFO_URI'], headers={
             'Authorization': 'OAuth ' + access_token

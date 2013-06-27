@@ -1,5 +1,6 @@
 $(document).ready(function(){
-    // set up async handlers for any async forms TODO: replace with a decent plugin
+    // set up async handlers for any async forms
+    // TODO: replace with a decent plugin
     $(document).on('submit', 'form.async', function(e){
         e.preventDefault();
         form = $(this);

@@ -21,7 +21,6 @@ def celery_is_alive():
 
 
 #def setUp():
-    ## TODO configure celery verbosity
     #celery_out = open(devnull, "w")
     #celery_cmd = ['wikimetrics', 'celery']
     #global celery_proc

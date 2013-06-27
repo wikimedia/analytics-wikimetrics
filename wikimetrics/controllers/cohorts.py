@@ -18,7 +18,6 @@ def cohorts_index():
 
 @app.route('/cohorts/list/')
 def cohorts_list():
-    # TODO: add filtering by permission (this also needs db support)
     db_session = db.get_session()
     cohorts = db_session.query(Cohort.id,Cohort.name,Cohort.description)\
                .join(CohortUser)\

@@ -64,6 +64,4 @@ class NamespaceEdits(Metric):
             .group_by(Revision.rev_user)
             .all()
         )
-        # TODO: make sure we return zero when user has no revisions
-        # we could solve this with temporary tables in the future
         return {user_id: revisions_by_user.get(user_id, 0) for user_id in user_ids}
