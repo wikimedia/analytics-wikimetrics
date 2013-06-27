@@ -79,7 +79,7 @@ $(document).ready(function(){
         ko.utils.arrayForEach(request.metrics(), function(metric){
             ko.utils.arrayForEach(request.cohorts(), function(cohort){
                 response = {
-                    name: metric.name + ' - ' + cohort.name,
+                    name: metric.label + ' - ' + cohort.name,
                     cohort: cohort,
                     metric: metric,
                     tabId: 'response-to-' + metric.id + '-for-' + cohort.id,
