@@ -12,7 +12,7 @@ __all__ = [
 ]
 
 """
-We use a tree-based job model to represent the relationships 
+We use a tree-based job model to represent the relationships
 between tasks which have a partial ordering, but which should
 still be loosely coupled or asynchronous.  For example, if we want
 to compute the average of some metric for a cohort, it makes sense
@@ -32,6 +32,7 @@ class JobStatus(object):
     STARTED  = 'STARTED'
     FINISHED = 'FINISHED'
 
+
 class Job(db.WikimetricsBase):
     """
     Base class for all jobs.  Uses sqlalchemy.declarative to
@@ -48,12 +49,10 @@ class Job(db.WikimetricsBase):
     status = Column(String(100), default=JobStatus.CREATED)
     result_id = Column(String(50))
     
-    
     # FIXME: calling ConcatMetricsJob().run uses this run instead of the JobNode one
     #@queue.task
     #def run(self):
         #pass
-    
     
     @classmethod
     def from_db(cls, job_id):
@@ -86,6 +85,7 @@ class Job(db.WikimetricsBase):
         meat of the task.  The return type can be anything"""
         pass
 
+
 class JobNode(Job):
     
     def child_tasks(self):
@@ -99,6 +99,7 @@ class JobNode(Job):
     @queue.task
     def finish(self):
         pass
+
 
 class JobLeaf(Job):
     pass

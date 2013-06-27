@@ -9,6 +9,7 @@ __all__ = [
     'Cohort',
 ]
 
+
 class Cohort(db.WikimetricsBase):
     """
     This class represents a list of users along with the project
@@ -16,7 +17,7 @@ class Cohort(db.WikimetricsBase):
     It maps to the cohort table  which keeps metadata about the cohort,
     however it is also home to a variety of conveneince functions
     for interacting with the actual list of users in that cohort.
-      
+    
     Importantly, there is no guarantee that a cohort consist of users
     from a single project.  To get the set of all users associated with
     a single project within a cohort use Cohort.group_by_project.
@@ -33,10 +34,8 @@ class Cohort(db.WikimetricsBase):
     enabled = Column(Boolean)
     public = Column(Boolean, default=False)
     
-    
     def __repr__(self):
         return '<Cohort("{0}")>'.format(self.id)
-    
     
     def __iter__(self):
         """ returns list of user_ids """
@@ -47,7 +46,6 @@ class Cohort(db.WikimetricsBase):
             .filter(CohortWikiUser.cohort_id == self.id)\
             .all()
         return (t[0] for t in tuples_with_ids)
-    
     
     def group_by_project(self):
         """

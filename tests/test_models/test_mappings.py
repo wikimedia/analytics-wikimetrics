@@ -1,6 +1,20 @@
-from nose.tools import *
-from wikimetrics.models import *
-from tests.fixtures import *
+from nose.tools import assert_true, assert_equals, assert_equal
+from wikimetrics.models import (
+    Job,
+    JobStatus,
+    User,
+    UserRole,
+    Cohort,
+    CohortUser,
+    CohortUserRole,
+    CohortWikiUser,
+    WikiUser,
+    Logging,
+    Page,
+    MediawikiUser,
+    Revision,
+)
+from tests.fixtures import DatabaseTest
 
 
 class TestMappings(DatabaseTest):

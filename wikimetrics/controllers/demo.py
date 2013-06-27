@@ -1,11 +1,17 @@
 from flask import render_template, redirect, request, jsonify
 from flask.ext.login import current_user
 from ..configurables import app, db
-from ..models import *
+from ..models import (
+    WikiUser,
+    User,
+    MediawikiUser,
+    Cohort,
+    CohortUser,
+    CohortUserRole,
+    CohortWikiUser,
+)
 import logging
-
 logger = logging.getLogger(__name__)
-
 
 
 # TODO: this is an obvious serious security flaw.  Either come up with a way to
@@ -14,7 +20,6 @@ logger = logging.getLogger(__name__)
 def add_demo_cohorts():
     db_session = db.get_session()
     user = db_session.query(User).filter_by(email=current_user.email).one()
-    
     
     db_session.query(CohortUser).delete()
     db_session.query(CohortWikiUser).delete()
@@ -140,7 +145,6 @@ def add_demo_cohorts():
     db_session.add(CohortWikiUser(wiki_user_id=33, cohort_id=11))
     db_session.add(CohortWikiUser(wiki_user_id=34, cohort_id=11))
     db_session.add(CohortWikiUser(wiki_user_id=35, cohort_id=11))
-    
     
     db_session.commit()
     return 'OK, wiped out the database and added cohorts only for ' + current_user.email

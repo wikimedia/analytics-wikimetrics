@@ -6,11 +6,13 @@ __all__ = [
     'UserRole',
 ]
 
+
 class UserRole(object):
     ADMIN = 'ADMIN'
     USER_WITH_NDA = 'USER_WITH_NDA'
     USER_WITHOUT_NDA = 'USER_WITHOUT_NDA'
     GUEST = 'GUEST'
+
 
 class User(db.WikimetricsBase):
     """

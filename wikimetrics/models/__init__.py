@@ -8,3 +8,6 @@ from metric_job import *
 from multi_project_metric_job import *
 from user import *
 from wikiuser import *
+
+# ignore flake8 because of F403 violation
+# flake8: noqa

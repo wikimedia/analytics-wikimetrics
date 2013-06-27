@@ -31,7 +31,6 @@ class Database(object):
     You should not instantiate this yourself, just do `from .configurables import db`
     """
     
-    
     def __init__(self):
         """
         Initializes the config object (using Flask's Config class).
@@ -51,7 +50,6 @@ class Database(object):
         self.mediawiki_engines = {}
         self.mediawiki_sessionmakers = {}
         self.project_host_map = self.get_project_host_map()
-    
     
     def get_session(self):
         """
@@ -75,13 +73,12 @@ class Database(object):
         
         return self.wikimetrics_sessionmaker()
     
-    
     def get_mw_session(self, project):
         """
         Based on the mediawiki project passed in, create a sqlalchemy session.
         
         Parameters:
-            project : string name of the mediawiki project (for example: enwiki, commonswiki, arwiki)
+            project : string name of the mediawiki project (for example: enwiki, arwiki)
         
         Returns:
             new sqlalchemy session connected to the appropriate database.  As an optimization,
@@ -99,13 +96,12 @@ class Database(object):
             self.mediawiki_sessionmakers[project] = project_sessionmaker
             return project_sessionmaker()
     
-    
     def get_mw_engine(self, project):
         """
         Based on the mediawiki project passed in, create a sqlalchemy engine.
         
         Parameters:
-            project : string name of the mediawiki project (for example: enwiki, commonswiki, arwiki)
+            project : string name of the mediawiki project (for example: enwiki, arwiki)
         
         Returns:
             new or cached sqlalchemy engine connected to the appropriate database.
@@ -119,7 +115,6 @@ class Database(object):
             )
             self.mediawiki_engines[project] = engine
             return engine
-    
     
     def get_project_host_map(self, usecache=True):
         """
@@ -145,5 +140,3 @@ class Database(object):
             project_host_map = json.load(open(cache_name))
         
         return project_host_map
-
-

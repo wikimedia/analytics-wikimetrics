@@ -1,5 +1,5 @@
 __test__ = False
-from nose.tools import *
+from nose.tools import assert_not_equals
 from tests.fixtures import QueueTest
 from wikimetrics.models import MetricJob
 from wikimetrics.metrics import RandomMetric
@@ -12,7 +12,8 @@ class AsyncTaskTest(QueueTest):
         job = MetricJob(metric, [1, 2], 'enwiki')
         async_result = job.run.delay(job)
         sync_result = async_result.get()
-        assert_true(
-            sync_result[1] is not None,
+        assert_not_equals(
+            sync_result[1],
+            None,
             'task did not run on celery queue'
         )

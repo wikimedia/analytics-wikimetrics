@@ -3,8 +3,8 @@ from flask.ext.login import current_user
 from ..configurables import app, db
 from ..models import Job
 import logging
-
 logger = logging.getLogger(__name__)
+
 
 @app.route('/jobs/')
 def jobs_index():
@@ -27,5 +27,5 @@ def jobs_request():
 def jobs_list():
     db_session = db.get_session()
     jobs = db_session.query(Job)\
-               .filter_by(user_id=current_user.id).all()
-    return jsonify(jobs = jobs)
+        .filter_by(user_id=current_user.id).all()
+    return jsonify(jobs=jobs)

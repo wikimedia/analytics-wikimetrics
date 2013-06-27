@@ -1,4 +1,4 @@
-from nose.tools import *
+from nose.tools import assert_true
 from tests.fixtures import DatabaseTest, QueueDatabaseTest
 
 from wikimetrics.metrics import NamespaceEdits

@@ -5,6 +5,7 @@ __all__ = [
     'WikiUser',
 ]
 
+
 class WikiUser(db.WikimetricsBase):
     """
     This class represents mediawiki users which compose
@@ -13,7 +14,6 @@ class WikiUser(db.WikimetricsBase):
     This class is mapped to the wiki_user table using
     sqlalchemy.declarative
     """
-    
     
     __tablename__ = 'wiki_user'
     

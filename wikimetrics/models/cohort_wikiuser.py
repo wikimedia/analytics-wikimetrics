@@ -5,6 +5,7 @@ __all__ = [
     'CohortWikiUser',
 ]
 
+
 class CohortWikiUser(db.WikimetricsBase):
     """
     Represents the join table between `cohort` and `wiki_user`
@@ -19,4 +20,3 @@ class CohortWikiUser(db.WikimetricsBase):
     
     def __repr__(self):
         return '<CohortWikiUser("{0}")>'.format(self.id)
-

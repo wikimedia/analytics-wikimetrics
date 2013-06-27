@@ -1,5 +1,5 @@
-from nose.tools import *
-from tests.fixtures import *
+from nose.tools import assert_true, assert_equal
+from tests.fixtures import WebTest
 import json
 from collections import OrderedDict
 import logging
@@ -22,27 +22,26 @@ class TestJobsController(WebTest):
         assert_equal(
             len(filter(lambda j : j['status'] == 'STARTED', parsed['jobs'])),
             2,
-            '/jobs/list should return a list of job objects, but instead returned:\n{0}'\
-                .format(response.data)
+            '/jobs/list should return a list of job objects, '
+            'but instead returned:\n{0}'.format(response.data)
         )
-        
+    
     def test_list_created(self):
         response = self.app.get('/jobs/list', follow_redirects=True)
         parsed = json.loads(response.data)
         assert_equal(
             len(filter(lambda j : j['status'] == 'CREATED', parsed['jobs'])),
             1,
-            '/jobs/list should return a list of job objects, but instead returned:\n{0}'\
-                .format(response.data)
+            '/jobs/list should return a list of job objects, '
+            'but instead returned:\n{0}'.format(response.data)
         )
-        
-        
+    
     def test_list_finished(self):
         response = self.app.get('/jobs/list', follow_redirects=True)
         parsed = json.loads(response.data)
         assert_equal(
             len(filter(lambda j : j['status'] == 'FINISHED', parsed['jobs'])),
             1,
-            '/jobs/list should return a list of job objects, but instead returned:\n{0}'\
-                .format(response.data)
+            '/jobs/list should return a list of job objects,'
+            'but instead returned:\n{0}'.format(response.data)
         )

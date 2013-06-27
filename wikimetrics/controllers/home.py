@@ -1,6 +1,5 @@
-from flask import render_template, redirect, request
+from flask import render_template
 from ..configurables import app
-from ..models import *
 from authentication import is_public
 
 

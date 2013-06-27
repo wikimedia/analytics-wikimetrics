@@ -1,21 +1,10 @@
 import pprint
-import logging
 import argparse
 import sys
 import imp
 import os
-
-
+import logging
 logger = logging.getLogger(__name__)
-
-
-__all__ = [
-    'app',
-    'db',
-    'google',
-    'login_manager',
-    'queue',
-]
 
 
 def create_object_from_config_file(path):
@@ -82,9 +71,3 @@ def config_celery(args):
     queue.config_from_object(config_object)
     if args.override_config:
         queue.config_from_object(args.override_config)
-
-
-
-
-
-

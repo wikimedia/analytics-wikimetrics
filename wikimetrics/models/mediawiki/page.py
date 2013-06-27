@@ -5,17 +5,18 @@ __all__ = [
     'Page',
 ]
 
+
 class Page(db.MediawikiBase):
     __tablename__ = 'page'
     
     page_id = Column(Integer, primary_key=True)
     page_namespace = Column(Integer)
     page_title = Column(String(255))
-    page_restrictions = None#TODO: tinyblob NOT NULL,
-    page_counter = None#TODO: bigint(20) unsigned NOT NULL DEFAULT '0',
+    page_restrictions = None  # TODO: tinyblob NOT NULL,
+    page_counter = None  # TODO: bigint(20) unsigned NOT NULL DEFAULT '0',
     page_is_redirect = Column(Boolean)
     page_is_new = Column(Boolean)
-    page_random = None#TODO: double unsigned NOT NULL,
+    page_random = None  # TODO: double unsigned NOT NULL,
     page_touched = Column(DateTime)
     page_latest = Column(Integer)
     page_len = Column(Integer)

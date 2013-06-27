@@ -6,6 +6,7 @@ __all__ = [
     'MultiProjectMetricJob',
 ]
 
+
 class MultiProjectMetricJob(job.JobNode):
     """
     A job responsbile for running a single metric on a potentially
@@ -13,7 +14,6 @@ class MultiProjectMetricJob(job.JobNode):
     of grouping the cohort by project and calling a MetricJob on
     each project-homogenous list of user_ids.
     """
-    
     
     def __init__(self, cohort, metric):
         super(MultiProjectMetricJob, self).__init__()
@@ -25,8 +25,7 @@ class MultiProjectMetricJob(job.JobNode):
             session = db.get_mw_session(project)
             # note that user_ids is actually just an iterator
             self.children.append(MetricJob(metric, user_ids, session))
-
-
+    
     @queue.task
     def finish(query_results):
         return reduce(dict.update, query_results, {})

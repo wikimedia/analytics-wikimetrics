@@ -14,3 +14,6 @@ from metrics import *
 from cohorts import *
 from jobs import *
 from demo import *
+
+# ignore flake8 because of F403 violation
+# flake8: noqa

@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, ForeignKey, VARCHAR
+from sqlalchemy import Column, Integer, ForeignKey, String
 from wikimetrics.configurables import db
 
 __all__ = [
@@ -8,13 +8,14 @@ __all__ = [
 
 
 class CohortUserRole(object):
-    OWNER  = 'OWNER'
+    OWNER = 'OWNER'
     VIEWER = 'VIEWER'
+
 
 class CohortUser(db.WikimetricsBase):
     """
     Represents the join table between `cohort` and `user`
-    tables which stores cohort permissions.  Uses 
+    tables which stores cohort permissions.  Uses
     sqlalchemy.declarative to handle db mapping
     """
     
@@ -23,8 +24,7 @@ class CohortUser(db.WikimetricsBase):
     id        = Column(Integer, primary_key=True)
     user_id   = Column(Integer(50), ForeignKey('user.id'))
     cohort_id = Column(Integer(50), ForeignKey('cohort.id'))
-    role      = Column(VARCHAR(45))
+    role      = Column(String(45))
     
     def __repr__(self):
         return '<CohortUser("{0}")>'.format(self.id)
-

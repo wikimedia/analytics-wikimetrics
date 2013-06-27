@@ -1,6 +1,6 @@
 import json
-from nose.tools import *
-from tests.fixtures import *
+from nose.tools import assert_equal, assert_true
+from tests.fixtures import WebTest
 
 
 class TestMetricsController(WebTest):
@@ -15,8 +15,8 @@ class TestMetricsController(WebTest):
         metrics_dictionary = json.loads(response.data)
         assert_true(
             'BytesAdded' in metrics_dictionary['metrics'],
-            '/metrics should get this temporary, raw list of available metrics, response.data:\n{0}'\
-                .format(response.data)
+            '/metrics should get this temporary, raw list of available metrics, '
+            'response.data:\n{0}'.format(response.data)
         )
         assert_equal(
             response.data.find('log in with Google'),
@@ -30,4 +30,5 @@ class TestMetricsController(WebTest):
         assert_equal(
             len(filter(lambda m : m['name'] == 'BytesAdded', parsed['metrics'])),
             1,
-            'test. got: {0}'.format(parsed))
+            'test. got: {0}'.format(parsed)
+        )

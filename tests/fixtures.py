@@ -1,5 +1,4 @@
 import unittest
-from nose.tools import *
 
 __all__ = [
     'DatabaseTest',
@@ -10,7 +9,20 @@ __all__ = [
 
 
 from wikimetrics.configurables import db
-from wikimetrics.models import *
+from wikimetrics.models import (
+    User,
+    WikiUser,
+    Cohort,
+    CohortWikiUser,
+    CohortUserRole,
+    CohortUser,
+    Job,
+    JobStatus,
+    Revision,
+    Page,
+    MediawikiUser,
+    Logging,
+)
 
 
 class DatabaseTest(unittest.TestCase):
@@ -19,7 +31,6 @@ class DatabaseTest(unittest.TestCase):
         pass
     
     def setUp(self):
-        
         
         # create basic test records for non-mediawiki tests
         self.session = db.get_session()
@@ -66,16 +77,27 @@ class DatabaseTest(unittest.TestCase):
         ])
         self.session.commit()
         
-        
         # create cohort ownership
-        dan_owns_test = CohortUser(user_id=dan_user.id, cohort_id=test_cohort.id,
-            role=CohortUserRole.OWNER)
-        evan_owns_private = CohortUser(user_id=evan_user.id, cohort_id=private_cohort.id,
-            role=CohortUserRole.OWNER)
-        evan_owns_private2 = CohortUser(user_id=evan_user.id, cohort_id=private_cohort2.id,
-            role=CohortUserRole.OWNER)
-        dan_views_private2 = CohortUser(user_id=evan_user.id, cohort_id=private_cohort2.id,
-            role=CohortUserRole.VIEWER)
+        dan_owns_test = CohortUser(
+            user_id=dan_user.id,
+            cohort_id=test_cohort.id,
+            role=CohortUserRole.OWNER,
+        )
+        evan_owns_private = CohortUser(
+            user_id=evan_user.id,
+            cohort_id=private_cohort.id,
+            role=CohortUserRole.OWNER,
+        )
+        evan_owns_private2 = CohortUser(
+            user_id=evan_user.id,
+            cohort_id=private_cohort2.id,
+            role=CohortUserRole.OWNER,
+        )
+        dan_views_private2 = CohortUser(
+            user_id=evan_user.id,
+            cohort_id=private_cohort2.id,
+            role=CohortUserRole.VIEWER
+        )
         self.session.add_all([
             dan_owns_test,
             evan_owns_private,
@@ -83,7 +105,6 @@ class DatabaseTest(unittest.TestCase):
             dan_views_private2
         ])
         self.session.commit()
-        
         
         # add jobs
         job_created = Job(user_id=2, classpath='', status=JobStatus.CREATED, result_id=None)
@@ -97,7 +118,6 @@ class DatabaseTest(unittest.TestCase):
             job_finished
         ])
         self.session.commit()
-        
         
         self.mwSession = db.get_mw_session('enwiki')
         
@@ -140,20 +160,18 @@ class QueueTest(unittest.TestCase):
 
 
 class QueueDatabaseTest(QueueTest, DatabaseTest):
-
+    
     def setUp(self):
         QueueTest.setUp(self)
         DatabaseTest.setUp(self)
-
+    
     def tearDown(self):
         QueueTest.tearDown(self)
         DatabaseTest.tearDown(self)
 
 
 from wikimetrics.configurables import app
-from wikimetrics.models import User
 from flask.ext.login import login_user, logout_user, current_user
-
 
 
 class WebTest(DatabaseTest):

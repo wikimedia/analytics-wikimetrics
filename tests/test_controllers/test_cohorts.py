@@ -1,7 +1,7 @@
 import pprint
 import json
-from nose.tools import *
-from tests.fixtures import *
+from nose.tools import assert_equal
+from tests.fixtures import WebTest
 
 
 class TestCohortsController(WebTest):
@@ -19,10 +19,9 @@ class TestCohortsController(WebTest):
         assert_equal(
             len(filter(lambda c : c['name'] == 'test_private', parsed['cohorts'])),
             1,
-            '/cohorts/list should include a cohort named test_private, but instead returned:\n{0}'\
-                .format(response.data)
+            '/cohorts/list should include a cohort named test_private, '
+            'but instead returned:\n{0}'.format(response.data)
         )
-    
     
     def test_detail(self):
         response = self.app.get('/cohorts/detail/1', follow_redirects=True)
@@ -30,6 +29,6 @@ class TestCohortsController(WebTest):
         assert_equal(
             len(parsed['wikiusers']),
             4,
-            '/cohorts/detail/1 should return JSON object with key `wikiusers` for a list of length 4== `test`, '
-            'but instead returned: {0}'.format(parsed)
+            '/cohorts/detail/1 should return JSON object with key `wikiusers`'
+            'for a list of length 4== `test`, but instead returned: {0}'.format(parsed)
         )

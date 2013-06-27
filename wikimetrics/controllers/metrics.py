@@ -59,7 +59,8 @@ def metrics_configure(name):
     elif request.method == 'GET':
         metric_form = metric_classes[name]()
     
-    return render_template('form.html',
+    return render_template(
+        'form.html',
         form=metric_form,
         form_class='async',
         action=request.url,

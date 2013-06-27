@@ -19,14 +19,14 @@ def cohorts_index():
 @app.route('/cohorts/list/')
 def cohorts_list():
     db_session = db.get_session()
-    cohorts = db_session.query(Cohort.id,Cohort.name,Cohort.description)\
-               .join(CohortUser)\
-               .join(User)\
-               .filter(User.id==current_user.id)\
-               .filter(CohortUser.role.in_([CohortUserRole.OWNER,CohortUserRole.VIEWER]))\
-               .filter(Cohort.enabled==True)\
-               .all()
-    return jsonify(cohorts = cohorts)
+    cohorts = db_session.query(Cohort.id, Cohort.name, Cohort.description)\
+        .join(CohortUser)\
+        .join(User)\
+        .filter(User.id == current_user.id)\
+        .filter(CohortUser.role.in_([CohortUserRole.OWNER, CohortUserRole.VIEWER]))\
+        .filter(Cohort.enabled)\
+        .all()
+    return jsonify(cohorts=cohorts)
 
 
 @app.route('/cohorts/detail/<int:id>')
@@ -42,16 +42,16 @@ def cohort_detail(id):
     """
     db_session = db.get_session()
     cohort = db_session.query(Cohort)\
-               .join(CohortUser)\
-               .join(User)\
-               .filter(CohortUser.role.in_([CohortUserRole.OWNER,CohortUserRole.VIEWER]))\
-               .filter(Cohort.enabled == True)\
-               .filter(Cohort.id == id)\
-               .one()
+        .join(CohortUser)\
+        .join(User)\
+        .filter(CohortUser.role.in_([CohortUserRole.OWNER, CohortUserRole.VIEWER]))\
+        .filter(Cohort.enabled)\
+        .filter(Cohort.id == id)\
+        .one()
     wikiusers = db_session.query(WikiUser)\
-               .join(CohortWikiUser)\
-               .filter(CohortWikiUser.cohort_id == cohort.id)\
-               .all()
+        .join(CohortWikiUser)\
+        .filter(CohortWikiUser.cohort_id == cohort.id)\
+        .all()
     cohort_dict = cohort._asdict()
     cohort_dict['wikiusers'] = [wu._asdict() for wu in wikiusers]
     return jsonify(cohort_dict)

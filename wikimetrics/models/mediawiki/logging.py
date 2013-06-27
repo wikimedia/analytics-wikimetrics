@@ -5,6 +5,7 @@ __all__ = [
     'Logging',
 ]
 
+
 class Logging(db.MediawikiBase):
     __tablename__ = 'logging'
     

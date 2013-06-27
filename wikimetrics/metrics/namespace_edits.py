@@ -1,9 +1,8 @@
 from flask.ext import wtf
 from sqlalchemy import func
 from metric import Metric
-from wikimetrics.models import *
+from wikimetrics.models import Page, Revision
 import logging
-
 logger = logging.getLogger(__name__)
 
 __all__ = [

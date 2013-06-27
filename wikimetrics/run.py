@@ -6,7 +6,6 @@ from .configurables import config_web, config_db, config_celery
 logger = logging.getLogger(__name__)
 
 
-
 ##################################
 # RUN methods
 ##################################
@@ -29,15 +28,18 @@ def run_celery():
 
 
 def setup_parser():
-    parser = argparse.ArgumentParser('wikimetrics',
+    parser = argparse.ArgumentParser(
+        'wikimetrics',
         formatter_class=argparse.ArgumentDefaultsHelpFormatter,
     )
-    parser.add_argument('--override-config', '-o',
-        default = None,
+    parser.add_argument(
+        '--override-config', '-o',
+        default=None,
         help='override config file',
         dest='override_config',
     )
-    parser.add_argument('mode',
+    parser.add_argument(
+        'mode',
         nargs='?',
         default='import',
         choices=[
@@ -46,29 +48,33 @@ def setup_parser():
             'test',
             'celery',
         ],
-        help='web    : runs flask webserver'\
-            'test   : run nosetests'\
-            'celery : runs celery worker'
-            'import : configures everything and runs nothing',
+        # NOTE: flake made me format the strings this way, nothing could be uglier
+        help='''
+            web    : runs flask webserver...
+            test   : run nosetests...
+            celery : runs celery worker...
+            import : configures everything and runs nothing...
+        ''',
     )
-    parser.add_argument('--web-config', '-w',
+    parser.add_argument(
+        '--web-config', '-w',
         default='config/web_config.py',
         help='Flask config file',
         dest='web_config',
     )
-    parser.add_argument('--db-config', '-d',
+    parser.add_argument(
+        '--db-config', '-d',
         default='wikimetrics/config/db_config.py',
         help='Database config file',
         dest='db_config',
     )
-    parser.add_argument('--celery-config', '-c',
+    parser.add_argument(
+        '--celery-config', '-c',
         default='wikimetrics/config/celery_config.py',
         help='Celery config file',
         dest='celery_config',
     )
     return parser
-
-
 
 
 ##################################
@@ -84,7 +90,6 @@ logger.info('running with arguments:\n%s', pprint.pformat(vars(args)))
 config_web(args)
 config_db(args)
 config_celery(args)
-
 
 
 def main():

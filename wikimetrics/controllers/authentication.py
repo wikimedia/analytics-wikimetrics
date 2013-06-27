@@ -15,7 +15,6 @@ from ..configurables import app, db, login_manager, google
 from ..models import User, UserRole
 
 
-
 def is_public(to_decorate):
     """
     Marks a Flask endpoint as public (not requiring authentication).
@@ -58,9 +57,10 @@ def default_to_private():
     
     print request.endpoint
     # TODO: put static resources in a new Blueprint
-    if (request.endpoint and
-        not 'static' in request.endpoint and
-        not getattr(app.view_functions[request.endpoint], 'is_public', False)
+    if (
+            request.endpoint
+        and not 'static' in request.endpoint
+        and not getattr(app.view_functions[request.endpoint], 'is_public', False)
     ):
         return redirect(url_for('login', next=request.url))
 
@@ -134,7 +134,7 @@ def auth_google(resp):
             db_session = db.get_session()
             user = None
             try:
-                user = db_session.query(User).filter_by(google_id = id).one()
+                user = db_session.query(User).filter_by(google_id=id).one()
             
             except NoResultFound:
                 user = User(

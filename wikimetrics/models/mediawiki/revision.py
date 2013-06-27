@@ -5,6 +5,7 @@ __all__ = [
     'Revision',
 ]
 
+
 class Revision(db.MediawikiBase):
     __tablename__ = 'revision'
     
