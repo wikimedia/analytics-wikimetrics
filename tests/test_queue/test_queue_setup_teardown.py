@@ -1,4 +1,3 @@
-__test__ = False
 from nose.tools import assert_not_equals
 from tests.fixtures import QueueTest
 from wikimetrics.models import MetricJob

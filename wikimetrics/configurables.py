@@ -62,6 +62,7 @@ def config_db(args):
 
 
 def config_celery(args):
+    logger.info('about to import celery')
     from celery import Celery
     
     # create and configure celery app

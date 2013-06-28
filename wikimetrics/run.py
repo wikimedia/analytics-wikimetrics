@@ -1,5 +1,6 @@
 #!/usr/bin/python
 import argparse
+import sys
 import logging
 import pprint
 from .configurables import config_web, config_db, config_celery
@@ -24,7 +25,8 @@ def run_celery():
     from .models import ConcatMetricsJob
     from .models import MultiProjectMetricJob
     from .models import MetricJob
-    queue.start()
+    print 'queue.tasks: {0}'.format(pprint.pformat(queue.tasks))
+    queue.start(argv=['celery', 'worker'])
 
 
 def setup_parser():

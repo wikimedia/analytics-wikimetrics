@@ -30,7 +30,6 @@ class NamespaceEditsDatabaseTest(DatabaseTest):
 
 
 class NamesapceEditsFullTest(QueueDatabaseTest):
-    __test__ = False
     
     def test_namespace_edits(self):
         cohort = self.session.query(Cohort).filter_by(name='test').one()
