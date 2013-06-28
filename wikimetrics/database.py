@@ -18,6 +18,10 @@ __all__ = [
 
 
 class SerializableBase(object):
+    """
+    This is used as a base class for our declarative Bases.  It allows us to jsonify
+    instances of SQLAlchemy models more easily.
+    """
     
     def _asdict(self):
         """ simplejson (used by flask.jsonify) looks for a method with this name """
@@ -65,11 +69,10 @@ class Database(object):
                 self.config['WIKIMETRICS_ENGINE_URL'],
                 echo=self.config['SQL_ECHO'],
             )
-            self.wikimetrics_sessionmaker = sessionmaker(self.wikimetrics_engine)
-            
             # This import is necessary here so WikimetricsBase knows about all its children.
             import wikimetrics.models
-            self.WikimetricsBase.metadata.create_all(self.wikimetrics_engine)
+            self.WikimetricsBase.metadata.create_all(self.wikimetrics_engine, checkfirst=True)
+            self.wikimetrics_sessionmaker = sessionmaker(self.wikimetrics_engine)
         
         return self.wikimetrics_sessionmaker()
     
@@ -87,10 +90,9 @@ class Database(object):
         if project in self.mediawiki_sessionmakers:
             return self.mediawiki_sessionmakers[project]()
         else:
-            engine = self.get_mw_engine(project)
-            # TODO: this should probably check before calling create_all
             import wikimetrics.models.mediawiki
-            self.MediawikiBase.metadata.create_all(engine)
+            engine = self.get_mw_engine(project)
+            self.MediawikiBase.metadata.create_all(engine, checkfirst=True)
             
             project_sessionmaker = sessionmaker(engine)
             self.mediawiki_sessionmakers[project] = project_sessionmaker

@@ -12,9 +12,10 @@ class Metric(wtf.Form):
     This class is the parent of all Metric implementations.
     Child implementations should be callable and should take in users
     and return the metric computation results for each user.
-    This class and its children also act as WTForms form creators by inheriting
-    from wtf.Form.  It makes sure to only call the __init__ in wtf.Form when we
-    are inside a flask context.
+    In addition, Metric inherits from wtf.Form and therefore child implementations
+    can provide WTForms field definitions of their parametrization.
+    To enable user interaction with child implementations, Metric also defines some
+    class level properties that can be introspected by an interface.
     """
     
     show_in_ui  = False
