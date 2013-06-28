@@ -40,7 +40,7 @@ class NamespaceEdits(Metric):
         Parameters:
             namespaces  : list of namespaces to look for edits in
         """
-        super(Metric, self).__init__()
+        Metric.__init__(self)
         self.namespaces = namespaces
 
     def __call__(self, user_ids, session):

@@ -1,4 +1,5 @@
 from flask.ext import wtf
+from werkzeug.local import LocalStack
 
 __all__ = [
     'Metric',
@@ -10,6 +11,9 @@ class Metric(wtf.Form):
     This class is the parent of all Metric implementations.
     Child implementations should be callable and should take in users
     and return the metric computation results for each user.
+    This class and its children also act as WTForms form creators by inheriting
+    from wtf.Form.  It makes sure to only call the __init__ in wtf.Form when we
+    are inside a flask context.
     """
     
     show_in_ui  = False
@@ -31,3 +35,13 @@ class Metric(wtf.Form):
         """
         
         return {user: None for user in user_ids}
+    
+    def __init__(self):
+        print LocalStack().top
+        """
+        This __init__ calls its super __init__ (the one in wtf.Form) only when
+        it runs inside a flask context.  Otherwise, tests would not be able to
+        instantiate any Metrics.
+        """
+        if LocalStack().top is not None:
+            super(wtf.Form, self).__init__()
