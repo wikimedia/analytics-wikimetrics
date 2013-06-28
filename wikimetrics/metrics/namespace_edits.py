@@ -35,14 +35,6 @@ class NamespaceEdits(Metric):
     
     namespaces = wtf.IntegerField(default=0, description='0, 2, 4, etc.')
     
-    def __init__(self, namespaces=[0]):
-        """
-        Parameters:
-            namespaces  : list of namespaces to look for edits in
-        """
-        Metric.__init__(self)
-        self.namespaces = namespaces
-
     def __call__(self, user_ids, session):
         """
         Parameters:

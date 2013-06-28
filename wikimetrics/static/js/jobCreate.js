@@ -1,13 +1,29 @@
 $(document).ready(function(){
     // set up async handlers for any async forms
     // TODO: replace with a decent plugin
-    $(document).on('submit', 'form.async', function(e){
+    $(document).on('submit', 'form.metric-configuration', function(e){
         e.preventDefault();
-        form = $(this);
+        e.stopPropagation();
         
-        $.post(form.attr('action'), form.serialize(), function(htmlToReplaceWith){
-            form.replaceWith(htmlToReplaceWith);
-        });
+        var form = $(this);
+        
+        $.post(form.attr('action'), form.serialize())
+            .done(function(htmlToReplaceWith){
+                form.replaceWith(htmlToReplaceWith);
+                // if no validation errors, save the metric into the viewModel
+                if (form.find('ul.error-list').length === 0) {
+                    // save to viewModel.metrics
+                    // search in viewModel.metrics
+                    // set metric properties
+                }
+            })
+            .fail(function(){
+            });
+    });
+    
+    $(document).on('submit', 'form.job-request', function(e){
+        // same thing as metric-configuration, but passing viewModel.request().responses()
+        // as the data
     });
     
     var viewModel = {

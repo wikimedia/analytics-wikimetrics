@@ -62,7 +62,7 @@ def metrics_configure(name):
     return render_template(
         'form.html',
         form=metric_form,
-        form_class='async',
+        form_class='metric-configuration',
         action=request.url,
         submit_text='Save Configuration',
     )

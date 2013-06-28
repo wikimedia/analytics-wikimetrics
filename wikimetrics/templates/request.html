@@ -80,7 +80,9 @@
     </div>
 </div>
 <div class="form-actions">
-    <input class="btn btn-primary save pull-right" type="submit" value="Run Job"/>
+    <form class="job-request pull-right" action="/jobs/create/">
+        <input class="btn btn-primary save" type="submit" value="Run Job"/>
+    </form>
 </div>
 {% endblock %}
 

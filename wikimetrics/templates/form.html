@@ -6,7 +6,7 @@
             <div class="controls">
                 {{ f(placeholder=f.description) }}
                 {% if f.errors %}
-                    <ul class="unstyled">
+                    <ul class="unstyled error-list">
                         {% for e in f.errors %}
                         <li class="text-error">{{ e }}</li>
                         {% endfor %}

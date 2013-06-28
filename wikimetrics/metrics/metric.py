@@ -37,13 +37,13 @@ class Metric(wtf.Form):
         """
         return {user: None for user in user_ids}
     
-    def __init__(self):
+    def __init__(self, *args, **kwargs):
         """
         This __init__ handles the problem with calling wtf.Form.__init__()
         outside of a flask request context.
         """
         try:
-            wtf.Form.__init__(self)
+            wtf.Form.__init__(self, *args, **kwargs)
         except(RuntimeError):
             logger.debug(
                 'initializing Metric outside Flask context,'
