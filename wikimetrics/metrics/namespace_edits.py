@@ -33,7 +33,7 @@ class NamespaceEdits(Metric):
     label       = 'Edits'
     description = 'Compute the number of edits in a specific namespace of a mediawiki project'
     
-    namespace = wtf.IntegerField(default=0)
+    namespaces = wtf.IntegerField(default=0, description='0, 2, 4, etc.')
     
     def __init__(self, namespaces=[0]):
         """

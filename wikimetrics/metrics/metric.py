@@ -1,5 +1,6 @@
 from flask.ext import wtf
-from werkzeug.local import LocalStack
+import logging
+logger = logging.getLogger(__name__)
 
 __all__ = [
     'Metric',
@@ -33,15 +34,17 @@ class Metric(wtf.Form):
         Returns:
             dictionary from user ids to the metric results.
         """
-        
         return {user: None for user in user_ids}
     
     def __init__(self):
-        print LocalStack().top
         """
-        This __init__ calls its super __init__ (the one in wtf.Form) only when
-        it runs inside a flask context.  Otherwise, tests would not be able to
-        instantiate any Metrics.
+        This __init__ handles the problem with calling wtf.Form.__init__()
+        outside of a flask request context.
         """
-        if LocalStack().top is not None:
-            super(wtf.Form, self).__init__()
+        try:
+            wtf.Form.__init__(self)
+        except(RuntimeError):
+            logger.debug(
+                'initializing Metric outside Flask context,'
+                'most likely in testing or interactive mode'
+            )
