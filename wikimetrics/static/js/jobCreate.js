@@ -1,25 +1,6 @@
 $(document).ready(function(){
     // set up async handlers for any async forms
     // TODO: replace with a decent plugin
-    $(document).on('submit', 'form.metric-configuration', function(e){
-        e.preventDefault();
-        e.stopPropagation();
-        
-        var form = $(this);
-        
-        $.post(form.attr('action'), form.serialize())
-            .done(function(htmlToReplaceWith){
-                form.replaceWith(htmlToReplaceWith);
-                // if no validation errors, save the metric into the viewModel
-                if (form.find('ul.error-list').length === 0) {
-                    // save to viewModel.metrics
-                    // search in viewModel.metrics
-                    // set metric properties
-                }
-            })
-            .fail(function(){
-            });
-    });
     
     $(document).on('submit', 'form.job-request', function(e){
         // same thing as metric-configuration, but passing viewModel.request().responses()
@@ -41,24 +22,33 @@ $(document).ready(function(){
 
         metrics: ko.observableArray([]),
         toggleMetric: function(metric){
-            // TODO: this should work but... doesn't?
-            // if (!metric.configure().length) {
-            // metric.configure = ko.observable();
-            // ...
-            // metric.configure(configureForm);
-            
             
             if (metric.selected()){
-            // fetch form to edit metric with
+                // fetch form to configure metric with
                 $.get('/metrics/configure/' + metric.name, function(configureForm){
-                    $(metric.tabIdSelector() + '-configure').html(configureForm);
+                    metric.configure(configureForm);
                 }).fail(failure);
             } else {
-                $(metric.tabIdSelector() + '-configure').html('');
+                metric.configure('');
             }
             return true;
         },
 
+        saveMetricConfiguration: function(formElement){
+            var metric = ko.dataFor(formElement);
+            var form = $(formElement);
+            var data = ko.toJS(metric);
+            delete data.configure;
+            
+            $.ajax({
+                type: 'post',
+                url: form.attr('action'),
+                data: data,
+            }).done(function(htmlToReplaceWith){
+                    metric.configure(htmlToReplaceWith);
+            }).fail(function(){
+            });
+        },
     };
     
     // fetch this user's cohorts

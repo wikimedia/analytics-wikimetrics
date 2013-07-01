@@ -60,9 +60,7 @@ def metrics_configure(name):
         metric_form = metric_classes[name]()
     
     return render_template(
-        'form.html',
+        'form_for_metrics.html',
         form=metric_form,
-        form_class='metric-configuration',
         action=request.url,
-        submit_text='Save Configuration',
     )

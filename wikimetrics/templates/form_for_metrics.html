@@ -1,10 +1,14 @@
-<form class="form-horizontal {{form_class}}" method="POST" action="{{action}}">
+<form class="form-horizontal metric-configuration" method="POST" action="{{action}}" data-bind="submit: $root.saveMetricConfiguration">
     {{ form.hidden_tag() }}
     {% for f in form if f.label.text != 'Csrf Token' %}
         <div class="control-group">
             {{ f.label(class="control-label") }}
             <div class="controls">
-                {{ f(placeholder=f.description) }}
+                {% if f.type == 'BooleanField' or f.type == 'BetterBooleanField' %}
+                    {{ f(**{'data-bind':'checked: '+f.name}) }}
+                {% else %}
+                    {{ f(placeholder=f.description, **{'data-bind':'value: '+f.name}) }}
+                {% endif %}
                 {% if f.errors %}
                     <ul class="unstyled error-list">
                         {% for e in f.errors %}
@@ -16,6 +20,6 @@
         </div>
     {% endfor %}
     <div class="form-actions">
-        <input class="btn btn-primary" type="submit" value="{{submit_text}}"/>
+        <input class="btn btn-primary" type="submit" value="Save Configuration"/>
     </div>
 </form>
