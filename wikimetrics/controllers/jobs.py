@@ -15,12 +15,16 @@ def jobs_index():
     return 'jobs'
 
 
-@app.route('/jobs/create', methods=['GET'])
+@app.route('/jobs/create/', methods=['GET', 'POST'])
 def jobs_request():
     """
     Renders a page that facilitates kicking off a new job
     """
-    return render_template('request.html')
+    if request.method == 'GET':
+        return render_template('request.html')
+    else:
+        print request.form['responses']
+        return render_template('jobs.html')
 
 
 @app.route('/jobs/list/')

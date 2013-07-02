@@ -1,17 +1,10 @@
 $(document).ready(function(){
-    // set up async handlers for any async forms
-    // TODO: replace with a decent plugin
-    
-    $(document).on('submit', 'form.job-request', function(e){
-        // same thing as metric-configuration, but passing viewModel.request().responses()
-        // as the data
-    });
     
     var viewModel = {
         cohorts: ko.observableArray([]),
         toggleCohort: function(cohort){
             // fetch wikiusers
-            if (!cohort.wikiusers) {
+            if (cohort && !cohort.wikiusers) {
                 cohort.wikiusers = ko.observableArray([]);
                 $.get('/cohorts/detail/' + cohort.id, function(data){
                     cohort.wikiusers(data.wikiusers);
@@ -23,17 +16,39 @@ $(document).ready(function(){
         metrics: ko.observableArray([]),
         toggleMetric: function(metric){
             
-            if (metric.selected()){
-                // fetch form to configure metric with
-                $.get('/metrics/configure/' + metric.name, function(configureForm){
-                    metric.configure(configureForm);
-                }).fail(failure);
-            } else {
-                metric.configure('');
+            if (metric) {
+                if (metric.selected()){
+                    // fetch form to configure metric with
+                    $.get('/metrics/configure/' + metric.name, function(configureForm){
+                        metric.configure(configureForm);
+                    }).fail(failure);
+                } else {
+                    metric.configure('');
+                }
             }
             return true;
         },
-
+        
+        save: function(formElement){
+            var vm = ko.dataFor(formElement);
+            var form = $(formElement);
+            var data = ko.toJSON(vm.request().responses);
+            data = JSON.parse(data);
+            ko.utils.arrayForEach(data, function(response){
+                delete response.metric.configure;
+                delete response.cohort.wikiusers;
+            });
+            data = JSON.stringify(data);
+            
+            $.ajax({
+                type: 'post',
+                url: form.attr('action'),
+                data: {responses: data},
+            }).done(function(response){
+                alert(response);
+            }).fail(failure);
+        },
+        
         saveMetricConfiguration: function(formElement){
             var metric = ko.dataFor(formElement);
             var form = $(formElement);
@@ -45,9 +60,8 @@ $(document).ready(function(){
                 url: form.attr('action'),
                 data: data,
             }).done(function(htmlToReplaceWith){
-                    metric.configure(htmlToReplaceWith);
-            }).fail(function(){
-            });
+                metric.configure(htmlToReplaceWith);
+            }).fail(failure);
         },
     };
     

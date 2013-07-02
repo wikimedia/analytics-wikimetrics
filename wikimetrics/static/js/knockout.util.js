@@ -1,10 +1,10 @@
 /**
  * Custom binding that is used as follows:
- * `<section data-bind="subview: observableProperty"></section>`
+ * `<section data-bind="metricConfigurationForm: property"></section>`
  * And works as follows:
- *     In the example above, observableProperty is a ko.observable whose value is an object that has a `template` property
- *     The binding finds the template with id `observableProperty().template` and fills it as the innerHTML of the section element
- *     The binding then sets the context for the section's child elements as the observableProperty (like with: observableProperty)
+ *     In the example above, property is a ko.observable or plain property that evaluates to some HTML which
+ *     should be rendered inside the <section></section>
+ *     The binding then sets the context for the section's child elements as the same as the current context
  */
 ko.bindingHandlers.metricConfigurationForm = {
     init: function(element, valueAccessor, allBindingsAccessor, viewModel, bindingContext){
