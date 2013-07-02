@@ -55,7 +55,6 @@ def default_to_private():
     if current_user.is_authenticated():
         return
     
-    print request.endpoint
     # TODO: put static resources in a new Blueprint
     if (
             request.endpoint
@@ -70,7 +69,6 @@ def load_user(user_id):
     """
     Callback required by Flask-Login.  Gets the User object from the database.
     """
-    print 'calling load_user on user_id=%s' % user_id
     db_session = db.get_session()
     user = User.get(db_session, user_id)
     return user

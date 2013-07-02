@@ -76,6 +76,8 @@ def config_celery(args):
     
     # makes Flask app context available to celery tasks
     TaskBase = queue.Task
+    
+    
     class ContextTask(TaskBase):
         abstract = True
         def __call__(self, *args, **kwargs):

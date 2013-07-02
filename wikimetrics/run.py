@@ -25,8 +25,7 @@ def run_celery():
     from .models import ConcatMetricsJob
     from .models import MultiProjectMetricJob
     from .models import MetricJob
-    print 'queue.tasks: {0}'.format(pprint.pformat(queue.tasks))
-    queue.start(argv=['celery', 'worker'])
+    queue.start(argv=['celery', 'worker', '-l', 'DEBUG'])
 
 
 def setup_parser():
@@ -85,7 +84,6 @@ def setup_parser():
 ##################################
 parser = setup_parser()
 args = parser.parse_args()
-pprint.pprint(vars(args))
 logger.info('running with arguments:\n%s', pprint.pformat(vars(args)))
 
 # runs the appropriate config function (web, celery, test)
