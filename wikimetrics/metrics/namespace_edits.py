@@ -9,6 +9,29 @@ __all__ = [
     'NamespaceEdits',
 ]
 
+class CommaSeparatedIntegerListField(wtf.Field):
+    
+    
+    print 'parsing CommaSeparatedIntegerListField.__iter__()'
+    def __iter__(self):
+        return iter(self.data)
+    
+    widget = wtf.TextInput()
+    
+    def _value(self):
+        """ overrides wtforms representation which is sends to server """
+        if self.data:
+            return u', '.join(map(unicode, self.data))
+        else:
+            return u''
+
+    def process_formdata(self, valuelist):
+        """ overrides wtforms parsing to split list into namespaces """
+        if valuelist:
+            self.data = [int(x.strip()) for x in valuelist[0].split(',')]
+        else:
+            self.data = [] 
+
 
 class NamespaceEdits(Metric):
     """
@@ -33,7 +56,8 @@ class NamespaceEdits(Metric):
     label       = 'Edits'
     description = 'Compute the number of edits in a specific namespace of a mediawiki project'
     
-    namespaces = wtf.IntegerField(default=0, description='0, 2, 4, etc.')
+    #namespaces = wtf.IntegerField(default=[1], description='0, 2, 4, etc.')
+    namespaces = CommaSeparatedIntegerListField(default = [0], description='0, 2, 4, etc.')
     
     def __call__(self, user_ids, session):
         """

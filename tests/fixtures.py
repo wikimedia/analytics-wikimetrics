@@ -156,7 +156,12 @@ class DatabaseTest(unittest.TestCase):
 
 
 class QueueTest(unittest.TestCase):
-    pass
+    
+    def setUp(self):
+        pass
+    
+    def tearDown(self):
+        pass
 
 
 class QueueDatabaseTest(QueueTest, DatabaseTest):

@@ -1,5 +1,5 @@
 import job
-from wikimetrics.configurables import queue, db
+from wikimetrics.configurables import queue, db, app
 
 __all__ = [
     'MetricJob',
@@ -21,4 +21,5 @@ class MetricJob(job.JobLeaf):
     @queue.task
     def run(self):
         session = db.get_mw_session(self.project)
-        return self.metric(self.user_ids, session)
+        with app.test_request_context():
+            return self.metric(self.user_ids, session)

@@ -1,14 +1,22 @@
 from nose.tools import assert_true
 from tests.fixtures import DatabaseTest, QueueDatabaseTest
 
+from wikimetrics import app
 from wikimetrics.metrics import NamespaceEdits
 from wikimetrics.models import Cohort, MetricJob
 
 
 class NamespaceEditsDatabaseTest(DatabaseTest):
+    
     def setUp(self):
         super(NamespaceEditsDatabaseTest, self).setUp()
+        self.ctx = app.test_request_context()
+        self.ctx.push()
     
+    def tearDown(self):
+        self.ctx.pop()
+        super(NamespaceEditsDatabaseTest, self).tearDown()
+   
     def test_finds_edits(self):
         cohort = self.session.query(Cohort).filter_by(name='test').one()
         
@@ -29,8 +37,17 @@ class NamespaceEditsDatabaseTest(DatabaseTest):
         assert_true(results[3] == 0, 'Andrew had not 0 edits')
 
 
-class NamesapceEditsFullTest(QueueDatabaseTest):
+class NamespaceEditsFullTest(QueueDatabaseTest):
     
+    def setUp(self):
+        super(NamespaceEditsFullTest, self).setUp()
+        self.ctx = app.test_request_context()
+        #self.ctx.push()
+    
+    def tearDown(self):
+        #self.ctx.pop()
+        super(NamespaceEditsFullTest, self).tearDown()
+        
     def test_namespace_edits(self):
         cohort = self.session.query(Cohort).filter_by(name='test').one()
         
@@ -46,7 +63,7 @@ class NamesapceEditsFullTest(QueueDatabaseTest):
         cohort = self.session.query(Cohort).filter_by(name='test').one()
         
         namespaces = [3]
-        metric = NamespaceEdits(namespaces)
+        metric = NamespaceEdits(namespaces=namespaces)
         job = MetricJob(metric, list(cohort), 'enwiki')
         results = job.run.delay(job).get()
         
@@ -57,7 +74,7 @@ class NamesapceEditsFullTest(QueueDatabaseTest):
         cohort = self.session.query(Cohort).filter_by(name='test').one()
         
         namespaces = []
-        metric = NamespaceEdits(namespaces)
+        metric = NamespaceEdits(namespaces=namespaces)
         job = MetricJob(metric, list(cohort), 'enwiki')
         results = job.run.delay(job).get()
         
