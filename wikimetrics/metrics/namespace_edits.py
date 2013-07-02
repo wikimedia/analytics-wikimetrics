@@ -1,4 +1,5 @@
-from flask.ext import wtf
+from wtforms import Field
+from wtforms.widgets import TextInput
 from sqlalchemy import func
 from metric import Metric
 from wikimetrics.models import Page, Revision
@@ -9,14 +10,14 @@ __all__ = [
     'NamespaceEdits',
 ]
 
-class CommaSeparatedIntegerListField(wtf.Field):
+class CommaSeparatedIntegerListField(Field):
     
     
     print 'parsing CommaSeparatedIntegerListField.__iter__()'
     def __iter__(self):
         return iter(self.data)
     
-    widget = wtf.TextInput()
+    widget = TextInput()
     
     def _value(self):
         """ overrides wtforms representation which is sends to server """
@@ -30,7 +31,7 @@ class CommaSeparatedIntegerListField(wtf.Field):
         if valuelist:
             self.data = [int(x.strip()) for x in valuelist[0].split(',')]
         else:
-            self.data = [] 
+            self.data = []
 
 
 class NamespaceEdits(Metric):
@@ -56,7 +57,6 @@ class NamespaceEdits(Metric):
     label       = 'Edits'
     description = 'Compute the number of edits in a specific namespace of a mediawiki project'
     
-    #namespaces = wtf.IntegerField(default=[1], description='0, 2, 4, etc.')
     namespaces = CommaSeparatedIntegerListField(default = [0], description='0, 2, 4, etc.')
     
     def __call__(self, user_ids, session):
@@ -74,7 +74,7 @@ class NamespaceEdits(Metric):
             session
             .query(Revision.rev_user, func.count(Revision.rev_id))
             .join(Page)
-            .filter(Page.page_namespace.in_(self.namespaces))
+            .filter(Page.page_namespace.in_(self.namespaces.data))
             .filter(Revision.rev_user.in_(user_ids))
             .group_by(Revision.rev_user)
             .all()

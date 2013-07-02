@@ -1,5 +1,5 @@
 from nose.tools import assert_not_equals
-from tests.fixtures import QueueTest
+from tests.fixtures import QueueTest, WebTest
 from wikimetrics.models import MetricJob
 from wikimetrics.metrics import RandomMetric
 
@@ -16,3 +16,9 @@ class AsyncTaskTest(QueueTest):
             None,
             'task did not run on celery queue'
         )
+
+
+class QueueAndWebTest(QueueTest, WebTest):
+    
+    def test_task(self):
+        pass

@@ -17,7 +17,7 @@ setup(
         'flask == 0.9',
         'flask-login',
         'flask-oauth',
-        'flask-wtf',
+        'wtforms',
         'nose == 1.3.0',
         'coverage == 3.6',
         'celery == 3.0',

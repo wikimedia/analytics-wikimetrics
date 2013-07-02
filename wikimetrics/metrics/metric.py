@@ -1,4 +1,4 @@
-from flask.ext import wtf
+from wtforms import Form
 import logging
 logger = logging.getLogger(__name__)
 
@@ -7,12 +7,13 @@ __all__ = [
 ]
 
 
-class Metric(wtf.Form):
+# TODO: implement csrf request token since we're no longer using wtf.Form
+class Metric(Form):
     """
     This class is the parent of all Metric implementations.
     Child implementations should be callable and should take in users
     and return the metric computation results for each user.
-    In addition, Metric inherits from wtf.Form and therefore child implementations
+    In addition, Metric inherits from wtforms Form and therefore child implementations
     can provide WTForms field definitions of their parametrization.
     To enable user interaction with child implementations, Metric also defines some
     class level properties that can be introspected by an interface.
@@ -37,15 +38,15 @@ class Metric(wtf.Form):
         """
         return {user: None for user in user_ids}
     
-    def __init__(self, *args, **kwargs):
-        """
-        This __init__ handles the problem with calling wtf.Form.__init__()
-        outside of a flask request context.
-        """
-        try:
-            wtf.Form.__init__(self, *args, **kwargs)
-        except(RuntimeError):
-            logger.debug(
-                'initializing Metric outside Flask context,'
-                'most likely in testing or interactive mode'
-            )
+    #def __init__(self, *args, **kwargs):
+        #"""
+        #This __init__ handles the problem with calling Form.__init__()
+        #outside of a flask request context.
+        #"""
+        #try:
+            #Form.__init__(self, *args, **kwargs)
+        #except(RuntimeError):
+            #logger.debug(
+                #'initializing Metric outside Flask context,'
+                #'most likely in testing or interactive mode'
+            #)

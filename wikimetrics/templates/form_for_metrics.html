@@ -1,5 +1,5 @@
 <form class="form-horizontal metric-configuration" method="POST" action="{{action}}" data-bind="submit: $root.saveMetricConfiguration">
-    {{ form.hidden_tag() }}
+    {# form.hidden_tag() #}
     {% for f in form if f.label.text != 'Csrf Token' %}
         <div class="control-group">
             {{ f.label(class="control-label") }}

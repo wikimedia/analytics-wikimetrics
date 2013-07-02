@@ -66,7 +66,7 @@ def config_celery(args):
     from celery import Celery
     
     # create and configure celery app
- 
+    
     global queue
     queue = Celery('wikimetrics', include=['wikimetrics'])
     config_object = create_object_from_config_file(args.celery_config)
@@ -75,12 +75,12 @@ def config_celery(args):
         queue.config_from_object(args.override_config)
     
     # makes Flask app context available to celery tasks
-    TaskBase = queue.Task
+    #TaskBase = queue.Task
     
     
-    class ContextTask(TaskBase):
-        abstract = True
-        def __call__(self, *args, **kwargs):
-            with app.app_context():
-                return TaskBase.__call__(self, *args, **kwargs)
-    queue.Task = ContextTask
+    #class ContextTask(TaskBase):
+        #abstract = True
+        #def __call__(self, *args, **kwargs):
+            #with app.app_context():
+                #return TaskBase.__call__(self, *args, **kwargs)
+    #queue.Task = ContextTask

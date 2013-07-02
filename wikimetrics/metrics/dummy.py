@@ -1,4 +1,5 @@
 import random
+from wtforms import IntegerField
 from metric import Metric
 import logging
 
@@ -19,6 +20,8 @@ class RandomMetric(Metric):
     label       = 'Random'
     description = 'test metric, compute random numbers for all users in your cohort(s)'
     
+    test_field = IntegerField(default=1000)
+    
     def __call__(self, user_ids, session):
         """
         Parameters:
@@ -28,4 +31,4 @@ class RandomMetric(Metric):
         Returns:
             dictionary from user ids to the number of edit reverts found.
         """
-        return {user: random.random() for user in user_ids}
+        return {user: random.random() + self.test_field.data for user in user_ids}

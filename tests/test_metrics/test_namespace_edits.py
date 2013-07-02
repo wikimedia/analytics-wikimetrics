@@ -8,15 +8,6 @@ from wikimetrics.models import Cohort, MetricJob
 
 class NamespaceEditsDatabaseTest(DatabaseTest):
     
-    def setUp(self):
-        super(NamespaceEditsDatabaseTest, self).setUp()
-        self.ctx = app.test_request_context()
-        self.ctx.push()
-    
-    def tearDown(self):
-        self.ctx.pop()
-        super(NamespaceEditsDatabaseTest, self).tearDown()
-   
     def test_finds_edits(self):
         cohort = self.session.query(Cohort).filter_by(name='test').one()
         
@@ -39,15 +30,6 @@ class NamespaceEditsDatabaseTest(DatabaseTest):
 
 class NamespaceEditsFullTest(QueueDatabaseTest):
     
-    def setUp(self):
-        super(NamespaceEditsFullTest, self).setUp()
-        self.ctx = app.test_request_context()
-        #self.ctx.push()
-    
-    def tearDown(self):
-        #self.ctx.pop()
-        super(NamespaceEditsFullTest, self).tearDown()
-        
     def test_namespace_edits(self):
         cohort = self.session.query(Cohort).filter_by(name='test').one()
         
