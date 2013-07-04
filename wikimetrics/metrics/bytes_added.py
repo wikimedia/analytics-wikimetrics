@@ -10,8 +10,10 @@ __all__ = [
 def better_bool(value):
     if type(value) is bool:
         return value
-    elif type(value) is list:
+    elif type(value) is list and len(value) > 0:
         value = value[0]
+    else:
+        return False
     
     return str(value).strip().lower() in ['yes', 'y', 'true']
 

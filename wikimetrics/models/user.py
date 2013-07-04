@@ -9,8 +9,7 @@ __all__ = [
 
 class UserRole(object):
     ADMIN = 'ADMIN'
-    USER_WITH_NDA = 'USER_WITH_NDA'
-    USER_WITHOUT_NDA = 'USER_WITHOUT_NDA'
+    USER = 'USER'
     GUEST = 'GUEST'
 
 

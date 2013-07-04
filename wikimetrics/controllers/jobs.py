@@ -12,7 +12,7 @@ def jobs_index():
     Renders a page with a list of jobs started by the currently logged in user.
     If the user is an admin, she has the option to see other users' jobs.
     """
-    return 'jobs'
+    return render_template('jobs.html')
 
 
 @app.route('/jobs/create/', methods=['GET', 'POST'])
@@ -23,7 +23,8 @@ def jobs_request():
     if request.method == 'GET':
         return render_template('request.html')
     else:
-        print request.form['responses']
+        # TODO: validate the different metrics in request.form
+        # TODO: create a JobResponse using responses=request.form['responses']
         return render_template('jobs.html')
 
 

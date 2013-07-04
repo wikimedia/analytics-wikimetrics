@@ -26,26 +26,6 @@ def is_public(to_decorate):
     return decorator(to_decorate)
 
 
-if app.config['DEBUG']:
-    # safeguard against exposing this route in production
-    @app.route('/login-for-testing-only')
-    @is_public
-    def login_for_testing_only():
-        if app.config['DEBUG']:
-            db_session = db.get_session()
-            user = db_session.query(User).get(2)
-            if user is None:
-                user = User(
-                    id=2,
-                    email='test@test.com',
-                )
-                db_session.add(user)
-                db_session.commit()
-            user.login(db_session)
-            login_user(user)
-            return ''
-
-
 @app.before_request
 def default_to_private():
     """
@@ -177,3 +157,16 @@ def auth_twitter():
     Callback for Twitter to send us authentication results.
     """
     return 'Not Implemented Yet'
+
+
+if app.config['DEBUG']:
+    # safeguard against exposing this route in production
+    @app.route('/login-for-testing-only')
+    @is_public
+    def login_for_testing_only():
+        if app.config['DEBUG']:
+            db_session = db.get_session()
+            user = db_session.query(User).filter_by(email='test@test.com').one()
+            user.login(db_session)
+            login_user(user)
+            return ''

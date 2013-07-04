@@ -34,10 +34,13 @@ class DatabaseTest(unittest.TestCase):
         
         # create basic test records for non-mediawiki tests
         self.session = db.get_session()
+        self.mwSession = db.get_mw_session('enwiki')
+        DatabaseTest.tearDown(self)
         
         job = Job()
         dan_user = User(username='Dan')
         evan_user = User(username='Evan')
+        web_test_user = User(email='test@test.com')
         
         # create a test cohort
         dan = WikiUser(mediawiki_username='Dan', mediawiki_userid=1, project='enwiki')
@@ -54,6 +57,7 @@ class DatabaseTest(unittest.TestCase):
             job,
             dan_user,
             evan_user,
+            web_test_user,
             dan,
             evan,
             andrew,
@@ -93,8 +97,18 @@ class DatabaseTest(unittest.TestCase):
             cohort_id=private_cohort2.id,
             role=CohortUserRole.OWNER,
         )
+        web_user_owns_private = CohortUser(
+            user_id=web_test_user.id,
+            cohort_id=private_cohort.id,
+            role=CohortUserRole.OWNER,
+        )
+        web_user_owns_private2 = CohortUser(
+            user_id=web_test_user.id,
+            cohort_id=private_cohort2.id,
+            role=CohortUserRole.OWNER,
+        )
         dan_views_private2 = CohortUser(
-            user_id=evan_user.id,
+            user_id=dan_user.id,
             cohort_id=private_cohort2.id,
             role=CohortUserRole.VIEWER
         )
@@ -102,15 +116,17 @@ class DatabaseTest(unittest.TestCase):
             dan_owns_test,
             evan_owns_private,
             evan_owns_private2,
+            web_user_owns_private,
+            web_user_owns_private2,
             dan_views_private2
         ])
         self.session.commit()
         
         # add jobs
-        job_created = Job(user_id=2, classpath='', status=JobStatus.CREATED, result_id=None)
-        job_started = Job(user_id=2, classpath='', status=JobStatus.STARTED, result_id=None)
-        job_started2 = Job(user_id=2, classpath='', status=JobStatus.STARTED, result_id=None)
-        job_finished = Job(user_id=2, classpath='', status=JobStatus.FINISHED, result_id=None)
+        job_created = Job(user_id=web_test_user.id, classpath='', status=JobStatus.CREATED, result_id=None)
+        job_started = Job(user_id=web_test_user.id, classpath='', status=JobStatus.STARTED, result_id=None)
+        job_started2 = Job(user_id=web_test_user.id, classpath='', status=JobStatus.STARTED, result_id=None)
+        job_finished = Job(user_id=web_test_user.id, classpath='', status=JobStatus.FINISHED, result_id=None)
         self.session.add_all([
             job_created,
             job_started,
@@ -118,8 +134,6 @@ class DatabaseTest(unittest.TestCase):
             job_finished
         ])
         self.session.commit()
-        
-        self.mwSession = db.get_mw_session('enwiki')
         
         # create records for enwiki tests
         self.mwSession.add(MediawikiUser(user_id=1, user_name='Dan'))
@@ -145,7 +159,6 @@ class DatabaseTest(unittest.TestCase):
         self.mwSession.query(Revision).delete()
         self.mwSession.commit()
         
-        self.session = db.get_session()
         self.session.query(CohortWikiUser).delete()
         self.session.query(CohortUser).delete()
         self.session.query(WikiUser).delete()
