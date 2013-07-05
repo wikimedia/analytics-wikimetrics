@@ -13,7 +13,6 @@ __all__ = [
 class CommaSeparatedIntegerListField(Field):
     
     
-    print 'parsing CommaSeparatedIntegerListField.__iter__()'
     def __iter__(self):
         return iter(self.data)
     

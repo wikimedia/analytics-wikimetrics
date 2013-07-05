@@ -1,4 +1,5 @@
-from wtforms import Form
+from wtforms.ext.csrf.session import SessionSecureForm
+from wikimetrics.configurables import app
 import logging
 logger = logging.getLogger(__name__)
 
@@ -7,8 +8,7 @@ __all__ = [
 ]
 
 
-# TODO: implement csrf request token since we're no longer using wtf.Form
-class Metric(Form):
+class Metric(SessionSecureForm):
     """
     This class is the parent of all Metric implementations.
     Child implementations should be callable and should take in users
@@ -38,15 +38,17 @@ class Metric(Form):
         """
         return {user: None for user in user_ids}
     
-    #def __init__(self, *args, **kwargs):
-        #"""
-        #This __init__ handles the problem with calling Form.__init__()
-        #outside of a flask request context.
-        #"""
-        #try:
-            #Form.__init__(self, *args, **kwargs)
-        #except(RuntimeError):
-            #logger.debug(
-                #'initializing Metric outside Flask context,'
-                #'most likely in testing or interactive mode'
-            #)
+    def __init__(self, *args, **kwargs):
+        """
+        Initialize the things required by SessionSecureForm to do its job
+        This __init__ handles the problem with calling SessionSecureForm.__init__()
+        outside of a flask request context.
+        """
+        self.SECRET_KEY = 'not really secret, this will only happen in a testing context'
+        csrf_context = {}
+        
+        if app:
+            # TODO: need to set csrf_context to something? (the flask session maybe?)
+            self.SECRET_KEY = app.config['SECRET_KEY']
+        
+        SessionSecureForm.__init__(self, csrf_context=csrf_context, *args, **kwargs)

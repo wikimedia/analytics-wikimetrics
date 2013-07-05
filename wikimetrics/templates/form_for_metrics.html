@@ -1,6 +1,7 @@
 <form class="form-horizontal metric-configuration" method="POST" action="{{action}}" data-bind="submit: $root.saveMetricConfiguration">
     {# TODO: flask-wtf does nice things, bring this back: form.hidden_tag() #}
-    {% for f in form if f.label.text != 'Csrf Token' %}
+    {% for f in form %}
+    {% if f.name != 'csrf_token' %}
         <div class="control-group">
             {{ f.label(class="control-label") }}
             <div class="controls">
@@ -18,6 +19,9 @@
                 {% endif %}
             </div>
         </div>
+    {% else %}
+        {{ f }}
+    {% endif %}
     {% endfor %}
     <div class="form-actions">
         <input class="btn btn-primary" type="submit" value="Save Configuration"/>
