@@ -13,15 +13,15 @@ setup(
     ],
     install_requires=[
         'sqlalchemy == 0.8.1',
-        'requests',
+        'requests == 1.2.3',
         'flask == 0.9',
-        'flask-login',
-        'flask-oauth',
-        'wtforms',
+        'flask-login == 0.2.4',
+        'flask-oauth == 0.12',
+        'wtforms == 1.0.4',
         'nose == 1.3.0',
         'coverage == 3.6',
         'celery == 3.0',
-        'celery-with-redis',
+        'celery-with-redis == 3.0',
     ],
     entry_points={
         'console_scripts': [
