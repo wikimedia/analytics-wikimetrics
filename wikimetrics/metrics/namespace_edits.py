@@ -10,8 +10,8 @@ __all__ = [
     'NamespaceEdits',
 ]
 
+
 class CommaSeparatedIntegerListField(Field):
-    
     
     def __iter__(self):
         return iter(self.data)
@@ -56,7 +56,7 @@ class NamespaceEdits(Metric):
     label       = 'Edits'
     description = 'Compute the number of edits in a specific namespace of a mediawiki project'
     
-    namespaces = CommaSeparatedIntegerListField(default = [0], description='0, 2, 4, etc.')
+    namespaces = CommaSeparatedIntegerListField(default=[0], description='0, 2, 4, etc.')
     
     def __call__(self, user_ids, session):
         """

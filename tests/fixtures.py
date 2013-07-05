@@ -1,4 +1,5 @@
 import unittest
+from datetime import datetime
 
 __all__ = [
     'DatabaseTest',
@@ -123,10 +124,18 @@ class DatabaseTest(unittest.TestCase):
         self.session.commit()
         
         # add jobs
-        job_created = Job(user_id=web_test_user.id, classpath='', status=JobStatus.CREATED, result_id=None)
-        job_started = Job(user_id=web_test_user.id, classpath='', status=JobStatus.STARTED, result_id=None)
-        job_started2 = Job(user_id=web_test_user.id, classpath='', status=JobStatus.STARTED, result_id=None)
-        job_finished = Job(user_id=web_test_user.id, classpath='', status=JobStatus.FINISHED, result_id=None)
+        job_created = Job(
+            user_id=web_test_user.id, classpath='', status=JobStatus.CREATED, result_id=None
+        )
+        job_started = Job(
+            user_id=web_test_user.id, classpath='', status=JobStatus.STARTED, result_id=None
+        )
+        job_started2 = Job(
+            user_id=web_test_user.id, classpath='', status=JobStatus.STARTED, result_id=None
+        )
+        job_finished = Job(
+            user_id=web_test_user.id, classpath='', status=JobStatus.FINISHED, result_id=None
+        )
         self.session.add_all([
             job_created,
             job_started,
@@ -142,12 +151,27 @@ class DatabaseTest(unittest.TestCase):
         self.mwSession.add(Logging(log_id=1, log_user_text='Reedy'))
         self.mwSession.add(Page(page_id=1, page_namespace=0, page_title='Main_Page'))
         # Dan edits
-        self.mwSession.add(Revision(rev_id=1, rev_page=1, rev_user=1, rev_comment='Dan edit 1'))
-        self.mwSession.add(Revision(rev_id=2, rev_page=1, rev_user=1, rev_comment='Dan edit 2'))
+        self.mwSession.add(Revision(
+            rev_id=1, rev_page=1, rev_user=1, rev_comment='Dan edit 1',
+            rev_len=-4, rev_timestamp=datetime(2013, 06, 01),
+        ))
+        self.mwSession.add(Revision(
+            rev_id=2, rev_page=1, rev_user=1, rev_comment='Dan edit 2',
+            rev_len=10, rev_timestamp=datetime(2013, 07, 01),
+        ))
         # Evan edits
-        self.mwSession.add(Revision(rev_id=3, rev_page=1, rev_user=2, rev_comment='Evan edit 1'))
-        self.mwSession.add(Revision(rev_id=4, rev_page=1, rev_user=2, rev_comment='Evan edit 2'))
-        self.mwSession.add(Revision(rev_id=5, rev_page=1, rev_user=2, rev_comment='Evan edit 3'))
+        self.mwSession.add(Revision(
+            rev_id=3, rev_page=1, rev_user=2, rev_comment='Evan edit 1',
+            rev_len=100, rev_timestamp=datetime(2013, 06, 01),
+        ))
+        self.mwSession.add(Revision(
+            rev_id=4, rev_page=1, rev_user=2, rev_comment='Evan edit 2',
+            rev_len=40, rev_timestamp=datetime(2013, 07, 01),
+        ))
+        self.mwSession.add(Revision(
+            rev_id=5, rev_page=1, rev_user=2, rev_comment='Evan edit 3',
+            rev_len=-4, rev_timestamp=datetime(2013, 07, 24),
+        ))
         self.mwSession.commit()
     
     def tearDown(self):
@@ -210,3 +234,16 @@ class WebTest(DatabaseTest):
     def tearDown(self):
         DatabaseTest.tearDown(self)
         self.app.get('/logout')
+
+
+class DatabaseWithCohortTest(DatabaseTest):
+    
+    def setUp(self):
+        DatabaseTest.setUp(self)
+        self.cohort = self.session.query(Cohort).filter_by(name='test').one()
+        wikiusers = self.session.query(WikiUser)\
+            .join(CohortWikiUser)\
+            .filter(CohortWikiUser.cohort_id == self.cohort.id)
+        
+        self.dan_id = wikiusers.filter(WikiUser.mediawiki_username == 'Dan').one().id
+        self.evan_id = wikiusers.filter(WikiUser.mediawiki_username == 'Evan').one().id

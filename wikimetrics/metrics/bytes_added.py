@@ -89,9 +89,9 @@ class BytesAdded(Metric):
         
         Returns:
             dictionary from user ids to another dictionary with the following keys:
-                * net_sum: bytes added minus bytes removed
-                * abs_sum: bytes added plus bytes removed
-                * pos_sum: bytes added
-                * neg_sum: bytes removed
+                * net_sum           : bytes added minus bytes removed
+                * absolute_sum      : bytes added plus bytes removed
+                * positive_only_sum : bytes added
+                * negative_only_sum : bytes removed
         """
         return {user: None for user in user_ids}
