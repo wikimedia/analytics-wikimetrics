@@ -66,7 +66,7 @@ class TestMappings(DatabaseTest):
         assert_equals(row.page_title, 'Main_Page')
     
     def test_mediawiki_revision(self):
-        row = self.mwSession.query(Revision).get(1)
+        row = self.mwSession.query(Revision).get(2)
         assert_equals(row.rev_comment, 'Dan edit 1')
     
     #***********

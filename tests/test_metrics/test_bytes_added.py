@@ -21,24 +21,16 @@ class BytesAddedTest(DatabaseWithCohortTest):
             'net_sum': 6,
             'absolute_sum': 14,
             'positive_only_sum': 10,
-            'negative_only_sum': 4,
+            'negative_only_sum': -4,
         }
         evan_expected = {
             'net_sum': 136,
             'absolute_sum': 144,
             'positive_only_sum': 140,
-            'negative_only_sum': 4,
+            'negative_only_sum': -4,
         }
-        assert_equal(
-            results[self.dan_id],
-            dan_expected,
-            'did not get the results expected'
-        )
-        assert_equal(
-            results[self.dan_id],
-            evan_expected,
-            'did not get the results expected'
-        )
+        assert_equal(results[self.dan_id], dan_expected)
+        assert_equal(results[self.evan_id], evan_expected)
     
     def test_uses_date_range(self):
         

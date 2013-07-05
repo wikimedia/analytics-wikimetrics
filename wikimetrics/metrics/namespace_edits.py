@@ -1,5 +1,3 @@
-from wtforms import Field
-from wtforms.widgets import TextInput
 from sqlalchemy import func
 from metric import Metric
 from form_fields import CommaSeparatedIntegerListField

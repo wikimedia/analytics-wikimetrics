@@ -150,27 +150,48 @@ class DatabaseTest(unittest.TestCase):
         self.mwSession.add(MediawikiUser(user_id=3, user_name='Andrew'))
         self.mwSession.add(Logging(log_id=1, log_user_text='Reedy'))
         self.mwSession.add(Page(page_id=1, page_namespace=0, page_title='Main_Page'))
-        # Dan edits
+        # edits in between Dan and Evan edits
         self.mwSession.add(Revision(
-            rev_id=1, rev_page=1, rev_user=1, rev_comment='Dan edit 1',
-            rev_len=-4, rev_timestamp=datetime(2013, 06, 01),
+            rev_id=1, rev_page=1, rev_user=4, rev_comment='before Dan edit 1',
+            rev_len=4, rev_timestamp=datetime(2013, 05, 30),
         ))
         self.mwSession.add(Revision(
-            rev_id=2, rev_page=1, rev_user=1, rev_comment='Dan edit 2',
-            rev_len=10, rev_timestamp=datetime(2013, 07, 01),
+            rev_id=3, rev_page=1, rev_user=4, rev_comment='before Dan edit 2',
+            rev_len=0, rev_timestamp=datetime(2013, 06, 30),
+        ))
+        self.mwSession.add(Revision(
+            rev_id=5, rev_page=1, rev_user=4, rev_comment='before Evan edit 1',
+            rev_len=0, rev_timestamp=datetime(2013, 05, 30),
+        ))
+        self.mwSession.add(Revision(
+            rev_id=7, rev_page=1, rev_user=4, rev_comment='before Evan edit 2',
+            rev_len=100, rev_timestamp=datetime(2013, 06, 30),
+        ))
+        self.mwSession.add(Revision(
+            rev_id=9, rev_page=1, rev_user=4, rev_comment='before Evan edit 3',
+            rev_len=140, rev_timestamp=datetime(2013, 07, 23),
+        ))
+        # Dan edits
+        self.mwSession.add(Revision(
+            rev_id=2, rev_page=1, rev_user=1, rev_comment='Dan edit 1',
+            rev_parent_id=1, rev_len=0, rev_timestamp=datetime(2013, 06, 01),
+        ))
+        self.mwSession.add(Revision(
+            rev_id=4, rev_page=1, rev_user=1, rev_comment='Dan edit 2',
+            rev_parent_id=3, rev_len=10, rev_timestamp=datetime(2013, 07, 01),
         ))
         # Evan edits
         self.mwSession.add(Revision(
-            rev_id=3, rev_page=1, rev_user=2, rev_comment='Evan edit 1',
-            rev_len=100, rev_timestamp=datetime(2013, 06, 01),
+            rev_id=6, rev_page=1, rev_user=2, rev_comment='Evan edit 1',
+            rev_parent_id=5, rev_len=100, rev_timestamp=datetime(2013, 06, 01),
         ))
         self.mwSession.add(Revision(
-            rev_id=4, rev_page=1, rev_user=2, rev_comment='Evan edit 2',
-            rev_len=40, rev_timestamp=datetime(2013, 07, 01),
+            rev_id=8, rev_page=1, rev_user=2, rev_comment='Evan edit 2',
+            rev_parent_id=7, rev_len=140, rev_timestamp=datetime(2013, 07, 01),
         ))
         self.mwSession.add(Revision(
-            rev_id=5, rev_page=1, rev_user=2, rev_comment='Evan edit 3',
-            rev_len=-4, rev_timestamp=datetime(2013, 07, 24),
+            rev_id=10, rev_page=1, rev_user=2, rev_comment='Evan edit 3',
+            rev_parent_id=9, rev_len=136, rev_timestamp=datetime(2013, 07, 24),
         ))
         self.mwSession.commit()
     

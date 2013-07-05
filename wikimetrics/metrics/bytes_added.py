@@ -1,6 +1,9 @@
+from ..models import Revision, Page
 from metric import Metric
 from form_fields import BetterBooleanField, CommaSeparatedIntegerListField
 from wtforms import DateField
+from sqlalchemy import func, case
+from sqlalchemy.sql.expression import label
 
 
 __all__ = [
@@ -75,4 +78,46 @@ class BytesAdded(Metric):
                 * positive_only_sum : bytes added
                 * negative_only_sum : bytes removed
         """
-        return {user: None for user in user_ids}
+        PreviousRevision = session.query(Revision).subquery()
+        
+        BC = session.query(
+            Revision.rev_user,
+            label('byte_change', Revision.rev_len - PreviousRevision.c.rev_len),
+        )\
+            .join(Page)\
+            .outerjoin(PreviousRevision, Revision.rev_parent_id == PreviousRevision.c.rev_id)\
+            .filter(Page.page_namespace.in_(self.namespaces.data))\
+            .filter(Revision.rev_user.in_(user_ids))\
+            .subquery()
+        
+        bytes_added_by_user = session.query(
+            BC.c.rev_user,
+            func.sum(BC.c.byte_change).label('net_sum'),
+            func.sum(func.abs(BC.c.byte_change)).label('absolute_sum'),
+            func.sum(case(
+                [(BC.c.byte_change > 0, BC.c.byte_change)], else_=0
+            )).label('positive_only_sum'),
+            func.sum(case(
+                [(BC.c.byte_change < 0, BC.c.byte_change)], else_=0
+            )).label('negative_only_sum'),
+        )\
+            .group_by(BC.c.rev_user)\
+            .all()
+        print bytes_added_by_user
+        
+        result_dict = {
+            user_id: {
+                'net_sum': net_sum,
+                'absolute_sum': absolute_sum,
+                'positive_only_sum': positive_only_sum,
+                'negative_only_sum': negative_only_sum,
+            }
+            for user_id, net_sum, absolute_sum, positive_only_sum, negative_only_sum
+            in bytes_added_by_user
+        }
+        return {user_id: result_dict.get(user_id, {
+            'net_sum': None,
+            'absolute_sum': None,
+            'positive_only_sum': None,
+            'negative_only_sum': None,
+        }) for user_id in user_ids}
