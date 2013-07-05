@@ -1,30 +1,11 @@
 from metric import Metric
-from flask.ext import wtf
-from wtforms.compat import text_type
+from form_fields import BetterBooleanField, CommaSeparatedIntegerListField
+from wtforms import DateField
+
 
 __all__ = [
     'BytesAdded',
 ]
-
-
-def better_bool(value):
-    if type(value) is bool:
-        return value
-    elif type(value) is list and len(value) > 0:
-        value = value[0]
-    else:
-        return False
-    
-    return str(value).strip().lower() in ['yes', 'y', 'true']
-
-
-class BetterBooleanField(wtf.BooleanField):
-    
-    def process_formdata(self, valuelist):
-        # Checkboxes and submit buttons simply do not send a value when
-        # unchecked/not pressed. So the actual value="" doesn't matter for
-        # purpose of determining .data, only whether one exists or not.
-        self.data = better_bool(valuelist)
 
 
 class BytesAdded(Metric):
@@ -73,9 +54,9 @@ class BytesAdded(Metric):
     description = 'Compute different aggregations of the bytes contributed or removed from a\
                    mediawiki project'
     
-    start_date      = wtf.DateField()
-    end_date        = wtf.DateField()
-    namespace       = wtf.IntegerField(default=0)
+    start_date      = DateField()
+    end_date        = DateField()
+    namespaces      = CommaSeparatedIntegerListField(default=[0], description='0, 2, 4, etc.')
     positive_total  = BetterBooleanField(default=True)
     negative_total  = BetterBooleanField(default=True)
     absolute_total  = BetterBooleanField(default=True)

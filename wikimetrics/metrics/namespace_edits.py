@@ -2,6 +2,7 @@ from wtforms import Field
 from wtforms.widgets import TextInput
 from sqlalchemy import func
 from metric import Metric
+from form_fields import CommaSeparatedIntegerListField
 from wikimetrics.models import Page, Revision
 import logging
 logger = logging.getLogger(__name__)
@@ -9,28 +10,6 @@ logger = logging.getLogger(__name__)
 __all__ = [
     'NamespaceEdits',
 ]
-
-
-class CommaSeparatedIntegerListField(Field):
-    
-    def __iter__(self):
-        return iter(self.data)
-    
-    widget = TextInput()
-    
-    def _value(self):
-        """ overrides wtforms representation which is sends to server """
-        if self.data:
-            return u', '.join(map(unicode, self.data))
-        else:
-            return u''
-
-    def process_formdata(self, valuelist):
-        """ overrides wtforms parsing to split list into namespaces """
-        if valuelist:
-            self.data = [int(x.strip()) for x in valuelist[0].split(',')]
-        else:
-            self.data = []
 
 
 class NamespaceEdits(Metric):
