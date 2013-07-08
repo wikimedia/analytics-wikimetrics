@@ -36,7 +36,7 @@ class TestMetricsController(WebTest):
     def test_configure_get(self):
         response = self.app.get('/metrics/configure/BytesAdded')
         assert_not_equal(
-            response.data.find('name="positive_total"'),
+            response.data.find('name="positive_only_sum"'),
             -1,
             'A form to configure a BytesAdded metric was not rendered'
         )

@@ -2,7 +2,7 @@ from ..models import Revision, Page
 from metric import Metric
 from form_fields import BetterBooleanField, CommaSeparatedIntegerListField
 from wtforms import DateField
-from sqlalchemy import func, case
+from sqlalchemy import func, case, between
 from sqlalchemy.sql.expression import label
 
 
@@ -17,10 +17,10 @@ class BytesAdded(Metric):
     An instance of the class is callable and will compute four different aggregations of
     the bytes contributed or removed from a mediawiki instance:
         
-        * net_sum: bytes added minus bytes removed
-        * abs_sum: bytes added plus bytes removed
-        * pos_sum: bytes added
-        * neg_sum: bytes removed
+        * net_sum           : bytes added minus bytes removed
+        * absolute_sum      : bytes added plus bytes removed
+        * positive_only_sum : bytes added
+        * negative_only_sum : bytes removed
     
     This sql query was used as a starting point for the sqlalchemy query:
     
@@ -29,19 +29,19 @@ class BytesAdded(Metric):
             ) as net_sum
             ,sum(
                 abs(cast(r.rev_len as signed) - cast(coalesce(previous_r.rev_len, 0) as signed))
-            ) as abs_sum
+            ) as absolute_sum
             ,sum(case
                 when cast(r.rev_len as signed) - cast(coalesce(previous_r.rev_len, 0) as signed) > 0
                 then cast(r.rev_len as signed) - cast(coalesce(previous_r.rev_len, 0) as signed)
                 else 0
-            end) as pos_sum
+            end) as positive_only_sum
             ,sum(case
                 when cast(r.rev_len as signed) - cast(coalesce(previous_r.rev_len, 0) as signed) < 0
                 then abs(
                     cast(r.rev_len as signed) - cast(coalesce(previous_r.rev_len, 0) as signed)
                 )
                 else 0
-            end) as neg_sum
+            end) as negative_only_sum
        from revision r
                 inner join
             page p              on p.page_id = r.rev_page
@@ -57,13 +57,14 @@ class BytesAdded(Metric):
     description = 'Compute different aggregations of the bytes contributed or removed from a\
                    mediawiki project'
     
-    start_date      = DateField()
-    end_date        = DateField()
-    namespaces      = CommaSeparatedIntegerListField(default=[0], description='0, 2, 4, etc.')
-    positive_total  = BetterBooleanField(default=True)
-    negative_total  = BetterBooleanField(default=True)
-    absolute_total  = BetterBooleanField(default=True)
-    net_total       = BetterBooleanField(default=True)
+    
+    start_date          = DateField()
+    end_date            = DateField()
+    namespaces          = CommaSeparatedIntegerListField(default=[0], description='0, 2, 4, etc.')
+    positive_only_sum   = BetterBooleanField(default=True)
+    negative_only_sum   = BetterBooleanField(default=True)
+    absolute_sum        = BetterBooleanField(default=True)
+    net_sum             = BetterBooleanField(default=True)
     
     def __call__(self, user_ids, session):
         """
@@ -88,6 +89,7 @@ class BytesAdded(Metric):
             .outerjoin(PreviousRevision, Revision.rev_parent_id == PreviousRevision.c.rev_id)\
             .filter(Page.page_namespace.in_(self.namespaces.data))\
             .filter(Revision.rev_user.in_(user_ids))\
+            .filter(between(Revision.rev_timestamp, self.start_date.data, self.end_date.data))\
             .subquery()
         
         bytes_added_by_user = session.query(
@@ -103,18 +105,20 @@ class BytesAdded(Metric):
         )\
             .group_by(BC.c.rev_user)\
             .all()
-        print bytes_added_by_user
         
-        result_dict = {
-            user_id: {
-                'net_sum': net_sum,
-                'absolute_sum': absolute_sum,
-                'positive_only_sum': positive_only_sum,
-                'negative_only_sum': negative_only_sum,
-            }
-            for user_id, net_sum, absolute_sum, positive_only_sum, negative_only_sum
-            in bytes_added_by_user
-        }
+        result_dict = {}
+        for user_id, net, absolute, positive, negative in bytes_added_by_user:
+            
+            result_dict[user_id] = {}
+            if self.net_sum.data:
+                result_dict[user_id]['net_sum'] = net
+            if self.absolute_sum.data:
+                result_dict[user_id]['absolute_sum'] = absolute
+            if self.positive_only_sum.data:
+                result_dict[user_id]['positive_only_sum'] = positive
+            if self.negative_only_sum.data:
+                result_dict[user_id]['negative_only_sum'] = negative
+        
         return {user_id: result_dict.get(user_id, {
             'net_sum': None,
             'absolute_sum': None,
