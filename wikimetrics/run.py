@@ -40,7 +40,7 @@ def setup_parser():
         dest='override_config',
     )
     parser.add_argument(
-        'mode',
+        '--mode',
         nargs='?',
         default='import',
         choices=[
@@ -83,7 +83,7 @@ def setup_parser():
 # wikimetrics.configurables
 ##################################
 parser = setup_parser()
-args = parser.parse_args()
+args, others = parser.parse_known_args()
 logger.info('running with arguments:\n%s', pprint.pformat(vars(args)))
 
 # runs the appropriate config function (web, celery, test)
