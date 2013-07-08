@@ -75,11 +75,7 @@ def from_db(job_id):
     # sqlalchemy returns unicode, which changes the byte representation
     state_dict = pickle.loads(str(job.state))
     job.__dict__.update(state_dict)
-    #return job
-    #return Dammy(job)
-    #return Dammy(None)
-    return job.__dict__
-    #return {}
+    return job
 
 
 class Job(db.WikimetricsBase):
