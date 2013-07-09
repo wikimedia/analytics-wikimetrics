@@ -24,6 +24,6 @@ class DummyQueueTest(QueueDatabaseTest):
         
         metric = RandomMetric()
         job = MetricJob(metric, list(cohort), 'enwiki')
-        results = job.run.delay(job).get()
+        results = job.run.delay().get()
         
         assert_true(results[results.keys()[0]] > 1000)

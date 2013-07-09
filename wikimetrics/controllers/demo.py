@@ -29,7 +29,7 @@ if app.config['DEBUG']:
         
         job = MetricJob(RandomMetric(), user_ids, 'enwiki')
         #from nose.tools import set_trace; set_trace()
-        res = job.run.delay(job).get()
+        res = job.run.delay().get()
         print user_ids
         return str(res)
     

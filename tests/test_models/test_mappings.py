@@ -1,6 +1,6 @@
 from nose.tools import assert_true, assert_equals, assert_equal
 from wikimetrics.models import (
-    Job,
+    PersistentJob,
     JobStatus,
     User,
     UserRole,
@@ -23,7 +23,7 @@ class TestMappings(DatabaseTest):
     #***********
 
     def test_job(self):
-        j = self.session.query(Job).get(1)
+        j = self.session.query(PersistentJob).get(1)
         assert_true(j.status == JobStatus.CREATED)
     
     def test_user(self):

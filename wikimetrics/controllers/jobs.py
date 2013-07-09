@@ -1,7 +1,7 @@
 from flask import render_template, redirect, request, jsonify
 from flask.ext.login import current_user
 from ..configurables import app, db
-from ..models import Job
+from ..models import PersistentJob
 import logging
 logger = logging.getLogger(__name__)
 
@@ -31,6 +31,6 @@ def jobs_request():
 @app.route('/jobs/list/')
 def jobs_list():
     db_session = db.get_session()
-    jobs = db_session.query(Job)\
+    jobs = db_session.query(PersistentJob)\
         .filter_by(user_id=current_user.id).all()
     return jsonify(jobs=jobs)
