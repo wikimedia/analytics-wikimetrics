@@ -62,7 +62,6 @@ class Job(object):
             status=JobStatus.CREATED,
             result_id=None,
             children=[]):
-        self.id=id
         self.user_id = user_id
         self.status = status
         self.result_id = result_id
@@ -84,7 +83,7 @@ class JobNode(Job):
         return group(child.run.s(child) for child in self.children)
     
     @queue.task(filter=task_method)
-    def run(self, *args):
+    def run(self):
         try:
             if self.children:
                 children_then_finish = chord(self.child_tasks())(self.finish.s())
@@ -99,7 +98,7 @@ class JobNode(Job):
             raise
     
     @queue.task(filter=task_method)
-    def finish(self, results):
+    def finish(results):
         pass
 
 
