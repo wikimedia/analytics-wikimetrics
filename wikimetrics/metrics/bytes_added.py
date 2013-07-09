@@ -57,7 +57,6 @@ class BytesAdded(Metric):
     description = 'Compute different aggregations of the bytes contributed or removed from a\
                    mediawiki project'
     
-    
     start_date          = DateField()
     end_date            = DateField()
     namespaces          = CommaSeparatedIntegerListField(default=[0], description='0, 2, 4, etc.')
