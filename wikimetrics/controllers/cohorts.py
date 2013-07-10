@@ -3,7 +3,7 @@ from flask import url_for, flash, render_template, redirect, request, jsonify
 from flask.ext.login import current_user
 from sqlalchemy.sql import exists
 from sqlalchemy.orm.exc import NoResultFound, MultipleResultsFound
-from ..utils import DateTimeCapableEncoder
+from ..utils import json_response, json_error, json_redirect
 from ..configurables import app, db
 from ..models import (
     Cohort, CohortUser, CohortUserRole,
@@ -47,7 +47,6 @@ def cohort_detail(name_or_id):
         {mediawiki_username: 'Gabriele', mediawiki_userid: 8, project: 'dewiki'},
     ]}
     """
-    d = db.get_session()
     cohort = None
     if str(name_or_id).isdigit():
         cohort = get_cohort_by_id(int(name_or_id))
@@ -56,7 +55,7 @@ def cohort_detail(name_or_id):
     
     if cohort:
         cohort_with_wikiusers = populate_cohort_wikiusers(cohort)
-        return json.dumps(cohort_with_wikiusers, cls=DateTimeCapableEncoder)
+        return json_response(cohort_with_wikiusers)
     
     return '{}', 404
 
@@ -264,8 +263,8 @@ def get_wikiuser_by_name(username, project):
     # NOTE: Not needed right? username = username.encode('utf-8')
     db_session = db.get_mw_session(project)
     try:
-        return db_session.query(MediaWikiUser)\
-            .filter(MediaWikiUser.user_name == username)\
+        return db_session.query(MediawikiUser)\
+            .filter(MediawikiUser.user_name == username)\
             .one()
     except:
         return None
@@ -274,8 +273,8 @@ def get_wikiuser_by_name(username, project):
 def get_wikiuser_by_id(id, project):
     db_session = db.get_mw_session(project)
     try:
-        return db_session.query(MediaWikiUser)\
-            .filter(MediaWikiUser.user_id == id)\
+        return db_session.query(MediawikiUser)\
+            .filter(MediawikiUser.user_id == id)\
             .one()
     except:
         return None
