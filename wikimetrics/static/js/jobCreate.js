@@ -6,9 +6,11 @@ $(document).ready(function(){
             // fetch wikiusers
             if (cohort && !cohort.wikiusers) {
                 cohort.wikiusers = ko.observableArray([]);
-                $.get('/cohorts/detail/' + cohort.id, function(data){
-                    cohort.wikiusers(data.wikiusers);
-                }).fail(failure);
+                $.get('/cohorts/detail/' + cohort.id)
+                    .done(site.handleWith(function(data){
+                        cohort.wikiusers(data.wikiusers);
+                    }))
+                    .fail(site.failure);
             }
             return true;
         },
@@ -19,9 +21,11 @@ $(document).ready(function(){
             if (metric) {
                 if (metric.selected()){
                     // fetch form to configure metric with
-                    $.get('/metrics/configure/' + metric.name, function(configureForm){
-                        metric.configure(configureForm);
-                    }).fail(failure);
+                    $.get('/metrics/configure/' + metric.name)
+                        .done(site.handleWith(function(configureForm){
+                            metric.configure(configureForm);
+                        }))
+                        .fail(site.failure);
                 } else {
                     metric.configure('');
                 }
@@ -40,13 +44,12 @@ $(document).ready(function(){
             });
             data = JSON.stringify(data);
             
-            $.ajax({
-                type: 'post',
-                url: form.attr('action'),
-                data: {responses: data},
-            }).done(function(response){
-                alert(response);
-            }).fail(failure);
+            $.ajax({ type: 'post', url: form.attr('action'), data: {responses: data} })
+                .done(site.handleWith(function(response){
+                    // should redirect to the jobs page, so show an error otherwise
+                    site.showError('unexpected response: ' + response);
+                }))
+                .fail(site.failure);
         },
         
         saveMetricConfiguration: function(formElement){
@@ -55,29 +58,31 @@ $(document).ready(function(){
             var data = ko.toJS(metric);
             delete data.configure;
             
-            $.ajax({
-                type: 'post',
-                url: form.attr('action'),
-                data: data,
-            }).done(function(htmlToReplaceWith){
-                metric.configure(htmlToReplaceWith);
-            }).fail(failure);
+            $.ajax({ type: 'post', url: form.attr('action'), data: data })
+                .done(site.handleWith(function(response){
+                    metric.configure(htmlToReplaceWith);
+                }))
+                .fail(site.failure);
         },
     };
     
     // fetch this user's cohorts
-    $.get('/cohorts/list/', function(data){
-        setSelected(data.cohorts);
-        viewModel.cohorts(data.cohorts);
-    }).fail(failure);
+    $.get('/cohorts/list/')
+        .done(site.handleWith(function(data){
+            setSelected(data.cohorts);
+            viewModel.cohorts(data.cohorts);
+        }))
+        .fail(site.failure);
     
     // fetch the list of available metrics
-    $.get('/metrics/list/', function(data){
-        setTabIds(data.metrics, 'metric');
-        setSelected(data.metrics);
-        setConfigure(data.metrics);
-        viewModel.metrics(data.metrics);
-    }).fail(failure);
+    $.get('/metrics/list/')
+        .done(site.handleWith(function(data){
+            setTabIds(data.metrics, 'metric');
+            setSelected(data.metrics);
+            setConfigure(data.metrics);
+            viewModel.metrics(data.metrics);
+        }))
+        .fail(site.failure);
     
     // computed pieces of the viewModel
     viewModel.request = ko.observable({
@@ -142,10 +147,6 @@ $(document).ready(function(){
                 return '#' + prefix + '-' + this.id;
             }, item);
         });
-    };
-    
-    function failure(error){
-        alert('TODO: report this error in a nicer way ' + error);
     };
     
     
