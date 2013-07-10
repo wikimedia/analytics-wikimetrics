@@ -25,7 +25,8 @@ class SerializableBase(object):
     
     def _asdict(self):
         """ simplejson (used by flask.jsonify) looks for a method with this name """
-        return {c.name : getattr(self, c.name) for c in self.__table__.columns if c.name != 'id'}
+        #return {c.name : getattr(self, c.name) for c in self.__table__.columns if c.name != 'id'}
+        return {c.name : getattr(self, c.name) for c in self.__table__.columns}
 
 
 class Database(object):

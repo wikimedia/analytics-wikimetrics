@@ -2,16 +2,20 @@
 {% block body %}
 <h2>Job queue</h2>
 <table class="table table-striped">
+    <caption>
+        (Refreshes automatically every 2 seconds)        
+    </caption>
     <thead>
         <tr>
-            <th>Started</th>
+            <th>Created</th>
+            <th>Status</th>
             <th>Name</th>
-            <th>Detail</th>
         </tr>
     </thead>
-    <tbody data-bind="foreach: jobs">
+    <tbody data-bind="foreach: jobs_sorted">
         <tr>
-            <td data-bind="text: started"></td>
+            <td data-bind="text: moment.unix(created).format('YYYY-MM-DD HH:mm')"></td>
+            <td data-bind="text: status"></td>
             <td data-bind="text: name"></td>
             <td>...</td>
         </tr>
@@ -22,5 +26,6 @@
 
 {% block scripts %}
 <script src="//ajax.aspnetcdn.com/ajax/knockout/knockout-2.2.1.js"></script>
+<script src="//rawgithub.com/timrwood/moment/2.1.0/min/moment.min.js"></script>
 <script src="{{ url_for('static', filename='js/jobList.js') }}"></script>
 {% endblock %}

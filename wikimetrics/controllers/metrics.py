@@ -4,6 +4,7 @@ from ..configurables import app, db
 from .. import metrics
 from ..metrics import metric_classes
 
+
 @app.route('/metrics/')
 def metrics_index():
     """

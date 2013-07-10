@@ -1,17 +1,15 @@
-import collections
-import pickle
-from sqlalchemy import Column, Integer, String, ForeignKey
-from sqlalchemy.orm import relationship, backref
+from sqlalchemy import Column, Integer, String, DateTime, func
+from sqlalchemy.orm import Session
 import celery
 from celery import group, chord
 from celery.utils.log import get_task_logger
 from celery import current_task
 from celery.contrib.methods import task_method
-import traceback
 import logging
+from flask.ext.login import current_user
 import time
-
 from wikimetrics.configurables import db, queue
+
 
 __all__ = [
     'Job',
@@ -19,6 +17,7 @@ __all__ = [
     'JobLeaf',
     'PersistentJob'
 ]
+
 
 """
 We use a tree-based job model to represent the relationships
@@ -36,7 +35,6 @@ metric would be a `JobLeaf`, whereas any aggregator would be a `JobNode`
 """
 
 
-
 task_logger = get_task_logger(__name__)
 sh = logging.StreamHandler()
 task_logger.addHandler(sh)
@@ -46,34 +44,54 @@ class PersistentJob(db.WikimetricsBase):
     __tablename__ = 'job'
     
     id = Column(Integer, primary_key=True)
+    created = Column(DateTime, default=func.now())
     user_id = Column(Integer)
-    result_key = Column(String(50)) 
+    result_key = Column(String(50))
     status = Column(String(50))
+    name = Column(String(200))
+    
+    def update_status(self):
+        if self.status not in (celery.states.SUCCESS, celery.states.FAILURE):
+            if self.result_key:
+                # if we don't have the result key leave as is (PENDING)
+                celery_task = Job.task.AsyncResult(self.result_key)
+                self.status = celery_task.status
+                Session.object_session(self).commit()
 
 
 class Job(object):
     
+    show_in_ui = False
+    
     def __init__(self,
-            user_id=None,
-            status=celery.states.PENDING,
-            result_key=None,
-            children=[]):
-        self.user_id = user_id
+                 user_id=None,
+                 status=celery.states.PENDING,
+                 name=None,
+                 result_key=None,
+                 children=[]):
+        if user_id is not None:
+            self.user_id = user_id
+        else:
+            self.user_id = None
+        #else:
+            #self.user_id = current_user.id
         self.status = status
+        self.name = name
         self.result_key = result_key
         self.children = children
         
         # create PersistentJob and store id
         # note that result_key is always empty at this stage
         pj = PersistentJob(user_id=self.user_id,
-                status=self.status)
+                           status=self.status,
+                           name=self.name)
         session = db.get_session()
         session.add(pj)
         session.commit()
         self.persistent_id = pj.id
     
     def __repr__(self):
-        return '<PersistentJob("{0}")>'.format(self.persistent_id)
+        return '<Job("{0}")>'.format(self.persistent_id)
     
     def set_status(self, status, task_id):
         """
@@ -89,8 +107,10 @@ class Job(object):
     
     @queue.task(filter=task_method)
     def task(self):
+        time.sleep(5)
         self.set_status(celery.states.STARTED, task_id=current_task.request.id)
         task_logger.info('starting task: %s', current_task.request.id)
+        time.sleep(5)
         result = self.run()
         return result
     
@@ -108,13 +128,43 @@ class JobNode(Job):
     
     def run(self):
         if self.children:
-            children_then_finish = chord(self.child_tasks())(self.finish.s())
-            children_then_finish.get()
-            return children_then_finish.result
+            # this is a hack to get around the fact that celery can't deal with
+            # instance methods as the final callback on a chord
+            # instead, we pass self in as an argument, and the actual
+            # list of results from the child tasks are prepended to the args
+            # with which finish_task is actually invoked
+            header = self.child_tasks()
+            callback = self.finish_task.s(self)
+            children_then_finish = chord(header)(callback)
+            return children_then_finish
         else:
             return []
     
-    def finish(results):
+    @queue.task(filter=task_method)
+    def finish_task(results, self):
+        """
+        This is the task which is executed after all of the child tasks
+        in a JobNode have been executed.  It serves as a wrapper to the
+        finish() method which actually deals with child task results
+     .  Note that the signature of this method is a little funny due to
+        a hack to get around the way that celery handles instance method tasks.
+        The JobNode instance (self) is specified  when the callback
+        subtask is created, and the results argument is filled in by celery
+        once they have completed.  The order is just reversed because celery
+        is hardcoded to prepend the results from a chord into the argument list
+        specified when createing the subtask.
+        """
+        task_logger.debug('finish_task self: %s', self)
+        task_logger.debug('finish_task results: %s', results)
+        self.set_status(celery.states.STARTED, task_id=current_task.request.id)
+        task_logger.info('starting finish task: %s', current_task.request.id)
+        result = self.finish(results)
+        return result
+    
+    def finish(self, results):
+        """
+        Each JobNode sublcass should implement this method to
+        deal with the results of its child jobs"""
         pass
 
 

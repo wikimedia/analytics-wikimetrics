@@ -1,5 +1,4 @@
 from wikimetrics.configurables import queue
-from celery.contrib.methods import task_method
 from celery.utils.log import get_task_logger
 import logging
 import job
@@ -9,9 +8,6 @@ __all__ = [
     'MultiProjectMetricJob',
 ]
 
-task_logger = get_task_logger(__name__)
-sh = logging.StreamHandler()
-task_logger.addHandler(sh)
 
 class MultiProjectMetricJob(job.JobNode):
     """
@@ -31,10 +27,8 @@ class MultiProjectMetricJob(job.JobNode):
             # note that user_ids is actually just an iterator
             self.children.append(MetricJob(metric, user_ids, project))
     
-    @queue.task
-    def finish(query_results):
+    def finish(self, query_results):
         merged = {}
         for res in query_results:
             merged.update(res)
-        task_logger.info('multi_project_metric_job returning: %s', merged)
         return merged

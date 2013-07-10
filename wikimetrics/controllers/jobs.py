@@ -1,11 +1,12 @@
-from flask import render_template, redirect, request, jsonify
+from flask import render_template, request, jsonify
 from flask.ext.login import current_user
 import celery
 from ..configurables import app, db
-from ..models import Cohort, Job, JobResponse, PersistentJob
+from ..models import Cohort, Job, JobResponse, PersistentJob, MultiProjectMetricJob
 from ..metrics import metric_classes
+from ..utils import json_response
 import json
-import redis
+
 
 @app.route('/jobs/')
 def jobs_index():
@@ -26,6 +27,7 @@ def jobs_request():
         return render_template('request.html')
     else:
         parsed = json.loads(request.form['responses'])
+        metric_jobs = []
         for cohort_metric_dict in parsed:
             app.logger.debug('cohort_metric_dict: %s', cohort_metric_dict)
             
@@ -45,9 +47,11 @@ def jobs_request():
             app.logger.debug('metric: %s', metric)
             
             # construct and start JobResponse
-            jr = JobResponse(((cohort, metric),))
-            async_response = jr.task.delay()
-            app.logger.info('starting job: %s', async_response.task_id)
+            metric_job = MultiProjectMetricJob(cohort, metric, cohort_metric_dict['name'])
+            metric_jobs.append(metric_job)
+        jr = JobResponse(metric_jobs)
+        async_response = jr.task.delay()
+        app.logger.info('starting job: %s', async_response.task_id)
             
         #return render_template('jobs.html')
         return jsonify(redirect_url='/jobs/status/{0}'.format(jr.persistent_id))
@@ -58,7 +62,12 @@ def jobs_list():
     db_session = db.get_session()
     jobs = db_session.query(PersistentJob)\
         .filter_by(user_id=current_user.id).all()
-    return jsonify(jobs=jobs)
+    app.logger.debug('jobs: %s', jobs)
+    # update status for each job
+    for job in jobs:
+        job.update_status()
+    # TODO fix json_response to deal with PersistentJob objects
+    return json_response(jobs=[job._asdict() for job in jobs])
 
 
 @app.route('/jobs/status/<job_id>')
@@ -70,4 +79,6 @@ def job_status(job_id):
             # if we don't have the result key leave as is (PENDING)
             celery_task = Job.task.AsyncResult(db_job.result_key)
             db_job.status = celery_task.status
+            db_session.add(db_job)
+            db_session.commit()
     return jsonify(status=db_job.status)
