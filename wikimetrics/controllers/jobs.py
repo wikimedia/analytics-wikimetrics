@@ -1,7 +1,7 @@
 from flask import render_template, redirect, request, jsonify
 from flask.ext.login import current_user
 import celery
-from ..configurables import app, db, redis_pool
+from ..configurables import app, db
 from ..models import Cohort, Job, JobResponse, PersistentJob
 from ..metrics import metric_classes
 import json
