@@ -7,6 +7,8 @@
             <div class="controls">
                 {% if f.type == 'BooleanField' or f.type == 'BetterBooleanField' %}
                     {{ f(**{'data-bind':'checked: '+f.name}) }}
+                {% elif f.type == 'DateField' %}
+                    {{ f(**{'type':'date', 'data-bind':'value: '+f.name}) }}
                 {% else %}
                     {{ f(placeholder=f.description, **{'data-bind':'value: '+f.name}) }}
                 {% endif %}

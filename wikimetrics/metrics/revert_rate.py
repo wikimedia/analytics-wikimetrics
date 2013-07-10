@@ -1,5 +1,7 @@
 from flask.ext import wtf
 from metric import Metric
+from datetime import date
+from ..utils import thirty_days_ago
 
 __all__ = [
     'RevertRate',
@@ -36,8 +38,8 @@ class RevertRate(Metric):
     label       = 'Revert Rate'
     description = 'Compute the number of reverted edits in a mediawiki project'
     
-    start_date  = wtf.DateField()
-    end_date    = wtf.DateField()
+    start_date  = wtf.DateField(default=thirty_days_ago)
+    end_date    = wtf.DateField(default=date.today)
     #namespace   = wtf.IntegerField(default=0)
     
     def __call__(self, user_ids, session):

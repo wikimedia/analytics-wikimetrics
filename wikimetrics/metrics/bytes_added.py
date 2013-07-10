@@ -1,3 +1,5 @@
+from datetime import date
+from ..utils import thirty_days_ago
 from ..models import Revision, Page
 from metric import Metric
 from form_fields import BetterBooleanField, CommaSeparatedIntegerListField
@@ -57,8 +59,8 @@ class BytesAdded(Metric):
     description = 'Compute different aggregations of the bytes contributed or removed from a\
                    mediawiki project'
     
-    start_date          = DateField()
-    end_date            = DateField()
+    start_date          = DateField(default=thirty_days_ago)
+    end_date            = DateField(default=date.today)
     namespaces          = CommaSeparatedIntegerListField(default=[0], description='0, 2, 4, etc.')
     positive_only_sum   = BetterBooleanField(default=True)
     negative_only_sum   = BetterBooleanField(default=True)

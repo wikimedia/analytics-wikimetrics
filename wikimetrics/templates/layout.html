@@ -52,12 +52,29 @@
         
         #}
     </ul>
+    <div class="site-messages">
+    </div>
     <section class="container">
         {% block body %}{% endblock %}
     </section>
     
     <script src="//ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js"></script>
     <script src="{{ url_for('static', filename='js/bootstrap.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/site.js') }}"></script>
     {% block scripts %}{% endblock %}
+    
+    <script type="text/html" class="errorTemplate">
+        <div class="alert alert-error">
+            <button type="button" class="close" data-dismiss="alert">&times;</button>
+            <strong>Error!</strong> #####
+        </div>
+    </script>
+    <script type="text/html" class="infoTemplate">
+        <div class="alert alert-info">
+            <button type="button" class="close" data-dismiss="alert">&times;</button>
+            <strong>Info</strong> #####
+        </div>
+    </script>
+</div>
 </body>
 </html>
