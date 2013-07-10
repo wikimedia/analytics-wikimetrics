@@ -22,11 +22,6 @@
 
 <h5>Try uploading again after fixing the issues</h5>
 {% include "csv_upload_form.html" %}
-<!--form action="/uploads/cohort/validate" method="POST" class="form-horizontal">
-    <div class="form-actions">
-        <input type="submit" class="btn" value="Re-Check These Users"/>
-    </div>
-</form-->
 {% endif %}
 
 <hr/>
@@ -48,45 +43,18 @@
     </tbody>
 </table>
 
-<form action="/uploads/cohort/finish" method="POST" class="form-horizontal finish-upload">
+<form action="{{url_for('cohort_upload_finish')}}" method="POST" class="form-horizontal finish-upload">
     <div class="form-actions">
         <input type="submit" class="btn btn-primary" value="{% if invalid %}Upload Only These Valid Users{% else %}Finish Upload{% endif %}"/>
     </div>
 </form>
 {% endif %}
+{% endblock %}
 
 
+{% block scripts %}
+<script src="//ajax.aspnetcdn.com/ajax/jquery.validate/1.11.1/jquery.validate.min.js"></script>
 <script src="//ajax.aspnetcdn.com/ajax/knockout/knockout-2.2.1.js"></script>
-<script>
-    var invalid = JSON.parse('{{ invalid_json | safe }}');
-    var valid = JSON.parse('{{ valid_json | safe }}');
-    var cohort_name = '{{ cohort_name }}';
-    var cohort_project = '{{ cohort_project }}';
-    $(document).ready(function(){
-        ko.applyBindings({
-            invalid: ko.observableArray(invalid),
-            valid: ko.observableArray(valid)
-        });
-
-        $('form.finish-upload').submit(function(event){
-            event.preventDefault();
-            event.stopPropagation();
-            
-            form = $(this);
-            $.ajax({
-                url: form.attr('action'),
-                type: 'post',
-                data: {
-                    users: JSON.stringify(valid),
-                    cohort_name: cohort_name,
-                    cohort_project: cohort_project
-                }
-            }).done(redirect);
-        });
-    });
-    
-    function redirect(to){
-        location.href = to;
-    };
-</script>
+<script src="{{ url_for('static', filename='js/cohortUpload.js') }}"></script>
+<script src="{{ url_for('static', filename='js/cohortReview.js') }}"></script>
 {% endblock %}

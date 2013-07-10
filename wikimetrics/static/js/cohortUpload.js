@@ -5,6 +5,7 @@ $(document).ready(function(){
     }, 'Cohort names should only contain letters, numbers, spaces, dashes, and underscores');
     
     $('form.upload-cohort').validate({
+        onkeyup: false,
         messages: {
             name: {
                 remote: 'This cohort name is taken.',
@@ -14,7 +15,7 @@ $(document).ready(function(){
             name: {
                 required: true,
                 cohortName: true,
-                remote: '/validate/cohort/allowed'
+                remote: '/cohorts/validate/name',
             },
             csv: {
                 required: true
