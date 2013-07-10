@@ -1,4 +1,5 @@
 import json
+import csv
 from flask import url_for, flash, render_template, redirect, request, jsonify
 from flask.ext.login import current_user
 from sqlalchemy.sql import exists
@@ -105,10 +106,10 @@ def cohort_upload():
 
     elif request.method == 'POST':
         try:
-            csv = request.files['csv']
+            csv_file = request.files['csv']
             name = request.form['name']
             project = request.form['project']
-            if not csv or not name or len(name) is 0:
+            if not csv_file or not name or len(name) is 0:
                 flash('The form was invalid, please select a file and name the cohort.')
                 return redirect(url_for('cohort_upload'))
             
@@ -116,7 +117,7 @@ def cohort_upload():
                 flash('That Cohort name is already taken.')
                 return redirect(url_for('cohort_upload'))
             
-            unparsed = csv.reader(normalize_newlines(csv.stream))
+            unparsed = csv.reader(normalize_newlines(csv_file.stream))
             unvalidated = parse_records(unparsed, project)
             (valid, invalid) = validate_records(unvalidated)
             
