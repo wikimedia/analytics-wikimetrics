@@ -4,6 +4,7 @@ from datetime import datetime
 
 __all__ = [
     'DatabaseTest',
+    'DatabaseWithCohortTest',
     'QueueTest',
     'QueueDatabaseTest',
     'WebTest',
@@ -97,6 +98,11 @@ class DatabaseTest(unittest.TestCase):
             cohort_id=private_cohort2.id,
             role=CohortUserRole.OWNER,
         )
+        web_user_owns_test = CohortUser(
+            user_id=web_test_user.id,
+            cohort_id=test_cohort.id,
+            role=CohortUserRole.OWNER,
+        )
         web_user_owns_private = CohortUser(
             user_id=web_test_user.id,
             cohort_id=private_cohort.id,
@@ -116,6 +122,7 @@ class DatabaseTest(unittest.TestCase):
             dan_owns_test,
             evan_owns_private,
             evan_owns_private2,
+            web_user_owns_test,
             web_user_owns_private,
             web_user_owns_private2,
             dan_views_private2
