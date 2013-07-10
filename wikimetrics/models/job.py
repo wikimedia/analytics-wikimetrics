@@ -2,12 +2,14 @@ import collections
 import pickle
 from sqlalchemy import Column, Integer, String, ForeignKey
 from sqlalchemy.orm import relationship, backref
+import celery
 from celery import group, chord
 from celery.utils.log import get_task_logger
 from celery import current_task
 from celery.contrib.methods import task_method
 import traceback
 import logging
+import time
 
 from wikimetrics.configurables import db, queue
 
@@ -15,7 +17,6 @@ __all__ = [
     'Job',
     'JobNode',
     'JobLeaf',
-    'JobStatus',
     'PersistentJob'
 ]
 
@@ -41,11 +42,6 @@ sh = logging.StreamHandler()
 task_logger.addHandler(sh)
 
 
-class JobStatus(object):
-    CREATED  = 'CREATED'
-    STARTED  = 'STARTED'
-    FINISHED = 'FINISHED'
-
 class PersistentJob(db.WikimetricsBase):
     __tablename__ = 'job'
     
@@ -59,16 +55,44 @@ class Job(object):
     
     def __init__(self,
             user_id=None,
-            status=JobStatus.CREATED,
-            result_id=None,
+            status=celery.states.PENDING,
+            result_key=None,
             children=[]):
         self.user_id = user_id
         self.status = status
-        self.result_id = result_id
+        self.result_key = result_key
         self.children = children
+        
+        # create PersistentJob and store id
+        # note that result_key is always empty at this stage
+        pj = PersistentJob(user_id=self.user_id,
+                status=self.status)
+        session = db.get_session()
+        session.add(pj)
+        session.commit()
+        self.persistent_id = pj.id
     
     def __repr__(self):
-        return '<Job("{0}")>'.format(self.id)
+        return '<PersistentJob("{0}")>'.format(self.persistent_id)
+    
+    def set_status(self, status, task_id):
+        """
+        helper function for updating database status after celery
+        task has been started
+        """
+        db_session = db.get_session()
+        pj = db_session.query(PersistentJob).get(self.persistent_id)
+        pj.status = status
+        pj.result_key = task_id
+        db_session.add(pj)
+        db_session.commit()
+    
+    @queue.task(filter=task_method)
+    def task(self):
+        self.set_status(celery.states.STARTED, task_id=current_task.request.id)
+        task_logger.info('starting task: %s', current_task.request.id)
+        result = self.run()
+        return result
     
     def run(self):
         """
@@ -80,24 +104,16 @@ class Job(object):
 class JobNode(Job):
     
     def child_tasks(self):
-        return group(child.run.s(child) for child in self.children)
+        return group(child.task.s() for child in self.children)
     
-    @queue.task(filter=task_method)
     def run(self):
-        try:
-            if self.children:
-                children_then_finish = chord(self.child_tasks())(self.finish.s())
-                task_logger.info('created chord')
-                children_then_finish.get()
-                task_logger.info('got chord result: %s', children_then_finish.result)
-                return children_then_finish.result
-            else:
-                return []
-        except:
-            task_logger.exception('caught exception within worker:')
-            raise
+        if self.children:
+            children_then_finish = chord(self.child_tasks())(self.finish.s())
+            children_then_finish.get()
+            return children_then_finish.result
+        else:
+            return []
     
-    @queue.task(filter=task_method)
     def finish(results):
         pass
 

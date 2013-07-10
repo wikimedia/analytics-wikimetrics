@@ -2,10 +2,7 @@ import inspect
 from flask import render_template, redirect, request, jsonify
 from ..configurables import app, db
 from .. import metrics
-
-
-metric_classes = {m[0]: m[1] for m in inspect.getmembers(metrics, inspect.isclass)}
-
+from ..metrics import metric_classes
 
 @app.route('/metrics/')
 def metrics_index():

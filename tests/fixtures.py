@@ -1,4 +1,5 @@
 import unittest
+import celery
 from datetime import datetime
 
 __all__ = [
@@ -18,7 +19,6 @@ from wikimetrics.models import (
     CohortUserRole,
     CohortUser,
     PersistentJob,
-    JobStatus,
     Revision,
     Page,
     MediawikiUser,
@@ -38,7 +38,6 @@ class DatabaseTest(unittest.TestCase):
         self.mwSession = db.get_mw_session('enwiki')
         DatabaseTest.tearDown(self)
         
-        job = PersistentJob()
         dan_user = User(username='Dan')
         evan_user = User(username='Evan')
         web_test_user = User(email='test@test.com')
@@ -125,16 +124,16 @@ class DatabaseTest(unittest.TestCase):
         
         # add jobs
         job_created = PersistentJob(
-            user_id=web_test_user.id, status=JobStatus.CREATED, result_key=None
+            user_id=web_test_user.id, status=celery.states.PENDING, result_key=None
         )
         job_started = PersistentJob(
-            user_id=web_test_user.id, status=JobStatus.STARTED, result_key=None
+            user_id=web_test_user.id, status=celery.states.STARTED, result_key=None
         )
         job_started2 = PersistentJob(
-            user_id=web_test_user.id, status=JobStatus.STARTED, result_key=None
+            user_id=web_test_user.id, status=celery.states.STARTED, result_key=None
         )
         job_finished = PersistentJob(
-            user_id=web_test_user.id, status=JobStatus.FINISHED, result_key=None
+            user_id=web_test_user.id, status=celery.states.SUCCESS, result_key=None
         )
         self.session.add_all([
             job_created,

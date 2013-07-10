@@ -84,3 +84,14 @@ def config_celery(args):
             #with app.app_context():
                 #return TaskBase.__call__(self, *args, **kwargs)
     #queue.Task = ContextTask
+    
+def config_redis(args):
+    from redis import ConnectionPool
+    global redis_pool
+    redis_config = create_object_from_config_file(args.redis_config)
+    redis_pool = ConnectionPool(
+            host=redis_config.REDIS_HOST,
+            port=redis_config.REDIS_PORT,
+            db=redis_config.REDIS_DB
+        )
+    

@@ -25,6 +25,6 @@ class JobResponse(job.JobNode):
         super(JobResponse, self).__init__(*args, **kwargs)
         self.children = [MultiProjectMetricJob(c, m) for c, m in cohort_metrics]
     
-    @queue.task(filter=task_method)
+    @queue.task()
     def finish(job_results):
         return job_results

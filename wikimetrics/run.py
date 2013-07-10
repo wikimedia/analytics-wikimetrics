@@ -3,7 +3,7 @@ import argparse
 import sys
 import logging
 import pprint
-from .configurables import config_web, config_db, config_celery
+from .configurables import config_web, config_db, config_celery, config_redis
 logger = logging.getLogger(__name__)
 
 
@@ -75,6 +75,14 @@ def setup_parser():
         help='Celery config file',
         dest='celery_config',
     )
+    parser.add_argument(
+        '--redis-config', '-r',
+        default='wikimetrics/config/redis_config.py',
+        help='''Redis info used for tracking jobs in Celery results backend
+            specifically, the following equality should always hold:
+            CELERY_RESULT_BACKEND == 'redis://REDIS_HOST:REDIS_PORT/REDIS_DB
+        ''',
+        dest='redis_config')
     return parser
 
 
@@ -90,6 +98,7 @@ logger.info('running with arguments:\n%s', pprint.pformat(vars(args)))
 config_web(args)
 config_db(args)
 config_celery(args)
+config_redis(args)
 
 
 def main():

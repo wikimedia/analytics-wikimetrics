@@ -20,7 +20,7 @@ class MetricJob(job.JobLeaf):
         self.user_ids = list(user_ids)
         self.project = project
     
-    @queue.task(filter=task_method)
+    #@queue.task(filter=task_method)
     def run(self):
         session = db.get_mw_session(self.project)
         return self.metric(self.user_ids, session)

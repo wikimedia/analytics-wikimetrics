@@ -12,7 +12,7 @@ class JobResponseTest(QueueDatabaseTest):
     def test_empty_response(self):
         # TODO: handle case where user tries to submit form with no cohorts / metrics
         jr = JobResponse(cohort_metrics=[], user_id=0)
-        result = jr.run.delay().get()
+        result = jr.task.delay().get()
         assert_equals(result, [])
     
     
@@ -21,5 +21,5 @@ class JobResponseTest(QueueDatabaseTest):
         m = NamespaceEdits(namespaces=[0,1,2])
         
         jr = JobResponse(cohort_metrics=[(c,m)], user_id=0)
-        results = jr.run.delay().get()
+        results = jr.task.delay().get()
         print results
