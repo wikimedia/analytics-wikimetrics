@@ -54,7 +54,7 @@ class Database(object):
         
         self.mediawiki_engines = {}
         self.mediawiki_sessionmakers = {}
-        self.project_host_map = self.get_project_host_map()
+        self.project_host_map = self.get_project_host_map(usecache=False)
     
     def get_session(self):
         """

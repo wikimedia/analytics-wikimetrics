@@ -3,6 +3,7 @@ from metric import Metric
 from datetime import date
 from ..utils import thirty_days_ago
 from form_fields import CommaSeparatedIntegerListField
+from wtforms.validators import Required
 
 __all__ = [
     'RevertRate',
