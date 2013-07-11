@@ -38,7 +38,8 @@ def default_to_private():
     # TODO: put static resources in a new Blueprint
     if (
             request.endpoint
-        and not 'static' in request.endpoint
+        and not request.path.startswith('/static/')
+        and not request.path == 'favicon.ico'
         and not getattr(app.view_functions[request.endpoint], 'is_public', False)
     ):
         flash('Please Login before visiting ' + request.url, 'info')
