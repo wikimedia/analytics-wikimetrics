@@ -138,7 +138,9 @@ class Database(object):
                 projects = urlopen(url).read().splitlines()
                 for project in projects:
                     project_host_map[project] = host
-            json.dump(project_host_map, open(cache_name, 'w'))
+            
+            if usecache:
+                json.dump(project_host_map, open(cache_name, 'w'))
         else:
             project_host_map = json.load(open(cache_name))
         
