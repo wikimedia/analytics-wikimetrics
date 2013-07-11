@@ -1,4 +1,3 @@
-from flask.ext import wtf
 from metric import Metric
 from datetime import date
 from ..utils import thirty_days_ago
