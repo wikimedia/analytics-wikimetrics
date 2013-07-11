@@ -110,11 +110,11 @@ def cohort_upload():
             name = request.form['name']
             project = request.form['project']
             if not csv_file or not name or len(name) is 0:
-                flash('The form was invalid, please select a file and name the cohort.')
+                flash('The form was invalid, please select a file and name the cohort.', 'error')
                 return redirect(url_for('cohort_upload'))
             
             if get_cohort_by_name(name):
-                flash('That Cohort name is already taken.')
+                flash('That Cohort name is already taken.', 'warning')
                 return redirect(url_for('cohort_upload'))
             
             unparsed = csv.reader(normalize_newlines(csv_file.stream))
@@ -135,6 +135,7 @@ def cohort_upload():
             flash(
                 'The file you uploaded was not in a valid format, could not be validated,'
                 'or the project you specified is not configured on this instance of Wiki Metrics.'
+                , 'error'
             )
             return redirect(url_for('cohort_upload'))
 
@@ -168,7 +169,7 @@ def cohort_upload_finish():
         
     except Exception, e:
         logging.exception(str(e))
-        flash('There was a problem finishing the upload.  The cohort was not saved.')
+        flash('There was a problem finishing the upload.  The cohort was not saved.', 'error')
         return '<<error>>'
 
 

@@ -20,16 +20,26 @@ var site = {
     },
     
     showError: function (message){
-        if (!site.errorTemplate){
-            site.errorTemplate = $('.errorTemplate').html();
-        }
-        $('.site-messages').append(site.errorTemplate.replace('#####', message));
+        site.showMessage(message, 'error');
     },
     showInfo: function (message){
-        if (!site.infoTemplate){
-            site.infoTemplate = $('.infoTemplate').html();
+        site.showMessage(message, 'info');
+    },
+    showWarning: function (message){
+        site.showMessage(message, 'warning');
+    },
+    showSuccess: function (message){
+        site.showMessage(message, 'success');
+    },
+    showMessage: function (message, category){
+        if (!site.messageTemplate){
+            site.messageTemplate = $('.messageTemplate').html();
         }
-        $('.site-messages').append(site.infoTemplate.replace('#####', message));
+        html = site.messageTemplate
+            .replace('##message##', message)
+            .replace(/##category##/g, category)
+            .replace('##punctuation##', category !== 'info' ? '!' : '');
+        $('.site-messages').append(html);
     },
     
     redirect: function (url){

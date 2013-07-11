@@ -37,22 +37,15 @@
             </div>
         </div>
     </div>
-    <ul class="unstyled">
-        {% for category, message in get_flashed_messages(with_categories=True) %}
-        <li class="flash text-{{category}}">{{ message }}</li>
-        {% endfor %}
-        
-        {#
-        TODO: consider cool alternative alert:
-        
-        <li class="alert alert-{{category}}">
-            <button class="close" data-dismiss="alert">&times;</button>
-            <strong>Some Title</strong> {{ message }}
-        </li>
-        
-        #}
-    </ul>
-    <div class="site-messages">
+    <div class="site-messages-container">
+        <ul class="unstyled site-messages">
+            {% for category, message in get_flashed_messages(with_categories=True) %}
+            <li class="alert alert-{{category}}">
+                <button class="close" data-dismiss="alert">&times;</button>
+                <strong>{{ category }}!</strong> {{ message }}
+            </li>
+            {% endfor %}
+        </ul>
     </div>
     <section class="container">
         {% block body %}{% endblock %}
@@ -63,17 +56,11 @@
     <script src="{{ url_for('static', filename='js/site.js') }}"></script>
     {% block scripts %}{% endblock %}
     
-    <script type="text/html" class="errorTemplate">
-        <div class="alert alert-error">
-            <button type="button" class="close" data-dismiss="alert">&times;</button>
-            <strong>Error!</strong> #####
-        </div>
-    </script>
-    <script type="text/html" class="infoTemplate">
-        <div class="alert alert-info">
-            <button type="button" class="close" data-dismiss="alert">&times;</button>
-            <strong>Info</strong> #####
-        </div>
+    <script type="text/html" class="messageTemplate">
+        <li class="alert alert-##category##">
+            <button class="close" data-dismiss="alert">&times;</button>
+            <strong>##category####punctuation##</strong> ##message##
+        </li>
     </script>
 </div>
 </body>
