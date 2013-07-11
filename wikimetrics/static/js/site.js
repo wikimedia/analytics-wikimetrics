@@ -32,6 +32,7 @@ var site = {
         site.showMessage(message, 'success');
     },
     showMessage: function (message, category){
+        $('.site-messages').children().remove();
         if (!site.messageTemplate){
             site.messageTemplate = $('.messageTemplate').html();
         }
@@ -48,5 +49,10 @@ var site = {
     
     failure: function (error){
         site.showError(error);
+        console.log(error);
+    },
+    
+    hasValidationErrors: function(){
+        return $('li.text-error').length > 0;
     },
 };

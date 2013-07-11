@@ -34,7 +34,16 @@ $(document).ready(function(){
         },
         
         save: function(formElement){
+            if (site.hasValidationErrors()){
+                site.showWarning('Please configure and click Save Configuration for each selected metric.');
+                return;
+            }
+            
             var vm = ko.dataFor(formElement);
+            if (vm.request().responses().length == 0){
+                site.showWarning('Please select at least one cohort and one metric.');
+                return;
+            }
             var form = $(formElement);
             var data = ko.toJSON(vm.request().responses);
             data = JSON.parse(data);
@@ -47,7 +56,7 @@ $(document).ready(function(){
             $.ajax({ type: 'post', url: form.attr('action'), data: {responses: data} })
                 .done(site.handleWith(function(response){
                     // should redirect to the jobs page, so show an error otherwise
-                    site.showError('unexpected response: ' + response);
+                    site.showWarning('Unexpected: ' + JSON.stringify(response));
                 }))
                 .fail(site.failure);
         },
@@ -60,7 +69,12 @@ $(document).ready(function(){
             
             $.ajax({ type: 'post', url: form.attr('action'), data: data })
                 .done(site.handleWith(function(response){
-                    metric.configure(htmlToReplaceWith);
+                    metric.configure(response);
+                    if (site.hasValidationErrors()){
+                        site.showWarning('The configuration was not all valid.  Please check all the metrics below.');
+                    } else {
+                        site.showSuccess('Configuration Saved');
+                    }
                 }))
                 .fail(site.failure);
         },

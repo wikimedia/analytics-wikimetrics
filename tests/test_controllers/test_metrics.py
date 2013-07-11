@@ -50,3 +50,13 @@ class TestMetricsController(WebTest):
             -1,
             'Validation on a BytesAdded configuration is not happening'
         )
+    
+    def test_configure_namespaces_post(self):
+        response = self.app.post('/metrics/configure/NamespaceEdits', data=dict(
+            namespaces='1,a,2,3,4',
+        ))
+        assert_not_equal(
+            response.data.find('<li class="text-error">'),
+            -1,
+            'Validation on the NamespaceEdits configuration, namespaces field is not happening.'
+        )

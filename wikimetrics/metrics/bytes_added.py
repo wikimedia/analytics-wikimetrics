@@ -3,6 +3,7 @@ from ..utils import thirty_days_ago
 from ..models import Revision, Page
 from metric import Metric
 from form_fields import BetterBooleanField, CommaSeparatedIntegerListField
+from wtforms.validators import Required
 from wtforms import DateField
 from sqlalchemy import func, case, between
 from sqlalchemy.sql.expression import label
@@ -61,7 +62,12 @@ class BytesAdded(Metric):
     
     start_date          = DateField(default=thirty_days_ago)
     end_date            = DateField(default=date.today)
-    namespaces          = CommaSeparatedIntegerListField(default=[0], description='0, 2, 4, etc.')
+    namespaces          = CommaSeparatedIntegerListField(
+        None,
+        [Required()],
+        default='0',
+        description='0, 2, 4, etc.',
+    )
     positive_only_sum   = BetterBooleanField(default=True)
     negative_only_sum   = BetterBooleanField(default=True)
     absolute_sum        = BetterBooleanField(default=True)

@@ -35,7 +35,6 @@ def default_to_private():
     if current_user.is_authenticated():
         return
     
-    # TODO: put static resources in a new Blueprint
     if (
             request.endpoint
         and not request.path.startswith('/static/')

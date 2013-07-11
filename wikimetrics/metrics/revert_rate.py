@@ -2,6 +2,7 @@ from flask.ext import wtf
 from metric import Metric
 from datetime import date
 from ..utils import thirty_days_ago
+from form_fields import CommaSeparatedIntegerListField
 
 __all__ = [
     'RevertRate',
@@ -40,7 +41,12 @@ class RevertRate(Metric):
     
     start_date  = wtf.DateField(default=thirty_days_ago)
     end_date    = wtf.DateField(default=date.today)
-    #namespace   = wtf.IntegerField(default=0)
+    namespaces  = CommaSeparatedIntegerListField(
+        None,
+        [Required()],
+        default='0',
+        description='0, 2, 4, etc.',
+    )
     
     def __call__(self, user_ids, session):
         """
