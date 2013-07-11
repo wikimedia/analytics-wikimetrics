@@ -59,19 +59,19 @@ def setup_parser():
     )
     parser.add_argument(
         '--web-config', '-w',
-        default='config/web_config.py',
+        default='wikimetrics/config/web_config.yaml',
         help='Flask config file',
         dest='web_config',
     )
     parser.add_argument(
         '--db-config', '-d',
-        default='wikimetrics/config/db_config.py',
+        default='wikimetrics/config/db_config.yaml',
         help='Database config file',
         dest='db_config',
     )
     parser.add_argument(
         '--celery-config', '-c',
-        default='wikimetrics/config/celery_config.py',
+        default='wikimetrics/config/celery_config.yaml',
         help='Celery config file',
         dest='celery_config',
     )

@@ -4,12 +4,30 @@ import sys
 import imp
 import os
 import logging
+import yaml
 logger = logging.getLogger(__name__)
 
 
+# TODO: does not work in labs environment
 def create_object_from_config_file(path):
     dir, fname = os.path.split(path)
     return imp.load_source(os.path.splitext(fname)[0], path)
+
+
+def create_dict_from_text_config_file(path):
+    yaml_string = open(path).read()
+    return yaml.load(yaml_string)
+
+
+class FromDictionary(object):
+    def __init__(self, **entries):
+        self.__dict__.update(entries)
+
+
+def create_object_from_text_config_file(path):
+    yaml_string = open(path).read()
+    yaml_dict = yaml.load(yaml_string)
+    return FromDictionary(**yaml_dict)
 
 
 def config_web(args):
@@ -19,9 +37,11 @@ def config_web(args):
     
     global app
     app = Flask('wikimetrics')
-    app.config.from_pyfile(args.web_config)
+    web_config = create_object_from_text_config_file(args.web_config)
+    app.config.from_object(web_config)
     if args.override_config:
-        app.config.from_pyfile(args.override_config)
+        web_config = create_object_from_text_config_file(args.override_config)
+        app.config.from_object(web_config)
     
     global login_manager
     login_manager = LoginManager()
@@ -54,11 +74,10 @@ def config_db(args):
     
     global db
     db = Database()
-    db_config_obj = create_object_from_config_file(args.db_config)
-    db.config = db_config_obj.__dict__
+    db.config = create_dict_from_text_config_file(args.db_config)
     if args.override_config:
-        config_override = create_object_from_config_file(args.override_config)
-        db.config.__dict__.update(config_override.__dict__)
+        config_override = create_dict_from_text_config_file(args.override_config)
+        db.config.__dict__.update(config_override)
 
 
 def config_celery(args):
@@ -69,7 +88,7 @@ def config_celery(args):
     
     global queue
     queue = Celery('wikimetrics', include=['wikimetrics'])
-    config_object = create_object_from_config_file(args.celery_config)
-    queue.config_from_object(config_object)
+    celery_config = create_dict_from_text_config_file(args.celery_config)
+    queue.config_from_object(celery_config)
     if args.override_config:
         queue.config_from_object(args.override_config)
