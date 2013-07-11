@@ -1,15 +1,23 @@
-import collections
-from sqlalchemy import Column, Integer, String, ForeignKey
+from sqlalchemy import Column, Integer, String, DateTime, func
+from sqlalchemy.orm import Session
+import celery
 from celery import group, chord
-
+from celery.utils.log import get_task_logger
+from celery import current_task
+from celery.contrib.methods import task_method
+import logging
+from flask.ext.login import current_user
+import time
 from wikimetrics.configurables import db, queue
+
 
 __all__ = [
     'Job',
     'JobNode',
     'JobLeaf',
-    'JobStatus',
+    'PersistentJob'
 ]
+
 
 """
 We use a tree-based job model to represent the relationships
@@ -27,57 +35,82 @@ metric would be a `JobLeaf`, whereas any aggregator would be a `JobNode`
 """
 
 
-class JobStatus(object):
-    CREATED  = 'CREATED'
-    STARTED  = 'STARTED'
-    FINISHED = 'FINISHED'
+task_logger = get_task_logger(__name__)
+sh = logging.StreamHandler()
+task_logger.addHandler(sh)
 
 
-class Job(db.WikimetricsBase):
-    """
-    Base class for all jobs.  Uses sqlalchemy.declarative to
-    map instance to `job` table.  This means that the database can be used
-    as a central server for persistent job status info.  Jobs are also
-    intended to be re-runnable from a serialized representation, using
-    the Job.from_db alternate constructor.
-    """
+class PersistentJob(db.WikimetricsBase):
     __tablename__ = 'job'
     
     id = Column(Integer, primary_key=True)
-    user_id = Column(Integer, ForeignKey('user.id'))
-    classpath = Column(String(200))
-    status = Column(String(100), default=JobStatus.CREATED)
-    result_id = Column(String(50))
+    created = Column(DateTime, default=func.now())
+    user_id = Column(Integer)
+    result_key = Column(String(50))
+    status = Column(String(50))
+    name = Column(String(200))
     
-    # FIXME: calling ConcatMetricsJob().run uses this run instead of the JobNode one
-    #@queue.task
-    #def run(self):
-        #pass
-    
-    @classmethod
-    def from_db(cls, job_id):
-        """
-        All `Job` subclasses should implement this to ensure that they
-        can be resumed from the database
-        
-        Parameters:
-            cls     : from_db is a class_method so it requires a class
-                      istance as it's first arg, so that it can be called
-                      with JobSubclass.form_db(job_id)
-            job_id  : primary key in the job table which can be used to
-                      locate the serialized information with which a new job
-                      can be created
-        
-        Returns:
-            a new instance of the Job() class which can be re-run
-        """
-        pass
+    def update_status(self):
+        if self.status not in (celery.states.SUCCESS, celery.states.FAILURE):
+            if self.result_key:
+                # if we don't have the result key leave as is (PENDING)
+                celery_task = Job.task.AsyncResult(self.result_key)
+                self.status = celery_task.status
+                Session.object_session(self).commit()
 
-    def __repr__(self):
-        return '<Job("{0}")>'.format(self.id)
+
+class Job(object):
     
-    def get_classpath(self):
-        return str(type(self))
+    show_in_ui = False
+    
+    def __init__(self,
+                 user_id=None,
+                 status=celery.states.PENDING,
+                 name=None,
+                 result_key=None,
+                 children=[]):
+        if user_id is not None:
+            self.user_id = user_id
+        else:
+            self.user_id = None
+        #else:
+            #self.user_id = current_user.id
+        self.status = status
+        self.name = name
+        self.result_key = result_key
+        self.children = children
+        
+        # create PersistentJob and store id
+        # note that result_key is always empty at this stage
+        pj = PersistentJob(user_id=self.user_id,
+                           status=self.status,
+                           name=self.name)
+        session = db.get_session()
+        session.add(pj)
+        session.commit()
+        self.persistent_id = pj.id
+    
+    def __repr__(self):
+        return '<Job("{0}")>'.format(self.persistent_id)
+    
+    def set_status(self, status, task_id):
+        """
+        helper function for updating database status after celery
+        task has been started
+        """
+        db_session = db.get_session()
+        pj = db_session.query(PersistentJob).get(self.persistent_id)
+        pj.status = status
+        pj.result_key = task_id
+        db_session.add(pj)
+        db_session.commit()
+    
+    @queue.task(filter=task_method)
+    def task(self):
+        self.set_status(celery.states.STARTED, task_id=current_task.request.id)
+        task_logger.info('starting task: %s', current_task.request.id)
+        result = self.run()
+        return result
     
     def run(self):
         """
@@ -89,15 +122,47 @@ class Job(db.WikimetricsBase):
 class JobNode(Job):
     
     def child_tasks(self):
-        return group(child.run.s(child) for child in self.children)
+        return group(child.task.s() for child in self.children)
     
-    @queue.task
     def run(self):
-        children_then_finish = chord(self.child_tasks())(self.finish.s())
-        children_then_finish.get()
+        if self.children:
+            # this is a hack to get around the fact that celery can't deal with
+            # instance methods as the final callback on a chord
+            # instead, we pass self in as an argument, and the actual
+            # list of results from the child tasks are prepended to the args
+            # with which finish_task is actually invoked
+            header = self.child_tasks()
+            callback = self.finish_task.s(self)
+            children_then_finish = chord(header)(callback)
+            return children_then_finish
+        else:
+            return []
     
-    @queue.task
-    def finish(self):
+    @queue.task(filter=task_method)
+    def finish_task(results, self):
+        """
+        This is the task which is executed after all of the child tasks
+        in a JobNode have been executed.  It serves as a wrapper to the
+        finish() method which actually deals with child task results
+     .  Note that the signature of this method is a little funny due to
+        a hack to get around the way that celery handles instance method tasks.
+        The JobNode instance (self) is specified  when the callback
+        subtask is created, and the results argument is filled in by celery
+        once they have completed.  The order is just reversed because celery
+        is hardcoded to prepend the results from a chord into the argument list
+        specified when createing the subtask.
+        """
+        task_logger.debug('finish_task self: %s', self)
+        task_logger.debug('finish_task results: %s', results)
+        self.set_status(celery.states.STARTED, task_id=current_task.request.id)
+        task_logger.info('starting finish task: %s', current_task.request.id)
+        result = self.finish(results)
+        return result
+    
+    def finish(self, results):
+        """
+        Each JobNode sublcass should implement this method to
+        deal with the results of its child jobs"""
         pass
 
 

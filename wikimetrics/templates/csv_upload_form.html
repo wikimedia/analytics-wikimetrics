@@ -1,55 +1,27 @@
-<form enctype="multipart/form-data" action="/uploads/cohort" method="POST" class="upload-cohort form-horizontal">
-    <div class="control-group">
-        <label for="cohort_name" class="control-label">Cohort Name</label>
-        <div class="controls">
-            <input type="text" name="cohort_name" id="cohort_name" value="{% if cohort_name %}{{cohort_name}}{% endif %}"/>
-            <label for="cohort_name">(automatically checks availability)</label>
-        </div>
+<form enctype="multipart/form-data" action="{{url_for('cohort_upload')}}" method="POST" class="upload-cohort form-horizontal">
+    <div class="navbar-inner">
+        <h3>Create a Cohort by Uploading a CSV</h3>
     </div>
-    <div class="control-group"> <label for="cohort_project" class="control-label">Wiki Project</label>
+    <div class="control-group">
+        <label for="name" class="control-label">Cohort Name</label>
         <div class="controls">
-            <select name="cohort_project" id="cohort_project">
-                <option value="">(select one or specify in file)</option>
-                {% for project in wiki_projects %}
-                <option {% if project == cohort_project %}selected{% endif %}>{{ project }}</option>
-                {% endfor %}
-            </select>
+            <input type="text" name="name" id="name" value="{% if name %}{{name}}{% endif %}"/>
+            <label for="name">(automatically checks availability)</label>
         </div>
     </div>
     <div class="control-group">
-        <label for="csv_cohort" class="control-label">CSV File</label>
+        <label for="project" class="control-label">Default Project</label>
         <div class="controls">
-            <input type="file" name="csv_cohort" id="csv_cohort"/>
+            <input type="text" name="project" id="project" value="{% if project %}{{project}}{% endif %}"/>
+        </div>
+    </div>
+    <div class="control-group">
+        <label for="csv" class="control-label">CSV File</label>
+        <div class="controls">
+            <input type="file" name="csv" id="csv"/>
         </div>
     </div>
     <div class="form-actions">
         <input type="submit" class="btn btn-primary" value="Upload CSV"/>
     </div>
 </form>
-<script src="//ajax.aspnetcdn.com/ajax/jquery.validate/1.11.1/jquery.validate.min.js"></script>
-<script>
-    $(document).ready(function(){
-        
-        jQuery.validator.addMethod('cohortName', function(value, element) {
-            return /^[0-9_\-A-Za-z ]*$/.test(value);
-        }, 'Cohort names should only contain letters, numbers, spaces, dashes, and underscores');
-        
-        $('form.upload-cohort').validate({
-            messages: {
-                cohort_name: {
-                    remote: 'This cohort name is taken.',
-                }
-            },
-            rules: {
-                cohort_name: {
-                    required: true,
-                    cohortName: true,
-                    remote: '/validate/cohort/allowed'
-                },
-                csv_cohort: {
-                    required: true
-                }
-            }
-        });
-    });
-</script>

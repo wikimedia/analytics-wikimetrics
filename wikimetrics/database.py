@@ -25,7 +25,8 @@ class SerializableBase(object):
     
     def _asdict(self):
         """ simplejson (used by flask.jsonify) looks for a method with this name """
-        return {c.name : getattr(self, c.name) for c in self.__table__.columns if c.name != 'id'}
+        #return {c.name : getattr(self, c.name) for c in self.__table__.columns if c.name != 'id'}
+        return {c.name : getattr(self, c.name) for c in self.__table__.columns}
 
 
 class Database(object):
@@ -53,7 +54,7 @@ class Database(object):
         
         self.mediawiki_engines = {}
         self.mediawiki_sessionmakers = {}
-        self.project_host_map = self.get_project_host_map()
+        self.project_host_map = self.get_project_host_map(usecache=False)
     
     def get_session(self):
         """
@@ -137,7 +138,9 @@ class Database(object):
                 projects = urlopen(url).read().splitlines()
                 for project in projects:
                     project_host_map[project] = host
-            json.dump(project_host_map, open(cache_name, 'w'))
+            
+            if usecache:
+                json.dump(project_host_map, open(cache_name, 'w'))
         else:
             project_host_map = json.load(open(cache_name))
         

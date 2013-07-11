@@ -1,4 +1,6 @@
-from wikimetrics.configurables import queue, db
+from wikimetrics.configurables import queue
+from celery.utils.log import get_task_logger
+import logging
 import job
 from metric_job import MetricJob
 
@@ -15,17 +17,18 @@ class MultiProjectMetricJob(job.JobNode):
     each project-homogenous list of user_ids.
     """
     
-    def __init__(self, cohort, metric):
-        super(MultiProjectMetricJob, self).__init__()
+    def __init__(self, cohort, metric, *args, **kwargs):
+        super(MultiProjectMetricJob, self).__init__(*args, **kwargs)
         self.cohort = cohort
         self.metric = metric
         
         self.children = []
         for project, user_ids in cohort.group_by_project():
-            session = db.get_mw_session(project)
             # note that user_ids is actually just an iterator
-            self.children.append(MetricJob(metric, user_ids, session))
+            self.children.append(MetricJob(metric, user_ids, project))
     
-    @queue.task
-    def finish(query_results):
-        return reduce(dict.update, query_results, {})
+    def finish(self, query_results):
+        merged = {}
+        for res in query_results:
+            merged.update(res)
+        return merged

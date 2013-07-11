@@ -44,6 +44,7 @@ class BytesAddedTest(DatabaseWithCohortTest):
             start_date='2013-07-01',
             end_date='2013-08-01',
         )
+        metric.csrf_token.data = metric.generate_csrf_token({})
         assert_true(metric.validate())
         
         results = metric(list(self.cohort), self.mwSession)
@@ -56,7 +57,6 @@ class BytesAddedTest(DatabaseWithCohortTest):
         assert_equal(
             results[self.dan_id],
             dan_expected,
-            'did not get the results expected'
         )
     
     def test_uses_summation_options(self):
@@ -65,9 +65,10 @@ class BytesAddedTest(DatabaseWithCohortTest):
             namespaces=[0],
             start_date='2013-06-01',
             end_date='2013-08-01',
-            positive_total=False,
-            negative_total=False,
+            positive_only_sum=False,
+            negative_only_sum=False,
         )
+        metric.csrf_token.data = metric.generate_csrf_token({})
         assert_true(metric.validate())
         
         results = metric(list(self.cohort), self.mwSession)
@@ -78,5 +79,4 @@ class BytesAddedTest(DatabaseWithCohortTest):
         assert_equal(
             results[self.dan_id],
             dan_expected,
-            'did not get the results expected'
         )

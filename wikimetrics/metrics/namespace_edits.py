@@ -1,6 +1,7 @@
 from sqlalchemy import func
 from metric import Metric
 from form_fields import CommaSeparatedIntegerListField
+from wtforms.validators import Required
 from wikimetrics.models import Page, Revision
 import logging
 logger = logging.getLogger(__name__)
@@ -33,7 +34,12 @@ class NamespaceEdits(Metric):
     label       = 'Edits'
     description = 'Compute the number of edits in a specific namespace of a mediawiki project'
     
-    namespaces = CommaSeparatedIntegerListField(default=[0], description='0, 2, 4, etc.')
+    namespaces = CommaSeparatedIntegerListField(
+        None,
+        [Required()],
+        default='0',
+        description='0, 2, 4, etc.',
+    )
     
     def __call__(self, user_ids, session):
         """

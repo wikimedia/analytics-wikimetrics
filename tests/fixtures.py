@@ -1,8 +1,10 @@
 import unittest
+import celery
 from datetime import datetime
 
 __all__ = [
     'DatabaseTest',
+    'DatabaseWithCohortTest',
     'QueueTest',
     'QueueDatabaseTest',
     'WebTest',
@@ -17,8 +19,7 @@ from wikimetrics.models import (
     CohortWikiUser,
     CohortUserRole,
     CohortUser,
-    Job,
-    JobStatus,
+    PersistentJob,
     Revision,
     Page,
     MediawikiUser,
@@ -38,7 +39,6 @@ class DatabaseTest(unittest.TestCase):
         self.mwSession = db.get_mw_session('enwiki')
         DatabaseTest.tearDown(self)
         
-        job = Job()
         dan_user = User(username='Dan')
         evan_user = User(username='Evan')
         web_test_user = User(email='test@test.com')
@@ -55,7 +55,7 @@ class DatabaseTest(unittest.TestCase):
         private_cohort2 = Cohort(name='test_private2', enabled=True, public=False)
         disabled_cohort = Cohort(name='test_disabled', enabled=False, public=True)
         self.session.add_all([
-            job,
+            #job,
             dan_user,
             evan_user,
             web_test_user,
@@ -98,6 +98,11 @@ class DatabaseTest(unittest.TestCase):
             cohort_id=private_cohort2.id,
             role=CohortUserRole.OWNER,
         )
+        web_user_owns_test = CohortUser(
+            user_id=web_test_user.id,
+            cohort_id=test_cohort.id,
+            role=CohortUserRole.OWNER,
+        )
         web_user_owns_private = CohortUser(
             user_id=web_test_user.id,
             cohort_id=private_cohort.id,
@@ -117,6 +122,7 @@ class DatabaseTest(unittest.TestCase):
             dan_owns_test,
             evan_owns_private,
             evan_owns_private2,
+            web_user_owns_test,
             web_user_owns_private,
             web_user_owns_private2,
             dan_views_private2
@@ -124,17 +130,17 @@ class DatabaseTest(unittest.TestCase):
         self.session.commit()
         
         # add jobs
-        job_created = Job(
-            user_id=web_test_user.id, classpath='', status=JobStatus.CREATED, result_id=None
+        job_created = PersistentJob(
+            user_id=web_test_user.id, status=celery.states.PENDING, result_key=None
         )
-        job_started = Job(
-            user_id=web_test_user.id, classpath='', status=JobStatus.STARTED, result_id=None
+        job_started = PersistentJob(
+            user_id=web_test_user.id, status=celery.states.STARTED, result_key=None
         )
-        job_started2 = Job(
-            user_id=web_test_user.id, classpath='', status=JobStatus.STARTED, result_id=None
+        job_started2 = PersistentJob(
+            user_id=web_test_user.id, status=celery.states.STARTED, result_key=None
         )
-        job_finished = Job(
-            user_id=web_test_user.id, classpath='', status=JobStatus.FINISHED, result_id=None
+        job_finished = PersistentJob(
+            user_id=web_test_user.id, status=celery.states.SUCCESS, result_key=None
         )
         self.session.add_all([
             job_created,
@@ -209,7 +215,7 @@ class DatabaseTest(unittest.TestCase):
         self.session.query(WikiUser).delete()
         self.session.query(Cohort).delete()
         self.session.query(User).delete()
-        self.session.query(Job).delete()
+        self.session.query(PersistentJob).delete()
         self.session.commit()
 
 

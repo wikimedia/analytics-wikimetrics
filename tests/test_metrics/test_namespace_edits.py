@@ -35,7 +35,7 @@ class NamespaceEditsFullTest(QueueDatabaseTest):
         
         metric = NamespaceEdits()
         job = MetricJob(metric, list(cohort), 'enwiki')
-        results = job.run.delay(job).get()
+        results = job.task.delay().get()
         print 'results: %s' % results
         
         assert_true(results is not None)
@@ -47,7 +47,7 @@ class NamespaceEditsFullTest(QueueDatabaseTest):
         namespaces = [3]
         metric = NamespaceEdits(namespaces=namespaces)
         job = MetricJob(metric, list(cohort), 'enwiki')
-        results = job.run.delay(job).get()
+        results = job.task.delay().get()
         
         assert_true(results is not None)
         assert_true(results[2] == 0, 'Evan had not 0 edits in namespaces %d, when run on queue')
@@ -58,7 +58,7 @@ class NamespaceEditsFullTest(QueueDatabaseTest):
         namespaces = []
         metric = NamespaceEdits(namespaces=namespaces)
         job = MetricJob(metric, list(cohort), 'enwiki')
-        results = job.run.delay(job).get()
+        results = job.task.delay().get()
         
         assert_true(results is not None)
         assert_true(results[2] == 0, 'Evan had not 0 edits in namespaces %s, when run on queue')

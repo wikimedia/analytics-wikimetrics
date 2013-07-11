@@ -6,6 +6,12 @@ label.error { color: #af3333; }
 div.flash { margin: 4px 0 20px 0; }
 
 
+/* messages stuff */
+div.site-messages-container { padding: 0 20px; }
+div.site-messages-container li.alert strong { text-transform: capitalize; margin: 0 10px 0 0; }
+
+
+/* login stuff */
 a.openid-logo {
     display: inline-block;
     background-color: #fff;
@@ -29,3 +35,7 @@ td.blur-completely { text-shadow: 0 0 20px rgba(0,0,0,0.6); color: transparent; 
 .pick-cohorts .cohorts { margin: 14px 0 0 14px; max-height: 160px; overflow-x: hide; overflow-y: auto; }
 .pick-metrics, .sample-result { background-color: #fff; }
 .pick-metrics .tabbable, .sample-result .tabbable { margin: 22px 0 0 0; }
+
+
+/* uploading a cohort */
+form.upload-cohort div.navbar-inner { margin: 0 0 20px 0; }

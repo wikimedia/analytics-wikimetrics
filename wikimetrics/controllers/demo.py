@@ -28,7 +28,8 @@ if app.config['DEBUG']:
             user_ids = db_session.query(WikiUser.mediawiki_userid).all()
         
         job = MetricJob(RandomMetric(), user_ids, 'enwiki')
-        res = job.run.delay(job).get()
+        #from nose.tools import set_trace; set_trace()
+        res = job.task.delay().get()
         print user_ids
         return str(res)
     

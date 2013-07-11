@@ -30,15 +30,15 @@ class CommaSeparatedIntegerListField(Field):
     widget = TextInput()
     
     def _value(self):
-        """ overrides wtforms representation which is sends to server """
-        if self.data:
+        """ overrides the representation wtforms sends to the server """
+        if self.data and len(self.data) > 0:
             return u', '.join(map(unicode, self.data))
         else:
             return u''
-
+    
     def process_formdata(self, valuelist):
         """ overrides wtforms parsing to split list into namespaces """
         if valuelist:
-            self.data = [int(x.strip()) for x in valuelist[0].split(',')]
+            self.data = [int(x.strip()) for x in valuelist[0].split(',') if x.strip().isdigit()]
         else:
             self.data = []

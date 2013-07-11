@@ -36,7 +36,7 @@ class TestMetricsController(WebTest):
     def test_configure_get(self):
         response = self.app.get('/metrics/configure/BytesAdded')
         assert_not_equal(
-            response.data.find('name="positive_total"'),
+            response.data.find('name="positive_only_sum"'),
             -1,
             'A form to configure a BytesAdded metric was not rendered'
         )
@@ -49,4 +49,14 @@ class TestMetricsController(WebTest):
             response.data.find('<li class="text-error">Not a valid date value</li>'),
             -1,
             'Validation on a BytesAdded configuration is not happening'
+        )
+    
+    def test_configure_namespaces_post(self):
+        response = self.app.post('/metrics/configure/NamespaceEdits', data=dict(
+            namespaces='1,a,2,3,4',
+        ))
+        assert_not_equal(
+            response.data.find('<li class="text-error">'),
+            -1,
+            'Validation on the NamespaceEdits configuration, namespaces field is not happening.'
         )

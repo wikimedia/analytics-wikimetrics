@@ -1,6 +1,6 @@
 import itertools
 from operator import itemgetter
-from sqlalchemy import Column, Integer, Boolean, DateTime, String
+from sqlalchemy import Column, Integer, Boolean, DateTime, String, func
 from wikimetrics.configurables import db
 from .wikiuser import WikiUser
 from .cohort_wikiuser import CohortWikiUser
@@ -29,7 +29,7 @@ class Cohort(db.WikimetricsBase):
     name = Column(String(50))
     description = Column(String(254))
     default_project = Column(String(50))
-    created = Column(DateTime)
+    created = Column(DateTime, default=func.now())
     changed = Column(DateTime)
     enabled = Column(Boolean)
     public = Column(Boolean, default=False)
