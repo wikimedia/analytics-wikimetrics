@@ -98,7 +98,7 @@ def populate_cohort_wikiusers(cohort):
     return cohort_dict
 
 
-@app.route('/cohorts/upload', methods=['GET','POST'])
+@app.route('/cohorts/upload', methods=['GET', 'POST'])
 def cohort_upload():
     """ View for uploading and validating a new cohort via CSV """
     if request.method == 'GET':

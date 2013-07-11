@@ -107,10 +107,8 @@ class Job(object):
     
     @queue.task(filter=task_method)
     def task(self):
-        time.sleep(5)
         self.set_status(celery.states.STARTED, task_id=current_task.request.id)
         task_logger.info('starting task: %s', current_task.request.id)
-        time.sleep(5)
         result = self.run()
         return result
     
