@@ -69,10 +69,15 @@ class Job(object):
                  name=None,
                  result_key=None,
                  children=[]):
-        if current_user.is_authenticated():
-            self.user_id = current_user.id
-        else:
-            self.user_id = None
+        
+        self.user_id = None
+        try:
+            if current_user.is_authenticated():
+                self.user_id = current_user.id
+        except RuntimeError:
+            # nothing to worry about, just using current_user outside
+            # of a web context.  This should only happen during testing
+            pass
         
         self.status = status
         self.name = name
