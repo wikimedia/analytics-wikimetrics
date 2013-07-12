@@ -1,6 +1,10 @@
 {% extends "layout.html" %}
 {% block body %}
-<h2>Job queue</h2>
+
+<h2>Current Job queue</h2>
+<a href="{{url_for('jobs_request')}}" class="btn btn-primary btn-large">
+    Create New Job
+</a>
 <table class="table table-striped">
     <caption>
         (Refreshes automatically every 2 seconds)        

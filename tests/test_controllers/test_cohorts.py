@@ -32,6 +32,20 @@ class TestCohortsController(WebTest):
         )
         assert_equal(
             len(parsed['wikiusers']),
+            3,
+            '/cohorts/detail/1 should return JSON object with key `wikiusers`'
+            'for a list of length 3== `test`, but instead returned: {0}'.format(parsed)
+        )
+    
+    def test_full_detail(self):
+        response = self.app.get('/cohorts/detail/1?full_detail=true', follow_redirects=True)
+        parsed = json.loads(response.data)
+        assert_equal(
+            response.status_code,
+            200,
+        )
+        assert_equal(
+            len(parsed['wikiusers']),
             4,
             '/cohorts/detail/1 should return JSON object with key `wikiusers`'
             'for a list of length 4== `test`, but instead returned: {0}'.format(parsed)

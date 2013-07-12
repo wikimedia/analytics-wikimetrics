@@ -1,28 +1,48 @@
 {% extends "layout.html" %}
 {% block body %}
-<ul class="breadcrumb">
-  <li><a href="{{ url_for('all_cohorts') }}">cohorts</a> <span class="divider">/</span></li>
-  <li class="active">{{c_str}}</li>
-</ul>
-<h2>{{c_str|safe}}</h2>
-{% if error %}<p class=error><strong>Error:</strong> {{ error }}{% endif %}
-<p>This page will include cohort description/metadata as well as a metric selector</p>
-<table class="table table-striped">
-<tbody>
-{% for metric in m_list %}
-<tr><td><a href="{{ url_for('all_cohorts') + c_str + '/' + metric }}">{{ metric }}</a></td><//tr>
-{% endfor %}
-</tbody>
-</table>
 
-{#
+<h2>Cohorts</h2>
+
 <div>
-    <h4>Cohort members</h4>
-    (
-    {% for m in members %}
-    {{ m }},
-    {% endfor %}
-    )
+    <a class="btn btn-primary btn-large" href="{{url_for('cohort_upload')}}">Create New</a>
+    &nbsp;
+    &nbsp;
+    <input type="text" class="search-query" placeholder="find below"/>
 </div>
-#}
+<hr/>
+<div class="tabbable tabs-left">
+    <ul class="nav nav-tabs" data-bind="foreach: cohorts">
+        <li data-bind="css: {active: $index == 0}">
+        <a data-bind="text: name, attr: {href: '#' + id}, click: $root.view"
+           data-toggle="tab"></a>
+        </li>
+    </ul>
+    <div class="tab-content" data-bind="foreach: cohorts">
+        <div class="tab-pane" data-bind="attr: {id: id}, css: {active: $index === 0}">
+            <div class="hero-unit">
+                <h5 data-bind="text: name"></h5>
+                <p data-bind="text: description"></p>
+            </div>
+            <table class="table table-striped">
+                <tbody data-bind="foreach: wikiusers">
+                    <tr>
+                        <td data-bind="text: project"></td>
+                        <td data-bind="text: mediawiki_username"></td>
+                    </tr>
+                </tbody>
+                <tfoot>
+                    <tr>
+                        <td colspan="2">
+                            <a href="#" data-bind="click: $root.viewFull">load all ...</a>
+                        </td>
+                    </tr>
+                </tfoot>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/cohortList.js') }}"></script>
 {% endblock %}

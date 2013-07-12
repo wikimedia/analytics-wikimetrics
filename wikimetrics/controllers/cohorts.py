@@ -21,7 +21,7 @@ def cohorts_index():
     Renders a page with a list cohorts belonging to the currently logged in user.
     If the user is an admin, she has the option of seeing other users' cohorts.
     """
-    return 'cohorts'
+    return render_template('cohorts.html')
 
 
 @app.route('/cohorts/list/')
@@ -48,6 +48,8 @@ def cohort_detail(name_or_id):
         {mediawiki_username: 'Gabriele', mediawiki_userid: 8, project: 'dewiki'},
     ]}
     """
+    full_detail = request.args.get('full_detail', 0)
+    
     cohort = None
     if str(name_or_id).isdigit():
         cohort = get_cohort_by_id(int(name_or_id))
@@ -55,7 +57,8 @@ def cohort_detail(name_or_id):
         cohort = get_cohort_by_name(name_or_id)
     
     if cohort:
-        cohort_with_wikiusers = populate_cohort_wikiusers(cohort)
+        limit = None if full_detail == 'true' else 3
+        cohort_with_wikiusers = populate_cohort_wikiusers(cohort, limit)
         return json_response(cohort_with_wikiusers)
     
     return '{}', 404
@@ -87,11 +90,12 @@ def get_cohort_by_name(name):
         return None
 
 
-def populate_cohort_wikiusers(cohort):
+def populate_cohort_wikiusers(cohort, limit):
     db_session = db.get_session()
     wikiusers = db_session.query(WikiUser)\
         .join(CohortWikiUser)\
         .filter(CohortWikiUser.cohort_id == cohort.id)\
+        .limit(limit)\
         .all()
     cohort_dict = cohort._asdict()
     cohort_dict['wikiusers'] = [wu._asdict() for wu in wikiusers]
