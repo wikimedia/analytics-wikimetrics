@@ -23,8 +23,8 @@
                         <li><a href="{{ url_for('cohorts_index') }}">Cohorts</a></li>
                         <li><a href="{{ url_for('metrics_index') }}">Metrics</a></li>
                         <li><a href="{{ url_for('jobs_index') }}">Jobs</a></li>
-                        <li><a href="#">About</a></li>
-                        <li><a href="#">Contact</a></li>
+                        <!--<li><a href="#">About</a></li>-->
+                        <!--<li><a href="#">Contact</a></li>-->
                         <li class="pull-right">
                             {% if current_user.is_authenticated() %}
                             <em>Welcome {{ current_user.username or current_user.email }}</em> <a href="/logout">(logout)</a>
@@ -52,6 +52,9 @@
     </section>
     
     <script src="//ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js"></script>
+    <script src="//rawgithub.com/timrwood/moment/2.1.0/min/moment.min.js"></script>
+    <script src="//ajax.aspnetcdn.com/ajax/knockout/knockout-2.2.1.js"></script>
+    <script src="{{ url_for('static', filename='js/knockout.util.js') }}"></script>
     <script src="{{ url_for('static', filename='js/bootstrap.js') }}"></script>
     <script src="{{ url_for('static', filename='js/site.js') }}"></script>
     {% block scripts %}{% endblock %}

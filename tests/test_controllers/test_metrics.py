@@ -12,16 +12,19 @@ class TestMetricsController(WebTest):
             200,
             '/metrics should return OK'
         )
-        metrics_dictionary = json.loads(response.data)
-        assert_true(
-            'BytesAdded' in metrics_dictionary['metrics'],
-            '/metrics should get this temporary, raw list of available metrics, '
-            'response.data:\n{0}'.format(response.data)
-        )
         assert_equal(
             response.data.find('log in with Google'),
             -1,
             '/metrics should get the list of metrics'
+        )
+        assert_not_equal(
+            response.data.find('BytesAdded'), -1, 'BytesAdded detail should be displayed'
+        )
+        assert_not_equal(
+            response.data.find('NamespaceEdits'), -1, 'NamespaceEdits detail should be displayed'
+        )
+        assert_not_equal(
+            response.data.find('RevertRate'), -1, 'RevertRate detail should be displayed'
         )
     
     def test_list(self):
@@ -53,8 +56,9 @@ class TestMetricsController(WebTest):
     
     def test_configure_namespaces_post(self):
         response = self.app.post('/metrics/configure/NamespaceEdits', data=dict(
-            namespaces='1,a,2,3,4',
+            namespaces='abcd',
         ))
+        print response.data
         assert_not_equal(
             response.data.find('<li class="text-error">'),
             -1,

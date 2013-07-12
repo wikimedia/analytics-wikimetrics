@@ -1,5 +1,4 @@
 <form class="form-horizontal metric-configuration" method="POST" action="{{action}}" data-bind="submit: $root.saveMetricConfiguration">
-    {# TODO: flask-wtf does nice things, bring this back: form.hidden_tag() #}
     {% for f in form %}
     {% if f.name != 'csrf_token' %}
         <div class="control-group">

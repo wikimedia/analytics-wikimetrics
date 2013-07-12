@@ -19,7 +19,8 @@ setup(
         'flask-login == 0.2.4',
         'flask-oauth == 0.12',
         'wtforms == 1.0.4',
-        'nose == 1.3.0',
+        # needed to run tests but bad in prod environment
+        # because tests are currently distructive 'nose == 1.3.0',
         'coverage == 3.6',
         'celery == 3.0',
         'celery-with-redis == 3.0',

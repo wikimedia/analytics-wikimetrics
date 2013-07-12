@@ -1,0 +1,3 @@
+create database wikimetrics;
+create user wikimetrics identified by PASSWORD('');
+grant ALL on wikimetrics.* TO wikimetrics@'localhost';

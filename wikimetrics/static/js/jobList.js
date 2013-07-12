@@ -16,14 +16,8 @@ $(document).ready(function(){
     
     // get jobs from jobs/detail/endpoint
     setInterval(function () {
-        $.get('/jobs/list/', function(data){
-            viewModel.jobs(data.jobs);
-        }).fail(failure);
+        site.populateJobs(viewModel);
     }, 2000);
-    
-    function failure(error){
-        alert('TODO: report this error in a nicer way ' + error);
-    };
     
     ko.applyBindings(viewModel);
 });

@@ -151,6 +151,7 @@ class DatabaseTest(unittest.TestCase):
         self.session.commit()
         
         # create records for enwiki tests
+        # TODO: make this safe to execute in any environment
         self.mwSession.add(MediawikiUser(user_id=1, user_name='Dan'))
         self.mwSession.add(MediawikiUser(user_id=2, user_name='Evan'))
         self.mwSession.add(MediawikiUser(user_id=3, user_name='Andrew'))

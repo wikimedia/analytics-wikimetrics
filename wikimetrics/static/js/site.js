@@ -55,4 +55,25 @@ var site = {
     hasValidationErrors: function(){
         return $('li.text-error').length > 0;
     },
+    
+    // ***********************************************************
+    // Data population - usually done with something like Sammy JS
+    // ***********************************************************
+    populateCohorts: function(viewModel){
+        $.get('/cohorts/list/', function(data){
+            viewModel.cohorts(data.cohorts);
+        }).fail(site.failure);
+    },
+    
+    populateMetrics: function(viewModel){
+        $.get('/metrics/list/', function(data){
+            viewModel.metrics(data.metrics);
+        }).fail(site.failure);
+    },
+    
+    populateJobs: function(viewModel){
+        $.get('/jobs/list/', function(data){
+            viewModel.jobs(data.jobs);
+        }).fail(site.failure);
+    },
 };

@@ -5,12 +5,29 @@ from .. import metrics
 from ..metrics import metric_classes
 
 
+def get_metrics(add_class=False):
+    records = []
+    for name, metric in inspect.getmembers(metrics, inspect.isclass):
+        if metric.show_in_ui:
+            new_record = {
+                'name' : name,
+                'id'   : metric.id,
+                'label': metric.label,
+                'description' : metric.description,
+            }
+            if add_class:
+                new_record['metricClass'] = metric
+            
+            records.append(new_record)
+    return records
+
+
 @app.route('/metrics/')
 def metrics_index():
     """
-    Renders a page with a list of all metrics.
+    Renders a page which will fetch a list of all metrics.
     """
-    return jsonify(metrics=metric_classes.keys())
+    return render_template('metrics.html', metrics=get_metrics(add_class=True))
 
 
 @app.route('/metrics/list/')
@@ -27,15 +44,7 @@ def metrics_list():
         ]
     }
     """
-    records = []
-    for name, metric in inspect.getmembers(metrics, inspect.isclass):
-        if metric.show_in_ui:
-            records.append({
-                'name' : name,
-                'id'   : metric.id,
-                'label': metric.label,
-                'description' : metric.description
-            })
+    records = get_metrics()
     return jsonify(metrics=records)
 
 

@@ -1,0 +1,33 @@
+{% extends "layout.html" %}
+{% block body %}
+<h2>Metrics</h2>
+<div class="tabbable tabs">
+    <ul class="nav nav-tabs">
+        {% for m in metrics %}
+        <li{% if loop.first %} class="active"{% endif %}>
+            <a href="#{{m.name}}" data-toggle="tab">{{m.label}}</a>
+        </li>
+        {% endfor %}
+    </ul>
+    <div class="tab-content">
+        {% for m in metrics %}
+        <div class="tab-pane{% if loop.first %} active{% endif %}" id="{{m.name}}">
+            <p class="hero-unit">{{m.description}}</p>
+            <table class="table table-striped">
+                {% for f in m.metricClass() %}
+                {% if f.name != 'csrf_token' %}
+                <tr>
+                    <td>{{f.label}}</td>
+                    <td>{{f.type}}</td>
+                    <td>{{f.description}}</td>
+                </tr>
+                {% endif %}
+                {% endfor %}
+            </table>
+            <pre>{{m.metricClass.__doc__}}</pre>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+
+{% endblock %}

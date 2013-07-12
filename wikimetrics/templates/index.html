@@ -8,64 +8,66 @@
         Welcome to the Wikimedia Foundation's Wikimetrics homepage.
         This API allows you to select a set of users, also known as a "cohort"
         <span class="muted">
-            (for example, <a href="{{url_for('cohorts_index') + 'e3_donor_referral_thank_you_b'}}">all users who signed up via the Thank You campaign</a>)
+            (for example, <a href="{{url_for('cohort_detail', name_or_id='e3_donor_referral_thank_you_b')}}">all users who signed up via the Thank You campaign</a>)
         </span>,
         select a metric to be computed for each of these users
         <span class="muted">
-            (for example, their <a href="{{ url_for('metrics_index') + 'revert_rate'}}">7-day revert rate</a>)
+            (for example, their <a href="{{ url_for('metrics_index') + '#RevertRate'}}">revert rate</a>)
         </span>
         with optional parameters
         <span class="muted">
-            (for example, a <a href="#">registration time range</a>)
+            (for example, a <strong>time range</strong>)
         </span>
-        and retrieve the response in JSON format.
+        and retrieve the response in JSON or CSV format.
         </p>
         <p>
         You can also compute a single, aggregate value for the cohort
         <span class="muted">
-            (like the <a href="#">mean revert rate</a> for these users)
+            (like the <strong>mean</strong> revert rate)
         </span>
+        .
     </p>
     <p class="margin-top:1em">
-        <a class="btn btn-primary btn-large" href="/about/">Learn more</a>
+        <a class="btn btn-large" href="/about/">Learn More</a>
+        <a class="btn btn-primary btn-large" href="{{url_for('jobs_request')}}">Analyze</a>
     </p>
 </div>
 
 <div class="row-fluid">
+    {% if current_user.is_authenticated() %}
     <div class="span4">
-        <h4>List of <a href="{{url_for('cohorts_index')}}">cohorts</a></h4>
-        <form action="" method="post" class="form-inline">
-            <select name="selectCohort">
-                {# for cohort in cohort_data %}
-                <option value="{{cohort}}">{{cohort}}</option>
-                {% endfor #}
-            </select>
-            <input type="submit" value="Next" class="btn btn-primary" />
-        </form>
+        <h4>Your <a href="{{url_for('cohorts_index')}}">cohorts</a></h4>
+        <ul data-bind="foreach: cohorts">
+            <li>
+                <span data-bind="text: name"></span>
+            </li>
+        </ul>
     </div>
     <div class="span4">
         <h4>List of <a href="{{url_for('metrics_index')}}">metrics</a></h4>
-        <form action="#" method="post" class="form-inline">
-            <select name="selectMetric">
-                {# for metric in m_list %}
-                <option value="{{metric}}">{{metric}}</option>
-                {% endfor #}
-            </select>
-            <input type="submit" value="Next" class="btn btn-primary" />
-        </form>
-    </div>
-    <div class="span4">
-        <h4>Additional parameters</h4>
-        <ul>
-            <li>Date start - date_start</li>
-            <li>Date end - date_end</li>
-            <li>Aggregator function - aggregator</li>
+        <ul data-bind="foreach: metrics">
+            <li>
+                <span data-bind="text: label"></span>
+            </li>
         </ul>
     </div>
+    <div class="span4">
+        <h4>Your <a href="{{url_for('jobs_index')}}">jobs</a></h4>
+        <ul data-bind="foreach: jobs">
+            <li>
+                <span data-bind="text: moment(created).format('YYYY-MM-DD HH:mm')"></span> - 
+                <span data-bind="text: name"></span>
+            </li>
+        </ul>
+    </div>
+    {% else %}
+    <div>
+        <h4><a href="{{url_for('login')}}">Login</a> to see your cohorts, metrics, and jobs</h4>
+    </div>
+    {% endif %}
 </div>
+{% endblock %}
 
-<div class="embed_p">
-    Choose a <a href="{{ url_for('cohorts_index') }}">Cohort</a>.<div class="v_space_sm"></div>
-    Check the <a href="{{ url_for('jobs_index') }}">Job Queue</a>.<div class="v_space_sm"></div>
-</div>
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/home.js') }}"></script>
 {% endblock %}
