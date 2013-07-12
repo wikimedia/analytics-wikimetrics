@@ -1,10 +1,10 @@
-from flask import render_template, request, jsonify
+from flask import render_template, request, url_for
 from flask.ext.login import current_user
 import celery
 from ..configurables import app, db
 from ..models import Cohort, Job, JobResponse, PersistentJob, MultiProjectMetricJob
 from ..metrics import metric_classes
-from ..utils import json_response
+from ..utils import json_response, json_redirect
 import json
 
 
@@ -54,7 +54,7 @@ def jobs_request():
         app.logger.info('starting job: %s', async_response.task_id)
             
         #return render_template('jobs.html')
-        return jsonify(redirect_url='/jobs/status/{0}'.format(jr.persistent_id))
+        return json_redirect(url_for('jobs_index'))
 
 
 @app.route('/jobs/list/')
@@ -62,7 +62,6 @@ def jobs_list():
     db_session = db.get_session()
     jobs = db_session.query(PersistentJob)\
         .filter_by(user_id=current_user.id).all()
-    app.logger.debug('jobs: %s', jobs)
     # update status for each job
     for job in jobs:
         job.update_status()
@@ -81,4 +80,4 @@ def job_status(job_id):
             db_job.status = celery_task.status
             db_session.add(db_job)
             db_session.commit()
-    return jsonify(status=db_job.status)
+    return json_response(status=db_job.status)
