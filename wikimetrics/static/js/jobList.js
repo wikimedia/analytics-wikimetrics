@@ -15,9 +15,11 @@ $(document).ready(function(){
     }, viewModel);
     
     // get jobs from jobs/detail/endpoint
-    setInterval(function () {
+    getJobs = function () {
         site.populateJobs(viewModel);
-    }, 2000);
+    };
+    getJobs();
+    setInterval(getJobs, 10000);
     
     ko.applyBindings(viewModel);
 });

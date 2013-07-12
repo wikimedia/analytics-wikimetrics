@@ -69,12 +69,11 @@ class Job(object):
                  name=None,
                  result_key=None,
                  children=[]):
-        if user_id is not None:
-            self.user_id = user_id
+        if current_user.is_authenticated():
+            self.user_id = current_user.id
         else:
             self.user_id = None
-        #else:
-            #self.user_id = current_user.id
+        
         self.status = status
         self.name = name
         self.result_key = result_key
