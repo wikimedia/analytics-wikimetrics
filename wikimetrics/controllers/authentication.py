@@ -52,6 +52,7 @@ def load_user(user_id):
     """
     db_session = db.get_session()
     user = User.get(db_session, user_id)
+    db_session.close()
     return user
 
 
@@ -75,6 +76,7 @@ def logout():
     db_session = db.get_session()
     if type(current_user) is User:
         current_user.logout(db_session)
+    db_session.close()
     logout_user()
     return redirect(url_for('home_index'))
 
@@ -125,11 +127,13 @@ def auth_google(resp):
                 db_session.commit()
             
             except MultipleResultsFound:
+                db_session.close()
                 return 'Multiple users found with your id!!! Contact Administrator'
             
             user.login(db_session)
             if login_user(user):
                 user.detach_from(db_session)
+                db_session.close()
                 redirect_to = session.get('next') or url_for('home_index')
                 return redirect(redirect_to)
     
@@ -170,4 +174,5 @@ if app.config['DEBUG']:
             user = db_session.query(User).filter_by(email='test@test.com').one()
             user.login(db_session)
             login_user(user)
+            db_session.close()
             return ''

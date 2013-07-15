@@ -34,6 +34,8 @@ def cohorts_list():
         .filter(CohortUser.role.in_([CohortUserRole.OWNER, CohortUserRole.VIEWER]))\
         .filter(Cohort.enabled)\
         .all()
+    
+    db_session.close()
     return jsonify(cohorts=cohorts)
 
 
@@ -66,17 +68,23 @@ def cohort_detail(name_or_id):
 
 def get_cohort_query():
     db_session = db.get_session()
-    return db_session.query(Cohort)\
-        .join(CohortUser)\
-        .join(User)\
-        .filter(User.id == current_user.id)\
-        .filter(CohortUser.role.in_([CohortUserRole.OWNER, CohortUserRole.VIEWER]))\
-        .filter(Cohort.enabled)
+    return (
+        db_session.query(Cohort)
+            .join(CohortUser)
+            .join(User)
+            .filter(User.id == current_user.id)
+            .filter(CohortUser.role.in_([CohortUserRole.OWNER, CohortUserRole.VIEWER]))
+            .filter(Cohort.enabled),
+        db_session
+    )
 
 
 def get_cohort_by_id(id):
     try:
-        return get_cohort_query().filter(Cohort.id == id).one()
+        query, db_session = get_cohort_query()
+        cohort = query.filter(Cohort.id == id).one()
+        db_session.close()
+        return cohort
     # MultipleResultsFound NoResultFound
     except:
         return None
@@ -84,7 +92,10 @@ def get_cohort_by_id(id):
 
 def get_cohort_by_name(name):
     try:
-        return get_cohort_query().filter(Cohort.name == name).one()
+        query, db_session = get_cohort_query()
+        cohort = query.filter(Cohort.name == name).one()
+        db_session.close()
+        return cohort
     # MultipleResultsFound NoResultFound
     except:
         return None
@@ -97,6 +108,8 @@ def populate_cohort_wikiusers(cohort, limit):
         .filter(CohortWikiUser.cohort_id == cohort.id)\
         .limit(limit)\
         .all()
+    
+    db_session.close()
     cohort_dict = cohort._asdict()
     cohort_dict['wikiusers'] = [wu._asdict() for wu in wikiusers]
     return cohort_dict
@@ -212,6 +225,8 @@ def create_cohort(name, description, project, valid_users):
         cohort_wikiusers.append(cohort_wikiuser)
     db_session.add_all(cohort_wikiusers)
     db_session.commit()
+    
+    db_session.close()
 
 
 @app.route('/cohorts/validate/name')
@@ -270,20 +285,26 @@ def get_wikiuser_by_name(username, project):
     # NOTE: Not needed right? username = username.encode('utf-8')
     db_session = db.get_mw_session(project)
     try:
-        return db_session.query(MediawikiUser)\
+        wikiuser = db_session.query(MediawikiUser)\
             .filter(MediawikiUser.user_name == username)\
             .one()
+        db_session.close()
+        return wikiuser
     except:
+        db_session.close()
         return None
 
 
 def get_wikiuser_by_id(id, project):
     db_session = db.get_mw_session(project)
     try:
-        return db_session.query(MediawikiUser)\
+        wikuser = db_session.query(MediawikiUser)\
             .filter(MediawikiUser.user_id == id)\
             .one()
+        db_session.close()
+        return wikiuser
     except:
+        db_session.close()
         return None
 
 

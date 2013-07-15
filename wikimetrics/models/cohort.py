@@ -39,12 +39,13 @@ class Cohort(db.WikimetricsBase):
     
     def __iter__(self):
         """ returns list of user_ids """
-        session = db.get_session()
-        tuples_with_ids = session\
+        db_session = db.get_session()
+        tuples_with_ids = db_session\
             .query(WikiUser.mediawiki_userid)\
             .join(CohortWikiUser)\
             .filter(CohortWikiUser.cohort_id == self.id)\
             .all()
+        db_session.close()
         return (t[0] for t in tuples_with_ids)
     
     def group_by_project(self):
@@ -62,13 +63,14 @@ class Cohort(db.WikimetricsBase):
         analyzed using a single database connection
         """
         
-        session = db.get_session()
-        user_id_projects = session\
+        db_session = db.get_session()
+        user_id_projects = db_session\
             .query(WikiUser.mediawiki_userid, WikiUser.project)\
             .join(CohortWikiUser)\
             .filter(CohortWikiUser.cohort_id == self.id)\
             .order_by(WikiUser.project)\
             .all()
+        db_session.close()
         # TODO: push this logic into sqlalchemy.  The solution
         # includes subquery(), but I can't seem to get anything working
         groups = itertools.groupby(user_id_projects, key=itemgetter(1))

@@ -210,6 +210,7 @@ class DatabaseTest(unittest.TestCase):
         self.mwSession.query(Page).delete()
         self.mwSession.query(Revision).delete()
         self.mwSession.commit()
+        self.mwSession.close()
         
         self.session.query(CohortWikiUser).delete()
         self.session.query(CohortUser).delete()
@@ -218,6 +219,7 @@ class DatabaseTest(unittest.TestCase):
         self.session.query(User).delete()
         self.session.query(PersistentJob).delete()
         self.session.commit()
+        self.session.close()
 
 
 class QueueTest(unittest.TestCase):

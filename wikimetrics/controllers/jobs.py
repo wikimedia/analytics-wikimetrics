@@ -36,6 +36,7 @@ def jobs_request():
             db_session = db.get_session()
             # TODO: filter by current_user
             cohort = db_session.query(Cohort).get(cohort_dict['id'])
+            db_session.close()
             app.logger.debug('cohort: %s', cohort)
             
             # construct metric
@@ -66,7 +67,9 @@ def jobs_list():
     for job in jobs:
         job.update_status()
     # TODO fix json_response to deal with PersistentJob objects
-    return json_response(jobs=[job._asdict() for job in jobs])
+    jobs_json = json_response(jobs=[job._asdict() for job in jobs])
+    db_session.close()
+    return jobs_json
 
 
 @app.route('/jobs/status/<job_id>')
@@ -80,4 +83,5 @@ def job_status(job_id):
             db_job.status = celery_task.status
             db_session.add(db_job)
             db_session.commit()
+    db_session.close()
     return json_response(status=db_job.status)

@@ -56,7 +56,11 @@ class PersistentJob(db.WikimetricsBase):
                 # if we don't have the result key leave as is (PENDING)
                 celery_task = Job.task.AsyncResult(self.result_key)
                 self.status = celery_task.status
-                Session.object_session(self).commit()
+                existing_session = Session.object_session(self)
+                if not existing_session:
+                    existing_session = db.get_session()
+                    existing_session.add(self)
+                existing_session.commit()
 
 
 class Job(object):
@@ -89,9 +93,9 @@ class Job(object):
         pj = PersistentJob(user_id=self.user_id,
                            status=self.status,
                            name=self.name)
-        session = db.get_session()
-        session.add(pj)
-        session.commit()
+        db_session = db.get_session()
+        db_session.add(pj)
+        db_session.commit()
         self.persistent_id = pj.id
     
     def __repr__(self):
