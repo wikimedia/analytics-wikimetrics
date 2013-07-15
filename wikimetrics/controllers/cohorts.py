@@ -70,11 +70,11 @@ def get_cohort_query():
     db_session = db.get_session()
     return (
         db_session.query(Cohort)
-            .join(CohortUser)
-            .join(User)
-            .filter(User.id == current_user.id)
-            .filter(CohortUser.role.in_([CohortUserRole.OWNER, CohortUserRole.VIEWER]))
-            .filter(Cohort.enabled),
+                  .join(CohortUser)
+                  .join(User)
+                  .filter(User.id == current_user.id)
+                  .filter(CohortUser.role.in_([CohortUserRole.OWNER, CohortUserRole.VIEWER]))
+                  .filter(Cohort.enabled),
         db_session
     )
 
@@ -298,7 +298,7 @@ def get_wikiuser_by_name(username, project):
 def get_wikiuser_by_id(id, project):
     db_session = db.get_mw_session(project)
     try:
-        wikuser = db_session.query(MediawikiUser)\
+        wikiuser = db_session.query(MediawikiUser)\
             .filter(MediawikiUser.user_id == id)\
             .one()
         db_session.close()
