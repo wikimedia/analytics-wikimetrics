@@ -13,7 +13,7 @@ setup(
     ],
     install_requires=[
         'sqlalchemy == 0.8.1',
-        'mysql-python == 1.2.3',
+        'mysql-python == 1.2.4',
         'requests == 1.2.3',
         'flask == 0.9',
         'flask-login == 0.2.4',
