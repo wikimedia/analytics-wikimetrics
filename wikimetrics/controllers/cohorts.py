@@ -36,7 +36,11 @@ def cohorts_list():
         .all()
     
     db_session.close()
-    return jsonify(cohorts=cohorts)
+    return json_response(cohorts=[{
+        'id': c.id,
+        'name': c.name,
+        'description': c.description,
+    } for c in cohorts])
 
 
 @app.route('/cohorts/detail/<string:name_or_id>')
