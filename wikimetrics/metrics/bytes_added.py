@@ -1,5 +1,4 @@
-from datetime import date
-from ..utils import thirty_days_ago
+from ..utils import thirty_days_ago, today
 from ..models import Revision, Page
 from metric import Metric
 from form_fields import BetterBooleanField, CommaSeparatedIntegerListField
@@ -61,7 +60,7 @@ class BytesAdded(Metric):
                    mediawiki project'
     
     start_date          = DateField(default=thirty_days_ago)
-    end_date            = DateField(default=date.today)
+    end_date            = DateField(default=today)
     namespaces          = CommaSeparatedIntegerListField(
         None,
         [Required()],

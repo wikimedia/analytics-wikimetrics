@@ -46,6 +46,13 @@ class DateTimeCapableEncoder(json.JSONEncoder):
         return json.JSONEncoder.default(self, obj)
 
 
+def today():
+    """
+    Callable that gets the date today, needed by WTForms DateFields
+    """
+    return datetime.date.today()
+
+
 def thirty_days_ago():
     """
     Callable that gets the date 30 days ago, needed by WTForms DateFields

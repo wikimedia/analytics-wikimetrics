@@ -41,6 +41,7 @@ var site = {
             .replace(/##category##/g, category)
             .replace('##punctuation##', category !== 'info' ? '!' : '');
         $('.site-messages').append(html);
+        $('body').scrollTop(0);
     },
     
     redirect: function (url){

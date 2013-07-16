@@ -29,7 +29,6 @@ def jobs_request():
         parsed = json.loads(request.form['responses'])
         metric_jobs = []
         for cohort_metric_dict in parsed:
-            app.logger.debug('cohort_metric_dict: %s', cohort_metric_dict)
             
             # get cohort
             cohort_dict = cohort_metric_dict['cohort']
@@ -37,7 +36,6 @@ def jobs_request():
             # TODO: filter by current_user
             cohort = db_session.query(Cohort).get(cohort_dict['id'])
             db_session.close()
-            app.logger.debug('cohort: %s', cohort)
             
             # construct metric
             metric_dict = cohort_metric_dict['metric']
@@ -45,15 +43,24 @@ def jobs_request():
             metric_class = metric_classes[class_name]
             metric = metric_class(**metric_dict)
             metric.validate()
-            app.logger.debug('metric: %s', metric)
+            
+            # debug output
+            #app.logger.debug('cohort_metric_dict: %s', cohort_metric_dict)
+            #app.logger.debug('cohort: %s', cohort)
+            #app.logger.debug('metric: %s', metric)
             
             # construct and start JobResponse
-            metric_job = MultiProjectMetricJob(cohort, metric, cohort_metric_dict['name'])
+            metric_job = MultiProjectMetricJob(
+                cohort,
+                metric,
+                name=cohort_metric_dict['name']
+            )
             metric_jobs.append(metric_job)
+        
         jr = JobResponse(metric_jobs)
         async_response = jr.task.delay()
         app.logger.info('starting job: %s', async_response.task_id)
-            
+        
         #return render_template('jobs.html')
         return json_redirect(url_for('jobs_index'))
 
