@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, DateTime, func
+from sqlalchemy import Column, Integer, String, DateTime, Boolean, func
 from sqlalchemy.orm import Session
 import celery
 from celery import group, chord
@@ -36,8 +36,6 @@ metric would be a `JobLeaf`, whereas any aggregator would be a `JobNode`
 
 
 task_logger = get_task_logger(__name__)
-sh = logging.StreamHandler()
-task_logger.addHandler(sh)
 
 
 class PersistentJob(db.WikimetricsBase):
@@ -48,7 +46,8 @@ class PersistentJob(db.WikimetricsBase):
     user_id = Column(Integer)
     result_key = Column(String(50))
     status = Column(String(50))
-    name = Column(String(200))
+    name = Column(String(2000))
+    show_in_ui = Column(Boolean)
     
     def update_status(self):
         if self.status not in (celery.states.SUCCESS, celery.states.FAILURE):
@@ -92,7 +91,8 @@ class Job(object):
         # note that result_key is always empty at this stage
         pj = PersistentJob(user_id=self.user_id,
                            status=self.status,
-                           name=self.name)
+                           name=self.name,
+                           show_in_ui=self.show_in_ui)
         db_session = db.get_session()
         db_session.add(pj)
         db_session.commit()

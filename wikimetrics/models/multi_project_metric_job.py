@@ -8,6 +8,8 @@ __all__ = [
     'MultiProjectMetricJob',
 ]
 
+task_logger = get_task_logger(__name__)
+
 
 class MultiProjectMetricJob(job.JobNode):
     """
@@ -30,5 +32,8 @@ class MultiProjectMetricJob(job.JobNode):
     def finish(self, query_results):
         merged = {}
         for res in query_results:
-            merged.update(res)
+            try:
+                merged.update(res)
+            except:
+                task_logger.error('updating failed: %s', res)
         return merged

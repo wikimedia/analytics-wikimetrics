@@ -58,3 +58,9 @@ def thirty_days_ago():
     Callable that gets the date 30 days ago, needed by WTForms DateFields
     """
     return datetime.date.today() - datetime.timedelta(days=30)
+
+
+def deduplicate(sequence):
+    seen = set()
+    seen_add = seen.add
+    return [ x for x in sequence if x not in seen and not seen_add(x)]

@@ -4,7 +4,7 @@ import celery
 from ..configurables import app, db
 from ..models import Cohort, Job, JobResponse, PersistentJob, MultiProjectMetricJob
 from ..metrics import metric_classes
-from ..utils import json_response, json_redirect
+from ..utils import json_response, json_redirect, deduplicate
 import json
 
 
@@ -28,6 +28,8 @@ def jobs_request():
     else:
         parsed = json.loads(request.form['responses'])
         metric_jobs = []
+        metric_names = []
+        cohort_names = []
         for cohort_metric_dict in parsed:
             
             # get cohort
@@ -50,14 +52,15 @@ def jobs_request():
             #app.logger.debug('metric: %s', metric)
             
             # construct and start JobResponse
-            metric_job = MultiProjectMetricJob(
-                cohort,
-                metric,
-                name=cohort_metric_dict['name']
-            )
+            metric_job = MultiProjectMetricJob(cohort, metric)
             metric_jobs.append(metric_job)
+            metric_names.append(metric.label)
+            cohort_names.append(cohort.name)
         
-        jr = JobResponse(metric_jobs)
+        metric_names = deduplicate(metric_names)
+        cohort_names = deduplicate(cohort_names)
+        name = ', '.join(metric_names) + ' for ' + ', '.join(cohort_names)
+        jr = JobResponse(metric_jobs, name=name)
         async_response = jr.task.delay()
         app.logger.info('starting job: %s', async_response.task_id)
         
@@ -69,10 +72,12 @@ def jobs_request():
 def jobs_list():
     db_session = db.get_session()
     jobs = db_session.query(PersistentJob)\
-        .filter_by(user_id=current_user.id).all()
+        .filter_by(user_id=current_user.id)\
+        .filter_by(show_in_ui=True).all()
     # update status for each job
     for job in jobs:
         job.update_status()
+    
     # TODO fix json_response to deal with PersistentJob objects
     jobs_json = json_response(jobs=[job._asdict() for job in jobs])
     db_session.close()
