@@ -1,0 +1,6 @@
+find . -name "*.pyc" -exec rm {} \;
+redis-cli FLUSHALL
+rm *.db
+sudo pip uninstall .
+sudo pip install -e .
+pgrep -fl wikimetrics
