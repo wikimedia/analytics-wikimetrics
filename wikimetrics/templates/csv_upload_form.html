@@ -3,10 +3,16 @@
         <h3>Create a Cohort by Uploading a CSV</h3>
     </div>
     <div class="control-group">
-        <label for="name" class="control-label">Cohort Name</label>
+        <label for="name" class="control-label">Name</label>
         <div class="controls">
             <input type="text" name="name" id="name" value="{% if name %}{{name}}{% endif %}"/>
             <label for="name">(automatically checks availability)</label>
+        </div>
+    </div>
+    <div class="control-group">
+        <label for="description" class="control-label">Description</label>
+        <div class="controls">
+            <textarea rows="4" cols="50" name="description" id="description">{% if description %}{{description}}{% endif %}</textarea>
         </div>
     </div>
     <div class="control-group">

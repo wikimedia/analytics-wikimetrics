@@ -130,6 +130,7 @@ def cohort_upload():
             csv_file = request.files['csv']
             name = request.form['name']
             project = request.form['project']
+            description = request.form['description']
             if not csv_file or not name or len(name) is 0:
                 flash('The form was invalid, please select a file and name the cohort.', 'error')
                 return redirect(url_for('cohort_upload'))
@@ -150,6 +151,7 @@ def cohort_upload():
                 invalid_json=to_safe_json(invalid),
                 name=name,
                 project=project,
+                description=description,
             )
         except Exception, e:
             logging.exception(str(e))
@@ -166,6 +168,7 @@ def cohort_upload_finish():
     try:
         name = request.form.get('name')
         project = request.form.get('project')
+        description = request.form.get('description')
         users_json = request.form.get('users')
         users = json.loads(users_json)
         # re-validate
@@ -185,7 +188,7 @@ def cohort_upload_finish():
             if all([user['project'] == users[0]['project'] for user in users]):
                 project = users[0]['project']
         logging.debug('adding cohort: {0}, with project: {1}'.format(name, project))
-        cohort = create_cohort(name, 'TODO: add description', project, valid)
+        cohort = create_cohort(name, description, project, valid)
         return json_redirect(url_for('cohorts_list'))
         
     except Exception, e:
@@ -200,6 +203,7 @@ def create_cohort(name, description, project, valid_users):
         name=name,
         default_project=project,
         description=description,
+        enabled=True,
     )
     db_session.add(cohort)
     db_session.commit()
@@ -207,13 +211,14 @@ def create_cohort(name, description, project, valid_users):
     cohort_owner = CohortUser(
         cohort_id=cohort.id,
         user_id=current_user.id,
+        role=CohortUserRole.OWNER,
     )
     db_session.add(cohort_owner)
     
     wikiusers = []
     for valid_user in valid_users:
         wikiuser = WikiUser(
-            mediawiki_userid=valid_user['userid'],
+            mediawiki_userid=valid_user['user_id'],
             mediawiki_username=valid_user['username'],
         )
         wikiusers.append(wikiuser)
