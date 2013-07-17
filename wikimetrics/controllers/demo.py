@@ -70,6 +70,7 @@ if app.config['DEBUG']:
         db_sess = db.get_session()
         delete_my_cohorts(db_sess)
         db_sess.close()
+        return 'OK, wiped out the database only for ' + current_user.email
     
     @app.route('/demo/create/cohorts/')
     def demo_add_cohorts():
