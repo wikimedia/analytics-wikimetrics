@@ -100,6 +100,7 @@ def job_status(job_id):
     db_session.close()
     return json_response(status=db_job.status)
 
+
 @app.route('/jobs/result/<job_id>.csv')
 def job_result_csv(job_id):
     db_session = db.get_session()
@@ -110,10 +111,10 @@ def job_result_csv(job_id):
         
         csv_io = StringIO()
         if task_result:
+            # if task_result is not empty find header in first row
             fieldnames = ['user_id'] + sorted(task_result.values()[0].keys())
         else:
-            fieldnames = ('user_id',)
-        app.logger.debug('header: %s', fieldnames)
+            fieldnames = ['user_id']
         writer = DictWriter(csv_io, fieldnames)
         
         task_rows = []
@@ -121,14 +122,23 @@ def job_result_csv(job_id):
         for user_id, row in task_result.iteritems():
             row['user_id'] = user_id
             task_rows.append(row)
-        app.logger.debug('raw result: %s', task_rows)
         writer.writeheader()
         writer.writerows(task_rows)
         app.logger.debug('celery task is ready! returning actual result:\n%s', csv_io.getvalue())
-        
-        # return streaming response by passing an iterable as first arg
-        #return Response(iter(csv_io), mimetype='text/csv')
         return Response(csv_io.getvalue(), mimetype='text/csv')
+    else:
+        return json_response(status=celery_task.status)
+        #return url_for('/jobs/list/')
+
+
+@app.route('/jobs/result/<job_id>.json')
+def job_result_json(job_id):
+    db_session = db.get_session()
+    db_job = db_session.query(PersistentJob).get(job_id)
+    celery_task = Job.task.AsyncResult(db_job.result_key)
+    if celery_task.ready:
+        task_result = celery_task.get()
+        return json_response(result=task_result)
     else:
         return json_response(status=celery_task.status)
         #return url_for('/jobs/list/')
