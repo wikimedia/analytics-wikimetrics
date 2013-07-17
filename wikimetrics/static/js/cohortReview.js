@@ -14,9 +14,13 @@ $(document).ready(function(){
             type: 'post',
             data: {
                 users: JSON.stringify(from_the_server.valid),
-                cohort_name: cohort_name,
-                cohort_project: cohort_project
+                name: from_the_server.name,
+                project: from_the_server.project
             }
-        }).done(redirect);
+        }).done(site.handleWith(function(response){
+            // should redirect to the cohorts page, so show an error otherwise
+            site.showWarning('Unexpected: ' + JSON.stringify(response));
+        }))
+        .fail(site.failure);
     });
 });

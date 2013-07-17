@@ -17,27 +17,7 @@ logger = logging.getLogger(__name__)
 
 
 if app.config['DEBUG']:
-    @app.route('/demo/metric/random/<int:cohort_id>')
-    def run_task_in_celery(cohort_id):
-        db_session = db.get_session()
-        user_ids = db_session.query(WikiUser.mediawiki_userid)\
-            .join(CohortWikiUser)\
-            .filter(CohortWikiUser.cohort_id == cohort_id)\
-            .all()
-        if len(user_ids) == 0:
-            user_ids = db_session.query(WikiUser.mediawiki_userid).all()
-        
-        db_session.close()
-        
-        job = MetricJob(RandomMetric(), user_ids, 'enwiki')
-        #from nose.tools import set_trace; set_trace()
-        res = job.task.delay().get()
-        print user_ids
-        return str(res)
-    
-    @app.route('/demo/create/cohorts/')
-    def add_demo_cohorts():
-        db_sess = db.get_session()
+    def delete_my_cohorts(db_sess):
         user = db_sess.query(User).filter_by(email=current_user.email).one()
         
         # delete all of this user's data
@@ -65,6 +45,36 @@ if app.config['DEBUG']:
             db_sess.delete(r)
         
         db_sess.commit()
+        return user
+    
+    @app.route('/demo/metric/random/<int:cohort_id>')
+    def run_task_in_celery(cohort_id):
+        db_session = db.get_session()
+        user_ids = db_session.query(WikiUser.mediawiki_userid)\
+            .join(CohortWikiUser)\
+            .filter(CohortWikiUser.cohort_id == cohort_id)\
+            .all()
+        if len(user_ids) == 0:
+            user_ids = db_session.query(WikiUser.mediawiki_userid).all()
+        
+        db_session.close()
+        
+        job = MetricJob(RandomMetric(), user_ids, 'enwiki')
+        #from nose.tools import set_trace; set_trace()
+        res = job.task.delay().get()
+        print user_ids
+        return str(res)
+    
+    @app.route('/demo/delete/cohorts/')
+    def demo_delete_cohorts():
+        db_sess = db.get_session()
+        delete_my_cohorts(db_sess)
+        db_sess.close()
+    
+    @app.route('/demo/create/cohorts/')
+    def demo_add_cohorts():
+        db_sess = db.get_session()
+        user = delete_my_cohorts(db_sess)
         
         # add cohorts and assign ownership to the passed-in user
         cohort1 = Cohort(name='Algeria Summer Teahouse', description='', enabled=True)
@@ -200,4 +210,5 @@ if app.config['DEBUG']:
         db_sess.add(CohortWikiUser(wiki_user_id=wu35.id, cohort_id=cohort11.id))
         
         db_sess.commit()
+        db_sess.close()
         return 'OK, wiped out the database and added cohorts only for ' + current_user.email

@@ -57,11 +57,13 @@
 <script src="{{ url_for('static', filename='js/cohortUpload.js') }}"></script>
 <script>
     // TODO: get this nasty stuff out of here
+    var desc = '{{ description | replace("\n", "\\n") | replace("\r", "\\r") }}';
     var from_the_server = {
-        invalid : JSON.parse('{{ invalid_json | safe }}'),
-        valid   : JSON.parse('{{ valid_json | safe }}'),
-        name    : '{{ name }}',
-        project : '{{ project }}',
+        invalid     : JSON.parse('{{ invalid_json | safe }}'),
+        valid       : JSON.parse('{{ valid_json | safe }}'),
+        name        : '{{ name }}',
+        project     : '{{ project }}',
+        description : desc
     };
 </script>
 <script src="{{ url_for('static', filename='js/cohortReview.js') }}"></script>

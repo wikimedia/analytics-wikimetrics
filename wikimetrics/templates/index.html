@@ -55,7 +55,7 @@
         <h4>Your <a href="{{url_for('jobs_index')}}">jobs</a></h4>
         <ul data-bind="foreach: jobs">
             <li>
-                <span data-bind="text: moment(created).format('YYYY-MM-DD HH:mm')"></span> - 
+                <strong data-bind="text: moment.unix(created).calendar()"></strong> - 
                 <span data-bind="text: name"></span>
             </li>
         </ul>
