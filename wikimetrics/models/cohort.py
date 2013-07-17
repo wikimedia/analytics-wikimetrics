@@ -78,4 +78,4 @@ class Cohort(db.WikimetricsBase):
         # note: the below line is more concise but harder to read
         #return ((project, (r[0] for r in users)) for project, users in groups)
         for project, users in groups:
-            yield project or self.cohort.default_project, (r[0] for r in users)
+            yield project or self.default_project, (r[0] for r in users)
