@@ -10,7 +10,7 @@ def json_response(*args, **kwargs):
     Takes care of the following custom encoding duties:
         * datetime.datetime objects encoded via DateTimeCapableEncoder
     """
-    data = json.dumps(dict(*args, **kwargs), cls=DateTimeCapableEncoder)
+    data = json.dumps(dict(*args, **kwargs), cls=DateTimeCapableEncoder, indent=4)
     return Response(data, mimetype='application/json')
 
 

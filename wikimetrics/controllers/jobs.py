@@ -2,7 +2,7 @@ from flask import render_template, request, url_for, Response
 from flask.ext.login import current_user
 import celery
 from ..configurables import app, db
-from ..models import Cohort, Job, JobResponse, PersistentJob, MultiProjectMetricJob
+from ..models import Cohort, CohortUser, CohortUserRole, Job, JobResponse, PersistentJob, MultiProjectMetricJob
 from ..metrics import metric_classes
 from ..utils import json_response, json_redirect, deduplicate
 import json
@@ -37,8 +37,11 @@ def jobs_request():
             # get cohort
             cohort_dict = cohort_metric_dict['cohort']
             db_session = db.get_session()
-            # TODO: filter by current_user
-            cohort = db_session.query(Cohort).get(cohort_dict['id'])
+            cohort = db_session.query(Cohort)\
+                .filter(CohortUser.role.in_([CohortUserRole.OWNER, CohortUserRole.VIEWER]))\
+                .filter(Cohort.enabled)\
+                .filter_by(id=cohort_dict['id'])\
+                .one()
             db_session.close()
             
             # construct metric
