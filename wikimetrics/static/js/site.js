@@ -74,7 +74,20 @@ var site = {
     
     populateJobs: function(viewModel){
         $.get('/jobs/list/', function(data){
-            viewModel.jobs(data.jobs);
+            jobs = viewModel.jobs();
+            jobsDict = {};
+            for(j in jobs){
+                jobsDict[jobs[j].id] = jobs[j];
+            }
+            for(dj in data.jobs){
+                job = data.jobs[dj];
+                if (job.id in jobsDict && job.status === jobsDict[job.id].status){
+                    continue;
+                }
+                // if there's a difference, just replace the whole thing
+                viewModel.jobs(data.jobs);
+                return;
+            }
         }).fail(site.failure);
     },
 };
