@@ -14,8 +14,8 @@ $(document).ready(function(){
             type: 'post',
             data: {
                 users: JSON.stringify(from_the_server.valid),
-                cohort_name: cohort_name,
-                cohort_project: cohort_project
+                name: name,
+                project: project
             }
         }).done(redirect);
     });
