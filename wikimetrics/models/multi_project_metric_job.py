@@ -18,6 +18,7 @@ class MultiProjectMetricJob(job.JobNode):
     of grouping the cohort by project and calling a MetricJob on
     each project-homogenous list of user_ids.
     """
+    show_in_ui = True
     
     def __init__(self, cohort, metric, *args, **kwargs):
         super(MultiProjectMetricJob, self).__init__(*args, **kwargs)

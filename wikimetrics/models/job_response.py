@@ -14,7 +14,7 @@ class JobResponse(job.JobNode):
     intended to be the unit of work which could be easily re-run.
     """
     
-    show_in_ui = True
+    show_in_ui = False
     
     def __init__(self, cohort_metrics_jobs, *args, **kwargs):
         """

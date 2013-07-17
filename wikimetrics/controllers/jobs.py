@@ -54,7 +54,7 @@ def jobs_request():
             #app.logger.debug('metric: %s', metric)
             
             # construct and start JobResponse
-            metric_job = MultiProjectMetricJob(cohort, metric)
+            metric_job = MultiProjectMetricJob(cohort, metric, name=cohort_metric_dict['name'])
             metric_jobs.append(metric_job)
             metric_names.append(metric.label)
             cohort_names.append(cohort.name)
