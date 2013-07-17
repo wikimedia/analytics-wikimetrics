@@ -1,6 +1,6 @@
 import json
 import csv
-from flask import url_for, flash, render_template, redirect, request, jsonify
+from flask import url_for, flash, render_template, redirect, request
 from flask.ext.login import current_user
 from sqlalchemy.sql import exists
 from sqlalchemy.orm.exc import NoResultFound, MultipleResultsFound
@@ -186,7 +186,7 @@ def cohort_upload_finish():
                 project = users[0]['project']
         logging.debug('adding cohort: {0}, with project: {1}'.format(name, project))
         cohort = create_cohort(name, 'TODO: add description', project, valid)
-        return url_for('cohort_details', name_or_id=cohort.id)
+        return json_redirect(url_for('cohorts_list'))
         
     except Exception, e:
         logging.exception(str(e))
