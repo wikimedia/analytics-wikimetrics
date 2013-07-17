@@ -5,7 +5,7 @@
     <div class="control-group">
         <label for="name" class="control-label">Name</label>
         <div class="controls">
-            <input type="text" name="name" id="name" value="{% if name %}{{name}}{% endif %}"/>
+            <input type="text" name="name" class="required" id="name" value="{% if name %}{{name}}{% endif %}"/>
             <label for="name">(automatically checks availability)</label>
         </div>
     </div>
@@ -18,7 +18,7 @@
     <div class="control-group">
         <label for="project" class="control-label">Default Project</label>
         <div class="controls">
-            <input type="text" name="project" id="project" value="{% if project %}{{project}}{% endif %}"/>
+            <input type="text" name="project" class="required" id="project" value="{% if project %}{{project}}{% endif %}"/>
         </div>
     </div>
     <div class="control-group">
