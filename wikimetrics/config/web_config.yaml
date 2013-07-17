@@ -10,7 +10,10 @@ GOOGLE_CLIENT_ID                    : '133082872359.apps.googleusercontent.com'
 GOOGLE_AUTH_PROVIDER_X509_CERT_URL  : 'https://www.googleapis.com/oauth2/v1/certs'
 GOOGLE_AUTH_SCOPE                   : 'https://www.googleapis.com/auth/userinfo.email'
 GOOGLE_USERINFO_URI                 : 'https://www.googleapis.com/oauth2/v1/userinfo'
-GOOGLE_REDIRECT_URI                 : 'http://localhost:5000/auth/google'
-GOOGLE_JAVASCRIPT_ORIGIN            : 'http://localhost:5000'
+GOOGLE_REDIRECT_URI                 : 'http://127.0.0.1:5000/auth/google'
+GOOGLE_JAVASCRIPT_ORIGIN            : 'http://127.0.0.1:5000'
 
 TWITTER_AUTH_URI                    : 'https://api.twitter.com/oauth/request_token'
+
+SERVER_HOST                         : '0.0.0.0'
+SERVER_PORT                         : 5000

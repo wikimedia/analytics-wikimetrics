@@ -12,7 +12,7 @@ logger = logging.getLogger(__name__)
 ##################################
 def run_web():
     from configurables import app
-    app.run()
+    app.run(host=app.config.get('SERVER_HOST'), port=app.config.get('SERVER_PORT'))
 
 
 def run_test():
