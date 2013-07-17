@@ -21,5 +21,5 @@ class Revision(db.MediawikiBase):
     rev_len = Column(Integer)
     rev_parent_id = Column(Integer)
     rev_sha1 = Column(String(32))
-    rev_content_model = Column(String(32))
-    rev_content_format = Column(String(64))
+    #rev_content_model = Column(String(32))
+    #rev_content_format = Column(String(64))

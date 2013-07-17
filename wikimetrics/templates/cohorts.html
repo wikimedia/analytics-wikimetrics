@@ -12,13 +12,12 @@
 <hr/>
 <div class="tabbable tabs-left">
     <ul class="nav nav-tabs" data-bind="foreach: cohorts">
-        <li data-bind="css: {active: $index == 0}">
-        <a data-bind="text: name, attr: {href: '#' + id}, click: $root.view"
-           data-toggle="tab"></a>
+        <li>
+            <a data-bind="text: name, attr: {href: '#' + id}, click: $root.view" data-toggle="tab"></a>
         </li>
     </ul>
     <div class="tab-content" data-bind="foreach: cohorts">
-        <div class="tab-pane" data-bind="attr: {id: id}, css: {active: $index === 0}">
+        <div class="tab-pane" data-bind="attr: {id: id}">
             <div class="hero-unit">
                 <h5 data-bind="text: name"></h5>
                 <p data-bind="text: description"></p>
