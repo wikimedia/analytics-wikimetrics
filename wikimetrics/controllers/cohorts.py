@@ -189,7 +189,7 @@ def cohort_upload_finish():
                 project = users[0]['project']
         logging.debug('adding cohort: {0}, with project: {1}'.format(name, project))
         cohort = create_cohort(name, description, project, valid)
-        return json_redirect(url_for('cohorts_list'))
+        return json_redirect(url_for('cohorts_index'))
         
     except Exception, e:
         logging.exception(str(e))
