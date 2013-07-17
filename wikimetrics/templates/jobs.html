@@ -1,9 +1,9 @@
 {% extends "layout.html" %}
 {% block body %}
 
-<h2>Current Job queue</h2>
+<h2>Current Report queue</h2>
 <a href="{{url_for('jobs_request')}}" class="btn btn-primary btn-large">
-    Create New Job
+    Create New Report
 </a>
 <table class="table table-striped">
     <caption>
@@ -26,13 +26,13 @@
             <td data-bind="text: name"></td>
             <td data-bind="if: status === 'SUCCESS'">
                 <div class="btn-group">
-                    <button class="btn btn-primary">Details</button>
+                    <button class="btn btn-primary">Get Data</button>
                     <button class="btn btn-primary dropdown-toggle" data-toggle="dropdown">
                     <span class="caret"></span>
                     </button>
                     <ul class="dropdown-menu">
-                        <li><a target="_blank" data-bind="attr: {href: '/jobs/result/' + id + '.json'}">JSON</a></li>
-                        <li><a target="_blank" data-bind="attr: {href: '/jobs/result/' + id + '.csv'}">CSV</a></li>
+                        <li><a target="_blank" data-bind="attr: {href: '/jobs/result/' + id + '.json'}">as JSON</a></li>
+                        <li><a target="_blank" data-bind="attr: {href: '/jobs/result/' + id + '.csv'}">as CSV</a></li>
                     </ul>
                 </div>
             </td>

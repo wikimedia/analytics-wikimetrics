@@ -52,7 +52,7 @@
         </ul>
     </div>
     <div class="span4">
-        <h4>Your <a href="{{url_for('jobs_index')}}">jobs</a></h4>
+        <h4>Your <a href="{{url_for('jobs_index')}}">reports</a></h4>
         <ul data-bind="foreach: jobs">
             <li>
                 <strong data-bind="text: moment.unix(created).calendar()"></strong> - 
@@ -62,7 +62,7 @@
     </div>
     {% else %}
     <div>
-        <h4><a href="{{url_for('login')}}">Login</a> to see your cohorts, metrics, and jobs</h4>
+        <h4><a href="{{url_for('login')}}">Login</a> to see your cohorts, metrics, and reports</h4>
     </div>
     {% endif %}
 </div>
