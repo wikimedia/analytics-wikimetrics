@@ -368,8 +368,10 @@ def validate_records(records):
     valid = []
     invalid = []
     for record in records:
-        record['user_str'] = record['username']
         normalized_project = normalize_project(record['project'])
+        link_project = normalized_project or record['project'] or 'invalid'
+        record['user_str'] = record['username']
+        record['link'] = link_to_user_page(record['username'], link_project)
         if normalized_project is None:
             record['reason_invalid'] = 'invalid project: %s' % record['project']
             invalid.append(record)
@@ -377,7 +379,6 @@ def validate_records(records):
         normalized_user = normalize_user(record['user_str'], normalized_project)
         # make a link to the potential user page even if user doesn't exist
         # this gives a chance to see any misspelling etc.
-        record['link'] = link_to_user_page(record['username'], normalized_project)
         if normalized_user is None:
             logging.debug('invalid: %s', record['user_str'])
             record['reason_invalid'] = 'invalid user_name / user_id: %s' % record['user_str']
