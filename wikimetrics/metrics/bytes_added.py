@@ -93,7 +93,8 @@ class BytesAdded(Metric):
         
         BC = session.query(
             Revision.rev_user,
-            label('byte_change',
+            label(
+                'byte_change',
                 cast(Revision.rev_len, Integer)
                 -
                 cast(func.coalesce(PreviousRevision.c.rev_len, 0), Integer)

@@ -33,7 +33,7 @@ def get_host_projects(host_id):
     cluster_url_fmt = 'http://noc.wikimedia.org/conf/s{0}.dblist'
     url = cluster_url_fmt.format(host_id)
     projects = urlopen(url).read().splitlines()
-    return  (host_id, projects)
+    return (host_id, projects)
 
 
 class Database(object):
@@ -100,7 +100,6 @@ class Database(object):
         else:
             import wikimetrics.models.mediawiki
             engine = self.get_mw_engine(project)
-            self.MediawikiBase.metadata.create_all(engine, checkfirst=True)
             
             project_sessionmaker = sessionmaker(engine)
             self.mediawiki_sessionmakers[project] = project_sessionmaker
@@ -125,7 +124,6 @@ class Database(object):
             )
             self.mediawiki_engines[project] = engine
             return engine
-    
     
     def get_project_host_map(self, usecache=True):
         """

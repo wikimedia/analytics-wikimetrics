@@ -63,4 +63,4 @@ def thirty_days_ago():
 def deduplicate(sequence):
     seen = set()
     seen_add = seen.add
-    return [ x for x in sequence if x not in seen and not seen_add(x)]
+    return [x for x in sequence if x not in seen and not seen_add(x)]
