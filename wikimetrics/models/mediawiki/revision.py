@@ -7,7 +7,7 @@ __all__ = [
 
 
 class Revision(db.MediawikiBase):
-    __tablename__ = 'revision'
+    __tablename__ = 'revision_userindex'
     
     rev_id = Column(Integer, primary_key=True)
     rev_page = Column(Integer, ForeignKey('page.page_id'))

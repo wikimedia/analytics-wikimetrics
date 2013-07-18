@@ -40,7 +40,9 @@ class BytesAdded(Metric):
                     ELSE 0 END
                ) AS negative_only_sum
        FROM (SELECT revision.rev_user AS rev_user,
-                    revision.rev_len - anon_2.rev_len AS byte_change
+                    (   cast(revision.rev_len as signed)
+                        - cast(coalesce(anon_2.rev_len, 0) as signed)
+                    ) AS byte_change
                FROM revision
                         INNER JOIN
                     page        ON page.page_id = revision.rev_page
@@ -51,7 +53,7 @@ class BytesAdded(Metric):
                     ) AS anon_2 ON revision.rev_parent_id = anon_2.rev_id
               WHERE page.page_namespace IN ('0')
                 AND revision.rev_user IN (3174352)
-                AND revision.rev_timestamp BETWEEN '2011-06-18' AND '2013-07-18'
+                AND revision.rev_timestamp BETWEEN '2013-06-18' AND '2013-07-18'
             ) AS anon_1
       GROUP BY anon_1.rev_user
     """
