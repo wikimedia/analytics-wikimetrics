@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, Boolean, DateTime, String, ForeignKey
+from sqlalchemy import Column, BigInteger, Integer, Boolean, DateTime, String, ForeignKey
 from wikimetrics.configurables import db
 
 __all__ = [
@@ -18,7 +18,7 @@ class Revision(db.MediawikiBase):
     rev_timestamp = Column(DateTime)
     rev_minor_edit = Column(Boolean)
     rev_deleted = Column(Integer)  # this might be a boolean but it gets overflown if set that way
-    rev_len = Column(Integer)
+    rev_len = Column(BigInteger)
     rev_parent_id = Column(Integer)
     rev_sha1 = Column(String(32))
     #rev_content_model = Column(String(32))

@@ -4,7 +4,7 @@ from metric import Metric
 from form_fields import BetterBooleanField, CommaSeparatedIntegerListField
 from wtforms.validators import Required
 from wtforms import DateField
-from sqlalchemy import func, case, between
+from sqlalchemy import func, case, cast, between, Integer
 from sqlalchemy.sql.expression import label
 
 
@@ -46,8 +46,7 @@ class BytesAdded(Metric):
                     page        ON page.page_id = revision.rev_page
                         LEFT OUTER JOIN
                     (SELECT revision.rev_id AS rev_id,
-                            revision.rev_len AS rev_len,
-                            revision.rev_parent_id AS rev_parent_id
+                            revision.rev_len AS rev_len
                        FROM revision
                     ) AS anon_2 ON revision.rev_parent_id = anon_2.rev_id
               WHERE page.page_namespace IN ('0')
@@ -92,7 +91,11 @@ class BytesAdded(Metric):
         
         BC = session.query(
             Revision.rev_user,
-            label('byte_change', Revision.rev_len - PreviousRevision.c.rev_len),
+            label('byte_change',
+                cast(Revision.rev_len, Integer)
+                -
+                cast(func.coalesce(PreviousRevision.c.rev_len, 0), Integer)
+            ),
         )\
             .join(Page)\
             .outerjoin(PreviousRevision, Revision.rev_parent_id == PreviousRevision.c.rev_id)\
@@ -128,6 +131,7 @@ class BytesAdded(Metric):
             if self.negative_only_sum.data:
                 result_dict[user_id]['negative_only_sum'] = negative
         
+        session.close()
         return {user_id: result_dict.get(user_id, {
             'net_sum': None,
             'absolute_sum': None,
