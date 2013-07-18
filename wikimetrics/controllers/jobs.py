@@ -111,7 +111,7 @@ def job_result_csv(job_id):
     db_session = db.get_session()
     db_job = db_session.query(PersistentJob).get(job_id)
     celery_task = Job.task.AsyncResult(db_job.result_key)
-    if celery_task.ready:
+    if celery_task.ready():
         task_result = celery_task.get()
         
         csv_io = StringIO()
@@ -143,7 +143,7 @@ def job_result_json(job_id):
     if not db_job:
         return json_error('no task exists with id: {0}'.format(job_id))
     celery_task = Job.task.AsyncResult(db_job.result_key)
-    if celery_task.ready:
+    if celery_task.ready():
         task_result = celery_task.get()
         return json_response(result=task_result)
     else:

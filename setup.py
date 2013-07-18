@@ -24,6 +24,7 @@ setup(
         'coverage == 3.6',
         'celery == 3.0',
         'celery-with-redis == 3.0',
+        'PyYAML==3.10'
     ],
     entry_points={
         'console_scripts': [
