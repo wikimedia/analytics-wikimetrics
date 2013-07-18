@@ -11,6 +11,8 @@ from ..models import (
     CohortWikiUser,
     MetricJob,
 )
+from ..models.mediawiki import Logging, Revision, Page
+from datetime import datetime
 from ..metrics import RandomMetric
 import logging
 logger = logging.getLogger(__name__)
@@ -212,4 +214,55 @@ if app.config['DEBUG']:
         
         db_sess.commit()
         db_sess.close()
+        
+        mwSession = db.get_mw_session('enwiki')
+        mwSession.add(MediawikiUser(user_id=1, user_name='Dan'))
+        mwSession.add(MediawikiUser(user_id=2, user_name='Evan'))
+        mwSession.add(MediawikiUser(user_id=3, user_name='Andrew'))
+        mwSession.add(Logging(log_id=1, log_user_text='Reedy'))
+        mwSession.add(Page(page_id=1, page_namespace=0, page_title='Main_Page'))
+        # edits in between Dan and Evan edits
+        mwSession.add(Revision(
+            rev_id=1, rev_page=1, rev_user=4, rev_comment='before Dan edit 1',
+            rev_len=4, rev_timestamp=datetime(2013, 05, 30),
+        ))
+        mwSession.add(Revision(
+            rev_id=3, rev_page=1, rev_user=4, rev_comment='before Dan edit 2',
+            rev_len=0, rev_timestamp=datetime(2013, 06, 30),
+        ))
+        mwSession.add(Revision(
+            rev_id=5, rev_page=1, rev_user=4, rev_comment='before Evan edit 1',
+            rev_len=0, rev_timestamp=datetime(2013, 05, 30),
+        ))
+        mwSession.add(Revision(
+            rev_id=7, rev_page=1, rev_user=4, rev_comment='before Evan edit 2',
+            rev_len=100, rev_timestamp=datetime(2013, 06, 30),
+        ))
+        mwSession.add(Revision(
+            rev_id=9, rev_page=1, rev_user=4, rev_comment='before Evan edit 3',
+            rev_len=140, rev_timestamp=datetime(2013, 07, 23),
+        ))
+        # Dan edits
+        mwSession.add(Revision(
+            rev_id=2, rev_page=1, rev_user=1, rev_comment='Dan edit 1',
+            rev_parent_id=1, rev_len=0, rev_timestamp=datetime(2013, 06, 01),
+        ))
+        mwSession.add(Revision(
+            rev_id=4, rev_page=1, rev_user=1, rev_comment='Dan edit 2',
+            rev_parent_id=3, rev_len=10, rev_timestamp=datetime(2013, 07, 01),
+        ))
+        # Evan edits
+        mwSession.add(Revision(
+            rev_id=6, rev_page=1, rev_user=2, rev_comment='Evan edit 1',
+            rev_parent_id=5, rev_len=100, rev_timestamp=datetime(2013, 06, 01),
+        ))
+        mwSession.add(Revision(
+            rev_id=8, rev_page=1, rev_user=2, rev_comment='Evan edit 2',
+            rev_parent_id=7, rev_len=140, rev_timestamp=datetime(2013, 07, 01),
+        ))
+        mwSession.add(Revision(
+            rev_id=10, rev_page=1, rev_user=2, rev_comment='Evan edit 3',
+            rev_parent_id=9, rev_len=136, rev_timestamp=datetime(2013, 07, 24),
+        ))
+        mwSession.commit()
         return 'OK, wiped out the database and added cohorts only for ' + current_user.email
