@@ -8,7 +8,7 @@ import json
 from os.path import exists
 from os import remove
 from urllib2 import urlopen
-from multiprocessing import Pool
+from multiprocessing.pool import ThreadPool as Pool
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.ext.declarative import declarative_base
