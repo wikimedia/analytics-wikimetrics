@@ -188,7 +188,7 @@ def cohort_upload_finish():
             if all([user['project'] == users[0]['project'] for user in users]):
                 project = users[0]['project']
         logging.debug('adding cohort: {0}, with project: {1}'.format(name, project))
-        cohort = create_cohort(name, description, project, valid)
+        create_cohort(name, description, project, valid)
         return json_redirect(url_for('cohorts_index'))
         
     except Exception, e:
