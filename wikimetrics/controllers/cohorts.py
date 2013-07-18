@@ -264,10 +264,21 @@ def parse_records(records, default_project):
     # TODO: This makes it impossible to add fields to the csv in the future,
     # so maybe require the project to be the first field and the username to be the last
     # or maybe change to a tsv format
-    return [{
-        'username': parse_username(",".join([str(p) for p in r[:-1]])),
-        'project': r[-1].decode('utf8') if len(r) > 1 else default_project
-    } for r in records if r]
+    parsed = []
+    for r in records:
+        if r:
+            if len(r) > 1:
+                username = ",".join([str(p) for p in r[:-1]])
+                project = r[-1].decode('utf8') or default_project
+            else:
+                username = r[0]
+                project = default_project
+            
+            parsed.append({
+                'username': parse_username(username),
+                'project': project,
+            })
+    return parsed
 
 
 def parse_username(raw_name):
