@@ -104,8 +104,11 @@ class BytesAdded(Metric):
             .outerjoin(PreviousRevision, Revision.rev_parent_id == PreviousRevision.c.rev_id)\
             .filter(Page.page_namespace.in_(self.namespaces.data))\
             .filter(Revision.rev_user.in_(user_ids))\
-            .filter(between(Revision.rev_timestamp, self.start_date.data, self.end_date.data))\
+            .filter(Revision.rev_timestamp >= self.start_date.data)\
+            .filter(Revision.rev_timestamp <= self.end_date.data)\
             .subquery()
+            # TODO: figure out why between isn't quite working with these timestamps
+            #.filter(between(Revision.rev_timestamp, self.start_date.data, self.end_date.data))\
         
         bytes_added_by_user = session.query(
             BC.c.rev_user,
