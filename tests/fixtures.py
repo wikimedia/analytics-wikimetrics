@@ -36,7 +36,11 @@ class DatabaseTest(unittest.TestCase):
         
         # create basic test records for non-mediawiki tests
         self.session = db.get_session()
-        self.mwSession = db.get_mw_session('enwiki')
+        
+        project = 'enwiki'
+        engine = db.get_mw_engine(project)
+        db.MediawikiBase.metadata.create_all(engine, checkfirst=True)
+        self.mwSession = db.get_mw_session(project)
         DatabaseTest.tearDown(self)
         
         dan_user = User(username='Dan')
