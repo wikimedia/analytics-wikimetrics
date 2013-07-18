@@ -24,34 +24,37 @@ class BytesAdded(Metric):
         * positive_only_sum : bytes added
         * negative_only_sum : bytes removed
     
-    This sql query was used as a starting point for the sqlalchemy query:
+    This is the sql query that sqlalchemy generates from our Bytes Added logic
     
-     select sum(
-                cast(r.rev_len as signed) - cast(coalesce(previous_r.rev_len, 0) as signed)
-            ) as net_sum
-            ,sum(
-                abs(cast(r.rev_len as signed) - cast(coalesce(previous_r.rev_len, 0) as signed))
-            ) as absolute_sum
-            ,sum(case
-                when cast(r.rev_len as signed) - cast(coalesce(previous_r.rev_len, 0) as signed) > 0
-                then cast(r.rev_len as signed) - cast(coalesce(previous_r.rev_len, 0) as signed)
-                else 0
-            end) as positive_only_sum
-            ,sum(case
-                when cast(r.rev_len as signed) - cast(coalesce(previous_r.rev_len, 0) as signed) < 0
-                then abs(
-                    cast(r.rev_len as signed) - cast(coalesce(previous_r.rev_len, 0) as signed)
-                )
-                else 0
-            end) as negative_only_sum
-       from revision r
-                inner join
-            page p              on p.page_id = r.rev_page
-                left join
-            revision previous_r on previous_r.rev_id = r.rev_parent_id
-      where p.page_namespace = [parametrized]
-        and r.rev_timestamp between [start] and [end]
-        and r.rev_user in ([parametrized])
+     SELECT anon_1.rev_user AS anon_1_rev_user,
+            sum(anon_1.byte_change) AS net_sum,
+            sum(abs(anon_1.byte_change)) AS absolute_sum,
+            sum(CASE
+                    WHEN (anon_1.byte_change > 0)
+                    THEN anon_1.byte_change
+                    ELSE 0 END
+               ) AS positive_only_sum,
+            sum(CASE
+                    WHEN (anon_1.byte_change < 0)
+                    THEN anon_1.byte_change
+                    ELSE 0 END
+               ) AS negative_only_sum
+       FROM (SELECT revision.rev_user AS rev_user,
+                    revision.rev_len - anon_2.rev_len AS byte_change
+               FROM revision
+                        INNER JOIN
+                    page        ON page.page_id = revision.rev_page
+                        LEFT OUTER JOIN
+                    (SELECT revision.rev_id AS rev_id,
+                            revision.rev_len AS rev_len,
+                            revision.rev_parent_id AS rev_parent_id
+                       FROM revision
+                    ) AS anon_2 ON revision.rev_parent_id = anon_2.rev_id
+              WHERE page.page_namespace IN ('0')
+                AND revision.rev_user IN (3174352)
+                AND revision.rev_timestamp BETWEEN '2011-06-18' AND '2013-07-18'
+            ) AS anon_1
+      GROUP BY anon_1.rev_user
     """
     show_in_ui  = True
     id          = 'bytes-added'
@@ -85,7 +88,7 @@ class BytesAdded(Metric):
                 * positive_only_sum : bytes added
                 * negative_only_sum : bytes removed
         """
-        PreviousRevision = session.query(Revision).subquery()
+        PreviousRevision = session.query(Revision.rev_len, Revision.rev_id).subquery()
         
         BC = session.query(
             Revision.rev_user,

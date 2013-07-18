@@ -17,7 +17,7 @@ class Revision(db.MediawikiBase):
     rev_user_text = Column(String(255))
     rev_timestamp = Column(DateTime)
     rev_minor_edit = Column(Boolean)
-    rev_deleted = Column(Boolean)
+    rev_deleted = Column(Integer)  # this might be a boolean but it gets overflown if set that way
     rev_len = Column(Integer)
     rev_parent_id = Column(Integer)
     rev_sha1 = Column(String(32))
