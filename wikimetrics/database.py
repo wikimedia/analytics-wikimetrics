@@ -8,6 +8,7 @@ import json
 from os.path import exists
 from os import remove
 from urllib2 import urlopen
+from multiprocessing import Pool
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.ext.declarative import declarative_base
@@ -27,6 +28,14 @@ class SerializableBase(object):
         """ simplejson (used by flask.jsonify) looks for a method with this name """
         #return {c.name : getattr(self, c.name) for c in self.__table__.columns if c.name != 'id'}
         return {c.name : getattr(self, c.name) for c in self.__table__.columns}
+
+
+def get_host_projects(host_id):
+    return (host_id,[])
+    #cluster_url_fmt = 'http://noc.wikimedia.org/conf/s{0}.dblist'
+    #url = cluster_url_fmt.format(host_id)
+    #projects = urlopen(url).read().splitlines()
+    #return  (host_id, projects)
 
 
 class Database(object):
@@ -119,6 +128,7 @@ class Database(object):
             self.mediawiki_engines[project] = engine
             return engine
     
+    
     def get_project_host_map(self, usecache=True):
         """
         Retrieves the list of mediawiki projects from noc.wikimedia.org.
@@ -128,17 +138,17 @@ class Database(object):
         """
         cache_name = 'project_host_map.json'
         if not exists(cache_name) or not usecache:
-            cluster_url_fmt = 'http://noc.wikimedia.org/conf/s%d.dblist'
-            host_fmt = 's%d'
-            project_host_map = {}
             # TODO: these numbers are hardcoded, is that ok?
-            for i in range(1, 8):
-                host = host_fmt % i
-                url = cluster_url_fmt % i
-                projects = urlopen(url).read().splitlines()
+            num_hosts = 7
+            #host_projects = map(get_host_projects, range(1, num_hosts + 1))
+            pool = Pool(num_hosts)
+            host_projects = pool.map(get_host_projects, range(1, num_hosts + 1))
+            project_host_map = {}
+            host_fmt = 's{0}'
+            for host_id, projects in host_projects:
+                host = host_fmt.format(host_id)
                 for project in projects:
                     project_host_map[project] = host
-            
             if usecache:
                 json.dump(project_host_map, open(cache_name, 'w'))
         else:

@@ -131,16 +131,28 @@ class DatabaseTest(unittest.TestCase):
         
         # add jobs
         job_created = PersistentJob(
-            user_id=web_test_user.id, status=celery.states.PENDING, result_key=None
+            user_id=web_test_user.id,
+            status=celery.states.PENDING,
+            result_key=None,
+            show_in_ui=True
         )
         job_started = PersistentJob(
-            user_id=web_test_user.id, status=celery.states.STARTED, result_key=None
+            user_id=web_test_user.id,
+            status=celery.states.STARTED,
+            result_key=None,
+            show_in_ui=True
         )
         job_started2 = PersistentJob(
-            user_id=web_test_user.id, status=celery.states.STARTED, result_key=None
+            user_id=web_test_user.id,
+            status=celery.states.STARTED,
+            result_key=None,
+            show_in_ui=True
         )
         job_finished = PersistentJob(
-            user_id=web_test_user.id, status=celery.states.SUCCESS, result_key=None
+            user_id=web_test_user.id,
+            status=celery.states.SUCCESS,
+            result_key=None,
+            show_in_ui=True
         )
         self.session.add_all([
             job_created,
