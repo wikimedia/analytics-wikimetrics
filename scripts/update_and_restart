@@ -1,0 +1,5 @@
+cd /usr/lib/wikimetrics
+git pull
+restart wikimetrics-queue
+service apache2 restart
+tail -f /var/log/apache2/*
