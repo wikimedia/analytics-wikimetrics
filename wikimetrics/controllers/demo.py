@@ -264,5 +264,9 @@ if app.config['DEBUG']:
             rev_id=10, rev_page=1, rev_user=2, rev_comment='Evan edit 3',
             rev_parent_id=9, rev_len=136, rev_timestamp=datetime(2013, 07, 24),
         ))
+        mwSession.add(Revision(
+            rev_id=11, rev_page=1, rev_user=2, rev_comment='Evan edit 3',
+            rev_parent_id=10, rev_len=-10000, rev_timestamp=datetime(2013, 07, 24),
+        ))
         mwSession.commit()
         return 'OK, wiped out the database and added cohorts only for ' + current_user.email
