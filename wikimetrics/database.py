@@ -6,9 +6,8 @@ It uses Flask's handy config module to configure itself.
 """
 import json
 from os.path import exists
-from os import remove
 from urllib2 import urlopen
-from multiprocessing.pool import ThreadPool as Pool
+#from multiprocessing import Pool
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.ext.declarative import declarative_base
@@ -31,11 +30,10 @@ class SerializableBase(object):
 
 
 def get_host_projects(host_id):
-    return (host_id,[])
-    #cluster_url_fmt = 'http://noc.wikimedia.org/conf/s{0}.dblist'
-    #url = cluster_url_fmt.format(host_id)
-    #projects = urlopen(url).read().splitlines()
-    #return  (host_id, projects)
+    cluster_url_fmt = 'http://noc.wikimedia.org/conf/s{0}.dblist'
+    url = cluster_url_fmt.format(host_id)
+    projects = urlopen(url).read().splitlines()
+    return  (host_id, projects)
 
 
 class Database(object):
@@ -140,9 +138,9 @@ class Database(object):
         if not exists(cache_name) or not usecache:
             # TODO: these numbers are hardcoded, is that ok?
             num_hosts = 7
-            #host_projects = map(get_host_projects, range(1, num_hosts + 1))
-            pool = Pool(num_hosts)
-            host_projects = pool.map(get_host_projects, range(1, num_hosts + 1))
+            host_projects = map(get_host_projects, range(1, num_hosts + 1))
+            #pool = Pool(num_hosts)
+            #host_projects = pool.map(get_host_projects, range(1, num_hosts + 1))
             project_host_map = {}
             host_fmt = 's{0}'
             for host_id, projects in host_projects:
