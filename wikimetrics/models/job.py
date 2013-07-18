@@ -5,7 +5,6 @@ from celery import group, chord
 from celery.utils.log import get_task_logger
 from celery import current_task
 from celery.contrib.methods import task_method
-import logging
 from flask.ext.login import current_user
 import time
 from wikimetrics.configurables import db, queue

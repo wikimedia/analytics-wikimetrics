@@ -1,10 +1,11 @@
 from flask import render_template, request, url_for, Response
 from flask.ext.login import current_user
 import celery
+from celery.task.control import revoke
 from ..configurables import app, db
 from ..models import Cohort, CohortUser, CohortUserRole, Job, JobResponse, PersistentJob, MultiProjectMetricJob
 from ..metrics import metric_classes
-from ..utils import json_response, json_redirect, deduplicate
+from ..utils import json_response, json_error, json_redirect, deduplicate
 import json
 from StringIO import StringIO
 from csv import DictWriter
@@ -67,7 +68,8 @@ def jobs_request():
         name = ', '.join(metric_names) + ' for ' + ', '.join(cohort_names)
         jr = JobResponse(metric_jobs, name=name)
         async_response = jr.task.delay()
-        app.logger.info('starting job: %s', async_response.task_id)
+        app.logger.info('starting job with celery_id: %s, PersistentJob.id: %d',\
+                async_response.task_id, jr.persistent_id)
         
         #return render_template('jobs.html')
         return json_redirect(url_for('jobs_index'))
@@ -138,6 +140,8 @@ def job_result_csv(job_id):
 def job_result_json(job_id):
     db_session = db.get_session()
     db_job = db_session.query(PersistentJob).get(job_id)
+    if not db_job:
+        return json_error('no task exists with id: {0}'.format(job_id))
     celery_task = Job.task.AsyncResult(db_job.result_key)
     if celery_task.ready:
         task_result = celery_task.get()
@@ -145,3 +149,19 @@ def job_result_json(job_id):
     else:
         return json_response(status=celery_task.status)
         #return url_for('/jobs/list/')
+
+@app.route('/jobs/kill/<job_id>')
+def job_kill(job_id):
+    db_session = db.get_session()
+    db_job = db_session.query(PersistentJob).get(job_id)
+    if not db_job:
+        return json_error('no task exists with id: {0}'.format(job_id))
+    celery_task = Job.task.AsyncResult(db_job.result_key)
+    app.logger.debug('revoking task: %s', celery_task.id)
+    #celery_task.revoke()
+    # TODO figure out how to terminate tasks. this throws an error
+    # which I believe is related to https://github.com/celery/celery/issues/1153
+    # and which is fixed by a patch.  however, I can't get things running
+    # with development version
+    #revoke(celery_task.id, terminate=True)
+    return json_response(status=celery_task.status)
