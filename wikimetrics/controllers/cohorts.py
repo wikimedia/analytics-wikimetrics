@@ -279,7 +279,7 @@ def parse_records(records, default_project):
     return parsed
 
 
-+def parse_username(raw_username, decode=True):
+def parse_username(raw_username, decode=True):
     """
     parses uncapitalized, whitespace-padded, and weird-charactered mediawiki
     user names into ones that have a chance of being found in the database
