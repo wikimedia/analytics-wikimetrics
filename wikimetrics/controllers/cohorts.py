@@ -280,10 +280,7 @@ def parse_records(records, default_project):
 
 
 def parse_username(raw_username):
-    stripped = str(raw_username).decode('utf8').strip()
-    # unfortunately .title() or .capitalize() don't work
-    # because 'miliMetric'.capitalize() == 'Milimetric'
-    return stripped[0].upper() + stripped[1:]
+    return str(raw_username).decode('utf8').strip()
 
 
 def normalize_project(project):
@@ -327,6 +324,11 @@ def get_wikiuser_by_id(id, project):
 
 
 def normalize_user(user_str, project):
+    # Capitalize the username according to the Mediawiki standard
+    # NOTE: unfortunately .title() or .capitalize() don't work
+    # because 'miliMetric'.capitalize() == 'Milimetric'
+    user_str = user_str[0].upper() + user_str[1:]
+    
     wikiuser = get_wikiuser_by_name(user_str, project)
     if wikiuser is not None:
         return (wikiuser.user_id, wikiuser.user_name)
