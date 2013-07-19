@@ -109,8 +109,8 @@ class BytesAdded(Metric):
             .outerjoin(PreviousRevision, Revision.rev_parent_id == PreviousRevision.c.rev_id)\
             .filter(Page.page_namespace.in_(self.namespaces.data))\
             .filter(Revision.rev_user.in_(user_ids))\
-            .filter(Revision.rev_timestamp >= self.start_date)\
-            .filter(Revision.rev_timestamp <= self.end_date)\
+            .filter(Revision.rev_timestamp >= start_date)\
+            .filter(Revision.rev_timestamp <= end_date)\
             .subquery()
             # TODO: figure out why between isn't quite working with these timestamps
             #.filter(between(Revision.rev_timestamp, self.start_date.data, self.end_date.data))\
