@@ -272,15 +272,26 @@ def parse_records(records, default_project):
                 project = default_project
             
             parsed.append({
-                'raw_username': username,
+                'raw_username': parse_username(username, decode=False),
                 'username': parse_username(username),
                 'project': project,
             })
     return parsed
 
 
-def parse_username(raw_username):
-    return str(raw_username).decode('utf8').strip()
++def parse_username(raw_username, decode=True):
+    """
+    parses uncapitalized, whitespace-padded, and weird-charactered mediawiki
+    user names into ones that have a chance of being found in the database
+    """
+    username = str(raw_username)
+    if decode:
+        username = username.decode('utf8')
+    stripped = username.strip()
+    # Capitalize the username according to the Mediawiki standard
+    # NOTE: unfortunately .title() or .capitalize() don't work
+    # because 'miliMetric'.capitalize() == 'Milimetric'
+    return stripped[0].upper() + stripped[1:]
 
 
 def normalize_project(project):
@@ -324,11 +335,6 @@ def get_wikiuser_by_id(id, project):
 
 
 def normalize_user(user_str, project):
-    # Capitalize the username according to the Mediawiki standard
-    # NOTE: unfortunately .title() or .capitalize() don't work
-    # because 'miliMetric'.capitalize() == 'Milimetric'
-    user_str = user_str[0].upper() + user_str[1:]
-    
     wikiuser = get_wikiuser_by_name(user_str, project)
     if wikiuser is not None:
         return (wikiuser.user_id, wikiuser.user_name)
