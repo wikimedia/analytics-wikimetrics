@@ -1,4 +1,4 @@
-from ..utils import thirty_days_ago, today
+from ..utils import thirty_days_ago, today, mediawiki_date
 from ..models import Revision, Page
 from metric import Metric
 from form_fields import BetterBooleanField, CommaSeparatedIntegerListField
@@ -90,6 +90,11 @@ class BytesAdded(Metric):
                 * negative_only_sum : bytes removed
         """
         PreviousRevision = session.query(Revision.rev_len, Revision.rev_id).subquery()
+        start_date = self.start_date.data
+        end_date = self.end_date.data
+        if session.bind.name == 'mysql':
+            start_date = mediawiki_date(self.start_date)
+            end_date = mediawiki_date(self.end_date)
         
         BC = session.query(
             Revision.rev_user,
@@ -104,8 +109,8 @@ class BytesAdded(Metric):
             .outerjoin(PreviousRevision, Revision.rev_parent_id == PreviousRevision.c.rev_id)\
             .filter(Page.page_namespace.in_(self.namespaces.data))\
             .filter(Revision.rev_user.in_(user_ids))\
-            .filter(Revision.rev_timestamp >= self.start_date.data)\
-            .filter(Revision.rev_timestamp <= self.end_date.data)\
+            .filter(Revision.rev_timestamp >= self.start_date)\
+            .filter(Revision.rev_timestamp <= self.end_date)\
             .subquery()
             # TODO: figure out why between isn't quite working with these timestamps
             #.filter(between(Revision.rev_timestamp, self.start_date.data, self.end_date.data))\

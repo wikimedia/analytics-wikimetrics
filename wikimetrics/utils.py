@@ -64,3 +64,8 @@ def deduplicate(sequence):
     seen = set()
     seen_add = seen.add
     return [x for x in sequence if x not in seen and not seen_add(x)]
+
+
+def mediawiki_date(date_field):
+    date = datetime.datetime.strptime(date_field.data, date_field.format)
+    return date.strftime('%Y%m%d%H%M%S')
