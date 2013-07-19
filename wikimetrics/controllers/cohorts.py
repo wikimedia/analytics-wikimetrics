@@ -154,7 +154,7 @@ def cohort_upload():
                 description=description,
             )
         except Exception, e:
-            logging.exception(str(e))
+            app.logger.exception(str(e))
             flash(
                 'The file you uploaded was not in a valid format, could not be validated,'
                 'or the project you specified is not configured on this instance of Wiki Metrics.'
@@ -175,24 +175,21 @@ def cohort_upload_finish():
         if get_cohort_by_name(name):
             raise Exception('Cohort name {0} is already used'.format(name))
         
-        # TODO: re-enable validation when either
-        # 1. the site is used by external, potentially untrusted users
-        # 2. the performance of validation is improved
-        #(valid, invalid) = validate_records(users)
-        #if invalid:
-            #raise Exception('Cohort changed since last validation')
-        # save the cohort
+        # NOTE: Without re-validating here, the user might have changed the cohort client-side
+        # since the last validation.  This will produce weird results but we sort of don't care.
+        
+        # Save the cohort
         valid = users
         
         if not project:
             if all([user['project'] == users[0]['project'] for user in users]):
                 project = users[0]['project']
-        logging.debug('adding cohort: {0}, with project: {1}'.format(name, project))
+        app.logger.info('adding cohort: {0}, with project: {1}'.format(name, project))
         create_cohort(name, description, project, valid)
         return json_redirect(url_for('cohorts_index'))
         
     except Exception, e:
-        logging.exception(str(e))
+        app.logger.exception(str(e))
         flash('There was a problem finishing the upload.  The cohort was not saved.', 'error')
         return '<<error>>'
 
@@ -261,7 +258,7 @@ def to_safe_json(s):
 def parse_records(records, default_project):
     # NOTE: the reason for the crazy -1 and comma joins
     # is that some users can have commas in their name
-    # TODO: This makes it impossible to add fields to the csv in the future,
+    # NOTE: This makes it impossible to add fields to the csv in the future,
     # so maybe require the project to be the first field and the username to be the last
     # or maybe change to a tsv format
     parsed = []
@@ -275,14 +272,15 @@ def parse_records(records, default_project):
                 project = default_project
             
             parsed.append({
+                'raw_username': username,
                 'username': parse_username(username),
                 'project': project,
             })
     return parsed
 
 
-def parse_username(raw_name):
-    stripped = str(raw_name).decode('utf8').strip()
+def parse_username(raw_username):
+    stripped = str(raw_username).decode('utf8').strip()
     # unfortunately .title() or .capitalize() don't work
     # because 'miliMetric'.capitalize() == 'Milimetric'
     return stripped[0].upper() + stripped[1:]
@@ -376,16 +374,16 @@ def validate_records(records):
             record['reason_invalid'] = 'invalid project: %s' % record['project']
             invalid.append(record)
             continue
-        normalized_user = normalize_user(record['user_str'], normalized_project)
+        normalized_user = normalize_user(record['raw_username'], normalized_project)
         # make a link to the potential user page even if user doesn't exist
         # this gives a chance to see any misspelling etc.
         if normalized_user is None:
-            logging.debug('invalid: %s', record['user_str'])
+            app.logger.info('invalid user: %s', record['user_str'])
             record['reason_invalid'] = 'invalid user_name / user_id: %s' % record['user_str']
             invalid.append(record)
             continue
         # set the normalized values and append to valid
-        logging.debug('found a valid user_str: %s', record['user_str'])
+        app.logger.info('found a valid user_str: %s', record['user_str'])
         record['project'] = normalized_project
         record['user_id'], record['username'] = normalized_user
         valid.append(record)
