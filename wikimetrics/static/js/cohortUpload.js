@@ -6,6 +6,8 @@ $(document).ready(function(){
     
     $('form.upload-cohort').validate({
         onkeyup: false,
+        // would be nice to not have to turn this off, but it conflicts with typeaheads
+        onfocusout: false,
         messages: {
             name: {
                 remote: 'This cohort name is taken.',

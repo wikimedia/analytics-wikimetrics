@@ -4,7 +4,7 @@
 <h2>Cohorts</h2>
 
 <div>
-    <a class="btn btn-primary btn-large" href="{{url_for('cohort_upload')}}">Create New</a>
+    <a class="btn btn-primary btn-large" href="{{url_for('cohort_upload')}}">Upload Cohort</a>
     &nbsp;
     &nbsp;
     <input type="text" class="search-query" placeholder="find below"/>
@@ -21,6 +21,9 @@
             <div class="hero-unit">
                 <h5 data-bind="text: name"></h5>
                 <p data-bind="text: description"></p>
+                <a href="{{url_for('jobs_request')}}" class="btn btn-primary">
+                    Create Report
+                </a>
             </div>
             <table class="table table-striped">
                 <tbody data-bind="foreach: wikiusers">
