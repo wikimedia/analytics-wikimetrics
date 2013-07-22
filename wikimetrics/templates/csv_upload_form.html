@@ -18,8 +18,12 @@
     <div class="control-group">
         <label for="project" class="control-label">Default Project</label>
         <div class="controls">
-            <input type="text" name="project" class="required" id="project" value="{% if project %}{{project}}{% endif %}"/>
-            <!--TODO: make this an autocomplete box-->
+            <input type="text" name="project" id="project"
+                   value="{% if project %}{{project}}{% endif %}"
+                   data-provide="typeahead"
+                   data-source='{{projects}}'
+                   autocomplete="off"
+            />
         </div>
     </div>
     <div class="control-group">

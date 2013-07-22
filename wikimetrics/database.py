@@ -33,7 +33,7 @@ class SerializableBase(object):
 
 
 def get_host_projects(host_id):
-    cluster_url_fmt = 'http://noc.wikimedia.org/conf/s{0}.dblist'
+    cluster_url_fmt = 'https://noc.wikimedia.org/conf/s{0}.dblist'
     url = cluster_url_fmt.format(host_id)
     projects = urlopen(url).read().splitlines()
     return (host_id, projects)

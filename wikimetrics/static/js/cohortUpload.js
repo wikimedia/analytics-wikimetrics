@@ -9,6 +9,9 @@ $(document).ready(function(){
         messages: {
             name: {
                 remote: 'This cohort name is taken.',
+            },
+            project: {
+                remote: 'That project does not exist.',
             }
         },
         rules: {
@@ -16,6 +19,10 @@ $(document).ready(function(){
                 required: true,
                 cohortName: true,
                 remote: '/cohorts/validate/name',
+            },
+            project: {
+                required: true,
+                remote: '/cohorts/validate/project',
             },
             csv: {
                 required: true

@@ -123,7 +123,10 @@ def populate_cohort_wikiusers(cohort, limit):
 def cohort_upload():
     """ View for uploading and validating a new cohort via CSV """
     if request.method == 'GET':
-        return render_template('csv_upload.html')
+        return render_template(
+            'csv_upload.html',
+            projects=json.dumps(db.project_host_map.keys()),
+        )
 
     elif request.method == 'POST':
         try:
@@ -152,6 +155,7 @@ def cohort_upload():
                 name=name,
                 project=project,
                 description=description,
+                projects=json.dumps(db.project_host_map.keys()),
             )
         except Exception, e:
             app.logger.exception(str(e))
@@ -240,6 +244,13 @@ def validate_cohort_name_allowed():
     name = request.args.get('name')
     available = get_cohort_by_name(name) is None
     return json.dumps(available)
+
+
+@app.route('/cohorts/validate/project')
+def validate_cohort_project_allowed():
+    project = request.args.get('project')
+    valid = project in db.project_host_map
+    return json.dumps(valid)
 
 
 def normalize_newlines(stream):
