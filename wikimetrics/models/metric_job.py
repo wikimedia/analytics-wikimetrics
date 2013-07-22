@@ -22,3 +22,6 @@ class MetricJob(job.JobLeaf):
     def run(self):
         session = db.get_mw_session(self.project)
         return self.metric(self.user_ids, session)
+    
+    def __repr__(self):
+        return '<MetricJob("{0}")>'.format(self.persistent_id)

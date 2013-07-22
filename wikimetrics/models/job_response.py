@@ -27,3 +27,6 @@ class JobResponse(job.JobNode):
     
     def finish(self, job_results):
         return job_results
+    
+    def __repr__(self):
+        return '<JobResponse("{0}")>'.format(self.persistent_id)

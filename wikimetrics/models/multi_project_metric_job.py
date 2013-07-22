@@ -38,3 +38,6 @@ class MultiProjectMetricJob(job.JobNode):
             except:
                 task_logger.error('updating failed: %s', res)
         return merged
+    
+    def __repr__(self):
+        return '<MultiProjectMetricJob("{0}")>'.format(self.persistent_id)

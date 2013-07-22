@@ -23,8 +23,10 @@ class ConcatMetricsJob(job.JobNode):
         self.children = [MetricJob(cohort, metric) for metric in metrics]
         # TODO self.save()
     
-    @queue.task
     def finish(query_results):
         # we're done - record result
         for result in query_results:
             pprint.pprint(result)
+    
+    def __repr__(self):
+        return '<ConcatMetricsJob("{0}")>'.format(self.persistent_id)
