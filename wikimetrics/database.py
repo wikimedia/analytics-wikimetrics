@@ -11,6 +11,9 @@ from urllib2 import urlopen
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.ext.declarative import declarative_base
+from sqlalchemy import exc
+from sqlalchemy import event
+from sqlalchemy.pool import Pool
 
 __all__ = [
     'Database',
@@ -151,3 +154,24 @@ class Database(object):
             project_host_map = json.load(open(cache_name))
         
         return project_host_map
+
+
+@event.listens_for(Pool, "checkout")
+def ping_connection(dbapi_connection, connection_record, connection_proxy):
+    """
+    Pings the connection on checkout, making sure that it hasn't gone stale.
+    This prevents error (OperationalError) (2006, 'MySQL server has gone away').
+    This fix can be tested with tests/manual/connection_survives_server_restart.py
+    """
+    cursor = dbapi_connection.cursor()
+    try:
+        cursor.execute("SELECT 1")
+    except:
+        # optional - dispose the whole pool
+        # instead of invalidating one at a time
+        # connection_proxy._pool.dispose()
+
+        # raise DisconnectionError - pool will try
+        # connecting again up to three times before raising.
+        raise exc.DisconnectionError()
+    cursor.close()
