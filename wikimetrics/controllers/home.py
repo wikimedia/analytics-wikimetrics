@@ -12,6 +12,15 @@ def home_index():
     return render_template('index.html')
 
 
+@app.route('/about')
+@is_public
+def home_about():
+    """
+    Renders the about page
+    """
+    return render_template('about.html')
+
+
 @app.route('/favicon.ico')
 @is_public
 def favicon():
