@@ -81,6 +81,7 @@ def jobs_list():
     jobs = db_session.query(PersistentJob)\
         .filter_by(user_id=current_user.id)\
         .filter_by(show_in_ui=True).all()
+    # TODO: update status for all jobs at all times
     # update status for each job
     for job in jobs:
         job.update_status()
@@ -108,6 +109,7 @@ def job_status(job_id):
 
 @app.route('/jobs/result/<job_id>.csv')
 def job_result_csv(job_id):
+    response = ''
     db_session = db.get_session()
     db_job = db_session.query(PersistentJob).get(job_id)
     if not db_job:
@@ -132,14 +134,16 @@ def job_result_csv(job_id):
         writer.writeheader()
         writer.writerows(task_rows)
         app.logger.debug('celery task is ready! returning actual result:\n%s', csv_io.getvalue())
-        return Response(csv_io.getvalue(), mimetype='text/csv')
+        response = Response(csv_io.getvalue(), mimetype='text/csv')
     else:
-        return json_response(status=celery_task.status)
-        #return url_for('/jobs/list/')
-
+        response = json_response(status=celery_task.status)
+    
+    db_session.close()
+    return response
 
 @app.route('/jobs/result/<job_id>.json')
 def job_result_json(job_id):
+    response = ''
     db_session = db.get_session()
     db_job = db_session.query(PersistentJob).get(job_id)
     if not db_job:
@@ -147,10 +151,15 @@ def job_result_json(job_id):
     celery_task = Job.task.AsyncResult(db_job.result_key)
     if celery_task.ready():
         task_result = celery_task.get()
-        return json_response(result=task_result)
+        response = json_response(
+            result=task_result,
+            parameters=json.loads(db_job.parameters),
+        )
     else:
-        return json_response(status=celery_task.status)
-        #return url_for('/jobs/list/')
+        response = json_response(status=celery_task.status)
+    
+    db_session.close()
+    return response
 
 @app.route('/jobs/kill/<job_id>')
 def job_kill(job_id):

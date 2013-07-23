@@ -1,9 +1,9 @@
 from sqlalchemy import Column, Integer, String, DateTime, Boolean, func
 from sqlalchemy.orm import Session
 import celery
-from celery import group, chord
+from celery import group, chord, current_task
+from celery.result import AsyncResult
 from celery.utils.log import get_task_logger
-from celery import current_task
 from celery.contrib.methods import task_method
 from flask.ext.login import current_user
 import time
@@ -47,18 +47,22 @@ class PersistentJob(db.WikimetricsBase):
     status = Column(String(50))
     name = Column(String(2000))
     show_in_ui = Column(Boolean)
+    parameters = Column(String(4000))
     
     def update_status(self):
-        if self.status not in (celery.states.SUCCESS, celery.states.FAILURE):
-            if self.result_key:
-                # if we don't have the result key leave as is (PENDING)
-                celery_task = Job.task.AsyncResult(self.result_key)
-                self.status = celery_task.status
-                existing_session = Session.object_session(self)
-                if not existing_session:
-                    existing_session = db.get_session()
-                    existing_session.add(self)
-                existing_session.commit()
+        # if we don't have the result key leave as is (PENDING)
+        if self.result_key and self.status not in (celery.states.READY_STATES):
+            celery_task = Job.task.AsyncResult(self.result_key)
+            print celery_task
+            print 'status is {0}, ready is {1}, result is {2}, id is {3}'.format(celery_task.status, celery_task.ready(), celery_task.result, celery_task.id)
+            self.status = celery_task.status
+            existing_session = Session.object_session(self)
+            if not existing_session:
+                existing_session = db.get_session()
+                existing_session.add(self)
+            existing_session.commit()
+            # if the result is still an AsyncResult, leave it as PENDING
+            #if isinstance(celery_task.result, AsyncResult):
 
 
 class Job(object):
@@ -70,7 +74,8 @@ class Job(object):
                  status=celery.states.PENDING,
                  name=None,
                  result_key=None,
-                 children=[]):
+                 children=[],
+                 parameters='{}'):
         
         self.user_id = None
         try:
@@ -91,7 +96,8 @@ class Job(object):
         pj = PersistentJob(user_id=self.user_id,
                            status=self.status,
                            name=self.name,
-                           show_in_ui=self.show_in_ui)
+                           show_in_ui=self.show_in_ui,
+                           parameters=parameters)
         db_session = db.get_session()
         db_session.add(pj)
         db_session.commit()
@@ -114,8 +120,9 @@ class Job(object):
     
     @queue.task(filter=task_method)
     def task(self):
-        self.set_status(celery.states.STARTED, task_id=current_task.request.id)
-        task_logger.info('starting task: %s', current_task.request.id)
+        # NOTE: JobNode can not override this special celery-decorated instance method
+        if not isinstance(self, JobNode):
+            self.set_status(celery.states.STARTED, task_id=current_task.request.id)
         result = self.run()
         return result
     
@@ -141,6 +148,7 @@ class JobNode(Job):
             header = self.child_tasks()
             callback = self.finish_task.s(self)
             children_then_finish = chord(header)(callback)
+            task_logger.info('running task: %s', current_task.request.id)
             return children_then_finish
         else:
             return []
@@ -150,8 +158,8 @@ class JobNode(Job):
         """
         This is the task which is executed after all of the child tasks
         in a JobNode have been executed.  It serves as a wrapper to the
-        finish() method which actually deals with child task results
-     .  Note that the signature of this method is a little funny due to
+        finish() method which actually deals with child task results.
+        Note that the signature of this method is a little funny due to
         a hack to get around the way that celery handles instance method tasks.
         The JobNode instance (self) is specified  when the callback
         subtask is created, and the results argument is filled in by celery
@@ -159,10 +167,7 @@ class JobNode(Job):
         is hardcoded to prepend the results from a chord into the argument list
         specified when createing the subtask.
         """
-        task_logger.debug('finish_task self: %s', self)
-        task_logger.debug('finish_task results: %s', results)
         self.set_status(celery.states.STARTED, task_id=current_task.request.id)
-        task_logger.info('starting finish task: %s', current_task.request.id)
         result = self.finish(results)
         return result
     

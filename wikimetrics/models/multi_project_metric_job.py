@@ -2,6 +2,7 @@ from wikimetrics.configurables import queue
 from celery.utils.log import get_task_logger
 import logging
 import job
+import json
 from metric_job import MetricJob
 
 __all__ = [
@@ -21,7 +22,11 @@ class MultiProjectMetricJob(job.JobNode):
     show_in_ui = True
     
     def __init__(self, cohort, metric, *args, **kwargs):
-        super(MultiProjectMetricJob, self).__init__(*args, **kwargs)
+        super(MultiProjectMetricJob, self).__init__(
+            parameters=json.dumps(metric.data, indent=4),
+            *args,
+            **kwargs
+        )
         self.cohort = cohort
         self.metric = metric
         
@@ -37,6 +42,7 @@ class MultiProjectMetricJob(job.JobNode):
                 merged.update(res)
             except:
                 task_logger.error('updating failed: %s', res)
+                raise
         return merged
     
     def __repr__(self):

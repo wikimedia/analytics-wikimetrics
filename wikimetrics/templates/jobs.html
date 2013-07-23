@@ -23,7 +23,7 @@
                 <span data-bind="text: moment.unix(created).calendar()"></span>
             </td>
             <td data-bind="text: status"></td>
-            <td data-bind="text: name"></td>
+            <td data-bind="text: name, attr:{ title: parameters }"></td>
             <td data-bind="if: status === 'SUCCESS'">
                 <div class="btn-group">
                     <button class="btn btn-primary">Get Data</button>
