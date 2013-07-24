@@ -34,7 +34,7 @@ class RevertRate(Metric):
       group by rev_user
     """
     
-    show_in_ui  = True
+    show_in_ui  = False
     id          = 'revert-rate'
     label       = 'Revert Rate'
     description = 'Compute the number of reverted edits in a mediawiki project'
