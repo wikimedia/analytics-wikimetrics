@@ -184,6 +184,9 @@ def cohort_upload_finish():
         
         # Save the cohort
         valid = users
+        for valid_user in valid:
+            # SQLAlchemy complains about the names unless we encode them
+            valid_user['username'] = valid_user['username'].encode('utf8')
         
         if not project:
             if all([user['project'] == users[0]['project'] for user in users]):
