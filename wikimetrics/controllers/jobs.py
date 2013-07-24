@@ -3,7 +3,10 @@ from flask.ext.login import current_user
 import celery
 from celery.task.control import revoke
 from ..configurables import app, db
-from ..models import Cohort, CohortUser, CohortUserRole, Job, JobResponse, PersistentJob, MultiProjectMetricJob
+from ..models import (
+    Cohort, CohortUser, CohortUserRole, Job,
+    JobResponse, PersistentJob, MultiProjectMetricJob
+)
 from ..metrics import metric_classes
 from ..utils import json_response, json_error, json_redirect, deduplicate
 import json
@@ -68,8 +71,10 @@ def jobs_request():
         name = ', '.join(metric_names) + ' for ' + ', '.join(cohort_names)
         jr = JobResponse(metric_jobs, name=name)
         async_response = jr.task.delay()
-        app.logger.info('starting job with celery_id: %s, PersistentJob.id: %d',\
-                async_response.task_id, jr.persistent_id)
+        app.logger.info(
+            'starting job with celery_id: %s, PersistentJob.id: %d',
+            async_response.task_id, jr.persistent_id
+        )
         
         #return render_template('jobs.html')
         return json_redirect(url_for('jobs_index'))
@@ -141,6 +146,7 @@ def job_result_csv(job_id):
     db_session.close()
     return response
 
+
 @app.route('/jobs/result/<job_id>.json')
 def job_result_json(job_id):
     response = ''
@@ -160,6 +166,7 @@ def job_result_json(job_id):
     
     db_session.close()
     return response
+
 
 @app.route('/jobs/kill/<job_id>')
 def job_kill(job_id):

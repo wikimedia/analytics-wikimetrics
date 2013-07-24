@@ -53,8 +53,6 @@ class PersistentJob(db.WikimetricsBase):
         # if we don't have the result key leave as is (PENDING)
         if self.result_key and self.status not in (celery.states.READY_STATES):
             celery_task = Job.task.AsyncResult(self.result_key)
-            print celery_task
-            print 'status is {0}, ready is {1}, result is {2}, id is {3}'.format(celery_task.status, celery_task.ready(), celery_task.result, celery_task.id)
             self.status = celery_task.status
             existing_session = Session.object_session(self)
             if not existing_session:
