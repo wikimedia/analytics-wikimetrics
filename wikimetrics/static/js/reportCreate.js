@@ -55,7 +55,7 @@ $(document).ready(function(){
             
             $.ajax({ type: 'post', url: form.attr('action'), data: {responses: data} })
                 .done(site.handleWith(function(response){
-                    // should redirect to the jobs page, so show an error otherwise
+                    // should redirect to the reports page, so show an error otherwise
                     site.showWarning('Unexpected: ' + JSON.stringify(response));
                 }))
                 .fail(site.failure);

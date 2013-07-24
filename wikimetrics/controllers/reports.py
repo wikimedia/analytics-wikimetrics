@@ -4,8 +4,8 @@ import celery
 from celery.task.control import revoke
 from ..configurables import app, db
 from ..models import (
-    Cohort, CohortUser, CohortUserRole, Job,
-    JobResponse, PersistentJob, MultiProjectMetricJob
+    Cohort, CohortUser, CohortUserRole, Report,
+    RunReport, PersistentReport, MultiProjectMetricReport
 )
 from ..metrics import metric_classes
 from ..utils import json_response, json_error, json_redirect, deduplicate
@@ -14,26 +14,26 @@ from StringIO import StringIO
 from csv import DictWriter
 
 
-@app.route('/jobs/')
-def jobs_index():
+@app.route('/reports/')
+def reports_index():
     """
-    Renders a page with a list of jobs started by the currently logged in user.
-    If the user is an admin, she has the option to see other users' jobs.
+    Renders a page with a list of reports started by the currently logged in user.
+    If the user is an admin, she has the option to see other users' reports.
     """
-    return render_template('jobs.html')
+    return render_template('reports.html')
 
 
-@app.route('/jobs/create/', methods=['GET', 'POST'])
-def jobs_request():
+@app.route('/reports/create/', methods=['GET', 'POST'])
+def reports_request():
     """
-    Renders a page that facilitates kicking off a new job
+    Renders a page that facilitates kicking off a new report
     """
     
     if request.method == 'GET':
         return render_template('request.html')
     else:
         parsed = json.loads(request.form['responses'])
-        metric_jobs = []
+        metric_reports = []
         metric_names = []
         cohort_names = []
         for cohort_metric_dict in parsed:
@@ -60,66 +60,70 @@ def jobs_request():
             #app.logger.debug('cohort: %s', cohort)
             #app.logger.debug('metric: %s', metric)
             
-            # construct and start JobResponse
-            metric_job = MultiProjectMetricJob(cohort, metric, name=cohort_metric_dict['name'])
-            metric_jobs.append(metric_job)
+            # construct and start RunReport
+            metric_report = MultiProjectMetricReport(
+                cohort,
+                metric,
+                name=cohort_metric_dict['name'],
+            )
+            metric_reports.append(metric_report)
             metric_names.append(metric.label)
             cohort_names.append(cohort.name)
         
         metric_names = deduplicate(metric_names)
         cohort_names = deduplicate(cohort_names)
         name = ', '.join(metric_names) + ' for ' + ', '.join(cohort_names)
-        jr = JobResponse(metric_jobs, name=name)
+        jr = RunReport(metric_reports, name=name)
         async_response = jr.task.delay()
         app.logger.info(
-            'starting job with celery_id: %s, PersistentJob.id: %d',
+            'starting report with celery_id: %s, PersistentReport.id: %d',
             async_response.task_id, jr.persistent_id
         )
         
-        #return render_template('jobs.html')
-        return json_redirect(url_for('jobs_index'))
+        #return render_template('reports.html')
+        return json_redirect(url_for('reports_index'))
 
 
-@app.route('/jobs/list/')
-def jobs_list():
+@app.route('/reports/list/')
+def reports_list():
     db_session = db.get_session()
-    jobs = db_session.query(PersistentJob)\
+    reports = db_session.query(PersistentReport)\
         .filter_by(user_id=current_user.id)\
         .filter_by(show_in_ui=True).all()
-    # TODO: update status for all jobs at all times
-    # update status for each job
-    for job in jobs:
-        job.update_status()
+    # TODO: update status for all reports at all times (not just show_in_ui ones)
+    # update status for each report
+    for report in reports:
+        report.update_status()
     
-    # TODO fix json_response to deal with PersistentJob objects
-    jobs_json = json_response(jobs=[job._asdict() for job in jobs])
+    # TODO fix json_response to deal with PersistentReport objects
+    reports_json = json_response(reports=[report._asdict() for report in reports])
     db_session.close()
-    return jobs_json
+    return reports_json
 
 
-@app.route('/jobs/status/<job_id>')
-def job_status(job_id):
+@app.route('/reports/status/<report_id>')
+def report_status(report_id):
     db_session = db.get_session()
-    db_job = db_session.query(PersistentJob).get(job_id)
-    if db_job.status not in (celery.states.SUCCESS, celery.states.FAILURE):
-        if db_job.result_key:
+    db_report = db_session.query(PersistentReport).get(report_id)
+    if db_report.status not in (celery.states.SUCCESS, celery.states.FAILURE):
+        if db_report.result_key:
             # if we don't have the result key leave as is (PENDING)
-            celery_task = Job.task.AsyncResult(db_job.result_key)
-            db_job.status = celery_task.status
-            db_session.add(db_job)
+            celery_task = Report.task.AsyncResult(db_report.result_key)
+            db_report.status = celery_task.status
+            db_session.add(db_report)
             db_session.commit()
     db_session.close()
-    return json_response(status=db_job.status)
+    return json_response(status=db_report.status)
 
 
-@app.route('/jobs/result/<job_id>.csv')
-def job_result_csv(job_id):
+@app.route('/reports/result/<report_id>.csv')
+def report_result_csv(report_id):
     response = ''
     db_session = db.get_session()
-    db_job = db_session.query(PersistentJob).get(job_id)
-    if not db_job:
-        return json_error('no task exists with id: {0}'.format(job_id))
-    celery_task = Job.task.AsyncResult(db_job.result_key)
+    db_report = db_session.query(PersistentReport).get(report_id)
+    if not db_report:
+        return json_error('no task exists with id: {0}'.format(report_id))
+    celery_task = Report.task.AsyncResult(db_report.result_key)
     if celery_task.ready():
         task_result = celery_task.get()
         
@@ -147,19 +151,19 @@ def job_result_csv(job_id):
     return response
 
 
-@app.route('/jobs/result/<job_id>.json')
-def job_result_json(job_id):
+@app.route('/reports/result/<report_id>.json')
+def report_result_json(report_id):
     response = ''
     db_session = db.get_session()
-    db_job = db_session.query(PersistentJob).get(job_id)
-    if not db_job:
-        return json_error('no task exists with id: {0}'.format(job_id))
-    celery_task = Job.task.AsyncResult(db_job.result_key)
+    db_report = db_session.query(PersistentReport).get(report_id)
+    if not db_report:
+        return json_error('no task exists with id: {0}'.format(report_id))
+    celery_task = Report.task.AsyncResult(db_report.result_key)
     if celery_task.ready():
         task_result = celery_task.get()
         response = json_response(
             result=task_result,
-            parameters=json.loads(db_job.parameters),
+            parameters=json.loads(db_report.parameters),
         )
     else:
         response = json_response(status=celery_task.status)
@@ -168,13 +172,13 @@ def job_result_json(job_id):
     return response
 
 
-@app.route('/jobs/kill/<job_id>')
-def job_kill(job_id):
+@app.route('/reports/kill/<report_id>')
+def report_kill(report_id):
     db_session = db.get_session()
-    db_job = db_session.query(PersistentJob).get(job_id)
-    if not db_job:
-        return json_error('no task exists with id: {0}'.format(job_id))
-    celery_task = Job.task.AsyncResult(db_job.result_key)
+    db_report = db_session.query(PersistentReport).get(report_id)
+    if not db_report:
+        return json_error('no task exists with id: {0}'.format(report_id))
+    celery_task = Report.task.AsyncResult(db_report.result_key)
     app.logger.debug('revoking task: %s', celery_task.id)
     #celery_task.revoke()
     # TODO figure out how to terminate tasks. this throws an error

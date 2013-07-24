@@ -1,26 +1,26 @@
 from wikimetrics.configurables import queue
-import job
+import report
 import pprint
-from metric_job import MetricJob
+from metric_report import MetricReport
 
 __all__ = [
-    'ConcatMetricsJob',
+    'ConcatMetricsReport',
 ]
 
 
-class ConcatMetricsJob(job.JobNode):
+class ConcatMetricsReport(report.ReportNode):
     """
-    Job which runs several metrics on the same cohort and then
+    Report which runs several metrics on the same cohort and then
     joins together the results from each metric into a suitable
     2-D representation.
     """
     
     def __init__(self, cohort, metrics):
-        super(ConcatMetricsJob, self).__init__()
+        super(ConcatMetricsReport, self).__init__()
         self.cohort = cohort
         self.metrics = metrics
         # TODO enforce children always have a run @queue.task
-        self.children = [MetricJob(cohort, metric) for metric in metrics]
+        self.children = [MetricReport(cohort, metric) for metric in metrics]
         # TODO self.save()
     
     def finish(query_results):
@@ -29,4 +29,4 @@ class ConcatMetricsJob(job.JobNode):
             pprint.pprint(result)
     
     def __repr__(self):
-        return '<ConcatMetricsJob("{0}")>'.format(self.persistent_id)
+        return '<ConcatMetricsReport("{0}")>'.format(self.persistent_id)

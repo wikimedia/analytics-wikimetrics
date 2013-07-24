@@ -11,34 +11,34 @@ from wikimetrics.configurables import db, queue
 
 
 __all__ = [
-    'Job',
-    'JobNode',
-    'JobLeaf',
-    'PersistentJob'
+    'Report',
+    'ReportNode',
+    'ReportLeaf',
+    'PersistentReport'
 ]
 
 
 """
-We use a tree-based job model to represent the relationships
+We use a tree-based report model to represent the relationships
 between tasks which have a partial ordering, but which should
 still be loosely coupled or asynchronous.  For example, if we want
 to compute the average of some metric for a cohort, it makes sense
 to first compute the metric for each user and then take the average.
-In this example both steps would Jobs, and the averaging task would
+In this example both steps would Reports, and the averaging task would
 register the task of computing the actual metric as its child.
 
-Specifically, we distinguish between `JobLeaf` instances, which have no
-subjobs, and `JobNode` isntances, which require their children to be
+Specifically, we distinguish between `ReportLeaf` instances, which have no
+subreports, and `ReportNode` isntances, which require their children to be
 excecuted first, before carrying out their task.  Computing a simple
-metric would be a `JobLeaf`, whereas any aggregator would be a `JobNode`
+metric would be a `ReportLeaf`, whereas any aggregator would be a `ReportNode`
 """
 
 
 task_logger = get_task_logger(__name__)
 
 
-class PersistentJob(db.WikimetricsBase):
-    __tablename__ = 'job'
+class PersistentReport(db.WikimetricsBase):
+    __tablename__ = 'report'
     
     id = Column(Integer, primary_key=True)
     created = Column(DateTime, default=func.now())
@@ -52,7 +52,7 @@ class PersistentJob(db.WikimetricsBase):
     def update_status(self):
         # if we don't have the result key leave as is (PENDING)
         if self.result_key and self.status not in (celery.states.READY_STATES):
-            celery_task = Job.task.AsyncResult(self.result_key)
+            celery_task = Report.task.AsyncResult(self.result_key)
             self.status = celery_task.status
             existing_session = Session.object_session(self)
             if not existing_session:
@@ -63,7 +63,7 @@ class PersistentJob(db.WikimetricsBase):
             #if isinstance(celery_task.result, AsyncResult):
 
 
-class Job(object):
+class Report(object):
     
     show_in_ui = False
     
@@ -89,20 +89,20 @@ class Job(object):
         self.result_key = result_key
         self.children = children
         
-        # create PersistentJob and store id
+        # create PersistentReport and store id
         # note that result_key is always empty at this stage
-        pj = PersistentJob(user_id=self.user_id,
-                           status=self.status,
-                           name=self.name,
-                           show_in_ui=self.show_in_ui,
-                           parameters=parameters)
+        pj = PersistentReport(user_id=self.user_id,
+                              status=self.status,
+                              name=self.name,
+                              show_in_ui=self.show_in_ui,
+                              parameters=parameters)
         db_session = db.get_session()
         db_session.add(pj)
         db_session.commit()
         self.persistent_id = pj.id
     
     def __repr__(self):
-        return '<Job("{0}")>'.format(self.persistent_id)
+        return '<Report("{0}")>'.format(self.persistent_id)
     
     def set_status(self, status, task_id):
         """
@@ -110,7 +110,7 @@ class Job(object):
         task has been started
         """
         db_session = db.get_session()
-        pj = db_session.query(PersistentJob).get(self.persistent_id)
+        pj = db_session.query(PersistentReport).get(self.persistent_id)
         pj.status = status
         pj.result_key = task_id
         db_session.add(pj)
@@ -118,20 +118,20 @@ class Job(object):
     
     @queue.task(filter=task_method)
     def task(self):
-        # NOTE: JobNode can not override this special celery-decorated instance method
-        if not isinstance(self, JobNode):
+        # NOTE: ReportNode can not override this special celery-decorated instance method
+        if not isinstance(self, ReportNode):
             self.set_status(celery.states.STARTED, task_id=current_task.request.id)
         result = self.run()
         return result
     
     def run(self):
         """
-        each job subclass should implement this method to do the
+        each report subclass should implement this method to do the
         meat of the task.  The return type can be anything"""
         pass
 
 
-class JobNode(Job):
+class ReportNode(Report):
     
     def child_tasks(self):
         return group(child.task.s() for child in self.children)
@@ -155,11 +155,11 @@ class JobNode(Job):
     def finish_task(results, self):
         """
         This is the task which is executed after all of the child tasks
-        in a JobNode have been executed.  It serves as a wrapper to the
+        in a ReportNode have been executed.  It serves as a wrapper to the
         finish() method which actually deals with child task results.
         Note that the signature of this method is a little funny due to
         a hack to get around the way that celery handles instance method tasks.
-        The JobNode instance (self) is specified  when the callback
+        The ReportNode instance (self) is specified  when the callback
         subtask is created, and the results argument is filled in by celery
         once they have completed.  The order is just reversed because celery
         is hardcoded to prepend the results from a chord into the argument list
@@ -171,10 +171,10 @@ class JobNode(Job):
     
     def finish(self, results):
         """
-        Each JobNode sublcass should implement this method to
-        deal with the results of its child jobs"""
+        Each ReportNode sublcass should implement this method to
+        deal with the results of its child reports"""
         pass
 
 
-class JobLeaf(Job):
+class ReportLeaf(Report):
     pass

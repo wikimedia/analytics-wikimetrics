@@ -3,7 +3,7 @@ from tests.fixtures import DatabaseTest, QueueDatabaseTest
 
 from wikimetrics import app
 from wikimetrics.metrics import RandomMetric
-from wikimetrics.models import Cohort, MetricJob
+from wikimetrics.models import Cohort, MetricReport
 
 
 class DummyTest(DatabaseTest):
@@ -23,7 +23,7 @@ class DummyQueueTest(QueueDatabaseTest):
         cohort = self.session.query(Cohort).filter_by(name='test').one()
         
         metric = RandomMetric()
-        job = MetricJob(metric, list(cohort), 'enwiki')
-        results = job.task.delay().get()
+        report = MetricReport(metric, list(cohort), 'enwiki')
+        results = report.task.delay().get()
         
         assert_true(results[results.keys()[0]] > 1000)

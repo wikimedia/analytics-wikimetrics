@@ -19,7 +19,7 @@ from wikimetrics.models import (
     CohortWikiUser,
     CohortUserRole,
     CohortUser,
-    PersistentJob,
+    PersistentReport,
     Revision,
     Page,
     MediawikiUser,
@@ -59,7 +59,7 @@ class DatabaseTest(unittest.TestCase):
         private_cohort2 = Cohort(name='test_private2', enabled=True, public=False)
         disabled_cohort = Cohort(name='test_disabled', enabled=False, public=True)
         self.session.add_all([
-            #job,
+            #report,
             dan_user,
             evan_user,
             web_test_user,
@@ -133,36 +133,36 @@ class DatabaseTest(unittest.TestCase):
         ])
         self.session.commit()
         
-        # add jobs
-        job_created = PersistentJob(
+        # add reports
+        report_created = PersistentReport(
             user_id=web_test_user.id,
             status=celery.states.PENDING,
             result_key=None,
             show_in_ui=True
         )
-        job_started = PersistentJob(
+        report_started = PersistentReport(
             user_id=web_test_user.id,
             status=celery.states.STARTED,
             result_key=None,
             show_in_ui=True
         )
-        job_started2 = PersistentJob(
+        report_started2 = PersistentReport(
             user_id=web_test_user.id,
             status=celery.states.STARTED,
             result_key=None,
             show_in_ui=True
         )
-        job_finished = PersistentJob(
+        report_finished = PersistentReport(
             user_id=web_test_user.id,
             status=celery.states.SUCCESS,
             result_key=None,
             show_in_ui=True
         )
         self.session.add_all([
-            job_created,
-            job_started,
-            job_started2,
-            job_finished
+            report_created,
+            report_started,
+            report_started2,
+            report_finished
         ])
         self.session.commit()
         
@@ -233,7 +233,7 @@ class DatabaseTest(unittest.TestCase):
         self.session.query(WikiUser).delete()
         self.session.query(Cohort).delete()
         self.session.query(User).delete()
-        self.session.query(PersistentJob).delete()
+        self.session.query(PersistentReport).delete()
         self.session.commit()
         self.session.close()
 

@@ -1,20 +1,20 @@
-import job
+import report
 from ..configurables import db
 
 __all__ = [
-    'MetricJob',
+    'MetricReport',
 ]
 
 
-class MetricJob(job.JobLeaf):
+class MetricReport(report.ReportLeaf):
     """
-    Job type responsbile for running a single metric on a project-
-    homogenous list of user_ids.  Like all jobs, the database session
-    is constructed within MetricJob.run()
+    Report type responsbile for running a single metric on a project-
+    homogenous list of user_ids.  Like all reports, the database session
+    is constructed within MetricReport.run()
     """
     
     def __init__(self, metric, user_ids, project):
-        super(MetricJob, self).__init__()
+        super(MetricReport, self).__init__()
         self.metric = metric
         self.user_ids = list(user_ids)
         self.project = project
@@ -24,4 +24,4 @@ class MetricJob(job.JobLeaf):
         return self.metric(self.user_ids, session)
     
     def __repr__(self):
-        return '<MetricJob("{0}")>'.format(self.persistent_id)
+        return '<MetricReport("{0}")>'.format(self.persistent_id)

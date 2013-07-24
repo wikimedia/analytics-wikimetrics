@@ -12,7 +12,7 @@ from home import *
 from authentication import *
 from metrics import *
 from cohorts import *
-from jobs import *
+from reports import *
 from demo import *
 
 # ignore flake8 because of F403 violation

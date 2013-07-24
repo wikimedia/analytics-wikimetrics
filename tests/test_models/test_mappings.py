@@ -1,7 +1,7 @@
 from nose.tools import assert_true, assert_equals, assert_equal
 import celery
 from wikimetrics.models import (
-    PersistentJob,
+    PersistentReport,
     User,
     UserRole,
     Cohort,
@@ -22,8 +22,8 @@ class TestMappings(DatabaseTest):
     # Mapping tests for our custom tables
     #***********
 
-    def test_job(self):
-        j = self.session.query(PersistentJob).get(1)
+    def test_report(self):
+        j = self.session.query(PersistentReport).get(1)
         assert_true(j.status == celery.states.PENDING)
     
     def test_user(self):

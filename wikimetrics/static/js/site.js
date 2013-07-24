@@ -72,20 +72,20 @@ var site = {
         }).fail(site.failure);
     },
     
-    populateJobs: function(viewModel){
-        $.get('/jobs/list/', function(data){
-            jobs = viewModel.jobs();
-            jobsDict = {};
-            for(j in jobs){
-                jobsDict[jobs[j].id] = jobs[j];
+    populateReports: function(viewModel){
+        $.get('/reports/list/', function(data){
+            reports = viewModel.reports();
+            reportsDict = {};
+            for(j in reports){
+                reportsDict[reports[j].id] = reports[j];
             }
-            for(dj in data.jobs){
-                job = data.jobs[dj];
-                if (job.id in jobsDict && job.status === jobsDict[job.id].status){
+            for(dj in data.reports){
+                report = data.reports[dj];
+                if (report.id in reportsDict && report.status === reportsDict[report.id].status){
                     continue;
                 }
                 // if there's a difference, just replace the whole thing
-                viewModel.jobs(data.jobs);
+                viewModel.reports(data.reports);
                 return;
             }
         }).fail(site.failure);

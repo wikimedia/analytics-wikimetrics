@@ -9,7 +9,7 @@ from ..models import (
     CohortUser,
     CohortUserRole,
     CohortWikiUser,
-    MetricJob,
+    MetricReport,
 )
 from ..models.mediawiki import Revision, Page
 from datetime import datetime
@@ -61,9 +61,9 @@ if app.config['DEBUG']:
         
         db_session.close()
         
-        job = MetricJob(RandomMetric(), user_ids, 'enwiki')
+        report = MetricReport(RandomMetric(), user_ids, 'enwiki')
         #from nose.tools import set_trace; set_trace()
-        res = job.task.delay().get()
+        res = report.task.delay().get()
         print user_ids
         return str(res)
     

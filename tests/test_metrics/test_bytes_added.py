@@ -3,7 +3,7 @@ from tests.fixtures import DatabaseWithCohortTest
 
 from wikimetrics import app
 from wikimetrics.metrics import BytesAdded
-from wikimetrics.models import Cohort, MetricJob, WikiUser, CohortWikiUser
+from wikimetrics.models import Cohort, MetricReport, WikiUser, CohortWikiUser
 
 
 class BytesAddedTest(DatabaseWithCohortTest):

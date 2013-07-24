@@ -103,6 +103,10 @@ class Database(object):
         else:
             import wikimetrics.models.mediawiki
             engine = self.get_mw_engine(project)
+            # Assuming that we're not using the real mediawiki databases in debug mode,
+            # we have to create the tables
+            #if self.config['DEBUG']:
+                #self.MediawikiBase.metadata.create_all(engine, checkfirst=True)
             
             project_sessionmaker = sessionmaker(engine)
             self.mediawiki_sessionmakers[project] = project_sessionmaker

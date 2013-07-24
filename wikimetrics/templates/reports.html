@@ -2,7 +2,7 @@
 {% block body %}
 
 <h2>Current Report queue</h2>
-<a href="{{url_for('jobs_request')}}" class="btn btn-primary btn-large">
+<a href="{{url_for('reports_request')}}" class="btn btn-primary btn-large">
     Create New Report
 </a>
 <table class="table table-striped">
@@ -17,7 +17,7 @@
             <th>Result</th>
         </tr>
     </thead>
-    <tbody data-bind="foreach: jobs_sorted">
+    <tbody data-bind="foreach: reports_sorted">
         <tr>
             <td>
                 <span data-bind="text: moment.unix(created).calendar()"></span>
@@ -31,8 +31,8 @@
                     <span class="caret"></span>
                     </button>
                     <ul class="dropdown-menu">
-                        <li><a target="_blank" data-bind="attr: {href: '/jobs/result/' + id + '.json'}">as JSON</a></li>
-                        <li><a target="_blank" data-bind="attr: {href: '/jobs/result/' + id + '.csv'}">as CSV</a></li>
+                        <li><a target="_blank" data-bind="attr: {href: '/reports/result/' + id + '.json'}">as JSON</a></li>
+                        <li><a target="_blank" data-bind="attr: {href: '/reports/result/' + id + '.csv'}">as CSV</a></li>
                     </ul>
                 </div>
             </td>
@@ -43,5 +43,5 @@
 {% endblock %}
 
 {% block scripts %}
-<script src="{{ url_for('static', filename='js/jobList.js') }}"></script>
+<script src="{{ url_for('static', filename='js/reportList.js') }}"></script>
 {% endblock %}

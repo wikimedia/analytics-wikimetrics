@@ -28,7 +28,7 @@
     </p>
     <p class="margin-top:1em">
         <a class="btn btn-large" href="{{url_for('home_about')}}">Learn More</a>
-        <a class="btn btn-primary btn-large" href="{{url_for('jobs_request')}}">Analyze</a>
+        <a class="btn btn-primary btn-large" href="{{url_for('reports_request')}}">Analyze</a>
     </p>
 </div>
 
@@ -51,8 +51,8 @@
         </ul>
     </div>
     <div class="span4">
-        <h4>Your <a href="{{url_for('jobs_index')}}">reports</a></h4>
-        <ul data-bind="foreach: jobs">
+        <h4>Your <a href="{{url_for('reports_index')}}">reports</a></h4>
+        <ul data-bind="foreach: reports">
             <li>
                 <strong data-bind="text: moment.unix(created).calendar()"></strong> - 
                 <span data-bind="text: name"></span>

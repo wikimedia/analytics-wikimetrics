@@ -3,7 +3,7 @@ from tests.fixtures import DatabaseTest, QueueDatabaseTest
 
 from wikimetrics import app
 from wikimetrics.metrics import NamespaceEdits
-from wikimetrics.models import Cohort, MetricJob
+from wikimetrics.models import Cohort, MetricReport
 
 
 class NamespaceEditsDatabaseTest(DatabaseTest):
@@ -34,8 +34,8 @@ class NamespaceEditsFullTest(QueueDatabaseTest):
         cohort = self.session.query(Cohort).filter_by(name='test').one()
         
         metric = NamespaceEdits()
-        job = MetricJob(metric, list(cohort), 'enwiki')
-        results = job.task.delay().get()
+        report = MetricReport(metric, list(cohort), 'enwiki')
+        results = report.task.delay().get()
         print 'results: %s' % results
         
         assert_true(results is not None)
@@ -46,8 +46,8 @@ class NamespaceEditsFullTest(QueueDatabaseTest):
         
         namespaces = [3]
         metric = NamespaceEdits(namespaces=namespaces)
-        job = MetricJob(metric, list(cohort), 'enwiki')
-        results = job.task.delay().get()
+        report = MetricReport(metric, list(cohort), 'enwiki')
+        results = report.task.delay().get()
         
         assert_true(results is not None)
         assert_true(results[2] == 0, 'Evan had not 0 edits in namespaces %d, when run on queue')
@@ -57,8 +57,8 @@ class NamespaceEditsFullTest(QueueDatabaseTest):
         
         namespaces = []
         metric = NamespaceEdits(namespaces=namespaces)
-        job = MetricJob(metric, list(cohort), 'enwiki')
-        results = job.task.delay().get()
+        report = MetricReport(metric, list(cohort), 'enwiki')
+        results = report.task.delay().get()
         
         assert_true(results is not None)
         assert_true(results[2] == 0, 'Evan had not 0 edits in namespaces %s, when run on queue')

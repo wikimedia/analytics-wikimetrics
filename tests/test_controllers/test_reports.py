@@ -7,42 +7,42 @@ import logging
 logger = logging.getLogger(__name__)
 
 
-class TestJobsController(WebTest):
+class TestReportsController(WebTest):
     
     def test_index(self):
-        response = self.app.get('/jobs/', follow_redirects=True)
+        response = self.app.get('/reports/', follow_redirects=True)
         assert_true(
             response._status_code == 200,
-            '/jobs should get the list of jobs for the current user'
+            '/reports should get the list of reports for the current user'
         )
     
     def test_list_started(self):
-        response = self.app.get('/jobs/list', follow_redirects=True)
+        response = self.app.get('/reports/list', follow_redirects=True)
         parsed = json.loads(response.data)
         assert_equal(
-            len(filter(lambda j : j['status'] == celery.states.STARTED, parsed['jobs'])),
+            len(filter(lambda j : j['status'] == celery.states.STARTED, parsed['reports'])),
             2,
-            '/jobs/list should return a list of job objects, '
+            '/reports/list should return a list of report objects, '
             'but instead returned:\n{0}'.format(response.data)
         )
     
     def test_list_pending(self):
-        response = self.app.get('/jobs/list', follow_redirects=True)
+        response = self.app.get('/reports/list', follow_redirects=True)
         parsed = json.loads(response.data)
         assert_equal(
-            len(filter(lambda j : j['status'] == celery.states.PENDING, parsed['jobs'])),
+            len(filter(lambda j : j['status'] == celery.states.PENDING, parsed['reports'])),
             1,
-            '/jobs/list should return a list of job objects, '
+            '/reports/list should return a list of report objects, '
             'but instead returned:\n{0}'.format(response.data)
         )
     
     def test_list_success(self):
-        response = self.app.get('/jobs/list', follow_redirects=True)
+        response = self.app.get('/reports/list', follow_redirects=True)
         parsed = json.loads(response.data)
         assert_equal(
-            len(filter(lambda j : j['status'] == celery.states.SUCCESS, parsed['jobs'])),
+            len(filter(lambda j : j['status'] == celery.states.SUCCESS, parsed['reports'])),
             1,
-            '/jobs/list should return a list of job objects,'
+            '/reports/list should return a list of report objects,'
             'but instead returned:\n{0}'.format(response.data)
         )
     
@@ -78,5 +78,5 @@ class TestJobsController(WebTest):
             #"tabIdSelector":"#response-to-bytes-added-for-1"
         #}
         
-        response = self.app.post('/jobs/create/', data=post_data)
+        response = self.app.post('/reports/create/', data=post_data)
         logger.debug(response)

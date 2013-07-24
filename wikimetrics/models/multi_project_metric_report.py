@@ -1,28 +1,28 @@
 from wikimetrics.configurables import queue
 from celery.utils.log import get_task_logger
 import logging
-import job
+import report
 import json
-from metric_job import MetricJob
+from metric_report import MetricReport
 
 __all__ = [
-    'MultiProjectMetricJob',
+    'MultiProjectMetricReport',
 ]
 
 task_logger = get_task_logger(__name__)
 
 
-class MultiProjectMetricJob(job.JobNode):
+class MultiProjectMetricReport(report.ReportNode):
     """
-    A job responsbile for running a single metric on a potentially
+    A report responsbile for running a single metric on a potentially
     project-heterogenous cohort. This just abstracts away the task
-    of grouping the cohort by project and calling a MetricJob on
+    of grouping the cohort by project and calling a MetricReport on
     each project-homogenous list of user_ids.
     """
     show_in_ui = True
     
     def __init__(self, cohort, metric, *args, **kwargs):
-        super(MultiProjectMetricJob, self).__init__(
+        super(MultiProjectMetricReport, self).__init__(
             parameters=json.dumps(metric.data, indent=4),
             *args,
             **kwargs
@@ -33,7 +33,7 @@ class MultiProjectMetricJob(job.JobNode):
         self.children = []
         for project, user_ids in cohort.group_by_project():
             # note that user_ids is actually just an iterator
-            self.children.append(MetricJob(metric, user_ids, project))
+            self.children.append(MetricReport(metric, user_ids, project))
     
     def finish(self, query_results):
         merged = {}
@@ -46,4 +46,4 @@ class MultiProjectMetricJob(job.JobNode):
         return merged
     
     def __repr__(self):
-        return '<MultiProjectMetricJob("{0}")>'.format(self.persistent_id)
+        return '<MultiProjectMetricReport("{0}")>'.format(self.persistent_id)

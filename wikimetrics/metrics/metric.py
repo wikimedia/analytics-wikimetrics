@@ -40,7 +40,7 @@ class Metric(SessionSecureForm):
     
     def __init__(self, *args, **kwargs):
         """
-        Initialize the things required by SessionSecureForm to do its job
+        Initialize the things required by SessionSecureForm to do its duty
         This __init__ handles the problem with calling SessionSecureForm.__init__()
         outside of a flask request context.
         """
