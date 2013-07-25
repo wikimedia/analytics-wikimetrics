@@ -14,15 +14,24 @@
         <div class="tab-pane{% if loop.first %} active{% endif %}" id="{{m.name}}">
             <p class="hero-unit">{{m.description}}</p>
             <table class="table table-striped">
-                {% for f in m.metricClass() %}
-                {% if f.name != 'csrf_token' %}
-                <tr>
-                    <td>{{f.label}}</td>
-                    <td>{{f.type}}</td>
-                    <td>{{f.description}}</td>
-                </tr>
-                {% endif %}
-                {% endfor %}
+                <thead>
+                    <tr>
+                        <th>Parameter</th>
+                        <th>Type</th>
+                        <th>Description</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for f in m.metricClass() %}
+                    {% if f.name != 'csrf_token' %}
+                    <tr>
+                        <td>{{f.label}}</td>
+                        <td>{{f.type}}</td>
+                        <td>{{f.description}}</td>
+                    </tr>
+                    {% endif %}
+                    {% endfor %}
+                </tbody>
             </table>
             <pre>{{m.metricClass.__doc__}}</pre>
         </div>
