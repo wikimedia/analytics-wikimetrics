@@ -10,9 +10,6 @@ from ..models import (
     Cohort, CohortUser, CohortUserRole,
     User, WikiUser, CohortWikiUser, MediawikiUser
 )
-import logging
-
-logger = logging.getLogger(__name__)
 
 
 @app.route('/cohorts/')
@@ -400,12 +397,14 @@ def validate_records(records):
         # make a link to the potential user page even if user doesn't exist
         # this gives a chance to see any misspelling etc.
         if normalized_user is None:
-            app.logger.info('invalid user: %s', record['user_str'])
+            app.logger.info(
+                'invalid user: {0} in project {1}'
+                .format(record['user_str'], normalized_project)
+            )
             record['reason_invalid'] = 'invalid user_name / user_id: %s' % record['user_str']
             invalid.append(record)
             continue
         # set the normalized values and append to valid
-        app.logger.info('found a valid user_str: %s', record['user_str'])
         record['project'] = normalized_project
         record['user_id'], record['username'] = normalized_user
         valid.append(record)

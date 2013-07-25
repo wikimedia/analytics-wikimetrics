@@ -2,9 +2,6 @@ from wikimetrics.models import Cohort, RunReport, MultiProjectMetricReport
 from wikimetrics.metrics import NamespaceEdits
 from ..fixtures import QueueDatabaseTest
 from nose.tools import assert_equals
-import logging
-
-logger = logging.getLogger(__name__)
 
 
 class RunReportTest(QueueDatabaseTest):

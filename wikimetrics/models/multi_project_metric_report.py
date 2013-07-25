@@ -1,13 +1,11 @@
 from wikimetrics.configurables import queue
 from celery.utils.log import get_task_logger
-import logging
 import report
 import json
 from metric_report import MetricReport
 
-__all__ = [
-    'MultiProjectMetricReport',
-]
+
+__all__ = ['MultiProjectMetricReport']
 
 task_logger = get_task_logger(__name__)
 

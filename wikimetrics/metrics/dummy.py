@@ -1,11 +1,9 @@
 import random
 from wtforms import IntegerField
 from metric import Metric
-import logging
+
 
 __all__ = ['RandomMetric']
-
-logger = logging.getLogger(__name__)
 
 
 class RandomMetric(Metric):

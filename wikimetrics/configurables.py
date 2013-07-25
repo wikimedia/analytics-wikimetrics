@@ -3,9 +3,7 @@ import argparse
 import sys
 import imp
 import os
-import logging
 import yaml
-logger = logging.getLogger(__name__)
 
 
 # TODO: does not work in labs environment
@@ -81,7 +79,6 @@ def config_db(args):
 
 
 def config_celery(args):
-    logger.info('about to import celery')
     from celery import Celery
     
     # create and configure celery app

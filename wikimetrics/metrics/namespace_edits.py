@@ -3,8 +3,7 @@ from metric import Metric
 from form_fields import CommaSeparatedIntegerListField
 from wtforms.validators import Required
 from wikimetrics.models import Page, Revision
-import logging
-logger = logging.getLogger(__name__)
+
 
 __all__ = [
     'NamespaceEdits',
@@ -51,7 +50,6 @@ class NamespaceEdits(Metric):
             dictionary from user ids to the number of edit found.
         """
         # directly construct dict from query results
-        logger.debug('user_ids: %s, namespaces: %s', user_ids, self.namespaces)
         revisions_by_user = dict(
             session
             .query(Revision.rev_user, func.count(Revision.rev_id))

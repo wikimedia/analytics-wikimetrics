@@ -14,8 +14,6 @@ from ..models import (
 from ..models.mediawiki import Revision, Page
 from datetime import datetime
 from ..metrics import RandomMetric
-import logging
-logger = logging.getLogger(__name__)
 
 
 if app.config['DEBUG']:

@@ -55,11 +55,6 @@ def reports_request():
             metric = metric_class(**metric_dict)
             metric.validate()
             
-            # debug output
-            #app.logger.debug('cohort_metric_dict: %s', cohort_metric_dict)
-            #app.logger.debug('cohort: %s', cohort)
-            #app.logger.debug('metric: %s', metric)
-            
             # construct and start RunReport
             metric_report = MultiProjectMetricReport(
                 cohort,
@@ -76,7 +71,7 @@ def reports_request():
         jr = RunReport(metric_reports, name=name)
         async_response = jr.task.delay()
         app.logger.info(
-            'starting report with celery_id: %s, PersistentReport.id: %d',
+            'starting report with database id: %s, PersistentReport.id: %d',
             async_response.task_id, jr.persistent_id
         )
         
@@ -144,7 +139,6 @@ def report_result_csv(report_id):
             task_rows.append(row)
         writer.writeheader()
         writer.writerows(task_rows)
-        app.logger.debug('celery task is ready! returning actual result:\n%s', csv_io.getvalue())
         response = Response(csv_io.getvalue(), mimetype='text/csv')
     else:
         response = json_response(status=celery_task.status)

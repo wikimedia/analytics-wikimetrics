@@ -1,11 +1,8 @@
 from wtforms.ext.csrf.session import SessionSecureForm
 from wikimetrics.configurables import app
-import logging
-logger = logging.getLogger(__name__)
 
-__all__ = [
-    'Metric',
-]
+
+__all__ = ['Metric']
 
 
 class Metric(SessionSecureForm):

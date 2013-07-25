@@ -1,9 +1,6 @@
 from nose.tools import assert_equal
 from tests.fixtures import WebTest
 import json
-import logging
-
-logger = logging.getLogger(__name__)
 
 
 class TestDemoController(WebTest):
