@@ -7,11 +7,11 @@
         <div class="navbar-search pull-right">
             <a href="{{url_for('cohort_upload')}}">upload a new cohort</a>
             &nbsp;&nbsp;
-            <input type="text" class="search-query" placeholder="find"/>
+            <input type="text" class="search-query" placeholder="type and press enter to filter" data-bind="value: filter"/>
         </div>
     </div>
     <div class="cohorts">
-        <ul class="unstyled" data-bind="foreach: cohorts">
+        <ul class="unstyled" data-bind="foreach: filteredCohorts">
             <li>
                 <label>
                     <input type="checkbox" data-bind="checked: selected, click: $root.toggleCohort"/>

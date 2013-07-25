@@ -7,11 +7,11 @@
     <a class="btn btn-primary btn-large" href="{{url_for('cohort_upload')}}">Upload Cohort</a>
     &nbsp;
     &nbsp;
-    <input type="text" class="search-query" placeholder="find below"/>
+    <input type="text" class="search-query" placeholder="type and press enter to filter" data-bind="value: filter"/>
 </div>
 <hr/>
 <div class="tabbable tabs-left">
-    <ul class="nav nav-tabs" data-bind="foreach: cohorts">
+    <ul class="nav nav-tabs" data-bind="foreach: filteredCohorts">
         <li>
             <a data-bind="text: name, attr: {href: '#' + id}, click: $root.view" data-toggle="tab"></a>
         </li>

@@ -1,6 +1,7 @@
 $(document).ready(function(){
     
     var viewModel = {
+        filter: ko.observable(''),
         cohorts: ko.observableArray([]),
         toggleCohort: function(cohort){
             // fetch wikiusers
@@ -131,6 +132,18 @@ $(document).ready(function(){
         
         return ret;
     }, viewModel.request());
+    
+    viewModel.filteredCohorts = ko.computed(function(){
+        if (this.cohorts().length && this.filter().length) {
+            filter = this.filter().toLowerCase();
+            return this.cohorts().filter(function(it){
+                var name = it.name.toLowerCase();
+                return name.indexOf(filter) >= 0;
+            });
+        } else {
+            return this.cohorts();
+        }
+    }, viewModel);
     
     function setSelected(list){
         bareList = ko.utils.unwrapObservable(list);
