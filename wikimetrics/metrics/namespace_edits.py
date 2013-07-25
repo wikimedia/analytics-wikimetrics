@@ -59,4 +59,4 @@ class NamespaceEdits(Metric):
             .group_by(Revision.rev_user)
             .all()
         )
-        return {user_id: revisions_by_user.get(user_id, 0) for user_id in user_ids}
+        return {user_id: {'edits': revisions_by_user.get(user_id, 0)} for user_id in user_ids}

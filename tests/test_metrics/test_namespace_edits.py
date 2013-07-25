@@ -1,4 +1,4 @@
-from nose.tools import assert_true
+from nose.tools import assert_true, assert_equal
 from tests.fixtures import DatabaseTest, QueueDatabaseTest
 
 from wikimetrics import app
@@ -15,8 +15,8 @@ class NamespaceEditsDatabaseTest(DatabaseTest):
         results = metric(list(cohort), self.mwSession)
         
         assert_true(results is not None)
-        assert_true(results[1] == 2, 'Dan had not 2 edits')
-        assert_true(results[2] == 3, 'Evan had not 3 edits')
+        assert_equal(results[1]['edits'], 2)
+        assert_equal(results[2]['edits'], 3)
     
     def test_reports_zero_edits(self):
         cohort = self.session.query(Cohort).filter_by(name='test').one()
@@ -25,7 +25,7 @@ class NamespaceEditsDatabaseTest(DatabaseTest):
         results = metric(list(cohort), self.mwSession)
         
         assert_true(results is not None)
-        assert_true(results[3] == 0, 'Andrew had not 0 edits')
+        assert_equal(results[3]['edits'], 0)
 
 
 class NamespaceEditsFullTest(QueueDatabaseTest):
@@ -39,7 +39,7 @@ class NamespaceEditsFullTest(QueueDatabaseTest):
         print 'results: %s' % results
         
         assert_true(results is not None)
-        assert_true(results[2] == 3, 'Evan had not 3 edits, when run on queue')
+        assert_equal(results[2]['edits'], 3)
     
     def test_namespace_edits_namespace_filter(self):
         cohort = self.session.query(Cohort).filter_by(name='test').one()
@@ -50,7 +50,7 @@ class NamespaceEditsFullTest(QueueDatabaseTest):
         results = report.task.delay().get()
         
         assert_true(results is not None)
-        assert_true(results[2] == 0, 'Evan had not 0 edits in namespaces %d, when run on queue')
+        assert_equal(results[2]['edits'], 0)
     
     def test_namespace_edits_namespace_filter_no_namespace(self):
         cohort = self.session.query(Cohort).filter_by(name='test').one()
@@ -61,4 +61,4 @@ class NamespaceEditsFullTest(QueueDatabaseTest):
         results = report.task.delay().get()
         
         assert_true(results is not None)
-        assert_true(results[2] == 0, 'Evan had not 0 edits in namespaces %s, when run on queue')
+        assert_equal(results[2]['edits'], 0)
