@@ -399,7 +399,7 @@ def validate_records(records):
         if normalized_user is None:
             app.logger.info(
                 'invalid user: {0} in project {1}'
-                .format(record['user_str'], normalized_project)
+                .format(record['raw_username'], normalized_project)
             )
             record['reason_invalid'] = 'invalid user_name / user_id: %s' % record['user_str']
             invalid.append(record)

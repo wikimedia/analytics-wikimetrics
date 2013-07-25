@@ -1,54 +1,84 @@
 {% extends "layout.html" %}
 {% block body %}
 
-{% if invalid %}
-<h4>In-Valid Users</h4>
-<table class="table table-striped">
-    <thead>
-        <tr>
-            <th>Username</th>
-            <th>Project</th>
-            <th>Reason Invalid</th>
-        </tr>
-    </thead>
-    <tbody data-bind="foreach: invalid">
-        <tr>
-            <td><a data-bind="text: username, attr: {href: link}" target="_blank"></a></td>
-            <td data-bind="text: project"></td>
-            <td data-bind="text: reason_invalid"></td>
-        </tr>
-    </tbody>
-</table>
 
-<h5>Try uploading again after fixing the issues</h5>
-{% include "csv_upload_form.html" %}
+{% set invalid_active = invalid %}
+{% set valid_active = not invalid and valid %}
+
+<h2>Upload Validation</h2>
+
+<p>
+{% if invalid and valid %}
+There were both valid and invalid users in your cohort.  You can either try again or upload only the valid users.
+{% elif invalid %}
+All of the users in your cohort were invalid.  Please try again.
+{% elif valid %}
+All of the users in your cohort were valid.  You can review and finish the upload.
 {% endif %}
+</p>
 
-<hr/>
+<div class="tabbable tabs">
+    <ul class="nav nav-tabs">
+        {% if invalid %}
+        <li{%if invalid_active%} class="active"{%endif%}>
+            <a href="#invalid" data-toggle="tab">Invalid Users</a>
+        </li>
+        {% endif %}
+        {% if valid %}
+        <li{%if valid_active%} class="active"{%endif%}>
+            <a href="#valid" data-toggle="tab">Valid Users</a>
+        </li>
+        {% endif %}
+    </ul>
+    <div class="tab-content">
+        {% if invalid %}
+        <div class="tab-pane{%if invalid_active%} active{%endif%}" id="invalid">
+            <table class="table table-striped">
+                <thead>
+                    <tr>
+                        <th>Username</th>
+                        <th>Project</th>
+                        <th>Reason Invalid</th>
+                    </tr>
+                </thead>
+                <tbody data-bind="foreach: invalid">
+                    <tr>
+                        <td><a data-bind="text: username, attr: {href: link}" target="_blank"></a></td>
+                        <td data-bind="text: project"></td>
+                        <td data-bind="text: reason_invalid"></td>
+                    </tr>
+                </tbody>
+            </table>
 
-{% if valid %}
-<h4>Valid Users</h4>
-<table class="table table-striped">
-    <thead>
-        <tr>
-            <th>Username</th>
-            <th>Project</th>
-        </tr>
-    </thead>
-    <tbody data-bind="foreach: valid">
-        <tr>
-            <td><a data-bind="text: username, attr: {href: link}" target="_blank"></a></td>
-            <td data-bind="text: project"></td>
-        </tr>
-    </tbody>
-</table>
+            {% include "csv_upload_form.html" %}
+        </div>
+        {% endif %}
+        {% if valid %}
+        <div class="tab-pane{%if valid_active%} active{%endif%}" id="valid">
+            <form action="{{url_for('cohort_upload_finish')}}" method="POST" class="form-horizontal finish-upload">
+                <div class="form-actions">
+                    <input type="submit" class="btn btn-primary" value="{% if invalid %}Upload Only These Valid Users{% else %}Finish Upload{% endif %}"/>
+                </div>
+            </form>
 
-<form action="{{url_for('cohort_upload_finish')}}" method="POST" class="form-horizontal finish-upload">
-    <div class="form-actions">
-        <input type="submit" class="btn btn-primary" value="{% if invalid %}Upload Only These Valid Users{% else %}Finish Upload{% endif %}"/>
+            <table class="table table-striped">
+                <thead>
+                    <tr>
+                        <th>Username</th>
+                        <th>Project</th>
+                    </tr>
+                </thead>
+                <tbody data-bind="foreach: valid">
+                    <tr>
+                        <td><a data-bind="text: username, attr: {href: link}" target="_blank"></a></td>
+                        <td data-bind="text: project"></td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+        {% endif %}
     </div>
-</form>
-{% endif %}
+</div>
 {% endblock %}
 
 
