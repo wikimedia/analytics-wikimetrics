@@ -76,7 +76,15 @@ class BytesAddedTest(DatabaseWithCohortTest):
             'net_sum': 6,
             'absolute_sum': 14,
         }
+        andrew_expected = {
+            'net_sum': None,
+            'absolute_sum': None,
+        }
         assert_equal(
             results[self.dan_id],
             dan_expected,
+        )
+        assert_equal(
+            results[self.andrew_id],
+            andrew_expected,
         )

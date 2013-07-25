@@ -8,7 +8,7 @@ from ..models import (
     RunReport, PersistentReport, MultiProjectMetricReport
 )
 from ..metrics import metric_classes
-from ..utils import json_response, json_error, json_redirect, deduplicate
+from ..utils import json_response, json_error, json_redirect, deduplicate, thirty_days_ago
 import json
 from StringIO import StringIO
 from csv import DictWriter
@@ -88,8 +88,10 @@ def reports_request():
 def reports_list():
     db_session = db.get_session()
     reports = db_session.query(PersistentReport)\
-        .filter_by(user_id=current_user.id)\
-        .filter_by(show_in_ui=True).all()
+        .filter(PersistentReport.user_id == current_user.id)\
+        .filter(PersistentReport.created > thirty_days_ago())\
+        .filter(PersistentReport.show_in_ui)\
+        .all()
     # TODO: update status for all reports at all times (not just show_in_ui ones)
     # update status for each report
     for report in reports:

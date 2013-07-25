@@ -143,9 +143,17 @@ class BytesAdded(Metric):
                 result_dict[user_id]['negative_only_sum'] = negative
         
         session.close()
-        return {user_id: result_dict.get(user_id, {
-            'net_sum': None,
-            'absolute_sum': None,
-            'positive_only_sum': None,
-            'negative_only_sum': None,
-        }) for user_id in user_ids}
+        return {user_id: result_dict.get(user_id, self.make_default()) for user_id in user_ids}
+    
+    def make_default(self):
+        default = dict()
+        if self.net_sum.data:
+            default['net_sum'] = None
+        if self.absolute_sum.data:
+            default['absolute_sum'] = None
+        if self.positive_only_sum.data:
+            default['positive_only_sum'] = None
+        if self.negative_only_sum.data:
+            default['negative_only_sum'] = None
+        
+        return default

@@ -293,3 +293,5 @@ class DatabaseWithCohortTest(DatabaseTest):
         
         self.dan_id = wikiusers.filter(WikiUser.mediawiki_username == 'Dan').one().id
         self.evan_id = wikiusers.filter(WikiUser.mediawiki_username == 'Evan').one().id
+        self.andrew_id = wikiusers.filter(WikiUser.mediawiki_username == 'Andrew').one().id
+        self.diederik_id = wikiusers.filter(WikiUser.mediawiki_username == 'Diederik').one().id

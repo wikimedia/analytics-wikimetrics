@@ -23,9 +23,6 @@ class TestMetricsController(WebTest):
         assert_not_equal(
             response.data.find('NamespaceEdits'), -1, 'NamespaceEdits detail should be displayed'
         )
-        assert_not_equal(
-            response.data.find('RevertRate'), -1, 'RevertRate detail should be displayed'
-        )
     
     def test_list(self):
         response = self.app.get('/metrics/list/', follow_redirects=True)
