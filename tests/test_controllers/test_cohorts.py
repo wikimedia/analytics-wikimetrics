@@ -1,7 +1,9 @@
+# -*- coding:utf-8 -*-
 import pprint
 import json
-from nose.tools import assert_equal
+from nose.tools import assert_equal, assert_not_equal
 from tests.fixtures import WebTest
+from wikimetrics.controllers.cohorts import *
 
 
 class TestCohortsController(WebTest):
@@ -58,3 +60,14 @@ class TestCohortsController(WebTest):
             response.status_code,
             404,
         )
+    
+    def test_validate_username(self):
+        # this username has a few problems that the normalize call should handle
+        # 1. normal ascii space in front
+        # 2. lowercase
+        # 3. nasty trailing unicode space (the reason this file has an encoding definition)
+        problem_username = ' dan '
+        
+        parsed_user = parse_username(problem_username)
+        valid_user = normalize_user(parsed_user, 'enwiki')
+        assert_not_equal(valid_user, None)

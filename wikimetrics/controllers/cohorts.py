@@ -283,26 +283,25 @@ def parse_records(records, default_project):
                 project = default_project
             
             parsed.append({
-                'raw_username': parse_username(username, decode=False),
                 'username': parse_username(username),
                 'project': project,
             })
     return parsed
 
 
-def parse_username(raw_username, decode=True):
+def parse_username(username):
     """
     parses uncapitalized, whitespace-padded, and weird-charactered mediawiki
     user names into ones that have a chance of being found in the database
     """
-    username = str(raw_username)
-    if decode:
-        username = username.decode('utf8')
+    username = str(username)
+    username = username.decode('utf8')
     stripped = username.strip()
     # Capitalize the username according to the Mediawiki standard
     # NOTE: unfortunately .title() or .capitalize() don't work
     # because 'miliMetric'.capitalize() == 'Milimetric'
-    return stripped[0].upper() + stripped[1:]
+    capitalized = stripped[0].upper() + stripped[1:]
+    return capitalized.encode('utf8')
 
 
 def normalize_project(project):
@@ -319,7 +318,6 @@ def normalize_project(project):
 
 
 def get_wikiuser_by_name(username, project):
-    # NOTE: Not needed right? username = username.encode('utf-8')
     db_session = db.get_mw_session(project)
     try:
         wikiuser = db_session.query(MediawikiUser)\
@@ -393,7 +391,7 @@ def validate_records(records):
             record['reason_invalid'] = 'invalid project: %s' % record['project']
             invalid.append(record)
             continue
-        normalized_user = normalize_user(record['raw_username'], normalized_project)
+        normalized_user = normalize_user(record['username'], normalized_project)
         # make a link to the potential user page even if user doesn't exist
         # this gives a chance to see any misspelling etc.
         if normalized_user is None:
