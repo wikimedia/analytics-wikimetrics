@@ -68,6 +68,6 @@ class TestCohortsController(WebTest):
         # 3. nasty trailing unicode space (the reason this file has an encoding definition)
         problem_username = ' dan '
         
-        parsed_user = parse_username(problem_username)
+        parsed_user = parse_username(problem_username, decode=False)
         valid_user = normalize_user(parsed_user, 'enwiki')
         assert_not_equal(valid_user, None)
