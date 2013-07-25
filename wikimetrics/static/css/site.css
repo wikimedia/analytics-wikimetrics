@@ -1,4 +1,5 @@
 body { padding-top: 60px; padding-bottom: 60px; }
+table caption { padding: 16px; }
 .navbar-fixed-top .nav { width: 80%; }
 .navbar-fixed-top .nav li:last-child { color: #cacaca; float: right !important; }
 .navbar-fixed-top .nav li:last-child a { color: #0088cc; display: inline-block; }

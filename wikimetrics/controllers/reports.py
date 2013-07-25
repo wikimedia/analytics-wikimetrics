@@ -71,7 +71,7 @@ def reports_request():
         jr = RunReport(metric_reports, name=name)
         async_response = jr.task.delay()
         app.logger.info(
-            'starting report with database id: %s, PersistentReport.id: %d',
+            'starting report with celery id: %s, PersistentReport.id: %d',
             async_response.task_id, jr.persistent_id
         )
         
@@ -98,29 +98,18 @@ def reports_list():
     return reports_json
 
 
-@app.route('/reports/status/<report_id>')
-def report_status(report_id):
-    db_session = db.get_session()
-    db_report = db_session.query(PersistentReport).get(report_id)
-    if db_report.status not in (celery.states.SUCCESS, celery.states.FAILURE):
-        if db_report.result_key:
-            # if we don't have the result key leave as is (PENDING)
-            celery_task = Report.task.AsyncResult(db_report.result_key)
-            db_report.status = celery_task.status
-            db_session.add(db_report)
-            db_session.commit()
-    db_session.close()
-    return json_response(status=db_report.status)
-
-
-@app.route('/reports/result/<report_id>.csv')
-def report_result_csv(report_id):
-    response = ''
-    db_session = db.get_session()
-    db_report = db_session.query(PersistentReport).get(report_id)
-    if not db_report:
-        return json_error('no task exists with id: {0}'.format(report_id))
+@app.route('/reports/status/<task_id>')
+def report_status(task_id):
     celery_task = Report.task.AsyncResult(db_report.result_key)
+    return json_response(status=celery_task.status)
+
+
+@app.route('/reports/result/<task_id>.csv')
+def report_result_csv(task_id):
+    celery_task = Report.task.AsyncResult(task_id)
+    if not celery_task:
+        return json_error('no task exists with id: {0}'.format(task_id))
+    
     if celery_task.ready():
         task_result = celery_task.get()
         
@@ -139,47 +128,49 @@ def report_result_csv(report_id):
             task_rows.append(row)
         writer.writeheader()
         writer.writerows(task_rows)
-        response = Response(csv_io.getvalue(), mimetype='text/csv')
+        return Response(csv_io.getvalue(), mimetype='text/csv')
     else:
-        response = json_response(status=celery_task.status)
+        return json_response(status=celery_task.status)
+
+
+@app.route('/reports/result/<task_id>.json')
+def report_result_json(task_id):
+    celery_task = Report.task.AsyncResult(task_id)
+    if not celery_task:
+        return json_error('no task exists with id: {0}'.format(task_id))
     
-    db_session.close()
-    return response
-
-
-@app.route('/reports/result/<report_id>.json')
-def report_result_json(report_id):
-    response = ''
-    db_session = db.get_session()
-    db_report = db_session.query(PersistentReport).get(report_id)
-    if not db_report:
-        return json_error('no task exists with id: {0}'.format(report_id))
-    celery_task = Report.task.AsyncResult(db_report.result_key)
     if celery_task.ready():
         task_result = celery_task.get()
-        response = json_response(
+        
+        # get the parameters from the database
+        db_session = db.get_session()
+        report = db_session.query(PersistentReport)\
+            .filter(PersistentReport.result_key == task_id)\
+            .one()
+        parameters = report.parameters
+        db_session.close()
+        
+        return json_response(
             result=task_result,
-            parameters=json.loads(db_report.parameters),
+            parameters=json.loads(parameters),
         )
     else:
-        response = json_response(status=celery_task.status)
-    
-    db_session.close()
-    return response
+        return json_response(status=celery_task.status)
 
 
-@app.route('/reports/kill/<report_id>')
-def report_kill(report_id):
-    db_session = db.get_session()
-    db_report = db_session.query(PersistentReport).get(report_id)
-    if not db_report:
-        return json_error('no task exists with id: {0}'.format(report_id))
-    celery_task = Report.task.AsyncResult(db_report.result_key)
-    app.logger.debug('revoking task: %s', celery_task.id)
+@app.route('/reports/kill/<task_id>')
+def report_kill(task_id):
+    return 'not implemented'
+    #db_session = db.get_session()
+    #db_report = db_session.query(PersistentReport).get(task_id)
+    #if not db_report:
+        #return json_error('no task exists with id: {0}'.format(task_id))
+    #celery_task = Report.task.AsyncResult(db_report.result_key)
+    #app.logger.debug('revoking task: %s', celery_task.id)
     #celery_task.revoke()
     # TODO figure out how to terminate tasks. this throws an error
     # which I believe is related to https://github.com/celery/celery/issues/1153
     # and which is fixed by a patch.  however, I can't get things running
     # with development version
     #revoke(celery_task.id, terminate=True)
-    return json_response(status=celery_task.status)
+    #return json_response(status=celery_task.status)
