@@ -30,7 +30,7 @@ def reports_request():
     """
     
     if request.method == 'GET':
-        return render_template('request.html')
+        return render_template('report.html')
     else:
         parsed = json.loads(request.form['responses'])
         metric_reports = []
@@ -100,7 +100,7 @@ def reports_list():
 
 @app.route('/reports/status/<task_id>')
 def report_status(task_id):
-    celery_task = Report.task.AsyncResult(db_report.result_key)
+    celery_task = Report.task.AsyncResult(task_id)
     return json_response(status=celery_task.status)
 
 

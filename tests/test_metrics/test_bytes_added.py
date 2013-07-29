@@ -17,6 +17,7 @@ class BytesAddedTest(DatabaseWithCohortTest):
         )
         
         results = metric(list(self.cohort), self.mwSession)
+        print results
         dan_expected = {
             'net_sum': 6,
             'absolute_sum': 14,
@@ -48,6 +49,7 @@ class BytesAddedTest(DatabaseWithCohortTest):
         assert_true(metric.validate())
         
         results = metric(list(self.cohort), self.mwSession)
+        print results
         dan_expected = {
             'net_sum': 10,
             'absolute_sum': 10,
@@ -72,6 +74,7 @@ class BytesAddedTest(DatabaseWithCohortTest):
         assert_true(metric.validate())
         
         results = metric(list(self.cohort), self.mwSession)
+        print results
         dan_expected = {
             'net_sum': 6,
             'absolute_sum': 14,

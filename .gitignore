@@ -5,6 +5,7 @@
 *.csv
 *.json
 *.db
+*.bak
 
 *egg-info
 

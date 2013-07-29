@@ -106,11 +106,14 @@ $(document).ready(function(){
                 return cohort.selected();
             });
         }, viewModel).extend({ throttle: 1 }),
+        
         metrics: ko.computed(function(){
             return this.metrics().filter(function(metric){
                 return metric.selected();
             });
         }, viewModel).extend({ throttle: 1 }),
+        
+        aggregators: ko.observable([]),
     });
     
     // second level computed pieces of the viewModel

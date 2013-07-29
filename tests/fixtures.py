@@ -34,24 +34,122 @@ class DatabaseTest(unittest.TestCase):
     
     def setUp(self):
         
-        # create basic test records for non-mediawiki tests
-        self.session = db.get_session()
-        
+        #****************************************************************
+        # set up for every test - delete and re-create all needed records
+        #****************************************************************
         project = 'enwiki'
+        self.session = db.get_session()
         engine = db.get_mw_engine(project)
         db.MediawikiBase.metadata.create_all(engine, checkfirst=True)
         self.mwSession = db.get_mw_session(project)
         DatabaseTest.tearDown(self)
         
+        #****************************************************************
+        # create records for enwiki tests
+        #****************************************************************
+        mw_user_dan = MediawikiUser(user_name='Dan')
+        mw_user_evan = MediawikiUser(user_name='Evan')
+        mw_user_andrew = MediawikiUser(user_name='Andrew')
+        mw_user_diederik = MediawikiUser(user_name='Diederik')
+        mw_logging = Logging(log_user_text='Reedy')
+        mw_page = Page(page_namespace=0, page_title='Main_Page')
+        self.mwSession.add_all([
+            mw_user_dan,
+            mw_user_evan,
+            mw_user_andrew,
+            mw_logging,
+            mw_page,
+        ])
+        self.mwSession.commit()
+        
+        # edits in between Dan and Evan edits
+        rev_before_1 = Revision(
+            rev_page=mw_page.page_id, rev_user=mw_user_diederik.user_id,
+            rev_comment='before Dan edit 1',
+            rev_len=4, rev_timestamp=datetime(2013, 05, 30),
+        )
+        rev_before_2 = Revision(
+            rev_page=mw_page.page_id, rev_user=mw_user_diederik.user_id,
+            rev_comment='before Dan edit 2',
+            rev_len=0, rev_timestamp=datetime(2013, 06, 30),
+        )
+        rev_before_3 = Revision(
+            rev_page=mw_page.page_id, rev_user=mw_user_diederik.user_id,
+            rev_comment='before Evan edit 1',
+            rev_len=0, rev_timestamp=datetime(2013, 05, 30),
+        )
+        rev_before_4 = Revision(
+            rev_page=mw_page.page_id, rev_user=mw_user_diederik.user_id,
+            rev_comment='before Evan edit 2',
+            rev_len=100, rev_timestamp=datetime(2013, 06, 30),
+        )
+        rev_before_5 = Revision(
+            rev_page=mw_page.page_id, rev_user=mw_user_diederik.user_id,
+            rev_comment='before Evan edit 3',
+            rev_len=140, rev_timestamp=datetime(2013, 07, 23),
+        )
+        self.mwSession.add_all([
+            rev_before_1,
+            rev_before_2,
+            rev_before_3,
+            rev_before_4,
+            rev_before_5,
+        ])
+        self.mwSession.commit()
+        
+        # Dan edits
+        rev1 = Revision(
+            rev_page=mw_page.page_id, rev_user=mw_user_dan.user_id, rev_comment='Dan edit 1',
+            rev_parent_id=rev_before_1.rev_id, rev_len=0, rev_timestamp=datetime(2013, 06, 01),
+        )
+        rev2 = Revision(
+            rev_page=mw_page.page_id, rev_user=mw_user_dan.user_id, rev_comment='Dan edit 2',
+            rev_parent_id=rev_before_2.rev_id, rev_len=10, rev_timestamp=datetime(2013, 07, 01),
+        )
+        # Evan edits
+        rev3 = Revision(
+            rev_page=mw_page.page_id, rev_user=mw_user_evan.user_id, rev_comment='Evan edit 1',
+            rev_parent_id=rev_before_3.rev_id, rev_len=100, rev_timestamp=datetime(2013, 06, 01),
+        )
+        rev4 = Revision(
+            rev_page=mw_page.page_id, rev_user=mw_user_evan.user_id, rev_comment='Evan edit 2',
+            rev_parent_id=rev_before_4.rev_id, rev_len=140, rev_timestamp=datetime(2013, 07, 01),
+        )
+        rev5 = Revision(
+            rev_page=mw_page.page_id, rev_user=mw_user_evan.user_id, rev_comment='Evan edit 3',
+            rev_parent_id=rev_before_5.rev_id, rev_len=136, rev_timestamp=datetime(2013, 07, 24),
+        )
+        self.mwSession.add_all([rev1, rev2, rev3, rev4, rev5])
+        self.mwSession.commit()
+        
+        #****************************************************************
+        # create basic test records for non-mediawiki tests
+        #****************************************************************
         dan_user = User(username='Dan')
         evan_user = User(username='Evan')
         web_test_user = User(email='test@test.com')
         
         # create a test cohort
-        dan = WikiUser(mediawiki_username='Dan', mediawiki_userid=1, project='enwiki')
-        evan = WikiUser(mediawiki_username='Evan', mediawiki_userid=2, project='enwiki')
-        andrew = WikiUser(mediawiki_username='Andrew', mediawiki_userid=3, project='enwiki')
-        diederik = WikiUser(mediawiki_username='Diederik', mediawiki_userid=4, project='enwiki')
+        dan = WikiUser(
+            mediawiki_username=mw_user_dan.user_name,
+            mediawiki_userid=mw_user_dan.user_id,
+            project=project
+        )
+        evan = WikiUser(
+            mediawiki_username=mw_user_evan.user_name,
+            mediawiki_userid=mw_user_evan.user_id,
+            project=project
+        )
+        andrew = WikiUser(
+            mediawiki_username=mw_user_andrew.user_name,
+            mediawiki_userid=mw_user_andrew.user_id,
+            project=project
+        )
+        diederik = WikiUser(
+            mediawiki_username=mw_user_diederik.user_name,
+            mediawiki_userid=mw_user_diederik.user_id,
+            project=project
+        )
         
         # create cohorts
         test_cohort = Cohort(name='test', enabled=True, public=True)
@@ -166,57 +264,19 @@ class DatabaseTest(unittest.TestCase):
         ])
         self.session.commit()
         
-        # create records for enwiki tests
-        # TODO: make this safe to execute in any environment
-        self.mwSession.add(MediawikiUser(user_id=1, user_name='Dan'))
-        self.mwSession.add(MediawikiUser(user_id=2, user_name='Evan'))
-        self.mwSession.add(MediawikiUser(user_id=3, user_name='Andrew'))
-        self.mwSession.add(Logging(log_id=1, log_user_text='Reedy'))
-        self.mwSession.add(Page(page_id=1, page_namespace=0, page_title='Main_Page'))
-        # edits in between Dan and Evan edits
-        self.mwSession.add(Revision(
-            rev_id=1, rev_page=1, rev_user=4, rev_comment='before Dan edit 1',
-            rev_len=4, rev_timestamp=datetime(2013, 05, 30),
-        ))
-        self.mwSession.add(Revision(
-            rev_id=3, rev_page=1, rev_user=4, rev_comment='before Dan edit 2',
-            rev_len=0, rev_timestamp=datetime(2013, 06, 30),
-        ))
-        self.mwSession.add(Revision(
-            rev_id=5, rev_page=1, rev_user=4, rev_comment='before Evan edit 1',
-            rev_len=0, rev_timestamp=datetime(2013, 05, 30),
-        ))
-        self.mwSession.add(Revision(
-            rev_id=7, rev_page=1, rev_user=4, rev_comment='before Evan edit 2',
-            rev_len=100, rev_timestamp=datetime(2013, 06, 30),
-        ))
-        self.mwSession.add(Revision(
-            rev_id=9, rev_page=1, rev_user=4, rev_comment='before Evan edit 3',
-            rev_len=140, rev_timestamp=datetime(2013, 07, 23),
-        ))
-        # Dan edits
-        self.mwSession.add(Revision(
-            rev_id=2, rev_page=1, rev_user=1, rev_comment='Dan edit 1',
-            rev_parent_id=1, rev_len=0, rev_timestamp=datetime(2013, 06, 01),
-        ))
-        self.mwSession.add(Revision(
-            rev_id=4, rev_page=1, rev_user=1, rev_comment='Dan edit 2',
-            rev_parent_id=3, rev_len=10, rev_timestamp=datetime(2013, 07, 01),
-        ))
-        # Evan edits
-        self.mwSession.add(Revision(
-            rev_id=6, rev_page=1, rev_user=2, rev_comment='Evan edit 1',
-            rev_parent_id=5, rev_len=100, rev_timestamp=datetime(2013, 06, 01),
-        ))
-        self.mwSession.add(Revision(
-            rev_id=8, rev_page=1, rev_user=2, rev_comment='Evan edit 2',
-            rev_parent_id=7, rev_len=140, rev_timestamp=datetime(2013, 07, 01),
-        ))
-        self.mwSession.add(Revision(
-            rev_id=10, rev_page=1, rev_user=2, rev_comment='Evan edit 3',
-            rev_parent_id=9, rev_len=136, rev_timestamp=datetime(2013, 07, 24),
-        ))
-        self.mwSession.commit()
+        #****************************************************************
+        # keep the test ids around so subclasses can use them
+        #****************************************************************
+        self.test_report_id = report_created.id
+        self.test_user_id = dan_user.id
+        self.test_cohort_id = test_cohort.id
+        self.test_cohort_user_id = dan_owns_test.id
+        self.test_wiki_user_id = dan.id
+        self.test_cohort_wiki_user_id = dan_in_test.id
+        self.test_logging_id = mw_logging.log_id
+        self.test_mediawiki_user_id = mw_user_dan.user_id
+        self.test_page_id = mw_page.page_id
+        self.test_revision_id = rev1.rev_id
     
     def tearDown(self):
         
@@ -291,7 +351,15 @@ class DatabaseWithCohortTest(DatabaseTest):
             .join(CohortWikiUser)\
             .filter(CohortWikiUser.cohort_id == self.cohort.id)
         
-        self.dan_id = wikiusers.filter(WikiUser.mediawiki_username == 'Dan').one().id
-        self.evan_id = wikiusers.filter(WikiUser.mediawiki_username == 'Evan').one().id
-        self.andrew_id = wikiusers.filter(WikiUser.mediawiki_username == 'Andrew').one().id
-        self.diederik_id = wikiusers.filter(WikiUser.mediawiki_username == 'Diederik').one().id
+        self.dan_id = wikiusers\
+            .filter(WikiUser.mediawiki_username == 'Dan')\
+            .one().mediawiki_userid
+        self.evan_id = wikiusers\
+            .filter(WikiUser.mediawiki_username == 'Evan')\
+            .one().mediawiki_userid
+        self.andrew_id = wikiusers\
+            .filter(WikiUser.mediawiki_username == 'Andrew')\
+            .one().mediawiki_userid
+        self.diederik_id = wikiusers\
+            .filter(WikiUser.mediawiki_username == 'Diederik')\
+            .one().mediawiki_userid
