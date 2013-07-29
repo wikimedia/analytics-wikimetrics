@@ -1,20 +1,18 @@
-from sqlalchemy import Column, Integer, String, DateTime, Boolean, func
-from sqlalchemy.orm import Session
+import time
 import celery
 from celery import group, chord, current_task
 from celery.result import AsyncResult
 from celery.utils.log import get_task_logger
 from celery.contrib.methods import task_method
 from flask.ext.login import current_user
-import time
 from wikimetrics.configurables import db, queue
+from ..persistent_report import PersistentReport
 
 
 __all__ = [
     'Report',
     'ReportNode',
     'ReportLeaf',
-    'PersistentReport'
 ]
 
 
@@ -35,32 +33,6 @@ metric would be a `ReportLeaf`, whereas any aggregator would be a `ReportNode`
 
 
 task_logger = get_task_logger(__name__)
-
-
-class PersistentReport(db.WikimetricsBase):
-    __tablename__ = 'report'
-    
-    id = Column(Integer, primary_key=True)
-    created = Column(DateTime, default=func.now())
-    user_id = Column(Integer)
-    result_key = Column(String(50))
-    status = Column(String(50))
-    name = Column(String(2000))
-    show_in_ui = Column(Boolean)
-    parameters = Column(String(4000))
-    
-    def update_status(self):
-        # if we don't have the result key leave as is (PENDING)
-        if self.result_key and self.status not in (celery.states.READY_STATES):
-            celery_task = Report.task.AsyncResult(self.result_key)
-            self.status = celery_task.status
-            existing_session = Session.object_session(self)
-            if not existing_session:
-                existing_session = db.get_session()
-                existing_session.add(self)
-            existing_session.commit()
-            # if the result is still an AsyncResult, leave it as PENDING
-            #if isinstance(celery_task.result, AsyncResult):
 
 
 class Report(object):
@@ -89,7 +61,7 @@ class Report(object):
         self.result_key = result_key
         self.children = children
         
-        # create PersistentReport and store id
+        # store report to database
         # note that result_key is always empty at this stage
         pj = PersistentReport(user_id=self.user_id,
                               status=self.status,

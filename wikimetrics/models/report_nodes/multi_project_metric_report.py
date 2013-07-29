@@ -1,7 +1,7 @@
+import json
 from wikimetrics.configurables import queue
 from celery.utils.log import get_task_logger
-import report
-import json
+from report import ReportNode
 from metric_report import MetricReport
 
 
@@ -10,9 +10,9 @@ __all__ = ['MultiProjectMetricReport']
 task_logger = get_task_logger(__name__)
 
 
-class MultiProjectMetricReport(report.ReportNode):
+class MultiProjectMetricReport(ReportNode):
     """
-    A report responsbile for running a single metric on a potentially
+    A node responsbile for running a single metric on a potentially
     project-heterogenous cohort. This just abstracts away the task
     of grouping the cohort by project and calling a MetricReport on
     each project-homogenous list of user_ids.
