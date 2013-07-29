@@ -18,10 +18,12 @@ class TestMetricsController(WebTest):
             '/metrics should get the list of metrics'
         )
         assert_not_equal(
-            response.data.find('BytesAdded'), -1, 'BytesAdded detail should be displayed'
+            response.data.find('BytesAdded'), -1,
+            'BytesAdded detail should be displayed'
         )
         assert_not_equal(
-            response.data.find('NamespaceEdits'), -1, 'NamespaceEdits detail should be displayed'
+            response.data.find('NamespaceEdits'), -1,
+            'NamespaceEdits detail should be displayed'
         )
     
     def test_list(self):
@@ -59,5 +61,6 @@ class TestMetricsController(WebTest):
         assert_not_equal(
             response.data.find('<li class="text-error">'),
             -1,
-            'Validation on the NamespaceEdits configuration, namespaces field is not happening.'
+            'Validation on the NamespaceEdits configuration, '
+            'namespaces field is not happening.'
         )

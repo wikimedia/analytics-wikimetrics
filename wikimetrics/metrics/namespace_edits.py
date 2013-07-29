@@ -31,7 +31,10 @@ class NamespaceEdits(Metric):
     show_in_ui  = True
     id          = 'edits'
     label       = 'Edits'
-    description = 'Compute the number of edits in a specific namespace of a mediawiki project'
+    description = (
+        'Compute the number of edits in a specific'
+        'namespace of a mediawiki project'
+    )
     
     namespaces = CommaSeparatedIntegerListField(
         None,
@@ -59,4 +62,7 @@ class NamespaceEdits(Metric):
             .group_by(Revision.rev_user)
             .all()
         )
-        return {user_id: {'edits': revisions_by_user.get(user_id, 0)} for user_id in user_ids}
+        return {
+            user_id: {'edits': revisions_by_user.get(user_id, 0)}
+            for user_id in user_ids
+        }

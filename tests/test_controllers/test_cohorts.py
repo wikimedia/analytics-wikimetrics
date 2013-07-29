@@ -29,13 +29,15 @@ class TestCohortsController(WebTest):
         assert_equal(len(parsed['wikiusers']), 3)
     
     def test_full_detail(self):
-        response = self.app.get('/cohorts/detail/{0}?full_detail=true'.format(self.test_cohort_id))
+        response = self.app.get('/cohorts/detail/{0}?full_detail=true'.format(
+            self.test_cohort_id
+        ))
         parsed = json.loads(response.data)
         assert_equal(response.status_code, 200)
         assert_equal(len(parsed['wikiusers']), 4)
     
     def test_not_found(self):
-        response = self.app.get('/cohorts/detail/no_way_anybody_names_a_cohort_this_23982739873')
+        response = self.app.get('/cohorts/detail/1-OI--LASJLI---LIJSL$EIOJ')
         
         assert_equal(response.status_code, 404)
     
@@ -43,7 +45,7 @@ class TestCohortsController(WebTest):
         # this username has a few problems that the normalize call should handle
         # 1. normal ascii space in front
         # 2. lowercase
-        # 3. nasty trailing unicode space (the reason this file has an encoding definition)
+        # 3. nasty trailing unicode space (the reason this file has coding:utf-8)
         problem_username = ' dan '
         
         parsed_user = parse_username(problem_username, decode=False)

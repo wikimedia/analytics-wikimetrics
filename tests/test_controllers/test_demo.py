@@ -20,6 +20,7 @@ class TestDemoController(WebTest):
             '/demo/create/cohorts/ exists and is OK to GET'
         )
         assert_equal(
-            response.data, 'OK, wiped out the database and added cohorts only for test@test.com',
+            response.data,
+            'OK, wiped out the database and added cohorts only for test@test.com',
             '/demo/create/cohorts/ completes successfully'
         )

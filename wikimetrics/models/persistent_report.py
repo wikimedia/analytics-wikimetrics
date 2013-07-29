@@ -27,7 +27,7 @@ class PersistentReport(db.WikimetricsBase):
     def update_status(self):
         # if we don't have the result key leave as is (PENDING)
         if self.result_key and self.status not in (celery.states.READY_STATES):
-            # TODO: fix nasty inline import.  Can't import up above because of circular reference
+            # TODO: inline import.  Can't import up above because of circular reference
             from wikimetrics.models.report_nodes import Report
             celery_task = Report.task.AsyncResult(self.result_key)
             self.status = celery_task.status

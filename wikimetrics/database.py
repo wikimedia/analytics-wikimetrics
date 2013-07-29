@@ -28,7 +28,6 @@ class SerializableBase(object):
     
     def _asdict(self):
         """ simplejson (used by flask.jsonify) looks for a method with this name """
-        #return {c.name : getattr(self, c.name) for c in self.__table__.columns if c.name != 'id'}
         return {c.name : getattr(self, c.name) for c in self.__table__.columns}
 
 
@@ -80,9 +79,13 @@ class Database(object):
                 self.config['WIKIMETRICS_ENGINE_URL'],
                 echo=self.config['SQL_ECHO'],
             )
-            # This import is necessary here so WikimetricsBase knows about all its children.
+            # This import is necessary here so that
+            # WikimetricsBase knows about all its children.
             import wikimetrics.models
-            self.WikimetricsBase.metadata.create_all(self.wikimetrics_engine, checkfirst=True)
+            self.WikimetricsBase.metadata.create_all(
+                self.wikimetrics_engine,
+                checkfirst=True
+            )
             self.wikimetrics_sessionmaker = sessionmaker(self.wikimetrics_engine)
         
         return self.wikimetrics_sessionmaker()
@@ -95,8 +98,8 @@ class Database(object):
             project : string name of the mediawiki project (for example: enwiki, arwiki)
         
         Returns:
-            new sqlalchemy session connected to the appropriate database.  As an optimization,
-            this method caches sqlalchemy session makers and creates sessions from those.
+            new sqlalchemy session connected to the appropriate database.  This method
+            caches sqlalchemy session makers and creates sessions from those.
         """
         if project in self.mediawiki_sessionmakers:
             return self.mediawiki_sessionmakers[project]()

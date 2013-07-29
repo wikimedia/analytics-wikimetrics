@@ -39,6 +39,10 @@ class CommaSeparatedIntegerListField(Field):
     def process_formdata(self, valuelist):
         """ overrides wtforms parsing to split list into namespaces """
         if valuelist:
-            self.data = [int(x.strip()) for x in valuelist[0].split(',') if x.strip().isdigit()]
+            self.data = [
+                int(x.strip())
+                for x in valuelist[0].split(',')
+                if x.strip().isdigit()
+            ]
         else:
             self.data = []

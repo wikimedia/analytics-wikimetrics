@@ -4,6 +4,10 @@ import json
 import celery
 
 
+def filterStatus(collection, status):
+    return filter(lambda j : j['status'] == status, collection)
+
+
 class TestReportsController(WebTest):
     
     def test_index(self):
@@ -17,7 +21,7 @@ class TestReportsController(WebTest):
         response = self.app.get('/reports/list', follow_redirects=True)
         parsed = json.loads(response.data)
         assert_equal(
-            len(filter(lambda j : j['status'] == celery.states.STARTED, parsed['reports'])),
+            len(filterStatus(parsed['reports'], celery.states.STARTED)),
             2,
             '/reports/list should return a list of report objects, '
             'but instead returned:\n{0}'.format(response.data)
@@ -27,7 +31,7 @@ class TestReportsController(WebTest):
         response = self.app.get('/reports/list', follow_redirects=True)
         parsed = json.loads(response.data)
         assert_equal(
-            len(filter(lambda j : j['status'] == celery.states.PENDING, parsed['reports'])),
+            len(filterStatus(parsed['reports'], celery.states.PENDING)),
             1,
             '/reports/list should return a list of report objects, '
             'but instead returned:\n{0}'.format(response.data)
@@ -37,7 +41,7 @@ class TestReportsController(WebTest):
         response = self.app.get('/reports/list', follow_redirects=True)
         parsed = json.loads(response.data)
         assert_equal(
-            len(filter(lambda j : j['status'] == celery.states.SUCCESS, parsed['reports'])),
+            len(filterStatus(parsed['reports'], celery.states.SUCCESS)),
             1,
             '/reports/list should return a list of report objects,'
             'but instead returned:\n{0}'.format(response.data)

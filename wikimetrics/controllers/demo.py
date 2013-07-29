@@ -95,17 +95,39 @@ if app.config['DEBUG']:
         ])
         db_sess.commit()
         
-        db_sess.add(CohortUser(user_id=user.id, cohort_id=cohort1.id, role=CohortUserRole.OWNER))
-        db_sess.add(CohortUser(user_id=user.id, cohort_id=cohort2.id, role=CohortUserRole.OWNER))
-        db_sess.add(CohortUser(user_id=user.id, cohort_id=cohort3.id, role=CohortUserRole.OWNER))
-        db_sess.add(CohortUser(user_id=user.id, cohort_id=cohort4.id, role=CohortUserRole.OWNER))
-        db_sess.add(CohortUser(user_id=user.id, cohort_id=cohort5.id, role=CohortUserRole.OWNER))
-        db_sess.add(CohortUser(user_id=user.id, cohort_id=cohort6.id, role=CohortUserRole.OWNER))
-        db_sess.add(CohortUser(user_id=user.id, cohort_id=cohort7.id, role=CohortUserRole.OWNER))
-        db_sess.add(CohortUser(user_id=user.id, cohort_id=cohort8.id, role=CohortUserRole.OWNER))
-        db_sess.add(CohortUser(user_id=user.id, cohort_id=cohort9.id, role=CohortUserRole.OWNER))
-        db_sess.add(CohortUser(user_id=user.id, cohort_id=cohort10.id, role=CohortUserRole.OWNER))
-        db_sess.add(CohortUser(user_id=user.id, cohort_id=cohort11.id, role=CohortUserRole.OWNER))
+        db_sess.add(
+            CohortUser(user_id=user.id, cohort_id=cohort1.id, role=CohortUserRole.OWNER)
+        )
+        db_sess.add(
+            CohortUser(user_id=user.id, cohort_id=cohort2.id, role=CohortUserRole.OWNER)
+        )
+        db_sess.add(
+            CohortUser(user_id=user.id, cohort_id=cohort3.id, role=CohortUserRole.OWNER)
+        )
+        db_sess.add(
+            CohortUser(user_id=user.id, cohort_id=cohort4.id, role=CohortUserRole.OWNER)
+        )
+        db_sess.add(
+            CohortUser(user_id=user.id, cohort_id=cohort5.id, role=CohortUserRole.OWNER)
+        )
+        db_sess.add(
+            CohortUser(user_id=user.id, cohort_id=cohort6.id, role=CohortUserRole.OWNER)
+        )
+        db_sess.add(
+            CohortUser(user_id=user.id, cohort_id=cohort7.id, role=CohortUserRole.OWNER)
+        )
+        db_sess.add(
+            CohortUser(user_id=user.id, cohort_id=cohort8.id, role=CohortUserRole.OWNER)
+        )
+        db_sess.add(
+            CohortUser(user_id=user.id, cohort_id=cohort9.id, role=CohortUserRole.OWNER)
+        )
+        db_sess.add(
+            CohortUser(user_id=user.id, cohort_id=cohort10.id, role=CohortUserRole.OWNER)
+        )
+        db_sess.add(
+            CohortUser(user_id=user.id, cohort_id=cohort11.id, role=CohortUserRole.OWNER)
+        )
         
         # TODO: these users don't actually exist in the mediawiki databases, add them
         #db_enwiki_session = db.get_mw_session('enwiki')
@@ -113,12 +135,16 @@ if app.config['DEBUG']:
         wu1 = WikiUser(mediawiki_username='Dan', mediawiki_userid=1, project='enwiki')
         wu2 = WikiUser(mediawiki_username='Evan', mediawiki_userid=2, project='enwiki')
         wu3 = WikiUser(mediawiki_username='Andrew', mediawiki_userid=3, project='enwiki')
-        wu4 = WikiUser(mediawiki_username='Diederik', mediawiki_userid=4, project='enwiki')
+        wu4 = WikiUser(
+            mediawiki_username='Diederik', mediawiki_userid=4, project='enwiki'
+        )
         
         wu5 = WikiUser(mediawiki_username='Andrea', mediawiki_userid=5, project='dewiki')
         wu6 = WikiUser(mediawiki_username='Dennis', mediawiki_userid=6, project='dewiki')
         wu7 = WikiUser(mediawiki_username='Florian', mediawiki_userid=7, project='dewiki')
-        wu8 = WikiUser(mediawiki_username='Gabriele', mediawiki_userid=8, project='dewiki')
+        wu8 = WikiUser(
+            mediawiki_username='Gabriele', mediawiki_userid=8, project='dewiki'
+        )
         
         wu9 = WikiUser(mediawiki_username='n/a', mediawiki_userid=9, project='enwiki')
         wu10 = WikiUser(mediawiki_username='n/a', mediawiki_userid=10, project='enwiki')
@@ -213,4 +239,6 @@ if app.config['DEBUG']:
         db_sess.commit()
         db_sess.close()
         
-        return 'OK, wiped out the database and added cohorts only for ' + current_user.email
+        return 'OK, wiped out the database and added cohorts only for {0}'.format(
+            current_user.email
+        )

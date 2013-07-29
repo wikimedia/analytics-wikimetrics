@@ -36,13 +36,14 @@ def reports_request():
         metric_reports = []
         metric_names = []
         cohort_names = []
+        allowed_roles = [CohortUserRole.OWNER, CohortUserRole.VIEWER]
         for cohort_metric_dict in parsed:
             
             # get cohort
             cohort_dict = cohort_metric_dict['cohort']
             db_session = db.get_session()
             cohort = db_session.query(Cohort)\
-                .filter(CohortUser.role.in_([CohortUserRole.OWNER, CohortUserRole.VIEWER]))\
+                .filter(CohortUser.role.in_(allowed_roles))\
                 .filter(Cohort.enabled)\
                 .filter_by(id=cohort_dict['id'])\
                 .one()

@@ -68,13 +68,14 @@ def cohort_detail(name_or_id):
 
 
 def get_cohort_query():
+    allowed_roles = [CohortUserRole.OWNER, CohortUserRole.VIEWER]
     db_session = db.get_session()
     return (
         db_session.query(Cohort)
                   .join(CohortUser)
                   .join(User)
                   .filter(User.id == current_user.id)
-                  .filter(CohortUser.role.in_([CohortUserRole.OWNER, CohortUserRole.VIEWER]))
+                  .filter(CohortUser.role.in_(allowed_roles))
                   .filter(Cohort.enabled),
         db_session
     )
@@ -132,7 +133,8 @@ def cohort_upload():
             project = request.form['project']
             description = request.form['description']
             if not csv_file or not name or len(name) is 0:
-                flash('The form was invalid, please select a file and name the cohort.', 'error')
+                flash('The form was invalid, please'
+                      'select a file and name the cohort.', 'error')
                 return redirect(url_for('cohort_upload'))
             
             if get_cohort_by_name(name):
@@ -158,8 +160,8 @@ def cohort_upload():
             app.logger.exception(str(e))
             flash(
                 'The file you uploaded was not in a valid format, could not be validated,'
-                'or the project you specified is not configured on this instance of Wiki Metrics.'
-                , 'error'
+                'or the project you specified is not configured on this instance of '
+                'Wiki Metrics.', 'error'
             )
             return redirect(url_for('cohort_upload'))
 
@@ -176,8 +178,8 @@ def cohort_upload_finish():
         if get_cohort_by_name(name):
             raise Exception('Cohort name {0} is already used'.format(name))
         
-        # NOTE: Without re-validating here, the user might have changed the cohort client-side
-        # since the last validation.  This will produce weird results but we sort of don't care.
+        # NOTE: If we don't re-validate here, the user can change the cohort client-side
+        # This will produce weird results but we sort of don't care.
         
         # Save the cohort
         valid = users
@@ -194,8 +196,9 @@ def cohort_upload_finish():
         
     except Exception, e:
         app.logger.exception(str(e))
-        flash('There was a problem finishing the upload.  The cohort was not saved.', 'error')
-        return '<<error>>'
+        return json_error(
+            'There was a problem finishing the upload.  The cohort was not saved.'
+        )
 
 
 def create_cohort(name, description, project, valid_users):
@@ -401,7 +404,9 @@ def validate_records(records):
                 'invalid user: {0} in project {1}'
                 .format(record['raw_username'], normalized_project)
             )
-            record['reason_invalid'] = 'invalid user_name / user_id: %s' % record['user_str']
+            record['reason_invalid'] = 'invalid user_name / user_id: {0}'.format(
+                record['user_str']
+            )
             invalid.append(record)
             continue
         # set the normalized values and append to valid

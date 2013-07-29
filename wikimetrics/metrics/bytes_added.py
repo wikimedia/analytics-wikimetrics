@@ -60,8 +60,8 @@ class BytesAdded(Metric):
     show_in_ui  = True
     id          = 'bytes-added'
     label       = 'Bytes Added'
-    description = 'Compute different aggregations of the bytes contributed or removed from a\
-                   mediawiki project'
+    description = 'Compute different aggregations of the bytes\
+                   contributed or removed from a mediawiki project'
     
     start_date          = DateField(default=thirty_days_ago)
     end_date            = DateField(default=today)
@@ -106,14 +106,19 @@ class BytesAdded(Metric):
             ),
         )\
             .join(Page)\
-            .outerjoin(PreviousRevision, Revision.rev_parent_id == PreviousRevision.c.rev_id)\
+            .outerjoin(
+                PreviousRevision,
+                Revision.rev_parent_id == PreviousRevision.c.rev_id
+            )\
             .filter(Page.page_namespace.in_(self.namespaces.data))\
             .filter(Revision.rev_user.in_(user_ids))\
             .filter(Revision.rev_timestamp >= start_date)\
             .filter(Revision.rev_timestamp <= end_date)\
             .subquery()
             # TODO: figure out why between isn't quite working with these timestamps
-            #.filter(between(Revision.rev_timestamp, self.start_date.data, self.end_date.data))\
+            #.filter(between(
+            #    Revision.rev_timestamp, self.start_date.data, self.end_date.data
+            #))\
         
         bytes_added_by_user = session.query(
             BC.c.rev_user,
@@ -143,7 +148,10 @@ class BytesAdded(Metric):
                 result_dict[user_id]['negative_only_sum'] = negative
         
         session.close()
-        return {user_id: result_dict.get(user_id, self.make_default()) for user_id in user_ids}
+        return {
+            user_id: result_dict.get(user_id, self.make_default())
+            for user_id in user_ids
+        }
     
     def make_default(self):
         default = dict()

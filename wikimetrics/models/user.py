@@ -55,9 +55,10 @@ class User(db.WikimetricsBase):
     
     def logout(self, session):
         """
-        Adds this instance back to the session passed in, logs it out, and saves it to the db.
-        Important: caller might want to remove this instance from the database session so it
-        can behave properly in Flask-Login.
+        Adds this instance back to the session passed in, logs it out,
+        and saves it to the db.
+        Important: caller might want to remove this instance from the
+        database session so it can behave properly in Flask-Login.
         """
         session.add(self)
         self.authenticated = False

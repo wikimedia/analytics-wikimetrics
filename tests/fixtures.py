@@ -99,25 +99,30 @@ class DatabaseTest(unittest.TestCase):
         
         # Dan edits
         rev1 = Revision(
-            rev_page=mw_page.page_id, rev_user=mw_user_dan.user_id, rev_comment='Dan edit 1',
-            rev_parent_id=rev_before_1.rev_id, rev_len=0, rev_timestamp=datetime(2013, 06, 01),
+            rev_page=mw_page.page_id, rev_user=mw_user_dan.user_id,
+            rev_comment='Dan edit 1', rev_parent_id=rev_before_1.rev_id,
+            rev_len=0, rev_timestamp=datetime(2013, 06, 01),
         )
         rev2 = Revision(
-            rev_page=mw_page.page_id, rev_user=mw_user_dan.user_id, rev_comment='Dan edit 2',
-            rev_parent_id=rev_before_2.rev_id, rev_len=10, rev_timestamp=datetime(2013, 07, 01),
+            rev_page=mw_page.page_id, rev_user=mw_user_dan.user_id,
+            rev_comment='Dan edit 2', rev_parent_id=rev_before_2.rev_id,
+            rev_len=10, rev_timestamp=datetime(2013, 07, 01),
         )
         # Evan edits
         rev3 = Revision(
-            rev_page=mw_page.page_id, rev_user=mw_user_evan.user_id, rev_comment='Evan edit 1',
-            rev_parent_id=rev_before_3.rev_id, rev_len=100, rev_timestamp=datetime(2013, 06, 01),
+            rev_page=mw_page.page_id, rev_user=mw_user_evan.user_id,
+            rev_comment='Evan edit 1', rev_parent_id=rev_before_3.rev_id,
+            rev_len=100, rev_timestamp=datetime(2013, 06, 01),
         )
         rev4 = Revision(
-            rev_page=mw_page.page_id, rev_user=mw_user_evan.user_id, rev_comment='Evan edit 2',
-            rev_parent_id=rev_before_4.rev_id, rev_len=140, rev_timestamp=datetime(2013, 07, 01),
+            rev_page=mw_page.page_id, rev_user=mw_user_evan.user_id,
+            rev_comment='Evan edit 2', rev_parent_id=rev_before_4.rev_id,
+            rev_len=140, rev_timestamp=datetime(2013, 07, 01),
         )
         rev5 = Revision(
-            rev_page=mw_page.page_id, rev_user=mw_user_evan.user_id, rev_comment='Evan edit 3',
-            rev_parent_id=rev_before_5.rev_id, rev_len=136, rev_timestamp=datetime(2013, 07, 24),
+            rev_page=mw_page.page_id, rev_user=mw_user_evan.user_id,
+            rev_comment='Evan edit 3', rev_parent_id=rev_before_5.rev_id,
+            rev_len=136, rev_timestamp=datetime(2013, 07, 24),
         )
         self.mwSession.add_all([rev1, rev2, rev3, rev4, rev5])
         self.mwSession.commit()
@@ -175,7 +180,10 @@ class DatabaseTest(unittest.TestCase):
         dan_in_test = CohortWikiUser(wiki_user_id=dan.id, cohort_id=test_cohort.id)
         evan_in_test = CohortWikiUser(wiki_user_id=evan.id, cohort_id=test_cohort.id)
         andrew_in_test = CohortWikiUser(wiki_user_id=andrew.id, cohort_id=test_cohort.id)
-        diederik_in_test = CohortWikiUser(wiki_user_id=diederik.id, cohort_id=test_cohort.id)
+        diederik_in_test = CohortWikiUser(
+            wiki_user_id=diederik.id,
+            cohort_id=test_cohort.id
+        )
         self.session.add_all([
             dan_in_test,
             evan_in_test,
@@ -331,7 +339,8 @@ class WebTest(DatabaseTest):
     
     def setUp(self):
         """
-        Creates a test flask environment.  Logs in a test user so tests on private urls work.
+        Creates a test flask environment.
+        Logs in a test user so tests on private urls work.
         """
         DatabaseTest.setUp(self)
         self.app = app.test_client()

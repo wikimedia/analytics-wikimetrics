@@ -24,7 +24,7 @@ class RandomMetric(Metric):
         """
         Parameters:
             user_ids    : list of user ids to return random numbers for
-            session     : sqlalchemy session open on a mediawiki database (not required here)
+            session     : sqlalchemy session open on a mediawiki database
         
         Returns:
             dictionary from user ids to the number of edit reverts found.
