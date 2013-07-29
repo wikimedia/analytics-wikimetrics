@@ -1,11 +1,10 @@
-from wikimetrics.configurables import queue
 import report
 import pprint
+from wikimetrics.configurables import queue
 from metric_report import MetricReport
 
-__all__ = [
-    'ConcatMetricsReport',
-]
+
+__all__ = ['ConcatMetricsReport']
 
 
 class ConcatMetricsReport(report.ReportNode):

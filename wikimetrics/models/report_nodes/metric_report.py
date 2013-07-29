@@ -1,12 +1,11 @@
-import report
-from ..configurables import db
-
-__all__ = [
-    'MetricReport',
-]
+from wikimetrics.configurables import db
+from report import ReportLeaf
 
 
-class MetricReport(report.ReportLeaf):
+__all__ = ['MetricReport']
+
+
+class MetricReport(ReportLeaf):
     """
     Report type responsbile for running a single metric on a project-
     homogenous list of user_ids.  Like all reports, the database session

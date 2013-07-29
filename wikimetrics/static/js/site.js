@@ -15,6 +15,7 @@ var site = {
             site.redirect(response.redirectTo);
             return false;
         } else {
+            site.clearMessages();
             return true;
         }
     },
@@ -32,7 +33,8 @@ var site = {
         site.showMessage(message, 'success');
     },
     showMessage: function (message, category){
-        $('.site-messages').children().remove();
+        site.clearMessages();
+        
         if (!site.messageTemplate){
             site.messageTemplate = $('.messageTemplate').html();
         }
@@ -42,6 +44,9 @@ var site = {
             .replace('##punctuation##', category !== 'info' ? '!' : '');
         $('.site-messages').append(html);
         $('body').scrollTop(0);
+    },
+    clearMessages: function (){
+        $('.site-messages').children().remove();
     },
     
     redirect: function (url){
@@ -61,33 +66,39 @@ var site = {
     // Data population - usually done with something like Sammy JS
     // ***********************************************************
     populateCohorts: function(viewModel){
-        $.get('/cohorts/list/', function(data){
-            viewModel.cohorts(data.cohorts);
-        }).fail(site.failure);
+        $.get('/cohorts/list/')
+            .done(site.handleWith(function(data){
+                viewModel.cohorts(data.cohorts);
+            }))
+            .fail(site.failure);
     },
     
     populateMetrics: function(viewModel){
-        $.get('/metrics/list/', function(data){
-            viewModel.metrics(data.metrics);
-        }).fail(site.failure);
+        $.get('/metrics/list/')
+            .done(site.handleWith(function(data){
+                viewModel.metrics(data.metrics);
+            }))
+            .fail(site.failure);
     },
     
     populateReports: function(viewModel){
-        $.get('/reports/list/', function(data){
-            reports = viewModel.reports();
-            reportsDict = {};
-            for(j in reports){
-                reportsDict[reports[j].id] = reports[j];
-            }
-            for(dj in data.reports){
-                report = data.reports[dj];
-                if (report.id in reportsDict && report.status === reportsDict[report.id].status){
-                    continue;
+        $.get('/reports/list/')
+            .done(site.handleWith(function(data){
+                reports = viewModel.reports();
+                reportsDict = {};
+                for(j in reports){
+                    reportsDict[reports[j].id] = reports[j];
                 }
-                // if there's a difference, just replace the whole thing
-                viewModel.reports(data.reports);
-                return;
-            }
-        }).fail(site.failure);
+                for(dj in data.reports){
+                    report = data.reports[dj];
+                    if (report.id in reportsDict && report.status === reportsDict[report.id].status){
+                        continue;
+                    }
+                    // if there's a difference, just replace the whole thing
+                    viewModel.reports(data.reports);
+                    return;
+                }
+            }))
+            .fail(site.failure);
     },
 };
