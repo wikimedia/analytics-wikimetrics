@@ -47,14 +47,15 @@ class Report(object):
                  children=[],
                  parameters='{}'):
         
-        self.user_id = None
-        try:
-            if current_user.is_authenticated():
-                self.user_id = current_user.id
-        except RuntimeError:
-            # nothing to worry about, just using current_user outside
-            # of a web context.  This should only happen during testing
-            pass
+        self.user_id = user_id
+        if not self.user_id:
+            try:
+                if current_user.is_authenticated():
+                    self.user_id = current_user.id
+            except RuntimeError:
+                # nothing to worry about, just using current_user outside
+                # of a web context.  This should only happen during testing
+                pass
         
         self.status = status
         self.name = name

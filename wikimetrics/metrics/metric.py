@@ -49,3 +49,6 @@ class Metric(SessionSecureForm):
             self.SECRET_KEY = app.config['SECRET_KEY']
         
         SessionSecureForm.__init__(self, csrf_context=csrf_context, *args, **kwargs)
+    
+    def fake_csrf(self):
+        self.csrf_token.data = self.generate_csrf_token({})

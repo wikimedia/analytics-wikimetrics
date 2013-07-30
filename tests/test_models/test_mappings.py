@@ -38,7 +38,7 @@ class TestMappings(DatabaseTest):
     def test_cohort(self):
         c = self.session.query(Cohort).get(self.test_cohort_id)
         assert_equals(c.name, 'test')
-        assert_true(c.public is True)
+        assert_true(c.public is False)
         
     def test_cohort_user(self):
         cu = self.session.query(CohortUser).get(self.test_cohort_user_id)

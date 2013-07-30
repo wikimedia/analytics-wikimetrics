@@ -2,12 +2,11 @@ import itertools
 from operator import itemgetter
 from sqlalchemy import Column, Integer, Boolean, DateTime, String, func
 from wikimetrics.configurables import db
-from .wikiuser import WikiUser
-from .cohort_wikiuser import CohortWikiUser
+from wikiuser import WikiUser
+from cohort_wikiuser import CohortWikiUser
 
-__all__ = [
-    'Cohort',
-]
+
+__all__ = ['Cohort']
 
 
 class Cohort(db.WikimetricsBase):

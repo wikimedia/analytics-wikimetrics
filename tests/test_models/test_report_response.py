@@ -8,14 +8,26 @@ class RunReportTest(QueueDatabaseTest):
     
     def test_empty_response(self):
         # TODO: handle case where user tries to submit form with no cohorts / metrics
-        jr = RunReport([], user_id=0)
+        jr = RunReport([], user_id=self.test_user_id)
         result = jr.task.delay().get()
         assert_equals(result, [])
     
     def test_basic_response(self):
-        c = self.session.query(Cohort).filter_by(name='test').one()
-        m = NamespaceEdits(namespaces=[0, 1, 2])
-        cohort_metric_reports = [MultiProjectMetricReport(c, m)]
-        jr = RunReport(cohort_metric_reports, user_id=0)
-        results = jr.task.delay().get()
+        desired_responses = [{
+            'name': 'Edits - test',
+            'cohort': {
+                'id': self.test_cohort_id,
+            },
+            'metric': {
+                'name': 'NamespaceEdits',
+                'namespaces': '0,1,2',
+            },
+        }]
+        jr = RunReport(desired_responses, user_id=self.test_user_id)
+        results = jr.task.delay().get().result[0].result
+        # TODO: figure out why one of the resulting wiki_user_ids is None here
         print results
+        assert_equals(
+            len(results),
+            4,
+        )

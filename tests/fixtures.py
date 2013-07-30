@@ -157,10 +157,10 @@ class DatabaseTest(unittest.TestCase):
         )
         
         # create cohorts
-        test_cohort = Cohort(name='test', enabled=True, public=True)
+        test_cohort = Cohort(name='test', enabled=True, public=False)
         private_cohort = Cohort(name='test_private', enabled=True, public=False)
         private_cohort2 = Cohort(name='test_private2', enabled=True, public=False)
-        disabled_cohort = Cohort(name='test_disabled', enabled=False, public=True)
+        disabled_cohort = Cohort(name='test_disabled', enabled=False, public=False)
         self.session.add_all([
             #report,
             dan_user,

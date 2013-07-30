@@ -45,7 +45,7 @@ class BytesAddedTest(DatabaseWithCohortTest):
             start_date='2013-07-01',
             end_date='2013-08-01',
         )
-        metric.csrf_token.data = metric.generate_csrf_token({})
+        metric.fake_csrf()
         assert_true(metric.validate())
         
         results = metric(list(self.cohort), self.mwSession)
@@ -70,7 +70,7 @@ class BytesAddedTest(DatabaseWithCohortTest):
             positive_only_sum=False,
             negative_only_sum=False,
         )
-        metric.csrf_token.data = metric.generate_csrf_token({})
+        metric.fake_csrf()
         assert_true(metric.validate())
         
         results = metric(list(self.cohort), self.mwSession)

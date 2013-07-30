@@ -3,12 +3,9 @@ from flask.ext.login import current_user
 import celery
 from celery.task.control import revoke
 from ..configurables import app, db
-from ..models import (
-    Cohort, CohortUser, CohortUserRole, Report,
-    RunReport, PersistentReport, MultiProjectMetricReport
-)
+from ..models import Report, RunReport, PersistentReport
 from ..metrics import metric_classes
-from ..utils import json_response, json_error, json_redirect, deduplicate, thirty_days_ago
+from ..utils import json_response, json_error, json_redirect, thirty_days_ago
 import json
 from StringIO import StringIO
 from csv import DictWriter
@@ -32,44 +29,9 @@ def reports_request():
     if request.method == 'GET':
         return render_template('report.html')
     else:
-        parsed = json.loads(request.form['responses'])
-        metric_reports = []
-        metric_names = []
-        cohort_names = []
-        allowed_roles = [CohortUserRole.OWNER, CohortUserRole.VIEWER]
-        for cohort_metric_dict in parsed:
-            
-            # get cohort
-            cohort_dict = cohort_metric_dict['cohort']
-            db_session = db.get_session()
-            cohort = db_session.query(Cohort)\
-                .filter(CohortUser.role.in_(allowed_roles))\
-                .filter(Cohort.enabled)\
-                .filter_by(id=cohort_dict['id'])\
-                .one()
-            db_session.close()
-            
-            # construct metric
-            metric_dict = cohort_metric_dict['metric']
-            class_name = metric_dict.pop('name')
-            metric_class = metric_classes[class_name]
-            metric = metric_class(**metric_dict)
-            metric.validate()
-            
-            # construct and start RunReport
-            metric_report = MultiProjectMetricReport(
-                cohort,
-                metric,
-                name=cohort_metric_dict['name'],
-            )
-            metric_reports.append(metric_report)
-            metric_names.append(metric.label)
-            cohort_names.append(cohort.name)
+        desired_responses = json.loads(request.form['responses'])
+        jr = RunReport(desired_responses, user_id=current_user.id)
         
-        metric_names = deduplicate(metric_names)
-        cohort_names = deduplicate(cohort_names)
-        name = ', '.join(metric_names) + ' for ' + ', '.join(cohort_names)
-        jr = RunReport(metric_reports, name=name)
         async_response = jr.task.delay()
         app.logger.info(
             'starting report with celery id: %s, PersistentReport.id: %d',
