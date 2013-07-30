@@ -101,4 +101,20 @@ var site = {
             }))
             .fail(site.failure);
     },
+    
+    // ***********************************************************
+    // Just some util functions so I don't have to
+    // import huge libraries like Underscore
+    // ***********************************************************
+    keys: function(obj){
+        var keys = [];
+
+        for(var key in obj){
+            if(obj.hasOwnProperty(key)){
+                keys.push(key);
+            }
+        }
+
+        return keys;
+    },
 };

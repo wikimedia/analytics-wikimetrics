@@ -31,11 +31,17 @@ a.openid-logo.twitter {
 
 
 /* creating a new report */
+div.pick-cohorts .navbar-search { margin: 16px 0 0 0; }
+div.pick-cohorts .cohorts { margin: 14px 0 0 14px; max-height: 160px; overflow-x: hide; overflow-y: auto; }
+div.pick-metrics, .sample-result { background-color: #fff; }
+div.pick-metrics .tabbable, .sample-result .tabbable { margin: 22px 0 0 0; }
 td.blur-completely { text-shadow: 0 0 20px rgba(0,0,0,0.6); color: transparent; }
-.pick-cohorts .navbar-search { margin: 16px 0 0 0; }
-.pick-cohorts .cohorts { margin: 14px 0 0 14px; max-height: 160px; overflow-x: hide; overflow-y: auto; }
-.pick-metrics, .sample-result { background-color: #fff; }
-.pick-metrics .tabbable, .sample-result .tabbable { margin: 22px 0 0 0; }
+
+table.sample-results tbody.totals { border-top: 3px solid #000000; }
+table.sample-results tbody.totals td {
+    background-color: white !important;
+    font-weight: bold;
+}
 
 
 /* uploading a cohort */

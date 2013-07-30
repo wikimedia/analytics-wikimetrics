@@ -35,6 +35,7 @@ $(document).ready(function(){
         },
         
         save: function(formElement){
+            
             if (site.hasValidationErrors()){
                 site.showWarning('Please configure and click Save Configuration for each selected metric.');
                 return;
@@ -45,9 +46,24 @@ $(document).ready(function(){
                 site.showWarning('Please select at least one cohort and one metric.');
                 return;
             }
+            
+            var metricsWithoutOutput = {};
+            ko.utils.arrayForEach(vm.request().responses(), function(response){
+                if (!response.metric.outputConfigured()){
+                    metricsWithoutOutput[response.metric.label] = true;
+                }
+            });
+            metricsWithoutOutput = site.keys(metricsWithoutOutput);
+            
+            if (metricsWithoutOutput.length){
+                site.showWarning(metricsWithoutOutput.join(', ') + ' do not have any output selected.');
+                return;
+            }
+            
             var form = $(formElement);
             var data = ko.toJSON(vm.request().responses);
             data = JSON.parse(data);
+            
             ko.utils.arrayForEach(data, function(response){
                 delete response.metric.configure;
                 delete response.cohort.wikiusers;
@@ -95,6 +111,7 @@ $(document).ready(function(){
             setTabIds(data.metrics, 'metric');
             setSelected(data.metrics);
             setConfigure(data.metrics);
+            setAggregationOptions(data.metrics);
             viewModel.metrics(data.metrics);
         }))
         .fail(site.failure);
@@ -112,8 +129,6 @@ $(document).ready(function(){
                 return metric.selected();
             });
         }, viewModel).extend({ throttle: 1 }),
-        
-        aggregators: ko.observable([]),
     });
     
     // second level computed pieces of the viewModel
@@ -159,6 +174,28 @@ $(document).ready(function(){
         bareList = ko.utils.unwrapObservable(list);
         ko.utils.arrayForEach(bareList, function(item){
             item.configure = ko.observable('');
+        });
+    };
+    
+    function setAggregationOptions(list){
+        bareList = ko.utils.unwrapObservable(list);
+        ko.utils.arrayForEach(bareList, function(item){
+            item.individualResults = ko.observable(true);
+            item.aggregateResults = ko.observable(false);
+            item.aggregateSum = ko.observable(false);
+            item.aggregateAverage = ko.observable(false);
+            item.aggregateStandardDeviation = ko.observable(false);
+            item.outputConfigured = ko.computed(function(){
+                return this.individualResults()
+                    || (
+                            this.aggregateResults()
+                         && (
+                                this.aggregateSum()
+                             || this.aggregateAverage()
+                             || this.aggregateStandardDeviation()
+                            )
+                       );
+            }, item);
         });
     };
     

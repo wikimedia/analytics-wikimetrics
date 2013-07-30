@@ -45,6 +45,56 @@
         </div>
     </div>
 </div>
+<div class="well pick-metrics">
+    <div class="navbar-inner">
+        <h3>Configure Output</h3>
+    </div>
+    <div class="tabbable tabs-left">
+        <ul class="nav nav-tabs" data-bind="foreach: request().metrics">
+            <li>
+                <a data-bind="attr: {href: tabIdSelector() + '-a'}, text: label" data-toggle="tab">
+                </a>
+            </li>
+        </ul>
+        <div class="tab-content" data-bind="foreach: request().metrics">
+            <div class="tab-pane form-horizontal" data-bind="attr: {id: tabId() + '-a'}">
+                <div class="control-group">
+                    <label class="control-label" data-bind="attr: {for: tabId() + '-a-ind'}">Individual Results</label>
+                    <div class="controls">
+                        <input type="checkbox" data-bind="checked: individualResults, attr: {id: tabId() + '-a-ind'}"/>
+                    </div>
+                </div>
+                <div class="control-group">
+                    <label class="control-label" data-bind="attr: {for: tabId() + '-a-agg'}">Aggregate Results</label>
+                    <div class="controls">
+                        <input type="checkbox" data-bind="checked: aggregateResults, attr: {id: tabId() + '-a-agg'}"/>
+                        
+                        <div data-bind="if: aggregateResults">
+                            <div class="control-group">
+                                <label class="control-label" data-bind="attr: {for: tabId() + '-a-sum'}">Sum</label>
+                                <div class="controls">
+                                    <input type="checkbox" data-bind="checked: aggregateSum, attr: {id: tabId() + '-a-sum'}"/>
+                                </div>
+                            </div>
+                            <div class="control-group">
+                                <label class="control-label" data-bind="attr: {for: tabId() + '-a-avg'}">Average</label>
+                                <div class="controls">
+                                    <input type="checkbox" data-bind="checked: aggregateAverage, attr: {id: tabId() + '-a-avg'}"/>
+                                </div>
+                            </div>
+                            <div class="control-group">
+                                <label class="control-label" data-bind="attr: {for: tabId() + '-a-std'}">Standard Deviation</label>
+                                <div class="controls">
+                                    <input type="checkbox" data-bind="checked: aggregateStandardDeviation, attr: {id: tabId() + '-a-std'}"/>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
 <div class="well sample-result">
     <div class="navbar-inner">
         <h3>Sample Result</h3>
@@ -57,21 +107,40 @@
         </ul>
         <div class="tab-content" data-bind="foreach: request().responses">
             <div class="tab-pane" data-bind="attr: {id: tabId}">
-                <table class="table table-striped">
+                <table class="table table-striped sample-results">
                     <thead>
                         <tr>
                             <th>Name</th>
-                            <th>Id</th>
                             <th>Project</th>
                             <th data-bind="text: metric.label"></th>
                         </tr>
                     </thead>
-                    <tbody data-bind="foreach: cohort.wikiusers">
+                    <tbody data-bind="if: metric.individualResults">
+                        <!-- ko foreach: cohort.wikiusers -->
                         <tr>
                             <td data-bind="text: mediawiki_username"></td>
-                            <td data-bind="text: mediawiki_userid"></td>
                             <td data-bind="text: project"></td>
                             <td class="blur-completely">123.45</td>
+                        </tr>
+                        <!-- /ko -->
+                    </tbody>
+                    <tbody class="totals" data-bind="if: metric.aggregateResults">
+                        <tr data-bind="if: metric.aggregateSum">
+                            <td colspan="2">Sum</td>
+                            <td class="blur-completely">123.45</td>
+                        </tr>
+                        <tr data-bind="if: metric.aggregateAverage">
+                            <td colspan="2">Average</td>
+                            <td class="blur-completely">123.45</td>
+                        </tr>
+                        <tr data-bind="if: metric.aggregateStandardDeviation">
+                            <td colspan="2">Standard Deviation</td>
+                            <td class="blur-completely">123.45</td>
+                        </tr>
+                    </tbody>
+                    <tbody data-bind="if: !metric.outputConfigured()">
+                        <tr>
+                            <td colspan="3">You should select some type of output for this metric.  Check the section above</td>
                         </tr>
                     </tbody>
                 </table>
