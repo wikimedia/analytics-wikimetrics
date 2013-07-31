@@ -32,7 +32,7 @@ def reports_request():
         desired_responses = json.loads(request.form['responses'])
         jr = RunReport(desired_responses, user_id=current_user.id)
         
-        async_response = jr.task.delay()
+        async_response = jr.task.delay(jr)
         app.logger.info(
             'starting report with celery id: %s, PersistentReport.id: %d',
             async_response.task_id, jr.persistent_id

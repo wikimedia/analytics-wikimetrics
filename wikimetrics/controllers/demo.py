@@ -61,8 +61,7 @@ if app.config['DEBUG']:
         
         report = MetricReport(RandomMetric(), user_ids, 'enwiki')
         #from nose.tools import set_trace; set_trace()
-        res = report.task.delay().get()
-        print user_ids
+        res = report.task.delay(report).get()
         return str(res)
     
     @app.route('/demo/delete/cohorts/')

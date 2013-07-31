@@ -6,7 +6,7 @@ from wikimetrics.models.cohort_user import CohortUser
 from wikimetrics.metrics import metric_classes
 from wikimetrics.utils import deduplicate
 from report import ReportNode
-from multi_project_metric_report import MultiProjectMetricReport
+from aggregate_report import AggregateReport
 
 
 __all__ = ['RunReport']
@@ -33,7 +33,7 @@ class RunReport(ReportNode):
         self.parse_request(desired_responses)
     
     def parse_request(self, desired_responses):
-        metric_reports = []
+        children = []
         metric_names = []
         cohort_names = []
         allowed_roles = [CohortUserRole.OWNER, CohortUserRole.VIEWER]
@@ -54,19 +54,25 @@ class RunReport(ReportNode):
             
             # construct metric
             metric_dict = cohort_metric_dict['metric']
-            class_name = metric_dict.pop('name')
+            class_name = metric_dict['name']
             metric_class = metric_classes[class_name]
             metric = metric_class(**metric_dict)
             # TODO: don't think csrf can work here, but see if there's another way
             metric.fake_csrf()
             if metric.validate():
                 # construct and start RunReport
-                metric_report = MultiProjectMetricReport(
+                output_child = AggregateReport(
                     cohort,
                     metric,
+                    individual=metric_dict['individualResults'],
+                    aggregate=metric_dict['aggregateResults'],
+                    aggregate_sum=metric_dict['aggregateSum'],
+                    aggregate_average=metric_dict['aggregateAverage'],
+                    aggregate_std_deviation=metric_dict['aggregateStandardDeviation'],
                     name=cohort_metric_dict['name'],
+                    user_id=self.user_id,
                 )
-                metric_reports.append(metric_report)
+                children.append(output_child)
                 metric_names.append(metric.label)
                 cohort_names.append(cohort.name)
             else:
@@ -76,10 +82,10 @@ class RunReport(ReportNode):
         cohort_names = deduplicate(cohort_names)
         
         self.name = ', '.join(metric_names) + ' for ' + ', '.join(cohort_names)
-        self.children = metric_reports
+        self.children = children
     
-    def finish(self, report_results):
-        return report_results
+    def finish(self, aggregated_output):
+        return aggregated_output
     
     def __repr__(self):
         return '<RunReport("{0}")>'.format(self.persistent_id)

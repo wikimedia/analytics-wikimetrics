@@ -5,13 +5,19 @@ from time import mktime
 from flask import Response
 
 
+def stringify(*args, **kwargs):
+    return json.dumps(dict(*args, **kwargs), cls=BetterEncoder, indent=4)
+
+
 def json_response(*args, **kwargs):
     """
     Handles returning generic arguments as json in a Flask application.
     Takes care of the following custom encoding duties:
         * datetime.datetime objects encoded via BetterEncoder
+        * datetime.date objects encoded via BetterEncoder
+        * decimal.Decimal objects encoded via BetterEncoder
     """
-    data = json.dumps(dict(*args, **kwargs), cls=BetterEncoder, indent=4)
+    data = stringify(*args, **kwargs)
     return Response(data, mimetype='application/json')
 
 
@@ -42,6 +48,9 @@ class BetterEncoder(json.JSONEncoder):
     
     def default(self, obj):
         if isinstance(obj, datetime.datetime):
+            return int(mktime(obj.timetuple()))
+        
+        if isinstance(obj, datetime.date):
             return int(mktime(obj.timetuple()))
         
         if isinstance(obj, decimal.Decimal):

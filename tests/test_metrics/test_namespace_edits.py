@@ -35,7 +35,7 @@ class NamespaceEditsFullTest(QueueDatabaseTest):
         
         metric = NamespaceEdits()
         report = MetricReport(metric, list(cohort), 'enwiki')
-        results = report.task.delay().get()
+        results = report.task.delay(report).get()
         print 'results: %s' % results
         
         assert_true(results is not None)
@@ -47,7 +47,7 @@ class NamespaceEditsFullTest(QueueDatabaseTest):
         namespaces = [3]
         metric = NamespaceEdits(namespaces=namespaces)
         report = MetricReport(metric, list(cohort), 'enwiki')
-        results = report.task.delay().get()
+        results = report.task.delay(report).get()
         
         assert_true(results is not None)
         assert_equal(results[2]['edits'], 0)
@@ -58,7 +58,7 @@ class NamespaceEditsFullTest(QueueDatabaseTest):
         namespaces = []
         metric = NamespaceEdits(namespaces=namespaces)
         report = MetricReport(metric, list(cohort), 'enwiki')
-        results = report.task.delay().get()
+        results = report.task.delay(report).get()
         
         assert_true(results is not None)
         assert_equal(results[2]['edits'], 0)

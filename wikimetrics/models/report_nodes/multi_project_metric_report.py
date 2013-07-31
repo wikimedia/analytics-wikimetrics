@@ -17,11 +17,10 @@ class MultiProjectMetricReport(ReportNode):
     of grouping the cohort by project and calling a MetricReport on
     each project-homogenous list of user_ids.
     """
-    show_in_ui = True
+    show_in_ui = False
     
     def __init__(self, cohort, metric, *args, **kwargs):
         super(MultiProjectMetricReport, self).__init__(
-            parameters=json.dumps(metric.data, indent=4),
             *args,
             **kwargs
         )
