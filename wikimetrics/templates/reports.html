@@ -24,9 +24,10 @@
             <td data-bind="text: name, attr:{ title: parameters }"></td>
             <td data-bind="if: status === 'SUCCESS'">
                 <div class="btn-group">
-                    <button class="btn btn-primary">Get Data</button>
                     <button class="btn btn-primary dropdown-toggle" data-toggle="dropdown">
-                    <span class="caret"></span>
+                        Get Data
+                        &nbsp;&nbsp;
+                        <span class="caret"></span>
                     </button>
                     <ul class="dropdown-menu">
                         <li><a target="_blank" data-bind="attr: {href: '/reports/result/' + result_key + '.json'}">as JSON</a></li>

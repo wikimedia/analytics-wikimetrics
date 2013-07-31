@@ -1,9 +1,12 @@
 from wikimetrics.utils import stringify
 from report import ReportNode
 from multi_project_metric_report import MultiProjectMetricReport
+from celery.utils.log import get_task_logger
 
 
 __all__ = ['AggregateReport']
+
+task_logger = get_task_logger(__name__)
 
 
 class Aggregation(object):
@@ -60,21 +63,18 @@ class AggregateReport(ReportNode):
     def finish(self, multi_project_results):
         aggregated_results = dict()
         
-        # TODO: what in the world is going on with async / non-async results
-        #multi_project_results = multi_project_results[0].result
-        
         if self.aggregate:
             if self.aggregate_sum:
                 aggregated_results[Aggregation.SUM] = self.calculate(
                     multi_project_results,
                     Aggregation.SUM
                 )
-            if self.aggregate_sum:
+            if self.aggregate_average:
                 aggregated_results[Aggregation.AVG] = self.calculate(
                     multi_project_results,
                     Aggregation.AVG
                 )
-            if self.aggregate_sum:
+            if self.aggregate_std_deviation:
                 aggregated_results[Aggregation.STD] = self.calculate(
                     multi_project_results,
                     Aggregation.STD

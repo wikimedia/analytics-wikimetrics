@@ -180,9 +180,9 @@ $(document).ready(function(){
     function setAggregationOptions(list){
         bareList = ko.utils.unwrapObservable(list);
         ko.utils.arrayForEach(bareList, function(item){
-            item.individualResults = ko.observable(true);
-            item.aggregateResults = ko.observable(false);
-            item.aggregateSum = ko.observable(false);
+            item.individualResults = ko.observable(false);
+            item.aggregateResults = ko.observable(true);
+            item.aggregateSum = ko.observable(true);
             item.aggregateAverage = ko.observable(false);
             item.aggregateStandardDeviation = ko.observable(false);
             item.outputConfigured = ko.computed(function(){
