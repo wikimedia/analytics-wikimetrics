@@ -1,3 +1,4 @@
+from decimal import Decimal
 from wikimetrics.utils import stringify
 from report import ReportNode
 from multi_project_metric_report import MultiProjectMetricReport
@@ -96,14 +97,14 @@ class AggregateReport(ReportNode):
                     if not key in aggregation:
                         aggregation[key] = 0
                         helper[key] = dict()
-                        helper[key]['sum'] = 0.0
+                        helper[key]['sum'] = Decimal(0.0)
                         helper[key]['count'] = 0
                     
                     value = results_by_user[user_id][key]
                     if not value:
-                        value = 0
+                        value = Decimal(0)
                     
-                    helper[key]['sum'] += value
+                    helper[key]['sum'] += Decimal(value)
                     helper[key]['count'] += 1
                     
                     if type_of_aggregate == Aggregation.SUM:
