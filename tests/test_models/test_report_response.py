@@ -1,4 +1,4 @@
-from wikimetrics.models import Cohort, RunReport, MultiProjectMetricReport
+from wikimetrics.models import Cohort, RunReport, MultiProjectMetricReport, Aggregation
 from wikimetrics.metrics import NamespaceEdits
 from ..fixtures import QueueDatabaseTest
 from nose.tools import assert_equals, assert_true
@@ -32,7 +32,7 @@ class RunReportTest(QueueDatabaseTest):
         results = jr.task.delay(jr).get()[0]
         # TODO: figure out why one of the resulting wiki_user_ids is None here
         assert_equals(
-            results['individual results'][0][self.test_mediawiki_user_id]['edits'],
+            results[Aggregation.IND][0][self.test_mediawiki_user_id]['edits'],
             2,
         )
     
@@ -55,12 +55,12 @@ class RunReportTest(QueueDatabaseTest):
         jr = RunReport(desired_responses, user_id=self.test_user_id)
         results = jr.task.delay(jr).get()[0]
         assert_equals(
-            results['individual results'][0][self.test_mediawiki_user_id]['edits'],
+            results[Aggregation.IND][0][self.test_mediawiki_user_id]['edits'],
             2,
         )
         
         assert_equals(
-            results['Sum']['edits'],
+            results[Aggregation.SUM]['edits'],
             5,
         )
     
@@ -83,12 +83,12 @@ class RunReportTest(QueueDatabaseTest):
         jr = RunReport(desired_responses, user_id=self.test_user_id)
         results = jr.task.delay(jr).get()[0]
         assert_equals(
-            results['individual results'][0][self.test_mediawiki_user_id]['net_sum'],
+            results[Aggregation.IND][0][self.test_mediawiki_user_id]['net_sum'],
             10,
         )
         
         assert_equals(
-            results['Sum']['positive_only_sum'],
+            results[Aggregation.SUM]['positive_only_sum'],
             50,
         )
     
@@ -119,7 +119,7 @@ class RunReportTest(QueueDatabaseTest):
         for report in reports:
             try:
                 results = report.get()[0]
-                if results['Sum']['positive_only_sum'] == 50:
+                if results[Aggregation.SUM]['positive_only_sum'] == 50:
                     successes += 1
             except:
                 print('timeout expired for this task')

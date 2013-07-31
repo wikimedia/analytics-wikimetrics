@@ -4,6 +4,7 @@ import celery
 from celery.task.control import revoke
 from ..configurables import app, db
 from ..models import Report, RunReport, PersistentReport
+from ..models.report_nodes import Aggregation
 from ..metrics import metric_classes
 from ..utils import json_response, json_error, json_redirect, thirty_days_ago
 import json
@@ -78,17 +79,50 @@ def report_result_csv(task_id):
         
         csv_io = StringIO()
         if task_result:
+            columns = []
+            
+            if Aggregation.IND in task_result:
+                columns = task_result[Aggregation.IND][0].values()[0].keys()
+            elif Aggregation.SUM in task_result:
+                columns = task_result[Aggregation.SUM].keys()
+            elif Aggregation.AVG in task_result:
+                columns = task_result[Aggregation.AVG].keys()
+            elif Aggregation.STD in task_result:
+                columns = task_result[Aggregation.STD].keys()
+            
             # if task_result is not empty find header in first row
-            fieldnames = ['user_id'] + sorted(task_result.values()[0].keys())
+            fieldnames = ['user_id'] + columns
         else:
             fieldnames = ['user_id']
         writer = DictWriter(csv_io, fieldnames)
         
+        # collect rows to output in CSV
         task_rows = []
-        # fold user_id into dict so we can use DictWriter to escape things
-        for user_id, row in task_result.iteritems():
-            row['user_id'] = user_id
-            task_rows.append(row)
+        
+        # Individual Results
+        if Aggregation.IND in task_result:
+            # fold user_id into dict so we can use DictWriter to escape things
+            for user_id, row in task_result[Aggregation.IND][0].iteritems():
+                task_row = row.copy()
+                task_row['user_id'] = user_id
+                task_rows.append(task_row)
+        
+        # Aggregate Results
+        if Aggregation.SUM in task_result:
+            task_row = task_result[Aggregation.SUM].copy()
+            task_row['user_id'] = Aggregation.SUM
+            task_rows.append(task_row)
+        
+        if Aggregation.AVG in task_result:
+            task_row = task_result[Aggregation.AVG].copy()
+            task_row['user_id'] = Aggregation.AVG
+            task_rows.append(task_row)
+        
+        if Aggregation.STD in task_result:
+            task_row = task_result[Aggregation.STD].copy()
+            task_row['user_id'] = Aggregation.STD
+            task_rows.append(task_row)
+        
         writer.writeheader()
         writer.writerows(task_rows)
         return Response(csv_io.getvalue(), mimetype='text/csv')

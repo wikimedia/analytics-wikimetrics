@@ -4,12 +4,13 @@ from multi_project_metric_report import MultiProjectMetricReport
 from celery.utils.log import get_task_logger
 
 
-__all__ = ['AggregateReport']
+__all__ = ['AggregateReport', 'Aggregation']
 
 task_logger = get_task_logger(__name__)
 
 
 class Aggregation(object):
+    IND = 'Individual Results'
     SUM = 'Sum'
     AVG = 'Average'
     STD = 'Standard Deviation'
@@ -81,7 +82,7 @@ class AggregateReport(ReportNode):
                 )
         
         if self.individual:
-            aggregated_results['individual results'] = multi_project_results
+            aggregated_results[Aggregation.IND] = multi_project_results
         
         return aggregated_results
     
