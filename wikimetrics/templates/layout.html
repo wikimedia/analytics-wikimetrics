@@ -51,9 +51,9 @@
         {% block body %}{% endblock %}
     </section>
     
-    <script src="//ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js"></script>
-    <script src="//rawgithub.com/timrwood/moment/2.1.0/min/moment.min.js"></script>
-    <script src="//ajax.aspnetcdn.com/ajax/knockout/knockout-2.2.1.js"></script>
+    <script src="{{ url_for('static', filename='js/jquery.min.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/moment.min.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/knockout-2.2.1.js') }}"></script>
     <script src="{{ url_for('static', filename='js/knockout.util.js') }}"></script>
     <script src="{{ url_for('static', filename='js/bootstrap.js') }}"></script>
     <script src="{{ url_for('static', filename='js/site.js') }}"></script>
