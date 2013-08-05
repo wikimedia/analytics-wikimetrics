@@ -53,12 +53,14 @@ class DatabaseTest(unittest.TestCase):
         mw_user_diederik = MediawikiUser(user_name='Diederik')
         mw_logging = Logging(log_user_text='Reedy')
         mw_page = Page(page_namespace=0, page_title='Main_Page')
+        mw_second_page = Page(page_namespace=209, page_title='Page in Namespace 209')
         self.mwSession.add_all([
             mw_user_dan,
             mw_user_evan,
             mw_user_andrew,
             mw_logging,
             mw_page,
+            mw_second_page,
         ])
         self.mwSession.commit()
         
@@ -88,12 +90,19 @@ class DatabaseTest(unittest.TestCase):
             rev_comment='before Evan edit 3',
             rev_len=140, rev_timestamp=datetime(2013, 07, 23),
         )
+        rev_alternate_namespace_1 = Revision(
+            rev_page=mw_second_page.page_id, rev_user=mw_user_dan.user_id,
+            rev_comment='first revision in namespace 209',
+            # NOTE: VIM is freaking out if I type 08 below.  Is this true on Mac?
+            rev_len=100, rev_timestamp=datetime(2013, 8, 5),
+        )
         self.mwSession.add_all([
             rev_before_1,
             rev_before_2,
             rev_before_3,
             rev_before_4,
             rev_before_5,
+            rev_alternate_namespace_1,
         ])
         self.mwSession.commit()
         
@@ -283,6 +292,9 @@ class DatabaseTest(unittest.TestCase):
         self.test_cohort_wiki_user_id = dan_in_test.id
         self.test_logging_id = mw_logging.log_id
         self.test_mediawiki_user_id = mw_user_dan.user_id
+        self.test_mediawiki_user_id_evan = mw_user_evan.user_id
+        self.test_mediawiki_user_id_andrew = mw_user_andrew.user_id
+        self.test_mediawiki_user_id_diederik = mw_user_diederik.user_id
         self.test_page_id = mw_page.page_id
         self.test_revision_id = rev1.rev_id
     

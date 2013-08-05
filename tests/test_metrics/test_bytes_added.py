@@ -91,3 +91,25 @@ class BytesAddedTest(DatabaseWithCohortTest):
             results[self.andrew_id],
             andrew_expected,
         )
+    
+    def test_counts_first_edit_on_a_page(self):
+        
+        metric = BytesAdded(
+            namespaces=[209],
+            start_date='2013-08-04',
+            end_date='2013-08-06',
+            positive_only_sum=False,
+            negative_only_sum=False,
+            absolute_sum=False,
+        )
+        metric.fake_csrf()
+        assert_true(metric.validate())
+        
+        results = metric(list(self.cohort), self.mwSession)
+        dan_expected = {
+            'net_sum': 100,
+        }
+        assert_equal(
+            results[self.dan_id],
+            dan_expected,
+        )

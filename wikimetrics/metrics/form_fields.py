@@ -36,6 +36,15 @@ class CommaSeparatedIntegerListField(Field):
         else:
             return u''
     
+    def process_data(self, value):
+        if isinstance(value, list):
+            self.data = value
+        else:
+            if value:
+                self.process_formdata([value])
+            else:
+                self.data = []
+    
     def process_formdata(self, valuelist):
         """ overrides wtforms parsing to split list into namespaces """
         if valuelist:
