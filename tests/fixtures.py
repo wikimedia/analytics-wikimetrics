@@ -252,25 +252,25 @@ class DatabaseTest(unittest.TestCase):
         report_created = PersistentReport(
             user_id=web_test_user.id,
             status=celery.states.PENDING,
-            result_key=None,
+            queue_result_key=None,
             show_in_ui=True
         )
         report_started = PersistentReport(
             user_id=web_test_user.id,
             status=celery.states.STARTED,
-            result_key=None,
+            queue_result_key=None,
             show_in_ui=True
         )
         report_started2 = PersistentReport(
             user_id=web_test_user.id,
             status=celery.states.STARTED,
-            result_key=None,
+            queue_result_key=None,
             show_in_ui=True
         )
         report_finished = PersistentReport(
             user_id=web_test_user.id,
             status=celery.states.SUCCESS,
-            result_key=None,
+            queue_result_key=None,
             show_in_ui=True
         )
         self.session.add_all([

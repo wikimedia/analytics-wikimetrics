@@ -62,30 +62,33 @@ class AggregateReport(ReportNode):
             name=self.name,
         )]
     
-    def finish(self, multi_project_results):
+    def finish(self, result_dicts):
         aggregated_results = dict()
+        result_values = [r.values() for r in result_dicts]
+        child_results = [result for sublist in result_values for result in sublist]
         
         if self.aggregate:
             if self.aggregate_sum:
                 aggregated_results[Aggregation.SUM] = self.calculate(
-                    multi_project_results,
+                    child_results,
                     Aggregation.SUM
                 )
             if self.aggregate_average:
                 aggregated_results[Aggregation.AVG] = self.calculate(
-                    multi_project_results,
+                    child_results,
                     Aggregation.AVG
                 )
             if self.aggregate_std_deviation:
                 aggregated_results[Aggregation.STD] = self.calculate(
-                    multi_project_results,
+                    child_results,
                     Aggregation.STD
                 )
         
         if self.individual:
-            aggregated_results[Aggregation.IND] = multi_project_results
+            aggregated_results[Aggregation.IND] = child_results
         
-        return aggregated_results
+        result = self.report_result(aggregated_results, child_results=result_dicts)
+        return result
     
     def calculate(self, list_of_results, type_of_aggregate):
         # TODO: terrible redo this

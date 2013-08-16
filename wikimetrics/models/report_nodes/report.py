@@ -1,5 +1,6 @@
 import time
 import celery
+from uuid import uuid4
 from celery import group, chord, current_task
 from celery.result import AsyncResult
 from celery.exceptions import SoftTimeLimitExceeded
@@ -38,39 +39,12 @@ task_logger = get_task_logger(__name__)
 
 @queue.task()
 def queue_task(report):
-    if not isinstance(report, ReportNode):
-        report.set_status(celery.states.STARTED, task_id=current_task.request.id)
     
     task_logger.info('running {0} on celery as {1}'.format(
         report,
         current_task.request.id,
     ))
-    result = report.run()
-    return result
-
-
-@queue.task()
-def queue_finish_task(results, report):
-    """
-    This is the task which is executed after all of the child tasks
-    in a ReportNode have been executed.  It serves as a wrapper to the
-    finish() method which actually deals with child task results.
-    Note that the signature of this method is a little funny due to
-    a hack to get around the way that celery handles instance method tasks.
-    The ReportNode instance (report) is specified  when the callback
-    subtask is created, and the results argument is filled in by celery
-    once they have completed.  The order is just reversed because celery
-    is hardcoded to prepend the results from a chord into the argument list
-    specified when creating the subtask.
-    """
-    report.set_status(celery.states.STARTED, task_id=current_task.request.id)
-    
-    task_logger.info('finishing {0} on celery as {1}'.format(
-        report,
-        current_task.request.id,
-    ))
-    result = report.finish(results)
-    return result
+    return report.run()
 
 
 class Report(object):
@@ -82,7 +56,7 @@ class Report(object):
                  user_id=None,
                  status=celery.states.PENDING,
                  name=None,
-                 result_key=None,
+                 queue_result_key=None,
                  children=[],
                  parameters='{}'):
         
@@ -98,11 +72,11 @@ class Report(object):
         
         self.status = status
         self.name = name
-        self.result_key = result_key
+        self.queue_result_key = queue_result_key
         self.children = children
         
         # store report to database
-        # note that result_key is always empty at this stage
+        # note that queue_result_key is always empty at this stage
         pj = PersistentReport(user_id=self.user_id,
                               status=self.status,
                               name=self.name,
@@ -117,7 +91,7 @@ class Report(object):
     def __repr__(self):
         return '<Report("{0}")>'.format(self.persistent_id)
     
-    def set_status(self, status, task_id):
+    def set_status(self, status, task_id=None):
         """
         helper function for updating database status after celery
         task has been started
@@ -125,7 +99,8 @@ class Report(object):
         db_session = db.get_session()
         pj = db_session.query(PersistentReport).get(self.persistent_id)
         pj.status = status
-        pj.result_key = task_id
+        if task_id:
+            pj.queue_result_key = task_id
         db_session.add(pj)
         db_session.commit()
         db_session.close()
@@ -139,28 +114,67 @@ class Report(object):
 
 class ReportNode(Report):
     
-    finish_task = queue_finish_task
-    
     def run(self):
+        """
+        This specialized version of run first runs all the children, then
+        calls the finish method with the results.
+        
+        NOTE: this used to spawn a tree of celery tasks.  That sacrificed parallelism
+        at the user level and gained parallelism at the task level.  That was bad.
+        So now this just runs all the children's run methods, collects the results,
+        and passes them to the finish method.  Deadlocking and celery worker starvation
+        are *much* less likely now.  Thank you Ori :)
+        """
+        self.set_status(celery.states.STARTED, task_id=current_task.request.id)
+        results = []
+        
         if self.children:
-            callback = queue_finish_task.s(self)
-            header = [queue_task.s(child) for child in self.children]
-            children_then_finish = chord(header)(callback)
             try:
-                return children_then_finish.get()
+                child_results = [child.run() for child in self.children]
+                results = self.finish(child_results)
             except SoftTimeLimitExceeded:
+                self.set_status(celery.states.FAILURE)
                 task_logger.error('timeout exceeded for {0}'.format(
                     current_task.request.id
                 ))
                 raise
-        else:
-            return []
+        
+        self.set_status(celery.states.SUCCESS)
+        return results
     
     def finish(self, results):
         """
-        Each ReportNode sublcass should implement this method to
-        deal with the results of its child reports"""
+        Each ReportNode sublcass should implement this method to deal with
+        the results of its child reports.  As a standard, report_results should
+        be called at the end of ReportNode.finish implementations.
+        """
         pass
+    
+    def report_result(self, results, child_results=[]):
+        """
+        Creates a unique identifier for this ReportNode, and returns a one element
+        dictionary with that identifier as the key and its results as the value.
+        This allows ReportNode results to be merged as the tree of ReportNodes is
+        evaluated.
+        
+        Parameters
+            results         : Anything that the ReportNode compiles in its finish step
+            child_results   : The results from a child Report(s) if they should be
+                              preserved.  ReportLeaf results and any ReportNode results
+                              that are copied should not be preserved.
+        """
+        self.result_key = str(uuid4())
+        db_session = db.get_session()
+        pj = db_session.query(PersistentReport).get(self.persistent_id)
+        pj.result_key = self.result_key
+        db_session.add(pj)
+        db_session.commit()
+        db_session.close()
+        
+        merged = {self.result_key: results}
+        for child_result in child_results:
+            merged.update(child_result)
+        return merged
 
 
 class ReportLeaf(Report):

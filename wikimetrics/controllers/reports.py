@@ -62,20 +62,40 @@ def reports_list():
     return reports_json
 
 
-@app.route('/reports/status/<task_id>')
-def report_status(task_id):
-    celery_task = Report.task.AsyncResult(task_id)
+def get_celery_task(result_key):
+    """
+    From a unique identifier, gets the celery task and database records associated.
+    
+    Parameters
+        result_key  : The unique identifier found in the report database table
+    
+    Returns
+        A tuple of the form (celery_task_object, database_report_object)
+    """
+    db_session = db.get_session()
+    pj = db_session.query(PersistentReport)\
+        .filter(PersistentReport.result_key == result_key)\
+        .one()
+    
+    celery_task = Report.task.AsyncResult(pj.queue_result_key)
+    db_session.close()
+    return (celery_task, pj)
+
+
+@app.route('/reports/status/<result_key>')
+def report_status(result_key):
+    celery_task, pj = get_celery_task(result_key)
     return json_response(status=celery_task.status)
 
 
-@app.route('/reports/result/<task_id>.csv')
-def report_result_csv(task_id):
-    celery_task = Report.task.AsyncResult(task_id)
+@app.route('/reports/result/<result_key>.csv')
+def report_result_csv(result_key):
+    celery_task, pj = get_celery_task(result_key)
     if not celery_task:
-        return json_error('no task exists with id: {0}'.format(task_id))
+        return json_error('no task exists with id: {0}'.format(result_key))
     
     if celery_task.ready():
-        task_result = celery_task.get()
+        task_result = celery_task.get()[result_key]
         
         csv_io = StringIO()
         if task_result:
@@ -130,38 +150,30 @@ def report_result_csv(task_id):
         return json_response(status=celery_task.status)
 
 
-@app.route('/reports/result/<task_id>.json')
-def report_result_json(task_id):
-    celery_task = Report.task.AsyncResult(task_id)
+@app.route('/reports/result/<result_key>.json')
+def report_result_json(result_key):
+    celery_task, pj = get_celery_task(result_key)
     if not celery_task:
-        return json_error('no task exists with id: {0}'.format(task_id))
+        return json_error('no task exists with id: {0}'.format(result_key))
     
     if celery_task.ready():
-        task_result = celery_task.get()
-        
-        # get the parameters from the database
-        db_session = db.get_session()
-        report = db_session.query(PersistentReport)\
-            .filter(PersistentReport.result_key == task_id)\
-            .one()
-        parameters = report.parameters
-        db_session.close()
+        task_result = celery_task.get()[result_key]
         
         return json_response(
             result=task_result,
-            parameters=json.loads(parameters),
+            parameters=json.loads(pj.parameters),
         )
     else:
         return json_response(status=celery_task.status)
 
 
-@app.route('/reports/kill/<task_id>')
-def report_kill(task_id):
+@app.route('/reports/kill/<result_key>')
+def report_kill(result_key):
     return 'not implemented'
     #db_session = db.get_session()
-    #db_report = db_session.query(PersistentReport).get(task_id)
+    #db_report = db_session.query(PersistentReport).get(result_key)
     #if not db_report:
-        #return json_error('no task exists with id: {0}'.format(task_id))
+        #return json_error('no task exists with id: {0}'.format(result_key))
     #celery_task = Report.task.AsyncResult(db_report.result_key)
     #app.logger.debug('revoking task: %s', celery_task.id)
     #celery_task.revoke()

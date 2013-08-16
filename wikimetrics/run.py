@@ -22,10 +22,6 @@ def run_test():
 
 def run_celery():
     from configurables import queue
-    from .models import ConcatMetricsReport
-    from .models import MultiProjectMetricReport
-    from .models import MetricReport
-    from .models import RunReport
     queue.start(argv=['celery', 'worker', '-l', 'DEBUG'])
 
 

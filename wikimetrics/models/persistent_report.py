@@ -18,6 +18,7 @@ class PersistentReport(db.WikimetricsBase):
     id = Column(Integer, primary_key=True)
     created = Column(DateTime, default=func.now())
     user_id = Column(Integer)
+    queue_result_key = Column(String(50))
     result_key = Column(String(50))
     status = Column(String(50))
     name = Column(String(2000))
@@ -25,16 +26,14 @@ class PersistentReport(db.WikimetricsBase):
     parameters = Column(String(4000))
     
     def update_status(self):
-        # if we don't have the result key leave as is (PENDING)
-        if self.result_key and self.status not in (celery.states.READY_STATES):
+        # if we don't have the result key leave as is
+        if self.queue_result_key and self.status not in (celery.states.READY_STATES):
             # TODO: inline import.  Can't import up above because of circular reference
             from wikimetrics.models.report_nodes import Report
-            celery_task = Report.task.AsyncResult(self.result_key)
+            celery_task = Report.task.AsyncResult(self.queue_result_key)
             self.status = celery_task.status
             existing_session = Session.object_session(self)
             if not existing_session:
                 existing_session = db.get_session()
                 existing_session.add(self)
             existing_session.commit()
-            # if the result is still an AsyncResult, leave it as PENDING
-            #if isinstance(celery_task.result, AsyncResult):

@@ -32,15 +32,14 @@ class MultiProjectMetricReport(ReportNode):
             # note that user_ids is actually just an iterator
             self.children.append(MetricReport(metric, user_ids, project))
     
-    def finish(self, query_results):
-        merged = {}
-        for res in query_results:
-            try:
-                merged.update(res)
-            except:
-                task_logger.error('updating failed: %s', res)
-                raise
-        return merged
+    def finish(self, metric_results):
+        merged_individual_results = {}
+        # TODO: handle collisions where the same ID is used accross projects
+        for res in metric_results:
+            merged_individual_results.update(res)
+        
+        result = self.report_result(merged_individual_results)
+        return result
     
     def __repr__(self):
         return '<MultiProjectMetricReport("{0}")>'.format(self.persistent_id)

@@ -84,8 +84,9 @@ class RunReport(ReportNode):
         self.name = ', '.join(metric_names) + ' for ' + ', '.join(cohort_names)
         self.children = children
     
-    def finish(self, aggregated_output):
-        return aggregated_output
+    def finish(self, aggregated_results):
+        result = self.report_result('Finished', child_results=aggregated_results)
+        return result
     
     def __repr__(self):
         return '<RunReport("{0}")>'.format(self.persistent_id)
