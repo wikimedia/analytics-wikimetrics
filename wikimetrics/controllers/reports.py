@@ -82,6 +82,15 @@ def get_celery_task(result_key):
     return (celery_task, pj)
 
 
+def get_celery_task_result(celery_task, db_report):
+    # this indicates an old style result, the celery task result can be returned directly
+    if db_report.result_key == db_report.queue_result_key:
+        return celery_task.get()
+    # otherwise, it's a new style result, the celery task is a dictionary
+    else:
+        return celery_task.get()[db_report.result_key]
+
+
 @app.route('/reports/status/<result_key>')
 def report_status(result_key):
     celery_task, pj = get_celery_task(result_key)
@@ -95,7 +104,7 @@ def report_result_csv(result_key):
         return json_error('no task exists with id: {0}'.format(result_key))
     
     if celery_task.ready():
-        task_result = celery_task.get()[result_key]
+        task_result = get_celery_task_result(celery_task, pj)
         
         csv_io = StringIO()
         if task_result:
@@ -157,7 +166,7 @@ def report_result_json(result_key):
         return json_error('no task exists with id: {0}'.format(result_key))
     
     if celery_task.ready():
-        task_result = celery_task.get()[result_key]
+        task_result = get_celery_task_result(celery_task, pj)
         
         return json_response(
             result=task_result,
