@@ -21,7 +21,9 @@ if app.config['DEBUG']:
         user = db_sess.query(User).filter_by(email=current_user.email).one()
         
         # delete all of this user's data
-        db_sess.query(CohortUser).filter_by(user_id=user.id).delete()
+        cu = db_sess.query(CohortUser)\
+            .filter(CohortUser.user_id == user.id)\
+            .all()
         cwu = db_sess.query(CohortWikiUser)\
             .join(Cohort)\
             .join(CohortUser)\
@@ -37,6 +39,8 @@ if app.config['DEBUG']:
             .join(CohortUser)\
             .filter(CohortUser.user_id == user.id)\
             .all()
+        for r in cu:
+            db_sess.delete(r)
         for r in cwu:
             db_sess.delete(r)
         for r in wu:

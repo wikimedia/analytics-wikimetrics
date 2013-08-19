@@ -157,7 +157,7 @@ class RunReportTest(QueueDatabaseTest):
                     successes += 1
             except SoftTimeLimitExceeded:
                 print('Timeout expired during this task.')
-            except Exception, e:
+            except Exception:
                 print('An exception occurred during this task.')
                 raise
         
