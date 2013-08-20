@@ -41,7 +41,7 @@ def default_to_private():
         and not request.path == 'favicon.ico'
         and not getattr(app.view_functions[request.endpoint], 'is_public', False)
     ):
-        flash('Please Login before visiting ' + request.url, 'info')
+        flash('Please Login before visiting {0}'.format(request.url), 'info')
         return redirect(url_for('login', next=request.url))
 
 

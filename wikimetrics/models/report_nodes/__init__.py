@@ -1,5 +1,4 @@
 from aggregate_report import *
-from concat_metrics_report import *
 from metric_report import *
 from multi_project_metric_report import *
 from report import *

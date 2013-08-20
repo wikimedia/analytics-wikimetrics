@@ -286,6 +286,7 @@ class DatabaseTest(unittest.TestCase):
         #****************************************************************
         self.test_report_id = report_created.id
         self.test_user_id = dan_user.id
+        self.test_web_user_id = web_test_user.id
         self.test_cohort_id = test_cohort.id
         self.test_cohort_user_id = dan_owns_test.id
         self.test_wiki_user_id = dan.id
@@ -342,7 +343,24 @@ from wikimetrics.configurables import app
 from flask.ext.login import login_user, logout_user, current_user
 
 
-class WebTest(DatabaseTest):
+class WebTestAnonymous(DatabaseTest):
+    """
+    Creates a test flask client but does not authenticate.
+    """
+    
+    def setUp(self):
+        """
+        Creates a test flask environment.
+        Logs in a test user so tests on private urls work.
+        """
+        DatabaseTest.setUp(self)
+        self.app = app.test_client()
+    
+    def tearDown(self):
+        DatabaseTest.tearDown(self)
+
+
+class WebTest(WebTestAnonymous):
     """
     Creates a test flask client from the normally configured app.
     Makes sure that a user is authenticated as far as Flask-Login is concerned,
@@ -354,12 +372,11 @@ class WebTest(DatabaseTest):
         Creates a test flask environment.
         Logs in a test user so tests on private urls work.
         """
-        DatabaseTest.setUp(self)
-        self.app = app.test_client()
+        WebTestAnonymous.setUp(self)
         self.app.get('/login-for-testing-only')
     
     def tearDown(self):
-        DatabaseTest.tearDown(self)
+        WebTestAnonymous.tearDown(self)
         self.app.get('/logout')
 
 
