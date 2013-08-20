@@ -1,6 +1,7 @@
+import celery
+from sqlalchemy.orm.exc import NoResultFound
 from flask import render_template, request, url_for, Response
 from flask.ext.login import current_user
-import celery
 from celery.task.control import revoke
 from ..configurables import app, db
 from ..models import Report, RunReport, PersistentReport
@@ -32,14 +33,8 @@ def reports_request():
     else:
         desired_responses = json.loads(request.form['responses'])
         jr = RunReport(desired_responses, user_id=current_user.id)
+        jr.task.delay(jr)
         
-        async_response = jr.task.delay(jr)
-        app.logger.info(
-            'starting report with celery id: %s, PersistentReport.id: %d',
-            async_response.task_id, jr.persistent_id
-        )
-        
-        #return render_template('reports.html')
         return json_redirect(url_for('reports_index'))
 
 
@@ -72,14 +67,17 @@ def get_celery_task(result_key):
     Returns
         A tuple of the form (celery_task_object, database_report_object)
     """
-    db_session = db.get_session()
-    pj = db_session.query(PersistentReport)\
-        .filter(PersistentReport.result_key == result_key)\
-        .one()
-    
-    celery_task = Report.task.AsyncResult(pj.queue_result_key)
-    db_session.close()
-    return (celery_task, pj)
+    try:
+        db_session = db.get_session()
+        pj = db_session.query(PersistentReport)\
+            .filter(PersistentReport.result_key == result_key)\
+            .one()
+        
+        celery_task = Report.task.AsyncResult(pj.queue_result_key)
+        db_session.close()
+        return (celery_task, pj)
+    except NoResultFound:
+        return (None, None)
 
 
 def get_celery_task_result(celery_task, db_report):
@@ -176,9 +174,9 @@ def report_result_json(result_key):
         return json_response(status=celery_task.status)
 
 
-@app.route('/reports/kill/<result_key>')
-def report_kill(result_key):
-    return 'not implemented'
+#@app.route('/reports/kill/<result_key>')
+#def report_kill(result_key):
+    #return 'not implemented'
     #db_session = db.get_session()
     #db_report = db_session.query(PersistentReport).get(result_key)
     #if not db_report:
