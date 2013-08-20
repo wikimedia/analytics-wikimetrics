@@ -101,6 +101,10 @@ def auth_google(resp):
     If a new user is created, they get the default role of GUEST and
     an email or username to match their details from the OAuth provider.
     """
+    if not resp and request.args.get('error') == 'access_denied':
+      flash('You need to grant the app permissions in order to login.', 'error')
+      return redirect(url_for('login'))
+
     access_token = resp['access_token'] or request.args.get('code')
     if access_token:
         session['access_token'] = access_token, ''
