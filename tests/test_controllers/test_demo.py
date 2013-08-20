@@ -20,7 +20,8 @@ class TestDemoController(WebTest):
         )
     
     def test_delete_cohorts(self):
-        users = self.session.query(CohortUser).filter(CohortUser.user_id == self.test_web_user_id)
+        users = self.session.query(CohortUser)\
+            .filter(CohortUser.user_id == self.test_web_user_id)
         print users.all()
         before = len(self.session.query(Cohort).all())
         assert_true(

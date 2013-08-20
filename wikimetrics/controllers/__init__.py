@@ -12,7 +12,6 @@ from home import *
 from authentication import *
 from metrics import *
 from cohorts import *
-from support import *
 from reports import *
 from demo import *
 
