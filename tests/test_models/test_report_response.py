@@ -1,9 +1,8 @@
 from nose.tools import assert_equals, assert_true
 from celery.exceptions import SoftTimeLimitExceeded
 from wikimetrics.models import (
-    Cohort, RunReport, MultiProjectMetricReport, Aggregation, PersistentReport
+    RunReport, Aggregation, PersistentReport
 )
-from wikimetrics.metrics import NamespaceEdits
 from ..fixtures import QueueDatabaseTest
 
 

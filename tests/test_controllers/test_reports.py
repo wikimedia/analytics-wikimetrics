@@ -1,7 +1,7 @@
 import json
 import celery
 import time
-from nose.tools import assert_true, assert_equal, nottest
+from nose.tools import assert_true, assert_equal
 from tests.fixtures import WebTest
 from wikimetrics.models import PersistentReport
 from wikimetrics.controllers.reports import (

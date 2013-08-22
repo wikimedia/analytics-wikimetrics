@@ -1,6 +1,6 @@
 import inspect
-from flask import render_template, redirect, request, jsonify
-from ..configurables import app, db
+from flask import render_template, request, jsonify
+from ..configurables import app
 from .. import metrics
 from ..metrics import metric_classes
 

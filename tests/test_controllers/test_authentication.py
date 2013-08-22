@@ -1,10 +1,7 @@
 from nose.tools import assert_equal, assert_true, raises
-from tests.fixtures import WebTestAnonymous, WebTest
-from flask import session
+from tests.fixtures import WebTestAnonymous
 from flask.ext.login import current_user
 from flask_oauth import OAuthException
-from wikimetrics.models import User
-from wikimetrics.controllers import get_access_token
 
 
 class TestAuthenticationControllerLoggedOut(WebTestAnonymous):

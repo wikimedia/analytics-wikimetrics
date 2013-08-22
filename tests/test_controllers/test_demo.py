@@ -1,4 +1,3 @@
-import json
 from nose.tools import assert_equal, assert_true
 from tests.fixtures import WebTest
 from wikimetrics.models import Cohort, CohortUser

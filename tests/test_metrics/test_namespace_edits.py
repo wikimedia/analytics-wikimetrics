@@ -1,7 +1,6 @@
 from nose.tools import assert_true, assert_equal
 from tests.fixtures import DatabaseTest, QueueDatabaseTest
 
-from wikimetrics import app
 from wikimetrics.metrics import NamespaceEdits
 from wikimetrics.models import Cohort, MetricReport
 

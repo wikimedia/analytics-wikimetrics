@@ -9,8 +9,7 @@ from flask import (
     flash,
 )
 from sqlalchemy.orm.exc import NoResultFound, MultipleResultsFound
-from flask.ext.login import LoginManager, login_user, logout_user, current_user
-from flask.ext.oauth import OAuth
+from flask.ext.login import login_user, logout_user, current_user
 from ..configurables import app, db, login_manager, google
 from ..models import User, UserRole
 

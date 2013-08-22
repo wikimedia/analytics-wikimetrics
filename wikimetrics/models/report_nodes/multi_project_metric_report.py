@@ -1,5 +1,3 @@
-import json
-from wikimetrics.configurables import queue
 from celery.utils.log import get_task_logger
 from report import ReportNode
 from metric_report import MetricReport

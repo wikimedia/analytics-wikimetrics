@@ -4,7 +4,7 @@ from metric import Metric
 from form_fields import BetterBooleanField, CommaSeparatedIntegerListField
 from wtforms.validators import Required
 from wtforms import DateField
-from sqlalchemy import func, case, cast, between, Integer
+from sqlalchemy import func, case, cast, Integer
 from sqlalchemy.sql.expression import label
 
 

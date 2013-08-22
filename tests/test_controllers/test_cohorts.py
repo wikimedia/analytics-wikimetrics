@@ -1,5 +1,4 @@
 # -*- coding:utf-8 -*-
-import pprint
 import json
 from nose.tools import assert_equal, assert_not_equal
 from tests.fixtures import WebTest

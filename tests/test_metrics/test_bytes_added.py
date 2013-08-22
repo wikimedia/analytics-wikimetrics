@@ -1,9 +1,6 @@
-from nose.tools import assert_true, assert_not_equal, assert_equal
+from nose.tools import assert_true, assert_equal
 from tests.fixtures import DatabaseWithCohortTest
-
-from wikimetrics import app
 from wikimetrics.metrics import BytesAdded
-from wikimetrics.models import Cohort, MetricReport, WikiUser, CohortWikiUser
 
 
 class BytesAddedTest(DatabaseWithCohortTest):

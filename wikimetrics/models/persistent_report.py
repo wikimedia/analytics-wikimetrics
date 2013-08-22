@@ -1,7 +1,7 @@
 import celery
 from sqlalchemy import Column, Integer, String, DateTime, Boolean, func
 from sqlalchemy.orm import Session
-from wikimetrics.configurables import db, queue
+from wikimetrics.configurables import db
 
 
 __all__ = ['PersistentReport']

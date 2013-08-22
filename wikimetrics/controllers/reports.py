@@ -1,12 +1,9 @@
-import celery
 from sqlalchemy.orm.exc import NoResultFound
 from flask import render_template, request, url_for, Response
 from flask.ext.login import current_user
-from celery.task.control import revoke
 from ..configurables import app, db
 from ..models import Report, RunReport, PersistentReport
 from ..models.report_nodes import Aggregation
-from ..metrics import metric_classes
 from ..utils import json_response, json_error, json_redirect, thirty_days_ago
 import json
 from StringIO import StringIO
@@ -183,6 +180,7 @@ def report_result_json(result_key):
         #return json_error('no task exists with id: {0}'.format(result_key))
     #celery_task = Report.task.AsyncResult(db_report.result_key)
     #app.logger.debug('revoking task: %s', celery_task.id)
+    #from celery.task.control import revoke
     #celery_task.revoke()
     # TODO figure out how to terminate tasks. this throws an error
     # which I believe is related to https://github.com/celery/celery/issues/1153

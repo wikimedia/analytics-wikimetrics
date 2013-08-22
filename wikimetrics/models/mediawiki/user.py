@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, Boolean, DateTime, String
+from sqlalchemy import Column, Integer, DateTime, String
 from wikimetrics.configurables import db
 
 __all__ = [

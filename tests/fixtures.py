@@ -340,7 +340,6 @@ class QueueDatabaseTest(QueueTest, DatabaseTest):
 
 
 from wikimetrics.configurables import app
-from flask.ext.login import login_user, logout_user, current_user
 
 
 class WebTestAnonymous(DatabaseTest):

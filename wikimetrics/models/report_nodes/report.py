@@ -1,11 +1,12 @@
-import time
 import celery
 from uuid import uuid4
-from celery import group, chord, current_task
+from celery import current_task
+# AsyncResult shows up as un-needed but actually is (for celery.states to work)
 from celery.result import AsyncResult
 from celery.exceptions import SoftTimeLimitExceeded
 from celery.utils.log import get_task_logger
-from celery.contrib.methods import task_method
+# This is the hack you need if you use instance methods as celery tasks
+# from celery.contrib.methods import task_method
 from flask.ext.login import current_user
 from wikimetrics.configurables import db, queue
 from ..persistent_report import PersistentReport

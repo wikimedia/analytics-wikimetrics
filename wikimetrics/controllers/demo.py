@@ -1,18 +1,14 @@
-from flask import render_template, redirect, request, jsonify
 from flask.ext.login import current_user
 from ..configurables import app, db
 from ..models import (
     WikiUser,
     User,
-    MediawikiUser,
     Cohort,
     CohortUser,
     CohortUserRole,
     CohortWikiUser,
     MetricReport,
 )
-from ..models.mediawiki import Revision, Page
-from datetime import datetime
 from ..metrics import RandomMetric
 
 

@@ -2,7 +2,6 @@ import json
 import csv
 from flask import url_for, flash, render_template, redirect, request
 from flask.ext.login import current_user
-from sqlalchemy.sql import exists
 from sqlalchemy.orm.exc import NoResultFound, MultipleResultsFound
 from ..utils import json_response, json_error, json_redirect
 from ..configurables import app, db
