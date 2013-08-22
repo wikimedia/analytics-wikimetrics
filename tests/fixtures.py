@@ -288,6 +288,7 @@ class DatabaseTest(unittest.TestCase):
         self.test_user_id = dan_user.id
         self.test_web_user_id = web_test_user.id
         self.test_cohort_id = test_cohort.id
+        self.test_cohort_name = test_cohort.name
         self.test_cohort_user_id = dan_owns_test.id
         self.test_wiki_user_id = dan.id
         self.test_cohort_wiki_user_id = dan_in_test.id

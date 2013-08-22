@@ -86,8 +86,7 @@ def get_cohort_by_id(id):
         cohort = query.filter(Cohort.id == id).one()
         db_session.close()
         return cohort
-    # MultipleResultsFound NoResultFound
-    except:
+    except (MultipleResultsFound, NoResultFound):
         return None
 
 
@@ -97,8 +96,7 @@ def get_cohort_by_name(name):
         cohort = query.filter(Cohort.name == name).one()
         db_session.close()
         return cohort
-    # MultipleResultsFound NoResultFound
-    except:
+    except (MultipleResultsFound, NoResultFound):
         return None
 
 
@@ -169,13 +167,14 @@ def cohort_upload():
 def cohort_upload_finish():
     try:
         name = request.form.get('name')
+        # re-validate the name
+        if get_cohort_by_name(name):
+            raise Exception('Cohort name {0} is already used'.format(name))
+        
         project = request.form.get('project')
         description = request.form.get('description')
         users_json = request.form.get('users')
         users = json.loads(users_json)
-        # re-validate
-        if get_cohort_by_name(name):
-            raise Exception('Cohort name {0} is already used'.format(name))
         
         # NOTE: If we don't re-validate here, the user can change the cohort client-side
         # This will produce weird results but we sort of don't care.
@@ -189,10 +188,14 @@ def cohort_upload_finish():
         if not project:
             if all([user['project'] == users[0]['project'] for user in users]):
                 project = users[0]['project']
-        app.logger.info('adding cohort: {0}, with project: {1}'.format(name, project))
+        
+        if not project:
+            return json_error('If all the users do not belong to the same project, '
+                              'your cohort needs a default project.')
+        
         create_cohort(name, description, project, valid)
         return json_redirect(url_for('cohorts_index'))
-        
+    
     except Exception, e:
         app.logger.exception(str(e))
         return json_error(
