@@ -111,12 +111,15 @@ class AggregateReport(ReportNode):
                     helper[key]['count'] += 1
                     
                     if type_of_aggregate == Aggregation.SUM:
-                        aggregation[key] = helper[key]['sum']
+                        aggregation[key] = round(
+                            helper[key]['sum'],
+                            4
+                        )
                     elif type_of_aggregate == Aggregation.AVG:
-                        if helper[key]['count'] != 0:
-                            aggregation[key] = helper[key]['sum'] / helper[key]['count']
-                        else:
-                            aggregation[key] = 0
+                        aggregation[key] = round(
+                            helper[key]['sum'] / helper[key]['count'],
+                            4
+                        )
                     elif type_of_aggregate == Aggregation.STD:
                         aggregation[key] = 'Not Implemented'
                         pass
