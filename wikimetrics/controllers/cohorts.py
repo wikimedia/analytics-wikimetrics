@@ -3,7 +3,7 @@ import csv
 from flask import url_for, flash, render_template, redirect, request
 from flask.ext.login import current_user
 from sqlalchemy.orm.exc import NoResultFound, MultipleResultsFound
-from ..utils import json_response, json_error, json_redirect
+from ..utils import json_response, json_error, json_redirect, deduplicate_by_key
 from ..configurables import app, db
 from ..models import (
     Cohort, CohortUser, CohortUserRole,
@@ -332,7 +332,7 @@ def get_wikiuser_by_name(username, project):
             .one()
         db_session.close()
         return wikiuser
-    except:
+    except (MultipleResultsFound, NoResultFound):
         db_session.close()
         return None
 
@@ -345,7 +345,7 @@ def get_wikiuser_by_id(id, project):
             .one()
         db_session.close()
         return wikiuser
-    except:
+    except (MultipleResultsFound, NoResultFound):
         db_session.close()
         return None
 
@@ -365,16 +365,6 @@ def normalize_user(user_str, project):
     return None
 
 
-def deduplicate(list_of_objects, key_function):
-    uniques = dict()
-    for o in list_of_objects:
-        key = key_function(o)
-        if not key in uniques:
-            uniques[key] = o
-    
-    return uniques.values()
-
-
 def project_name_for_link(project):
     if project.endswith('wiki'):
         return project[:len(project) - 4]
@@ -383,7 +373,7 @@ def project_name_for_link(project):
 
 def link_to_user_page(username, project):
     project = project_name_for_link(project)
-    return 'https://%s.wikipedia.org/wiki/User:%s' % (project, username)
+    return 'https://{0}.wikipedia.org/wiki/User:{1}'.format(project, username)
 
 
 def validate_records(records):
@@ -416,5 +406,5 @@ def validate_records(records):
         record['user_id'], record['username'] = normalized_user
         valid.append(record)
     
-    valid = deduplicate(valid, lambda record: record['username'])
+    valid = deduplicate_by_key(valid, lambda record: record['username'])
     return (valid, invalid)

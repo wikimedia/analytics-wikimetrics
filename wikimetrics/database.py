@@ -5,6 +5,7 @@ It has the ability to connect to multiple mediawiki databases.
 It uses Flask's handy config module to configure itself.
 """
 import json
+import os
 from os.path import exists
 from urllib2 import urlopen
 #from multiprocessing import Pool
@@ -63,7 +64,7 @@ class Database(object):
         
         self.mediawiki_engines = {}
         self.mediawiki_sessionmakers = {}
-        self.project_host_map = self.get_project_host_map(usecache=False)
+        self.project_host_map = self.get_project_host_map(usecache=True)
     
     def get_session(self):
         """
@@ -155,10 +156,15 @@ class Database(object):
                 host = host_fmt.format(host_id)
                 for project in projects:
                     project_host_map[project] = host
-            if usecache:
-                json.dump(project_host_map, open(cache_name, 'w'))
-        else:
+            if usecache and os.access(cache_name, os.W_OK):
+                try:
+                    json.dump(project_host_map, open(cache_name, 'w'))
+                except:
+                    pass  # no rights to write the file, it's OK
+        elif os.access(cache_name, os.R_OK):
             project_host_map = json.load(open(cache_name))
+        else:
+            raise Exception('Project host map could not be fetched or read')
         
         return project_host_map
 

@@ -79,6 +79,16 @@ def deduplicate(sequence):
     return [x for x in sequence if x not in seen and not seen_add(x)]
 
 
+def deduplicate_by_key(list_of_objects, key_function):
+    uniques = dict()
+    for o in list_of_objects:
+        key = key_function(o)
+        if not key in uniques:
+            uniques[key] = o
+    
+    return uniques.values()
+
+
 def mediawiki_date(date_field):
     date = datetime.datetime.strptime(date_field.data, date_field.format)
     return date.strftime('%Y%m%d%H%M%S')
