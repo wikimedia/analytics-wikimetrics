@@ -3,3 +3,4 @@ WIKIMETRICS_ENGINE_URL          : 'sqlite:///test.db'
 # For testing with mysql locally (useful for manual connection survival tests)
 #WIKIMETRICS_ENGINE_URL          : 'mysql://wikimetrics:wikimetrics@localhost/wikimetrics'
 MEDIAWIKI_ENGINE_URL_TEMPLATE   : 'sqlite:///{0}.db'
+DEBUG                           : True
