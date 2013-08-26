@@ -32,9 +32,6 @@ class User(db.WikimetricsBase):
     # Flask-Login properties
     authenticated = Column(Boolean, default=False)
     active = Column(Boolean, default=False)
-
-    def __repr__(self):
-        return '<User("{0}")>'.format(self.id)
     
     @staticmethod
     def get(session, user_id):
@@ -86,3 +83,6 @@ class User(db.WikimetricsBase):
         to return a unicode id.
         """
         return unicode(self.id)
+
+    def __repr__(self):
+        return '<User("{0}")>'.format(self.id)

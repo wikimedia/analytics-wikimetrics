@@ -14,7 +14,7 @@ def filterStatus(collection, status):
     return filter(lambda j : j['status'] == status, collection)
 
 
-class TestReportsController(WebTest):
+class ReportsControllerTest(WebTest):
     
     def test_index(self):
         response = self.app.get('/reports/', follow_redirects=True)
@@ -120,6 +120,13 @@ class TestReportsController(WebTest):
         self.session.expunge(report_new)
         report_new.update_status()
         assert_equal(report_new.status, celery.states.SUCCESS)
+        
+        # Change this report to look like the old style, to test that still works
+        # TODO: delete this test on October 1st
+        report.result_key = report.queue_result_key
+        self.session.commit()
+        result = get_celery_task_result(task, report)
+        assert_true(result is not None)
     
     def test_report_result_csv_error(self):
         response = self.app.get('/reports/result/blah.csv')
@@ -128,3 +135,117 @@ class TestReportsController(WebTest):
     def test_report_result_json_error(self):
         response = self.app.get('/reports/result/blah.json')
         assert_true(response.data.find('isError') >= 0)
+    
+    def test_report_result_average_only_csv(self):
+        # Make the request
+        desired_responses = [{
+            'name': 'Edits - test',
+            'cohort': {
+                'id': self.test_cohort_id,
+            },
+            'metric': {
+                'name': 'NamespaceEdits',
+                'namespaces': [0, 1, 2],
+                'start_date': '2013-06-01',
+                'end_date': '2013-09-01',
+                'individualResults': False,
+                'aggregateResults': True,
+                'aggregateSum': False,
+                'aggregateAverage': True,
+                'aggregateStandardDeviation': False,
+            },
+        }]
+        json_to_post = json.dumps(desired_responses)
+        
+        response = self.app.post('/reports/create/', data=dict(
+            responses=json_to_post
+        ))
+        
+        # Wait a second for the task to get processed
+        time.sleep(1)
+        
+        # Check that the task has been created
+        response = self.app.get('/reports/list/')
+        parsed = json.loads(response.data)
+        result_key = parsed['reports'][-1]['result_key']
+        task, report = get_celery_task(result_key)
+        
+        # Check the csv result
+        response = self.app.get('/reports/result/{0}.csv'.format(result_key))
+        assert_true(response.data.find('Average') >= 0)
+    
+    def test_report_result_sum_only_csv(self):
+        # Make the request
+        desired_responses = [{
+            'name': 'Edits - test',
+            'cohort': {
+                'id': self.test_cohort_id,
+            },
+            'metric': {
+                'name': 'NamespaceEdits',
+                'namespaces': [0, 1, 2],
+                'start_date': '2013-06-01',
+                'end_date': '2013-09-01',
+                'individualResults': False,
+                'aggregateResults': True,
+                'aggregateSum': True,
+                'aggregateAverage': False,
+                'aggregateStandardDeviation': False,
+            },
+        }]
+        json_to_post = json.dumps(desired_responses)
+        
+        response = self.app.post('/reports/create/', data=dict(
+            responses=json_to_post
+        ))
+        
+        # Wait a second for the task to get processed
+        time.sleep(1)
+        
+        # Check that the task has been created
+        response = self.app.get('/reports/list/')
+        parsed = json.loads(response.data)
+        result_key = parsed['reports'][-1]['result_key']
+        task, report = get_celery_task(result_key)
+        
+        # Check the csv result
+        response = self.app.get('/reports/result/{0}.csv'.format(result_key))
+        assert_true(response.data.find('Sum') >= 0)
+    
+    def test_report_result_std_dev_only_csv(self):
+        # Make the request
+        desired_responses = [{
+            'name': 'Edits - test',
+            'cohort': {
+                'id': self.test_cohort_id,
+            },
+            'metric': {
+                'name': 'NamespaceEdits',
+                'namespaces': [0, 1, 2],
+                'start_date': '2013-06-01',
+                'end_date': '2013-09-01',
+                'individualResults': False,
+                'aggregateResults': True,
+                'aggregateSum': False,
+                'aggregateAverage': False,
+                'aggregateStandardDeviation': True,
+            },
+        }]
+        json_to_post = json.dumps(desired_responses)
+        
+        response = self.app.post('/reports/create/', data=dict(
+            responses=json_to_post
+        ))
+        
+        # Wait a second for the task to get processed
+        time.sleep(1)
+        
+        # Check that the task has been created
+        response = self.app.get('/reports/list/')
+        parsed = json.loads(response.data)
+        result_key = parsed['reports'][-1]['result_key']
+        task, report = get_celery_task(result_key)
+        
+        # Check the csv result
+        response = self.app.get('/reports/result/{0}.csv'.format(result_key))
+        assert_true(response.data.find('Standard Deviation') >= 0)

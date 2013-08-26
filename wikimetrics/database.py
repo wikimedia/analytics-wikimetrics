@@ -154,8 +154,6 @@ class Database(object):
             # TODO: these numbers are hardcoded, is that ok?
             num_hosts = 7
             host_projects = map(get_host_projects, range(1, num_hosts + 1))
-            #pool = Pool(num_hosts)
-            #host_projects = pool.map(get_host_projects, range(1, num_hosts + 1))
             project_host_map = {}
             host_fmt = 's{0}'
             for host_id, projects in host_projects:

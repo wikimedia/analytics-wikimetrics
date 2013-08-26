@@ -91,3 +91,30 @@ class TestMappings(DatabaseTest):
             .all()
         print cohorts
         assert_equal(len(cohorts), 2, "User Evan should own 2 cohorts")
+    
+    #***********
+    # String representation tests
+    #***********
+    def test_report_repr(self):
+        r = self.session.query(PersistentReport).get(self.test_report_id)
+        assert_true(str(r).find('PersistentReport') >= 0)
+    
+    def test_user_repr(self):
+        u = self.session.query(User).get(self.test_user_id)
+        assert_true(str(u).find('User') >= 0)
+    
+    def test_cohort_repr(self):
+        c = self.session.query(Cohort).get(self.test_cohort_id)
+        assert_true(str(c).find('Cohort') >= 0)
+    
+    def test_cohort_user_repr(self):
+        cu = self.session.query(CohortUser).get(self.test_cohort_user_id)
+        assert_true(str(cu).find('CohortUser') >= 0)
+    
+    def test_wikiuser_repr(self):
+        wu = self.session.query(WikiUser).get(self.test_wiki_user_id)
+        assert_true(str(wu).find('WikiUser') >= 0)
+    
+    def test_cohort_wikiuser_repr(self):
+        cwu = self.session.query(CohortWikiUser).get(self.test_cohort_wiki_user_id)
+        assert_true(str(cwu).find('CohortWikiUser') >= 0)

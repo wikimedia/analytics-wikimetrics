@@ -79,6 +79,7 @@ def get_celery_task(result_key):
 
 def get_celery_task_result(celery_task, db_report):
     # this indicates an old style result, the celery task result can be returned directly
+    # TODO: delete this logic on October 1st, as all old results will have expired by then
     if db_report.result_key == db_report.queue_result_key:
         return celery_task.get()
     # otherwise, it's a new style result, the celery task is a dictionary

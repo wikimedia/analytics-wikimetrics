@@ -37,3 +37,6 @@ class PersistentReport(db.WikimetricsBase):
                 existing_session = db.get_session()
                 existing_session.add(self)
             existing_session.commit()
+    
+    def __repr__(self):
+        return '<PersistentReport("{0}")>'.format(self.id)
