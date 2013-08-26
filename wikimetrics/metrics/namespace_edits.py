@@ -1,6 +1,8 @@
+from ..utils import thirty_days_ago, today, mediawiki_date
 from sqlalchemy import func
 from metric import Metric
 from form_fields import CommaSeparatedIntegerListField
+from wtforms import DateField
 from wtforms.validators import Required
 from wikimetrics.models import Page, Revision
 
@@ -36,6 +38,8 @@ class NamespaceEdits(Metric):
         'namespace of a mediawiki project'
     )
     
+    start_date          = DateField(default=thirty_days_ago)
+    end_date            = DateField(default=today)
     namespaces = CommaSeparatedIntegerListField(
         None,
         [Required()],
@@ -52,6 +56,13 @@ class NamespaceEdits(Metric):
         Returns:
             dictionary from user ids to the number of edit found.
         """
+        # get the dates to act properly in any environment
+        start_date = self.start_date.data
+        end_date = self.end_date.data
+        if session.bind.name == 'mysql':
+            start_date = mediawiki_date(self.start_date)
+            end_date = mediawiki_date(self.end_date)
+        
         # directly construct dict from query results
         revisions_by_user = dict(
             session
@@ -59,6 +70,8 @@ class NamespaceEdits(Metric):
             .join(Page)
             .filter(Page.page_namespace.in_(self.namespaces.data))
             .filter(Revision.rev_user.in_(user_ids))
+            .filter(Revision.rev_timestamp >= start_date)\
+            .filter(Revision.rev_timestamp <= end_date)\
             .group_by(Revision.rev_user)
             .all()
         )
