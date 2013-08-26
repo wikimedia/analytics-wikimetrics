@@ -55,12 +55,19 @@ class PagesCreated(Metric):
             dictionary from user ids to the number of edit found.
         """
         # TODO: (low-priority) take into account cases where rev_deleted = 1
+        start_date = self.start_date.data
+        end_date = self.end_date.data
+        if session.bind.name == 'mysql':
+            start_date = mediawiki_date(self.start_date)
+            end_date = mediawiki_date(self.end_date)
         p = dict(session
                  .query(Revision.rev_user, func.count(Page.page_id))
                  .join(Page)
                  .filter(Page.page_namespace.in_(self.namespaces.data))
                  .filter(Revision.rev_parent_id == 0)
                  .filter(Revision.rev_user.in_(user_ids))
+                 .filter(Revision.rev_timestamp >= start_date)
+                 .filter(Revision.rev_timestamp <= end_date)
                  .all()
                  )
 

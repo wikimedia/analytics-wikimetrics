@@ -56,7 +56,7 @@ class DatabaseTest(unittest.TestCase):
                 rev_comment='Evan edit ' + str(i),
                 rev_parent_id=parent_id1,
                 rev_len=100,
-                rev_timestamp=datetime(2013, 06, 30)
+                rev_timestamp=datetime(2013, 6, 20)
             )
             r2 = Revision(
                 rev_page=mw_page_evan1.page_id,
@@ -64,7 +64,7 @@ class DatabaseTest(unittest.TestCase):
                 rev_comment='Evan edit ' + str(i),
                 rev_parent_id=parent_id2,
                 rev_len=100,
-                rev_timestamp=datetime(2013, 06, 30)
+                rev_timestamp=datetime(2013, 7, 20)
             )
             r3 = Revision(
                 rev_page=mw_page_evan1.page_id,
@@ -72,7 +72,7 @@ class DatabaseTest(unittest.TestCase):
                 rev_comment='Evan edit ' + str(i),
                 rev_parent_id=parent_id3,
                 rev_len=100,
-                rev_timestamp=datetime(2013, 06, 30)
+                rev_timestamp=datetime(2013, 8, 20)
             )
             revisions.append([r1, r2, r3])
             self.mwSession.add_all([r1, r2, r3])
