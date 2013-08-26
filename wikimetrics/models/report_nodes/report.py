@@ -16,6 +16,7 @@ __all__ = [
     'Report',
     'ReportNode',
     'ReportLeaf',
+    'queue_task',
 ]
 
 

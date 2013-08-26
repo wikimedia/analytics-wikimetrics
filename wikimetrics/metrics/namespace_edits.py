@@ -70,8 +70,8 @@ class NamespaceEdits(Metric):
             .join(Page)
             .filter(Page.page_namespace.in_(self.namespaces.data))
             .filter(Revision.rev_user.in_(user_ids))
-            .filter(Revision.rev_timestamp >= start_date)\
-            .filter(Revision.rev_timestamp <= end_date)\
+            .filter(Revision.rev_timestamp >= start_date)
+            .filter(Revision.rev_timestamp <= end_date)
             .group_by(Revision.rev_user)
             .all()
         )

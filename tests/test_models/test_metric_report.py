@@ -10,10 +10,10 @@ class MetricReportTest(DatabaseTest):
     
     def test_basic_response(self):
         metric = metric_classes['NamespaceEdits'](
-            name = 'NamespaceEdits',
-            namespaces = [0, 1, 2],
-            start_date = '2013-06-01',
-            end_date = '2013-09-01',
+            name='NamespaceEdits',
+            namespaces=[0, 1, 2],
+            start_date='2013-06-01',
+            end_date='2013-09-01',
         )
         mr = MetricReport(
             metric,
@@ -30,10 +30,10 @@ class MetricReportTest(DatabaseTest):
     
     def test_repr(self):
         metric = metric_classes['NamespaceEdits'](
-            name = 'NamespaceEdits',
-            namespaces = [0, 1, 2],
-            start_date = '2013-06-01',
-            end_date = '2013-09-01',
+            name='NamespaceEdits',
+            namespaces=[0, 1, 2],
+            start_date='2013-06-01',
+            end_date='2013-09-01',
         )
         mr = MetricReport(
             metric,

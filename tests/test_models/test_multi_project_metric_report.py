@@ -11,10 +11,10 @@ class MultiProjectMetricReportTest(QueueDatabaseTest):
     def test_basic_response(self):
         cohort = self.session.query(Cohort).get(self.test_cohort_id)
         metric = metric_classes['NamespaceEdits'](
-            name = 'NamespaceEdits',
-            namespaces = [0, 1, 2],
-            start_date = '2013-06-01',
-            end_date = '2013-09-01',
+            name='NamespaceEdits',
+            namespaces=[0, 1, 2],
+            start_date='2013-06-01',
+            end_date='2013-09-01',
         )
         mr = MultiProjectMetricReport(cohort, metric, 'enwiki')
         
@@ -33,10 +33,10 @@ class MultiProjectMetricReportWithoutQueueTest(DatabaseTest):
     def test_finish(self):
         cohort = self.session.query(Cohort).get(self.test_cohort_id)
         metric = metric_classes['NamespaceEdits'](
-            name = 'NamespaceEdits',
-            namespaces = [0, 1, 2],
-            start_date = '2013-06-01',
-            end_date = '2013-09-01',
+            name='NamespaceEdits',
+            namespaces=[0, 1, 2],
+            start_date='2013-06-01',
+            end_date='2013-09-01',
         )
         mr = MultiProjectMetricReport(cohort, metric, 'enwiki')
         
@@ -55,10 +55,10 @@ class MultiProjectMetricReportWithoutQueueTest(DatabaseTest):
     def test_repr(self):
         cohort = self.session.query(Cohort).get(self.test_cohort_id)
         metric = metric_classes['NamespaceEdits'](
-            name = 'NamespaceEdits',
-            namespaces = [0, 1, 2],
-            start_date = '2013-06-01',
-            end_date = '2013-09-01',
+            name='NamespaceEdits',
+            namespaces=[0, 1, 2],
+            start_date='2013-06-01',
+            end_date='2013-09-01',
         )
         mr = MultiProjectMetricReport(cohort, metric, 'enwiki')
         

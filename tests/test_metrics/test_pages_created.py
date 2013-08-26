@@ -30,5 +30,3 @@ class PagesCreatedTest(DatabaseWithCohortTest):
         )
         results = metric(list(self.cohort), self.mwSession)
         assert_equal(results[self.evan_id]["pages_created"], 2)
-
-

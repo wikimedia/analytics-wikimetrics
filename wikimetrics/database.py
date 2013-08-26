@@ -39,6 +39,20 @@ def get_host_projects(host_id):
     return (host_id, projects)
 
 
+def get_host_projects_map():
+    # TODO: these numbers are hardcoded, is that ok?
+    num_hosts = 7
+    host_projects = map(get_host_projects, range(1, num_hosts + 1))
+    project_host_map = {}
+    host_fmt = 's{0}'
+    for host_id, projects in host_projects:
+        host = host_fmt.format(host_id)
+        for project in projects:
+            project_host_map[project] = host
+    
+    return project_host_map
+
+
 class Database(object):
     """
     Basically a collection of all database related objects and methods.
@@ -151,15 +165,8 @@ class Database(object):
         """
         cache_name = 'project_host_map.json'
         if not exists(cache_name) or not usecache:
-            # TODO: these numbers are hardcoded, is that ok?
-            num_hosts = 7
-            host_projects = map(get_host_projects, range(1, num_hosts + 1))
-            project_host_map = {}
-            host_fmt = 's{0}'
-            for host_id, projects in host_projects:
-                host = host_fmt.format(host_id)
-                for project in projects:
-                    project_host_map[project] = host
+            
+            project_host_map = get_host_projects_map()
             if usecache and os.access(cache_name, os.W_OK):
                 try:
                     json.dump(project_host_map, open(cache_name, 'w'))

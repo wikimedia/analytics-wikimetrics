@@ -1,4 +1,4 @@
-from nose.tools import assert_equals, assert_true
+from nose.tools import assert_equals, assert_true, raises
 from celery.exceptions import SoftTimeLimitExceeded
 from wikimetrics.models import (
     RunReport, Aggregation, PersistentReport
@@ -162,3 +162,28 @@ class RunReportTest(QueueDatabaseTest):
         
         print('Successes: {0}'.format(successes))
         assert_true(successes == trials, 'all of the trials must succeed')
+    
+    # TODO: This is weird, the exception seems to be thrown
+    # But the line is still showing as not covered by tests
+    @raises(Exception)
+    def test_invalid_metric(self):
+        run_report = RunReport()
+        run_report.parse_request([{
+            'name': 'Edits - test',
+            'cohort': {
+                'id': self.test_cohort_id,
+            },
+            'metric': {
+                'name': 'NamespaceEdits',
+                'namespaces': 'blah blah',
+            },
+        }])
+    
+    def test_run_report_finish(self):
+        run_report = RunReport([])
+        result = run_report.finish([])
+        assert_equals(result[run_report.result_key], 'Finished')
+    
+    def test_run_report_repr(self):
+        run_report = RunReport([])
+        assert_true(str(run_report).find('RunReport') >= 0)

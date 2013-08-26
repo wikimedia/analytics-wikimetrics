@@ -37,7 +37,7 @@ class PagesCreated(Metric):
     
     start_date          = DateField(default=thirty_days_ago)
     end_date            = DateField(default=today)
-
+    
     namespaces = CommaSeparatedIntegerListField(
         None,
         [Required()],
@@ -70,7 +70,7 @@ class PagesCreated(Metric):
                  .filter(Revision.rev_timestamp <= end_date)
                  .all()
                  )
-
+        
         return {
             user_id: {'pages_created': p.get(user_id, 0)}
             for user_id in user_ids

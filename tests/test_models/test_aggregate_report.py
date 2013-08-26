@@ -12,10 +12,10 @@ class AggregateReportTest(QueueDatabaseTest):
     def test_basic_response(self):
         cohort = self.session.query(Cohort).get(self.test_cohort_id)
         metric = metric_classes['NamespaceEdits'](
-            name = 'NamespaceEdits',
-            namespaces = [0, 1, 2],
-            start_date = '2013-06-01',
-            end_date = '2013-09-01',
+            name='NamespaceEdits',
+            namespaces=[0, 1, 2],
+            start_date='2013-06-01',
+            end_date='2013-09-01',
         )
         ar = AggregateReport(
             cohort,
@@ -33,25 +33,14 @@ class AggregateReportTest(QueueDatabaseTest):
             .filter(PersistentReport.id == ar.persistent_id)\
             .one()\
             .result_key
-        inner_key = self.session.query(PersistentReport)\
-            .filter(PersistentReport.id == ar.children[0].persistent_id)\
-            .one()\
-            .result_key
         
         assert_equals(
-            result
-                [aggregate_key]
-                [Aggregation.IND]
-                [0]
-                [self.test_mediawiki_user_id]
-                ['edits'],
+            result[aggregate_key][Aggregation.IND][0][self.test_mediawiki_user_id]
+            ['edits'],
             2
         )
         assert_equals(
-            result
-                [aggregate_key]
-                [Aggregation.AVG]
-                ['edits'],
+            result[aggregate_key][Aggregation.AVG]['edits'],
             Decimal(1.25)
         )
 
@@ -61,10 +50,10 @@ class AggregateReportWithoutQueueTest(DatabaseTest):
     def test_finish(self):
         cohort = self.session.query(Cohort).get(self.test_cohort_id)
         metric = metric_classes['NamespaceEdits'](
-            name = 'NamespaceEdits',
-            namespaces = [0, 1, 2],
-            start_date = '2013-06-01',
-            end_date = '2013-09-01',
+            name='NamespaceEdits',
+            namespaces=[0, 1, 2],
+            start_date='2013-06-01',
+            end_date='2013-09-01',
         )
         ar = AggregateReport(
             cohort,
@@ -117,10 +106,10 @@ class AggregateReportWithoutQueueTest(DatabaseTest):
     def test_repr(self):
         cohort = self.session.query(Cohort).get(self.test_cohort_id)
         metric = metric_classes['NamespaceEdits'](
-            name = 'NamespaceEdits',
-            namespaces = [0, 1, 2],
-            start_date = '2013-06-01',
-            end_date = '2013-09-01',
+            name='NamespaceEdits',
+            namespaces=[0, 1, 2],
+            start_date='2013-06-01',
+            end_date='2013-09-01',
         )
         ar = AggregateReport(
             cohort,
