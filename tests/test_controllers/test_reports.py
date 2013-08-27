@@ -173,6 +173,15 @@ class ReportsControllerTest(WebTest):
         # Check the csv result
         response = self.app.get('/reports/result/{0}.csv'.format(result_key))
         assert_true(response.data.find('Average') >= 0)
+
+        # Testing to see if the parameters are also in the CSV
+        # (related to Mingle 1089)
+        assert_true(response.data.find('parameters') >= 0)
+        assert_true(response.data.find('start_date') >= 0)
+        assert_true(response.data.find('end_date') >= 0)
+        assert_true(response.data.find('namespaces') >= 0)
+        assert_true(response.data.find('metric/cohort') >= 0)
+
     
     def test_report_result_sum_only_csv(self):
         # Make the request
