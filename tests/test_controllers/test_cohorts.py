@@ -290,6 +290,11 @@ class TestCohortsController(WebTest):
         link = link_to_user_page('Dan', 'en')
         assert_equal(link, 'https://en.wikipedia.org/wiki/User:Dan')
     
+    def test_link_to_user_page_unicode(self):
+        link_to_user_page('ولاء عبد المنعم', 'ar')
+        # just want to make sure no exceptions are raised
+        assert_true(True)
+    
     def test_validate_records(self):
         (valid, invalid) = validate_records([
             {

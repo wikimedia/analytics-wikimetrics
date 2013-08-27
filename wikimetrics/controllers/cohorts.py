@@ -373,7 +373,16 @@ def project_name_for_link(project):
 
 def link_to_user_page(username, project):
     project = project_name_for_link(project)
-    return 'https://{0}.wikipedia.org/wiki/User:{1}'.format(project, username)
+    user_link = 'https://{0}.wikipedia.org/wiki/User:{1}'
+    user_not_found_link = 'https://{0}.wikipedia.org/wiki/Username_could_not_be_parsed'
+    # TODO: python 2 has insane unicode handling, switch to python 3
+    try:
+        return user_link.format(project, username)
+    except UnicodeEncodeError:
+        try:
+            return user_link.format(project, username.encode('utf8'))
+        except:
+            return user_not_found_link.format(project)
 
 
 def validate_records(records):
