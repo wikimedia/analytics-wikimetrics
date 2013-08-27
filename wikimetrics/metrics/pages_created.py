@@ -60,18 +60,21 @@ class PagesCreated(Metric):
         if session.bind.name == 'mysql':
             start_date = mediawiki_date(self.start_date)
             end_date = mediawiki_date(self.end_date)
-        p = dict(session
-                 .query(Revision.rev_user, func.count(Page.page_id))
-                 .join(Page)
-                 .filter(Page.page_namespace.in_(self.namespaces.data))
-                 .filter(Revision.rev_parent_id == 0)
-                 .filter(Revision.rev_user.in_(user_ids))
-                 .filter(Revision.rev_timestamp >= start_date)
-                 .filter(Revision.rev_timestamp <= end_date)
-                 .all()
-                 )
+        
+        pages_by_user = dict(
+            session
+            .query(Revision.rev_user, func.count(Page.page_id))
+            .join(Page)
+            .filter(Page.page_namespace.in_(self.namespaces.data))
+            .filter(Revision.rev_parent_id == 0)
+            .filter(Revision.rev_user.in_(user_ids))
+            .filter(Revision.rev_timestamp >= start_date)
+            .filter(Revision.rev_timestamp <= end_date)
+            .group_by(Revision.rev_user)
+            .all()
+        )
         
         return {
-            user_id: {'pages_created': p.get(user_id, 0)}
+            user_id: {'pages_created': pages_by_user.get(user_id, 0)}
             for user_id in user_ids
         }

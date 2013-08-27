@@ -19,6 +19,7 @@ class PagesCreatedTest(DatabaseWithCohortTest):
         )
         results = metric(list(self.cohort), self.mwSession)
         assert_equal(results[self.evan_id]["pages_created"], 3)
+        assert_equal(results[self.dan_id]["pages_created"], 1)
 
     # same thing as before, but this time we leave one page created
     # out of the date range to see if date ranges work properly
