@@ -6,6 +6,8 @@ from datetime import datetime
 __all__ = [
     'DatabaseTest',
     'DatabaseWithCohortTest',
+    'DatabaseWithSurvivorCohortTest',
+    'DatabaseForPagesCreatedTest',
     'QueueTest',
     'QueueDatabaseTest',
     'WebTest',
@@ -32,64 +34,6 @@ class DatabaseTest(unittest.TestCase):
     
     def runTest(self):
         pass
-
-    # create test data for metric PagesCreated
-    def createTestDataMetricPagesCreated(self, user, second_user):
-        mw_page_evan1 = Page(page_namespace=301, page_title='Page1')
-        mw_page_evan2 = Page(page_namespace=302, page_title='Page2')
-        mw_page_evan3 = Page(page_namespace=303, page_title='Page3')
-        mw_page_dan1 = Page(page_namespace=301, page_title='Page4')
-        self.mwSession.add_all(
-            [mw_page_evan1, mw_page_evan2, mw_page_evan3, mw_page_dan1]
-        )
-        self.mwSession.commit()
-        revisions = []
-
-        r1 = None
-        r2 = None
-        r3 = None
-        r4 = None
-        for i in range(0, 3):
-            parent_id1 = (0 if r1 is None else r1.rev_id)
-            parent_id2 = (0 if r2 is None else r2.rev_id)
-            parent_id3 = (0 if r3 is None else r3.rev_id)
-            parent_id4 = (0 if r4 is None else r4.rev_id)
-            print("rev_id1=" + str(parent_id1) + "\n", sys.stderr)
-            r1 = Revision(
-                rev_page=mw_page_evan1.page_id,
-                rev_user=user.user_id,
-                rev_comment='Evan edit ' + str(i),
-                rev_parent_id=parent_id1,
-                rev_len=100,
-                rev_timestamp=datetime(2013, 6, 20)
-            )
-            r2 = Revision(
-                rev_page=mw_page_evan1.page_id,
-                rev_user=user.user_id,
-                rev_comment='Evan edit ' + str(i),
-                rev_parent_id=parent_id2,
-                rev_len=100,
-                rev_timestamp=datetime(2013, 7, 20)
-            )
-            r3 = Revision(
-                rev_page=mw_page_evan1.page_id,
-                rev_user=user.user_id,
-                rev_comment='Evan edit ' + str(i),
-                rev_parent_id=parent_id3,
-                rev_len=100,
-                rev_timestamp=datetime(2013, 8, 20)
-            )
-            r4 = Revision(
-                rev_page=mw_page_dan1.page_id,
-                rev_user=second_user.user_id,
-                rev_comment='Dan edit ' + str(i),
-                rev_parent_id=parent_id4,
-                rev_len=100,
-                rev_timestamp=datetime(2013, 8, 20)
-            )
-            revisions.append([r1, r2, r3, r4])
-            self.mwSession.add_all([r1, r2, r3, r4])
-            self.mwSession.commit()
         
     def setUp(self):
         
@@ -124,8 +68,6 @@ class DatabaseTest(unittest.TestCase):
         ])
         self.mwSession.commit()
         
-        self.createTestDataMetricPagesCreated(mw_user_evan, mw_user_dan)
-
         # edits in between Dan and Evan edits
         rev_before_1 = Revision(
             rev_page=mw_page.page_id, rev_user=mw_user_diederik.user_id,
@@ -443,7 +385,7 @@ class WebTest(WebTestAnonymous):
 
 
 class DatabaseWithCohortTest(DatabaseTest):
-    
+
     def setUp(self):
         DatabaseTest.setUp(self)
         self.cohort = self.session.query(Cohort).filter_by(name='test').one()
@@ -463,3 +405,127 @@ class DatabaseWithCohortTest(DatabaseTest):
         self.diederik_id = wikiusers\
             .filter(WikiUser.mediawiki_username == 'Diederik')\
             .one().mediawiki_userid
+
+
+# class used to test Pages Created metric
+class DatabaseForPagesCreatedTest(DatabaseWithCohortTest):
+
+    # create test data for metric PagesCreated
+    def createTestDataMetricPagesCreated(self):
+        mw_page_evan1 = Page(page_namespace=301, page_title='Page1')
+        mw_page_evan2 = Page(page_namespace=302, page_title='Page2')
+        mw_page_evan3 = Page(page_namespace=303, page_title='Page3')
+        mw_page_dan1 = Page(page_namespace=301, page_title='Page4')
+        self.mwSession.add_all(
+            [mw_page_evan1, mw_page_evan2, mw_page_evan3, mw_page_dan1]
+        )
+        self.mwSession.commit()
+        revisions = []
+
+        r1 = None
+        r2 = None
+        r3 = None
+        r4 = None
+        for i in range(0, 3):
+            parent_id1 = (0 if r1 is None else r1.rev_id)
+            parent_id2 = (0 if r2 is None else r2.rev_id)
+            parent_id3 = (0 if r3 is None else r3.rev_id)
+            parent_id4 = (0 if r4 is None else r4.rev_id)
+            print("rev_id1=" + str(parent_id1) + "\n", sys.stderr)
+            r1 = Revision(
+                rev_page=mw_page_evan1.page_id,
+                rev_user=self.evan_id,
+                rev_comment='Evan edit ' + str(i),
+                rev_parent_id=parent_id1,
+                rev_len=100,
+                rev_timestamp=datetime(2013, 6, 20)
+            )
+            r2 = Revision(
+                rev_page=mw_page_evan1.page_id,
+                rev_user=self.evan_id,
+                rev_comment='Evan edit ' + str(i),
+                rev_parent_id=parent_id2,
+                rev_len=100,
+                rev_timestamp=datetime(2013, 7, 20)
+            )
+            r3 = Revision(
+                rev_page=mw_page_evan1.page_id,
+                rev_user=self.evan_id,
+                rev_comment='Evan edit ' + str(i),
+                rev_parent_id=parent_id3,
+                rev_len=100,
+                rev_timestamp=datetime(2013, 8, 20)
+            )
+            r4 = Revision(
+                rev_page=mw_page_dan1.page_id,
+                rev_user=self.dan_id,
+                rev_comment='Dan edit ' + str(i),
+                rev_parent_id=parent_id4,
+                rev_len=100,
+                rev_timestamp=datetime(2013, 8, 20)
+            )
+            revisions.append([r1, r2, r3, r4])
+            self.mwSession.add_all([r1, r2, r3, r4])
+            self.mwSession.commit()
+
+    def setUp(self):
+        DatabaseWithCohortTest.setUp(self)
+        self.createTestDataMetricPagesCreated()
+
+
+class DatabaseWithSurvivorCohortTest(DatabaseWithCohortTest):
+
+    # update dan,evan,andrew,diederik user_registration timestamp
+    def updateSurvivorRegistrationData(self):
+        registration_date_dan    = datetime.strptime("2013-01-01", "%Y-%m-%d")
+        registration_date_evan   = datetime.strptime("2013-01-02", "%Y-%m-%d")
+        registration_date_andrew = datetime.strptime("2013-01-03", "%Y-%m-%d")
+        self.mwSession.query(MediawikiUser.user_id == self.dan_id) \
+            .update({"user_registration": registration_date_dan})
+        self.mwSession.query(MediawikiUser.user_id == self.evan_id) \
+            .update({"user_registration": registration_date_evan})
+        self.mwSession.query(MediawikiUser.user_id == self.andrew_id) \
+            .update({"user_registration": registration_date_andrew})
+
+    def createPageForSurvivors(self):
+        self.page = Page(page_namespace=304, page_title='SurvivorTestPage')
+        self.mwSession.add_all([self.page])
+        self.mwSession.commit()
+
+    def createRevisionsForSurvivors(self):
+
+        new_revisions = []
+
+        # create a revision for user with id uid at time t
+        def createCustomRevision(uid, t):
+            r = Revision(
+                rev_page=self.page.page_id,
+                rev_user=uid,
+                rev_comment='Survivor Revision',
+                rev_parent_id=111,
+                rev_len=100,
+                rev_timestamp=t
+            )
+            new_revisions.append(r)
+
+        createCustomRevision(self.dan_id, datetime(2013, 1, 1))
+        createCustomRevision(self.dan_id, datetime(2013, 1, 2))
+        createCustomRevision(self.dan_id, datetime(2013, 1, 3))
+
+        createCustomRevision(self.evan_id, datetime(2013, 1, 2))
+        createCustomRevision(self.evan_id, datetime(2013, 1, 3))
+        createCustomRevision(self.evan_id, datetime(2013, 1, 4))
+
+        createCustomRevision(self.andrew_id, datetime(2013, 1, 3))
+        createCustomRevision(self.andrew_id, datetime(2013, 1, 4))
+        createCustomRevision(self.andrew_id, datetime(2013, 1, 5))
+        createCustomRevision(self.andrew_id, datetime(2013, 1, 6))
+
+        self.mwSession.add_all(new_revisions)
+        self.mwSession.commit()
+
+    def setUp(self):
+        DatabaseWithCohortTest.setUp(self)
+        self.updateSurvivorRegistrationData()
+        self.createPageForSurvivors()
+        self.createRevisionsForSurvivors()

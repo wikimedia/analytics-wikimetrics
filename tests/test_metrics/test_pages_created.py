@@ -1,12 +1,12 @@
 from nose.tools import assert_true, assert_not_equal, assert_equal
-from tests.fixtures import DatabaseWithCohortTest
+from tests.fixtures import DatabaseForPagesCreatedTest
 
 from wikimetrics import app
 from wikimetrics.metrics import PagesCreated
 from wikimetrics.models import Cohort, MetricReport, WikiUser, CohortWikiUser
 
 
-class PagesCreatedTest(DatabaseWithCohortTest):
+class PagesCreatedTest(DatabaseForPagesCreatedTest):
     # Evan has 3 pages created, one in namespace 301, one in 302, and one in 303
     # (see tests/fixtures.py for details)
     # So here we just test if the number of pages created in those namespaces is
