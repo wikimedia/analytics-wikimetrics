@@ -181,7 +181,6 @@ class ReportsControllerTest(WebTest):
         assert_true(response.data.find('end_date') >= 0)
         assert_true(response.data.find('namespaces') >= 0)
         assert_true(response.data.find('metric/cohort') >= 0)
-
     
     def test_report_result_sum_only_csv(self):
         # Make the request

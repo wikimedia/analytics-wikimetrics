@@ -406,7 +406,7 @@ def validate_records(records):
                 .format(record['raw_username'], normalized_project)
             )
             record['reason_invalid'] = 'invalid user_name / user_id: {0}'.format(
-                record['user_str']
+                record['raw_username']
             )
             invalid.append(record)
             continue

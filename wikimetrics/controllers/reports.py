@@ -147,22 +147,19 @@ def report_result_csv(result_key):
             task_row = task_result[Aggregation.STD].copy()
             task_row['user_id'] = Aggregation.STD
             task_rows.append(task_row)
-
-
-        #========================================================
-
+        
         parameters = json.loads(pj.parameters)
-
+        
         # generate some empty rows to separate the result
         # from the parameters
         task_rows.append({})
         task_rows.append({})
-        task_rows.append({ 'user_id': 'parameters' })
-
-        for key,value in parameters.items():
-            task_rows.append({ 'user_id': key , fieldnames[1]: value })
-
-        task_rows.append({'user_id': 'metric/cohort name', fieldnames[1]: pj.name});
+        task_rows.append({'user_id': 'parameters'})
+        
+        for key, value in parameters.items():
+            task_rows.append({'user_id': key , fieldnames[1]: value})
+        
+        task_rows.append({'user_id': 'metric/cohort name', fieldnames[1]: pj.name})
         
         writer.writeheader()
         writer.writerows(task_rows)
