@@ -34,21 +34,26 @@ class DatabaseTest(unittest.TestCase):
         pass
 
     # create test data for metric PagesCreated
-    def createTestDataMetricPagesCreated(self, user):
+    def createTestDataMetricPagesCreated(self, user, second_user):
         mw_page_evan1 = Page(page_namespace=301, page_title='Page1')
         mw_page_evan2 = Page(page_namespace=302, page_title='Page2')
         mw_page_evan3 = Page(page_namespace=303, page_title='Page3')
-        self.mwSession.add_all([mw_page_evan1, mw_page_evan2, mw_page_evan3])
+        mw_page_dan1 = Page(page_namespace=301, page_title='Page4')
+        self.mwSession.add_all(
+            [mw_page_evan1, mw_page_evan2, mw_page_evan3, mw_page_dan1]
+        )
         self.mwSession.commit()
         revisions = []
 
         r1 = None
         r2 = None
         r3 = None
+        r4 = None
         for i in range(0, 3):
             parent_id1 = (0 if r1 is None else r1.rev_id)
             parent_id2 = (0 if r2 is None else r2.rev_id)
             parent_id3 = (0 if r3 is None else r3.rev_id)
+            parent_id4 = (0 if r4 is None else r4.rev_id)
             print("rev_id1=" + str(parent_id1) + "\n", sys.stderr)
             r1 = Revision(
                 rev_page=mw_page_evan1.page_id,
@@ -74,8 +79,16 @@ class DatabaseTest(unittest.TestCase):
                 rev_len=100,
                 rev_timestamp=datetime(2013, 8, 20)
             )
-            revisions.append([r1, r2, r3])
-            self.mwSession.add_all([r1, r2, r3])
+            r4 = Revision(
+                rev_page=mw_page_dan1.page_id,
+                rev_user=second_user.user_id,
+                rev_comment='Dan edit ' + str(i),
+                rev_parent_id=parent_id4,
+                rev_len=100,
+                rev_timestamp=datetime(2013, 8, 20)
+            )
+            revisions.append([r1, r2, r3, r4])
+            self.mwSession.add_all([r1, r2, r3, r4])
             self.mwSession.commit()
         
     def setUp(self):
@@ -111,7 +124,7 @@ class DatabaseTest(unittest.TestCase):
         ])
         self.mwSession.commit()
         
-        self.createTestDataMetricPagesCreated(mw_user_evan)
+        self.createTestDataMetricPagesCreated(mw_user_evan, mw_user_dan)
 
         # edits in between Dan and Evan edits
         rev_before_1 = Revision(
