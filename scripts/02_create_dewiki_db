@@ -1,0 +1,2 @@
+create database dewiki;
+grant ALL on dewiki.* TO wikimetrics@'localhost';

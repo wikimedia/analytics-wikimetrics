@@ -62,6 +62,7 @@ class QueueTaskTest(QueueDatabaseTest):
     def test_set_status(self):
         fr = FakeReport()
         fr.set_status('STARTED')
+        self.session.commit()
         pr_started = self.session.query(PersistentReport).get(fr.persistent_id)
         assert_equals(pr_started.status, 'STARTED')
         assert_equals(pr_started.queue_result_key, None)
@@ -69,6 +70,7 @@ class QueueTaskTest(QueueDatabaseTest):
     def test_set_status_and_task(self):
         fr = FakeReport()
         fr.set_status('WORKING', task_id=1)
+        self.session.commit()
         pr_working = self.session.query(PersistentReport).get(fr.persistent_id)
         assert_equals(pr_working.status, 'WORKING')
         assert_equals(pr_working.queue_result_key, '1')

@@ -34,6 +34,7 @@ class RunReportTest(QueueDatabaseTest):
         }]
         jr = RunReport(desired_responses, user_id=self.test_user_id)
         results = jr.task.delay(jr).get()
+        self.session.commit()
         result_key = self.session.query(PersistentReport)\
             .filter(PersistentReport.id == jr.children[0].persistent_id)\
             .one()\
@@ -65,6 +66,7 @@ class RunReportTest(QueueDatabaseTest):
         }]
         jr = RunReport(desired_responses, user_id=self.test_user_id)
         results = jr.task.delay(jr).get()
+        self.session.commit()
         result_key = self.session.query(PersistentReport)\
             .filter(PersistentReport.id == jr.children[0].persistent_id)\
             .one()\
@@ -100,6 +102,7 @@ class RunReportTest(QueueDatabaseTest):
         }]
         jr = RunReport(desired_responses, user_id=self.test_user_id)
         results = jr.task.delay(jr).get()
+        self.session.commit()
         result_key = self.session.query(PersistentReport)\
             .filter(PersistentReport.id == jr.children[0].persistent_id)\
             .one()\
@@ -147,6 +150,7 @@ class RunReportTest(QueueDatabaseTest):
         for jr, delayed in reports:
             try:
                 results = delayed.get()
+                self.session.commit()
                 result_key = self.session.query(PersistentReport)\
                     .filter(PersistentReport.id == jr.children[0].persistent_id)\
                     .one()\

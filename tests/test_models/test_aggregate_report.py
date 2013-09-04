@@ -29,6 +29,7 @@ class AggregateReportTest(QueueDatabaseTest):
         )
         result = ar.task.delay(ar).get()
         
+        self.session.commit()
         aggregate_key = self.session.query(PersistentReport)\
             .filter(PersistentReport.id == ar.persistent_id)\
             .one()\

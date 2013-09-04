@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, Boolean, DateTime, String, ForeignKey
+from sqlalchemy import Column, Integer, Boolean, Numeric, String, ForeignKey
 from wikimetrics.configurables import db
 
 __all__ = [
@@ -12,7 +12,7 @@ class Logging(db.MediawikiBase):
     log_id = Column(Integer, primary_key=True)
     log_type = Column(String(32))
     log_action = Column(String(32))
-    log_timestamp = Column(DateTime)
+    log_timestamp = Column(Numeric(precision=14))
     log_user = Column(Integer, ForeignKey('user.user_id'))
     log_user_text = Column(String(255))
     log_namespace = Column(Integer)

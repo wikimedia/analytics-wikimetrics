@@ -20,6 +20,7 @@ class MultiProjectMetricReportTest(QueueDatabaseTest):
         
         result = mr.task.delay(mr).get()
         
+        self.session.commit()
         result_key = self.session.query(PersistentReport)\
             .filter(PersistentReport.id == mr.persistent_id)\
             .one()\
