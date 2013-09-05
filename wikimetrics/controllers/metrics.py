@@ -7,7 +7,7 @@ from ..metrics import metric_classes
 
 def get_metrics(add_class=False):
     records = []
-    for name, metric in inspect.getmembers(metrics, inspect.isclass):
+    for name, metric in metric_classes.iteritems():
         if metric.show_in_ui:
             new_record = {
                 'name' : name,

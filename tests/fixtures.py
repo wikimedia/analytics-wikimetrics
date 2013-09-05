@@ -1,7 +1,7 @@
 import unittest
 import celery
 import sys
-from datetime import datetime
+from nose.tools import nottest
 
 __all__ = [
     'DatabaseTest',
@@ -31,10 +31,160 @@ from wikimetrics.models import (
 
 
 class DatabaseTest(unittest.TestCase):
+    """
+    WARNING: making instance methods on test classes is ok, but you
+             MUST decorate them as @nottest otherwise they will execute
+             as part of test runs
+    """
     
     def runTest(self):
         pass
+    
+    @nottest
+    def create_test_cohort(
+        self,
+        name='test-specific',
+        editor_count=0,
+        revisions_per_editor=0,
+        revision_timestamps=[],
+        revision_lengths=[],
+    ):
+        """
+        Parameters
+            name                    : a unique name to append to everything
+            editor_count            : count of editors we want in this cohort
+            revisions_per_editor    : count of revisions we want for each editor
+            revision_timestamps     : two dimensional array indexed by
+                                        editor from 0 to editor_count-1
+                                        revision from 0 to revisions_per_editor-1
+            revision_lengths        : two dimensional array indexed same as above OR
+                                        a single integer so all revisions will
+                                        have the same length
         
+        Returns
+            Nothing but creates the following, to be accessed in a test:
+              self.cohort       : owned by web_test_user, contains self.editors
+              self.page         : the page that all the editors edited
+              self.editors      : the mediawiki editors from the cohort
+              self.revisions    : the revisions added, in a two dimensional array
+        """
+        if type(revision_lengths) is int:
+            revision_lengths = [[revision_lengths] * revisions_per_editor] * editor_count
+        
+        self.project = 'enwiki'
+        self.editors = []
+        self.revisions = []
+        
+        self.cohort = Cohort(name='{0}-cohort'.format(name), enabled=True, public=False)
+        self.session.add(self.cohort)
+        self.session.commit()
+        
+        self.page = Page(page_namespace=0, page_title='{0}-page'.format(name))
+        self.mwSession.add(self.page)
+        self.mwSession.commit()
+        
+        for e in range(editor_count):
+            editor = MediawikiUser(user_name='Editor {0}-{1}'.format(name, e))
+            self.mwSession.add(editor)
+            self.mwSession.commit()
+            self.editors.append(editor)
+            
+            wiki_editor = WikiUser(
+                mediawiki_username=editor.user_name,
+                mediawiki_userid=editor.user_id,
+                project=self.project,
+            )
+            self.session.add(wiki_editor)
+            self.session.commit()
+            
+            cohort_wiki_editor = CohortWikiUser(
+                cohort_id=self.cohort.id,
+                wiki_user_id=wiki_editor.id,
+            )
+            self.session.add(cohort_wiki_editor)
+            self.session.commit()
+            
+            for r in range(revisions_per_editor):
+                revision = Revision(
+                    rev_page=self.page.page_id,
+                    rev_user=editor.user_id,
+                    rev_comment='revision {0}, editor {1}'.format(r, e),
+                    rev_timestamp=revision_timestamps[e][r],
+                    rev_len=revision_lengths[e][r],
+                    # rev_parent_id will be set below, following chronology
+                )
+                self.revisions.append(revision)
+        
+        self.mwSession.add_all(self.revisions)
+        self.mwSession.commit()
+        # add rev_parent_id chain in chronological order
+        ordered_revisions = sorted(self.revisions, key=lambda r: r.rev_timestamp)
+        for i, revision in enumerate(ordered_revisions):
+            if i == 0:
+                revision.rev_parent_id = 0
+            else:
+                revision.rev_parent_id = ordered_revisions[i-1].rev_id
+        
+        self.mwSession.commit()
+    
+    # create test data for metric PagesCreated
+    @nottest
+    def createTestDataMetricPagesCreated(self, user, second_user):
+        mw_page_evan1 = Page(page_namespace=301, page_title='Page1')
+        mw_page_evan2 = Page(page_namespace=302, page_title='Page2')
+        mw_page_evan3 = Page(page_namespace=303, page_title='Page3')
+        mw_page_dan1 = Page(page_namespace=301, page_title='Page4')
+        self.mwSession.add_all(
+            [mw_page_evan1, mw_page_evan2, mw_page_evan3, mw_page_dan1]
+        )
+        self.mwSession.commit()
+        revisions = []
+
+        r1 = None
+        r2 = None
+        r3 = None
+        r4 = None
+        for i in range(0, 3):
+            parent_id1 = (0 if r1 is None else r1.rev_id)
+            parent_id2 = (0 if r2 is None else r2.rev_id)
+            parent_id3 = (0 if r3 is None else r3.rev_id)
+            parent_id4 = (0 if r4 is None else r4.rev_id)
+            r1 = Revision(
+                rev_page=mw_page_evan1.page_id,
+                rev_user=user.user_id,
+                rev_comment='Evan edit ' + str(i),
+                rev_parent_id=parent_id1,
+                rev_len=100,
+                rev_timestamp=20130620000000,
+            )
+            r2 = Revision(
+                rev_page=mw_page_evan1.page_id,
+                rev_user=user.user_id,
+                rev_comment='Evan edit ' + str(i),
+                rev_parent_id=parent_id2,
+                rev_len=100,
+                rev_timestamp=20130720000000,
+            )
+            r3 = Revision(
+                rev_page=mw_page_evan1.page_id,
+                rev_user=user.user_id,
+                rev_comment='Evan edit ' + str(i),
+                rev_parent_id=parent_id3,
+                rev_len=100,
+                rev_timestamp=20130820000000,
+            )
+            r4 = Revision(
+                rev_page=mw_page_dan1.page_id,
+                rev_user=second_user.user_id,
+                rev_comment='Dan edit ' + str(i),
+                rev_parent_id=parent_id4,
+                rev_len=100,
+                rev_timestamp=20130820000000,
+            )
+            revisions.append([r1, r2, r3, r4])
+            self.mwSession.add_all([r1, r2, r3, r4])
+            self.mwSession.commit()
+    
     def setUp(self):
         
         #****************************************************************
@@ -72,33 +222,33 @@ class DatabaseTest(unittest.TestCase):
         rev_before_1 = Revision(
             rev_page=mw_page.page_id, rev_user=mw_user_diederik.user_id,
             rev_comment='before Dan edit 1',
-            rev_len=4, rev_timestamp=datetime(2013, 05, 30),
+            rev_len=4, rev_timestamp=20130530000000,
         )
         rev_before_2 = Revision(
             rev_page=mw_page.page_id, rev_user=mw_user_diederik.user_id,
             rev_comment='before Dan edit 2',
-            rev_len=0, rev_timestamp=datetime(2013, 06, 30),
+            rev_len=0, rev_timestamp=20130630000000,
         )
         rev_before_3 = Revision(
             rev_page=mw_page.page_id, rev_user=mw_user_diederik.user_id,
             rev_comment='before Evan edit 1',
-            rev_len=0, rev_timestamp=datetime(2013, 05, 30),
+            rev_len=0, rev_timestamp=20130530000000,
         )
         rev_before_4 = Revision(
             rev_page=mw_page.page_id, rev_user=mw_user_diederik.user_id,
             rev_comment='before Evan edit 2',
-            rev_len=100, rev_timestamp=datetime(2013, 06, 30),
+            rev_len=100, rev_timestamp=20130630000000,
         )
         rev_before_5 = Revision(
             rev_page=mw_page.page_id, rev_user=mw_user_diederik.user_id,
             rev_comment='before Evan edit 3',
-            rev_len=140, rev_timestamp=datetime(2013, 07, 23),
+            rev_len=140, rev_timestamp=20130723000000,
         )
         rev_alternate_namespace_1 = Revision(
             rev_page=mw_second_page.page_id, rev_user=mw_user_dan.user_id,
             rev_comment='first revision in namespace 209',
             # NOTE: VIM is freaking out if I type 08 below.  Is this true on Mac?
-            rev_len=100, rev_timestamp=datetime(2013, 8, 5),
+            rev_len=100, rev_timestamp=20130805000000,
         )
         self.mwSession.add_all([
             rev_before_1,
@@ -114,28 +264,28 @@ class DatabaseTest(unittest.TestCase):
         rev1 = Revision(
             rev_page=mw_page.page_id, rev_user=mw_user_dan.user_id,
             rev_comment='Dan edit 1', rev_parent_id=rev_before_1.rev_id,
-            rev_len=0, rev_timestamp=datetime(2013, 06, 01),
+            rev_len=0, rev_timestamp=20130601000000,
         )
         rev2 = Revision(
             rev_page=mw_page.page_id, rev_user=mw_user_dan.user_id,
             rev_comment='Dan edit 2', rev_parent_id=rev_before_2.rev_id,
-            rev_len=10, rev_timestamp=datetime(2013, 07, 01),
+            rev_len=10, rev_timestamp=20130701000000,
         )
         # Evan edits
         rev3 = Revision(
             rev_page=mw_page.page_id, rev_user=mw_user_evan.user_id,
             rev_comment='Evan edit 1', rev_parent_id=rev_before_3.rev_id,
-            rev_len=100, rev_timestamp=datetime(2013, 06, 01),
+            rev_len=100, rev_timestamp=20130601000000,
         )
         rev4 = Revision(
             rev_page=mw_page.page_id, rev_user=mw_user_evan.user_id,
             rev_comment='Evan edit 2', rev_parent_id=rev_before_4.rev_id,
-            rev_len=140, rev_timestamp=datetime(2013, 07, 01),
+            rev_len=140, rev_timestamp=20130701000000,
         )
         rev5 = Revision(
             rev_page=mw_page.page_id, rev_user=mw_user_evan.user_id,
             rev_comment='Evan edit 3', rev_parent_id=rev_before_5.rev_id,
-            rev_len=136, rev_timestamp=datetime(2013, 07, 24),
+            rev_len=136, rev_timestamp=20130724000000,
         )
         self.mwSession.add_all([rev1, rev2, rev3, rev4, rev5])
         self.mwSession.commit()
@@ -307,10 +457,10 @@ class DatabaseTest(unittest.TestCase):
     def tearDown(self):
         
         # delete records
-        self.mwSession.query(MediawikiUser).delete()
         self.mwSession.query(Logging).delete()
-        self.mwSession.query(Page).delete()
         self.mwSession.query(Revision).delete()
+        self.mwSession.query(MediawikiUser).delete()
+        self.mwSession.query(Page).delete()
         self.mwSession.commit()
         self.mwSession.close()
         

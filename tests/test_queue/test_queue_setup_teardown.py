@@ -16,9 +16,3 @@ class AsyncTaskTest(QueueTest):
             None,
             'task did not run on celery queue'
         )
-
-
-class QueueAndWebTest(QueueTest, WebTest):
-    
-    def test_task(self):
-        pass

@@ -1,7 +1,7 @@
 from nose.tools import assert_true, assert_equal
-from tests.fixtures import DatabaseWithCohortTest, QueueDatabaseTest
+from tests.fixtures import DatabaseWithCohortTest, QueueDatabaseTest, DatabaseTest
 
-from wikimetrics.metrics import NamespaceEdits
+from wikimetrics.metrics import NamespaceEdits, TimeseriesChoices
 from wikimetrics.models import Cohort, MetricReport
 
 
@@ -62,7 +62,6 @@ class NamespaceEditsFullTest(QueueDatabaseTest):
         )
         report = MetricReport(metric, list(cohort), 'enwiki')
         results = report.task.delay(report).get()
-        print 'results: %s' % results
         
         assert_true(results is not None)
         assert_equal(results[self.test_mediawiki_user_id_evan]['edits'], 3)
@@ -122,3 +121,37 @@ class NamespaceEditsFullTest(QueueDatabaseTest):
         
         assert_true(results is not None)
         assert_equal(results[self.test_mediawiki_user_id]['edits'], 3)
+
+
+class NamespaceEditsTimeseriesTest(DatabaseTest):
+    
+    def setUp(self):
+        DatabaseTest.setUp(self)
+        self.create_test_cohort(
+            editor_count=4,
+            revisions_per_editor=3,
+            revision_timestamps=[
+                [20121231230000, 20130101003000, 20130101010000],
+                [20130101120000, 20130102000000, 20130102120000],
+                [20130101000000, 20130108000000, 20130116000000],
+                [20130101000000, 20130201000000, 20140101000000],
+            ],
+            revision_lengths=10
+        )
+    
+    def test_the_setup_worked(self):
+        assert_equal(len(self.editors), 4)
+        assert_equal(len(self.revisions), 12)
+        assert_equal(self.revisions[-1].rev_timestamp, '20140101000000')
+        assert_equal(self.revisions[0].rev_timestamp, '20121231230000')
+    
+    def test_timeseries_by_day(self):
+        metric = NamespaceEdits(
+            namespaces=[0],
+            start_date='2012-12-31',
+            end_date='2014-01-02',
+            timeseries=TimeseriesChoices.DAY,
+        )
+        results = metric(list(self.cohort), self.mwSession)
+        
+        assert_equal(results[self.editors[0].user_id]['edits'], 3)

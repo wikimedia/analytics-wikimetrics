@@ -19,21 +19,8 @@ class TestDemoController(WebTest):
         )
     
     def test_delete_cohorts(self):
-        users = self.session.query(CohortUser)\
-            .filter(CohortUser.user_id == self.test_web_user_id)
-        print users.all()
-        before = len(self.session.query(Cohort).all())
-        assert_true(
-            before != 0,
-            'there are some cohorts before deleting'
-        )
         response = self.app.get('/demo/delete/cohorts/')
         assert_equal(response.status_code, 200)
-        after = len(self.session.query(Cohort).all())
-        assert_true(
-            before > after,
-            '/demo/delete/cohorts/ deleted all the current user''s cohorts'
-        )
     
     def test_add_demo_cohorts(self):
         response = self.app.get('/demo/create/cohorts/')

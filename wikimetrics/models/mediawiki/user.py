@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, DateTime, String
+from sqlalchemy import Column, Integer, Numeric, String
 from wikimetrics.configurables import db
 
 __all__ = [
@@ -14,12 +14,12 @@ class MediawikiUser(db.MediawikiBase):
     user_real_name = Column(String(255))
     # do not map: user_password
     # do not map: user_newpassword
-    user_newpass_time = Column(DateTime)
+    user_newpass_time = Column(Numeric(precision=14))
     user_email = Column(String(255))
-    user_touched = Column(DateTime)
+    user_touched = Column(Numeric(precision=14))
     # do not map: user_token
-    user_email_authenticated = Column(DateTime)
+    user_email_authenticated = Column(Numeric(precision=14))
     # do not map: user_email_token
-    # do not map: user_email_token_expires = Column(DateTime)
-    user_registration = Column(DateTime)
+    # do not map: user_email_token_expires = Column(Numeric(precision=14))
+    user_registration = Column(Numeric(precision=14))
     user_editcount = Column(Integer)

@@ -20,7 +20,9 @@ class MetricReport(ReportLeaf):
     
     def run(self):
         session = db.get_mw_session(self.project)
-        return self.metric(self.user_ids, session)
+        result = self.metric(self.user_ids, session)
+        session.close()
+        return result
     
     def __repr__(self):
         return '<MetricReport("{0}")>'.format(self.persistent_id)

@@ -1,14 +1,18 @@
+from flask import render_template, redirect, request, jsonify
 from flask.ext.login import current_user
 from ..configurables import app, db
 from ..models import (
     WikiUser,
     User,
+    MediawikiUser,
     Cohort,
     CohortUser,
     CohortUserRole,
     CohortWikiUser,
     MetricReport,
 )
+from ..models.mediawiki import Revision, Page
+from datetime import datetime
 from ..metrics import RandomMetric
 
 
@@ -17,9 +21,8 @@ if app.config['DEBUG']:
         user = db_sess.query(User).filter_by(email=current_user.email).one()
         
         # delete all of this user's data
-        cu = db_sess.query(CohortUser)\
-            .filter(CohortUser.user_id == user.id)\
-            .all()
+        cohort_users = db_sess.query(CohortUser).filter_by(user_id=user.id)
+        cohort_users.delete()
         cwu = db_sess.query(CohortWikiUser)\
             .join(Cohort)\
             .join(CohortUser)\
@@ -34,9 +37,11 @@ if app.config['DEBUG']:
         c = db_sess.query(Cohort)\
             .join(CohortUser)\
             .filter(CohortUser.user_id == user.id)\
+            .filter(CohortUser.role == CohortUserRole.OWNER)\
             .all()
-        for r in cu:
-            db_sess.delete(r)
+        
+        db_sess.commit()
+        
         for r in cwu:
             db_sess.delete(r)
         for r in wu:

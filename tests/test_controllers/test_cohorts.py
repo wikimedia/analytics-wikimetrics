@@ -123,6 +123,7 @@ class TestCohortsController(WebTest):
         assert_true(response.data.find('/cohorts/') >= 0)
         
         # look for the newly created cohort
+        self.session.commit()
         cohort = self.session.query(Cohort).filter(Cohort.name == new_cohort_name).one()
         assert_equal(cohort.description, new_cohort_description)
     
@@ -143,6 +144,7 @@ class TestCohortsController(WebTest):
         ))
         
         # look for the newly created cohort
+        self.session.commit()
         cohort = self.session.query(Cohort).filter(Cohort.name == new_cohort_name).one()
         assert_equal(cohort.default_project, 'enwiki')
     

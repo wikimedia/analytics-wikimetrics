@@ -5,21 +5,14 @@
     <h1>Wiki Metrics</h1>
     <p class="margin-top:2em">
         Welcome to the Wikimedia Foundation's Wikimetrics homepage.
-        This API allows you to select a set of users, also known as a "cohort"
-        <span class="muted">
-            (for example, <strong>all users who signed up via the Thank You campaign</strong>)
-        </span>,
-        select a metric to be computed for each of these users
-        <span class="muted">
-            (for example, how many <a href="{{ url_for('metrics_index') + '#BytesAdded'}}">bytes they've added</a>)
-        </span>
-        with optional parameters
-        <span class="muted">
-            (for example, a <strong>time range</strong>)
-        </span>
-        and retrieve the response in JSON or CSV format.
-        </p>
-        <p>
+        This API allows you to
+    </p>
+    <ul class="unstyled">
+        <li>select a set of users, also known as a "cohort" <span class="muted">(for example, <strong>all users who signed up via the Thank You campaign</strong>)</span></li>
+        <li>select a metric to be computed for each of these users <span class="muted">(for example, how many <a href="{{ url_for('metrics_index') + '#BytesAdded'}}">bytes they've added</a>)</span> with optional parameters <span class="muted"> (for example, a <strong>time range</strong>)</span></li>
+        <li>and retrieve the response in JSON or CSV format.</li>
+    </ul>
+    <p>
         You can also compute a single, aggregate value for the cohort
         <span class="muted">
             (like the <strong>mean</strong> revert rate)
