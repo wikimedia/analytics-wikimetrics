@@ -1,9 +1,8 @@
-from ..utils import thirty_days_ago, today, mediawiki_date
+from ..utils import thirty_days_ago, today
 from sqlalchemy import func
 from metric import Metric
-from form_fields import CommaSeparatedIntegerListField
+from form_fields import CommaSeparatedIntegerListField, BetterDateTimeField
 from wtforms.validators import Required
-from wtforms import DateField
 from wikimetrics.models import Page, Revision
 
 
@@ -35,8 +34,8 @@ class PagesCreated(Metric):
          editor in a time interval'
     )
     
-    start_date          = DateField(default=thirty_days_ago)
-    end_date            = DateField(default=today)
+    start_date  = BetterDateTimeField(default=thirty_days_ago)
+    end_date    = BetterDateTimeField(default=today)
     
     namespaces = CommaSeparatedIntegerListField(
         None,
@@ -57,9 +56,6 @@ class PagesCreated(Metric):
         # TODO: (low-priority) take into account cases where rev_deleted = 1
         start_date = self.start_date.data
         end_date = self.end_date.data
-        if session.bind.name == 'mysql':
-            start_date = mediawiki_date(self.start_date)
-            end_date = mediawiki_date(self.end_date)
         
         pages_by_user = dict(
             session

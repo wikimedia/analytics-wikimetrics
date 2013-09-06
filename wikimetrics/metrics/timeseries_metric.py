@@ -6,12 +6,12 @@ __all__ = ['TimeseriesChoices', 'TimeseriesMetric']
 
 
 class TimeseriesChoices(object):
-    NONE =  'none'
-    HOUR =  'hour'
-    DAY =   'day'
-    WEEK =  'week'
+    NONE = 'none'
+    HOUR = 'hour'
+    DAY = 'day'
+    WEEK = 'week'
     MONTH = 'month'
-    YEAR =  'year'
+    YEAR = 'year'
 
 
 class TimeseriesMetric(Metric):

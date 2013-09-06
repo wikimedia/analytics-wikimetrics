@@ -36,6 +36,8 @@ class Cohort(db.WikimetricsBase):
     def __repr__(self):
         return '<Cohort("{0}")>'.format(self.id)
     
+    # TODO: that weird bug that makes "None" show up in metric results
+    # starts with iterating Cohorts here
     def __iter__(self):
         """ returns list of user_ids """
         db_session = db.get_session()

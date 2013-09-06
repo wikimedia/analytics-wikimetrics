@@ -1,9 +1,12 @@
-from ..utils import thirty_days_ago, today, mediawiki_date
+from ..utils import thirty_days_ago, today
 from ..models import Revision, Page
 from metric import Metric
-from form_fields import BetterBooleanField, CommaSeparatedIntegerListField
+from form_fields import (
+    BetterDateTimeField,
+    BetterBooleanField,
+    CommaSeparatedIntegerListField,
+)
 from wtforms.validators import Required
-from wtforms import DateField
 from sqlalchemy import func, case, cast, Integer
 from sqlalchemy.sql.expression import label
 
@@ -63,8 +66,8 @@ class BytesAdded(Metric):
     description = 'Compute different aggregations of the bytes\
                    contributed or removed from a mediawiki project'
     
-    start_date          = DateField(default=thirty_days_ago)
-    end_date            = DateField(default=today)
+    start_date          = BetterDateTimeField(default=thirty_days_ago)
+    end_date            = BetterDateTimeField(default=today)
     namespaces          = CommaSeparatedIntegerListField(
         None,
         [Required()],
@@ -89,12 +92,8 @@ class BytesAdded(Metric):
                 * positive_only_sum : bytes added
                 * negative_only_sum : bytes removed
         """
-        # get the dates to act properly in any environment
         start_date = self.start_date.data
         end_date = self.end_date.data
-        if session.bind.name == 'mysql':
-            start_date = mediawiki_date(self.start_date)
-            end_date = mediawiki_date(self.end_date)
         
         PreviousRevision = session.query(Revision.rev_len, Revision.rev_id).subquery()
         BC = session.query(

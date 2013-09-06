@@ -1,3 +1,5 @@
+from custom_columns import *
+
 from revision import *
 from page import *
 from user import *

@@ -23,8 +23,8 @@ class RunReportTest(QueueDatabaseTest):
             'metric': {
                 'name': 'NamespaceEdits',
                 'namespaces': [0, 1, 2],
-                'start_date': '2013-06-01',
-                'end_date': '2013-09-01',
+                'start_date': '2013-06-01 00:00:00',
+                'end_date': '2013-09-01 00:00:00',
                 'individualResults': True,
                 'aggregateResults': False,
                 'aggregateSum': False,
@@ -55,8 +55,8 @@ class RunReportTest(QueueDatabaseTest):
             'metric': {
                 'name': 'NamespaceEdits',
                 'namespaces': [0, 1, 2],
-                'start_date': '2013-06-01',
-                'end_date': '2013-09-01',
+                'start_date': '2013-06-01 00:00:00',
+                'end_date': '2013-09-01 00:00:00',
                 'individualResults': True,
                 'aggregateResults': True,
                 'aggregateSum': True,
@@ -91,8 +91,8 @@ class RunReportTest(QueueDatabaseTest):
             'metric': {
                 'name': 'BytesAdded',
                 'namespaces': [0, 1, 2],
-                'start_date': '2013-06-01',
-                'end_date': '2013-09-01',
+                'start_date': '2013-06-01 00:00:00',
+                'end_date': '2013-09-01 00:00:00',
                 'individualResults': True,
                 'aggregateResults': True,
                 'aggregateSum': True,
@@ -129,8 +129,8 @@ class RunReportTest(QueueDatabaseTest):
             'metric': {
                 'name': 'BytesAdded',
                 'namespaces': '0,1,2',
-                'start_date': '2013-06-01',
-                'end_date': '2013-09-01',
+                'start_date': '2013-06-01 00:00:00',
+                'end_date': '2013-09-01 00:00:00',
                 'individualResults': True,
                 'aggregateResults': True,
                 'aggregateSum': True,

@@ -48,7 +48,7 @@ class TestMetricsController(WebTest):
             start_date='hi'
         ))
         assert_not_equal(
-            response.data.find('<li class="text-error">Not a valid date value</li>'),
+            response.data.find('<li class="text-error">Not a valid datetime value</li>'),
             -1,
             'Validation on a BytesAdded configuration is not happening'
         )

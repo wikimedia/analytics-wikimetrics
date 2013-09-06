@@ -1,16 +1,6 @@
-from wtforms import Field, BooleanField
+from datetime import datetime, date, time
+from wtforms import Field, BooleanField, DateField, DateTimeField
 from wtforms.widgets import TextInput
-
-
-def better_bool(value):
-    if type(value) is bool:
-        return value
-    elif type(value) is list and len(value) > 0:
-        value = value[0]
-    else:
-        return False
-    
-    return str(value).strip().lower() in ['yes', 'y', 'true']
 
 
 class BetterBooleanField(BooleanField):
@@ -19,7 +9,18 @@ class BetterBooleanField(BooleanField):
         # Checkboxes and submit buttons simply do not send a value when
         # unchecked/not pressed. So the actual value="" doesn't matter for
         # purpose of determining .data, only whether one exists or not.
-        self.data = better_bool(valuelist)
+        self.data = BetterBooleanField.better_bool(valuelist)
+    
+    @staticmethod
+    def better_bool(value):
+        if type(value) is bool:
+            return value
+        elif type(value) is list and len(value) > 0:
+            value = value[0]
+        else:
+            return False
+        
+        return str(value).strip().lower() in ['yes', 'y', 'true']
 
 
 class CommaSeparatedIntegerListField(Field):
@@ -55,3 +56,34 @@ class CommaSeparatedIntegerListField(Field):
             ]
         else:
             self.data = []
+
+
+class BetterDateTimeField(DateTimeField):
+    
+    def parse_datetime(self, value):
+        if not value:
+            self.report_invalid()
+        
+        if isinstance(value, date):
+            value = datetime.combine(value, time())
+        
+        if isinstance(value, datetime):
+            return value
+        
+        try:
+            return datetime.strptime(value, self.format)
+        except ValueError:
+            self.report_invalid()
+    
+    def process_data(self, value):
+        self.data = self.parse_datetime(value)
+    
+    def process_formdata(self, valuelist):
+        if not valuelist:
+            self.report_invalid()
+        
+        self.data = self.parse_datetime(' '.join(valuelist))
+    
+    def report_invalid(self):
+        self.data = None
+        raise ValueError(self.gettext('Not a valid datetime value'))

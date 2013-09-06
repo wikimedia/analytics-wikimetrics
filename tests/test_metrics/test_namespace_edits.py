@@ -1,3 +1,4 @@
+from datetime import datetime
 from nose.tools import assert_true, assert_equal
 from tests.fixtures import DatabaseWithCohortTest, QueueDatabaseTest, DatabaseTest
 
@@ -10,8 +11,8 @@ class NamespaceEditsDatabaseTest(DatabaseWithCohortTest):
     def test_finds_edits(self):
         metric = NamespaceEdits(
             namespaces=[0],
-            start_date='2013-06-01',
-            end_date='2013-08-01',
+            start_date='2013-06-01 00:00:00',
+            end_date='2013-08-01 00:00:00',
         )
         results = metric(list(self.cohort), self.mwSession)
         
@@ -22,8 +23,8 @@ class NamespaceEditsDatabaseTest(DatabaseWithCohortTest):
     def test_reports_zero_edits(self):
         metric = NamespaceEdits(
             namespaces=[0],
-            start_date='2013-06-01',
-            end_date='2013-08-01',
+            start_date='2013-06-01 00:00:00',
+            end_date='2013-08-01 00:00:00',
         )
         results = metric(list(self.cohort), self.mwSession)
         
@@ -39,8 +40,8 @@ class NamespaceEditsDatabaseTest(DatabaseWithCohortTest):
         
         metric = NamespaceEdits(
             namespaces=[0],
-            start_date='2013-07-01',
-            end_date='2013-07-02',
+            start_date='2013-07-01 00:00:00',
+            end_date='2013-07-02 00:00:00',
         )
         metric.fake_csrf()
         assert_true(metric.validate())
@@ -57,8 +58,8 @@ class NamespaceEditsFullTest(QueueDatabaseTest):
         
         metric = NamespaceEdits(
             namespaces=[0],
-            start_date='2013-06-01',
-            end_date='2013-08-01',
+            start_date='2013-06-01 00:00:00',
+            end_date='2013-08-01 00:00:00',
         )
         report = MetricReport(metric, list(cohort), 'enwiki')
         results = report.task.delay(report).get()
@@ -71,8 +72,8 @@ class NamespaceEditsFullTest(QueueDatabaseTest):
         
         metric = NamespaceEdits(
             namespaces=[3],
-            start_date='2013-06-01',
-            end_date='2013-08-01',
+            start_date='2013-06-01 00:00:00',
+            end_date='2013-08-01 00:00:00',
         )
         report = MetricReport(metric, list(cohort), 'enwiki')
         results = report.task.delay(report).get()
@@ -85,8 +86,8 @@ class NamespaceEditsFullTest(QueueDatabaseTest):
         
         metric = NamespaceEdits(
             namespaces=[],
-            start_date='2013-06-01',
-            end_date='2013-08-01',
+            start_date='2013-06-01 00:00:00',
+            end_date='2013-08-01 00:00:00',
         )
         report = MetricReport(metric, list(cohort), 'enwiki')
         results = report.task.delay(report).get()
@@ -99,8 +100,8 @@ class NamespaceEditsFullTest(QueueDatabaseTest):
         
         metric = NamespaceEdits(
             namespaces=[0, 209],
-            start_date='2013-06-01',
-            end_date='2013-08-06',
+            start_date='2013-06-01 00:00:00',
+            end_date='2013-08-06 00:00:00',
         )
         report = MetricReport(metric, list(cohort), 'enwiki')
         results = report.task.delay(report).get()
@@ -113,8 +114,8 @@ class NamespaceEditsFullTest(QueueDatabaseTest):
         
         metric = NamespaceEdits(
             namespaces='0, 209',
-            start_date='2013-06-01',
-            end_date='2013-08-06',
+            start_date='2013-06-01 00:00:00',
+            end_date='2013-08-06 00:00:00',
         )
         report = MetricReport(metric, list(cohort), 'enwiki')
         results = report.task.delay(report).get()
@@ -142,14 +143,14 @@ class NamespaceEditsTimeseriesTest(DatabaseTest):
     def test_the_setup_worked(self):
         assert_equal(len(self.editors), 4)
         assert_equal(len(self.revisions), 12)
-        assert_equal(self.revisions[-1].rev_timestamp, '20140101000000')
-        assert_equal(self.revisions[0].rev_timestamp, '20121231230000')
+        assert_equal(self.revisions[-1].rev_timestamp, datetime(2014, 01, 01))
+        assert_equal(self.revisions[0].rev_timestamp, datetime(2012, 12, 31, 23))
     
     def test_timeseries_by_day(self):
         metric = NamespaceEdits(
             namespaces=[0],
-            start_date='2012-12-31',
-            end_date='2014-01-02',
+            start_date='2012-12-31 00:00:00',
+            end_date='2014-01-02 00:00:00',
             timeseries=TimeseriesChoices.DAY,
         )
         results = metric(list(self.cohort), self.mwSession)

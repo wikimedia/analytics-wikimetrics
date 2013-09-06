@@ -14,8 +14,8 @@ class AggregateReportTest(QueueDatabaseTest):
         metric = metric_classes['NamespaceEdits'](
             name='NamespaceEdits',
             namespaces=[0, 1, 2],
-            start_date='2013-06-01',
-            end_date='2013-09-01',
+            start_date='2013-06-01 00:00:00',
+            end_date='2013-09-01 00:00:00',
         )
         ar = AggregateReport(
             cohort,
@@ -53,8 +53,8 @@ class AggregateReportWithoutQueueTest(DatabaseTest):
         metric = metric_classes['NamespaceEdits'](
             name='NamespaceEdits',
             namespaces=[0, 1, 2],
-            start_date='2013-06-01',
-            end_date='2013-09-01',
+            start_date='2013-06-01 00:00:00',
+            end_date='2013-09-01 00:00:00',
         )
         ar = AggregateReport(
             cohort,
@@ -109,8 +109,8 @@ class AggregateReportWithoutQueueTest(DatabaseTest):
         metric = metric_classes['NamespaceEdits'](
             name='NamespaceEdits',
             namespaces=[0, 1, 2],
-            start_date='2013-06-01',
-            end_date='2013-09-01',
+            start_date='2013-06-01 00:00:00',
+            end_date='2013-09-01 00:00:00',
         )
         ar = AggregateReport(
             cohort,

@@ -60,10 +60,14 @@ def get_celery_task(result_key):
     
     Parameters
         result_key  : The unique identifier found in the report database table
+                        This parameter is required and should not be None
     
     Returns
         A tuple of the form (celery_task_object, database_report_object)
     """
+    if not result_key:
+        return (None, None)
+    
     try:
         db_session = db.get_session()
         pj = db_session.query(PersistentReport)\

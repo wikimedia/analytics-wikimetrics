@@ -1,9 +1,8 @@
-from sqlalchemy import Column, Integer, Boolean, Numeric, String
+from sqlalchemy import Column, Integer, Boolean, String
 from wikimetrics.configurables import db
+from custom_columns import MediawikiTimestamp
 
-__all__ = [
-    'Page',
-]
+__all__ = ['Page']
 
 
 class Page(db.MediawikiBase):
@@ -17,7 +16,7 @@ class Page(db.MediawikiBase):
     page_is_redirect = Column(Boolean)
     page_is_new = Column(Boolean)
     page_random = None  # TODO: double unsigned NOT NULL,
-    page_touched = Column(Numeric(precision=14))
+    page_touched = Column(MediawikiTimestamp)
     page_latest = Column(Integer)
     page_len = Column(Integer)
     page_content_model = Column(String(32))

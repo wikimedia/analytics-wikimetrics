@@ -9,8 +9,8 @@ class BytesAddedTest(DatabaseWithCohortTest):
         
         metric = BytesAdded(
             namespaces=[0],
-            start_date='2013-06-01',
-            end_date='2013-08-01',
+            start_date='2013-06-01 00:00:00',
+            end_date='2013-08-01 00:00:00',
         )
         
         results = metric(list(self.cohort), self.mwSession)
@@ -39,8 +39,8 @@ class BytesAddedTest(DatabaseWithCohortTest):
         
         metric = BytesAdded(
             namespaces=[0],
-            start_date='2013-07-01',
-            end_date='2013-08-01',
+            start_date='2013-07-01 00:00:00',
+            end_date='2013-08-01 00:00:00',
         )
         metric.fake_csrf()
         assert_true(metric.validate())
@@ -62,8 +62,8 @@ class BytesAddedTest(DatabaseWithCohortTest):
         
         metric = BytesAdded(
             namespaces=[0],
-            start_date='2013-06-01',
-            end_date='2013-08-01',
+            start_date='2013-06-01 00:00:00',
+            end_date='2013-08-01 00:00:00',
             positive_only_sum=False,
             negative_only_sum=False,
         )
@@ -93,8 +93,8 @@ class BytesAddedTest(DatabaseWithCohortTest):
         
         metric = BytesAdded(
             namespaces=[209],
-            start_date='2013-08-04',
-            end_date='2013-08-06',
+            start_date='2013-08-04 00:00:00',
+            end_date='2013-08-06 00:00:00',
             positive_only_sum=False,
             negative_only_sum=False,
             absolute_sum=False,

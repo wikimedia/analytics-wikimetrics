@@ -3,7 +3,7 @@ import decimal
 from nose.tools import assert_true, assert_equals
 from unittest import TestCase
 from wikimetrics.utils import (
-    stringify, mediawiki_date,
+    stringify,
 )
 from wikimetrics.metrics import NamespaceEdits
 
@@ -21,8 +21,3 @@ class UtilsTest(TestCase):
     def test_better_encoder_default(self):
         string = stringify(normal='hello world')
         assert_true(string.find('"normal"') >= 0)
-    
-    def test_mediawiki_date(self):
-        edits = NamespaceEdits(start_date='2013-06-01')
-        mw_date = mediawiki_date(edits.start_date)
-        assert_equals(mw_date, '20130601000000')

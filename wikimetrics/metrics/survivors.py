@@ -1,9 +1,9 @@
-from ..utils import thirty_days_ago, today, mediawiki_date
+from ..utils import thirty_days_ago, today
 from sqlalchemy import func
 from metric import Metric
-from form_fields import CommaSeparatedIntegerListField
+from form_fields import CommaSeparatedIntegerListField, BetterDateTimeField
 from wtforms.validators import Required
-from wtforms import DateField, BooleanField, IntegerField
+from wtforms import BooleanField, IntegerField
 from wikimetrics.models import Page, Revision, MediawikiUser
 import datetime
 import calendar
@@ -31,8 +31,8 @@ class Survivors(Metric):
          editor in a time interval'
     )
     
-    start_date            = DateField(default=thirty_days_ago)
-    end_date              = DateField(default=today)
+    start_date            = BetterDateTimeField(default=thirty_days_ago)
+    end_date              = BetterDateTimeField(default=today)
     survival_days         = IntegerField(default=0)
     use_registration_date = BooleanField(default=False)
     
@@ -125,7 +125,6 @@ class Survivors(Metric):
             if survival_days:
                 print "\n\n[DBG] Case 3\n\n"
                 # survival_days YES ; registration NO
-                #print "start_date=",start_date
                 q = session \
                     .query(Revision.rev_user) \
                     .join(MediawikiUser) \

@@ -1,6 +1,7 @@
 import unittest
 import celery
 import sys
+from datetime import datetime
 from nose.tools import nottest
 
 __all__ = [
@@ -123,7 +124,7 @@ class DatabaseTest(unittest.TestCase):
             if i == 0:
                 revision.rev_parent_id = 0
             else:
-                revision.rev_parent_id = ordered_revisions[i-1].rev_id
+                revision.rev_parent_id = ordered_revisions[i - 1].rev_id
         
         self.mwSession.commit()
     

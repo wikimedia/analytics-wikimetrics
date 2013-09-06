@@ -1,7 +1,6 @@
 from metric import Metric
 from ..utils import thirty_days_ago, today
-from form_fields import CommaSeparatedIntegerListField
-from wtforms import DateField
+from form_fields import CommaSeparatedIntegerListField, BetterDateTimeField
 from wtforms.validators import Required
 
 __all__ = [
@@ -39,8 +38,8 @@ class RevertRate(Metric):
     label       = 'Revert Rate'
     description = 'Compute the number of reverted edits in a mediawiki project'
     
-    start_date  = DateField(default=thirty_days_ago)
-    end_date    = DateField(default=today)
+    start_date  = BetterDateTimeField(default=thirty_days_ago)
+    end_date    = BetterDateTimeField(default=today)
     namespaces  = CommaSeparatedIntegerListField(
         None,
         [Required()],
