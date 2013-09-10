@@ -47,7 +47,7 @@
         <h4>Your <a href="{{url_for('reports_index')}}">reports</a></h4>
         <ul data-bind="foreach: reports">
             <li>
-                <strong data-bind="text: moment.unix(created).calendar()"></strong> - 
+                <strong data-bind="text: moment(created).calendar()"></strong> - 
                 <span data-bind="text: name"></span>
             </li>
         </ul>

@@ -11,7 +11,7 @@ class NamespaceEditsDatabaseTest(DatabaseWithCohortTest):
     def test_finds_edits(self):
         metric = NamespaceEdits(
             namespaces=[0],
-            start_date='2013-06-01 00:00:00',
+            start_date='2013-05-01 00:00:00',
             end_date='2013-08-01 00:00:00',
         )
         results = metric(list(self.cohort), self.mwSession)
@@ -23,7 +23,7 @@ class NamespaceEditsDatabaseTest(DatabaseWithCohortTest):
     def test_reports_zero_edits(self):
         metric = NamespaceEdits(
             namespaces=[0],
-            start_date='2013-06-01 00:00:00',
+            start_date='2013-05-01 00:00:00',
             end_date='2013-08-01 00:00:00',
         )
         results = metric(list(self.cohort), self.mwSession)
@@ -40,8 +40,8 @@ class NamespaceEditsDatabaseTest(DatabaseWithCohortTest):
         
         metric = NamespaceEdits(
             namespaces=[0],
-            start_date='2013-07-01 00:00:00',
-            end_date='2013-07-02 00:00:00',
+            start_date='2013-06-30 00:00:00',
+            end_date='2013-07-01 00:00:00',
         )
         metric.fake_csrf()
         assert_true(metric.validate())
@@ -58,7 +58,7 @@ class NamespaceEditsFullTest(QueueDatabaseTest):
         
         metric = NamespaceEdits(
             namespaces=[0],
-            start_date='2013-06-01 00:00:00',
+            start_date='2013-05-01 00:00:00',
             end_date='2013-08-01 00:00:00',
         )
         report = MetricReport(metric, list(cohort), 'enwiki')
@@ -72,7 +72,7 @@ class NamespaceEditsFullTest(QueueDatabaseTest):
         
         metric = NamespaceEdits(
             namespaces=[3],
-            start_date='2013-06-01 00:00:00',
+            start_date='2013-05-01 00:00:00',
             end_date='2013-08-01 00:00:00',
         )
         report = MetricReport(metric, list(cohort), 'enwiki')
@@ -86,7 +86,7 @@ class NamespaceEditsFullTest(QueueDatabaseTest):
         
         metric = NamespaceEdits(
             namespaces=[],
-            start_date='2013-06-01 00:00:00',
+            start_date='2013-05-01 00:00:00',
             end_date='2013-08-01 00:00:00',
         )
         report = MetricReport(metric, list(cohort), 'enwiki')
@@ -100,7 +100,7 @@ class NamespaceEditsFullTest(QueueDatabaseTest):
         
         metric = NamespaceEdits(
             namespaces=[0, 209],
-            start_date='2013-06-01 00:00:00',
+            start_date='2013-05-01 00:00:00',
             end_date='2013-08-06 00:00:00',
         )
         report = MetricReport(metric, list(cohort), 'enwiki')
@@ -114,7 +114,7 @@ class NamespaceEditsFullTest(QueueDatabaseTest):
         
         metric = NamespaceEdits(
             namespaces='0, 209',
-            start_date='2013-06-01 00:00:00',
+            start_date='2013-05-01 00:00:00',
             end_date='2013-08-06 00:00:00',
         )
         report = MetricReport(metric, list(cohort), 'enwiki')
@@ -156,3 +156,48 @@ class NamespaceEditsTimeseriesTest(DatabaseTest):
         results = metric(list(self.cohort), self.mwSession)
         
         assert_equal(results[self.editors[0].user_id]['edits'], 3)
+
+
+class NamespaceEditsTimestampTest(DatabaseTest):
+    
+    def setUp(self):
+        DatabaseTest.setUp(self)
+        self.create_test_cohort(
+            editor_count=1,
+            revisions_per_editor=5,
+            revision_timestamps=[[
+                20130101000000,
+                20130101010000,
+                20130101010100,
+                20130101020100,
+                20130101020101,
+            ]],
+            revision_lengths=10
+        )
+    
+    def test_timestamp_range_hour(self):
+        metric = NamespaceEdits(
+            namespaces=[0],
+            start_date='2013-01-01 00:00:00',
+            end_date='2013-01-01 01:00:00',
+        )
+        results = metric(list(self.cohort), self.mwSession)
+        assert_equal(results[self.editors[0].user_id]['edits'], 1)
+        
+    def test_timestamp_range_minutes(self):
+        metric = NamespaceEdits(
+            namespaces=[0],
+            start_date='2013-01-01 00:00:00',
+            end_date='2013-01-01 01:01:00',
+        )
+        results = metric(list(self.cohort), self.mwSession)
+        assert_equal(results[self.editors[0].user_id]['edits'], 2)
+        
+    def test_timestamp_range_seconds(self):
+        metric = NamespaceEdits(
+            namespaces=[0],
+            start_date='2013-01-01 02:01:00',
+            end_date='2013-01-01 02:01:01',
+        )
+        results = metric(list(self.cohort), self.mwSession)
+        assert_equal(results[self.editors[0].user_id]['edits'], 1)

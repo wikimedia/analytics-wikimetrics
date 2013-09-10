@@ -1,12 +1,8 @@
 from sqlalchemy import TypeDecorator, Unicode
 from datetime import datetime
+from wikimetrics.utils import parse_date, format_date
 
 __all__ = ['MediawikiTimestamp']
-
-
-# Format string for datetime.strptime for MediaWiki timestamps.
-# See <http://www.mediawiki.org/wiki/Manual:Timestamp>.
-MEDIAWIKI_TIMESTAMP = '%Y%m%d%H%M%S'
 
 
 class MediawikiTimestamp(TypeDecorator):
@@ -25,7 +21,7 @@ class MediawikiTimestamp(TypeDecorator):
         if not value:
             return None
         if isinstance(value, datetime):
-            value = value.strftime(MEDIAWIKI_TIMESTAMP)
+            value = format_date(value)
         #if hasattr(value, 'decode'):
             #value = value.decode('utf-8')
         return unicode(value)
@@ -36,4 +32,4 @@ class MediawikiTimestamp(TypeDecorator):
         """
         if not value:
             return None
-        return datetime.strptime(value, MEDIAWIKI_TIMESTAMP)
+        return parse_date(value)

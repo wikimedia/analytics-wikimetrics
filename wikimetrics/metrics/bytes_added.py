@@ -112,7 +112,7 @@ class BytesAdded(Metric):
             )\
             .filter(Page.page_namespace.in_(self.namespaces.data))\
             .filter(Revision.rev_user.in_(user_ids))\
-            .filter(Revision.rev_timestamp >= start_date)\
+            .filter(Revision.rev_timestamp > start_date)\
             .filter(Revision.rev_timestamp <= end_date)\
             .subquery()
             # TODO: figure out why between isn't quite working with these timestamps
@@ -147,7 +147,6 @@ class BytesAdded(Metric):
             if self.negative_only_sum.data:
                 result_dict[user_id]['negative_only_sum'] = negative
         
-        session.close()
         return {
             user_id: result_dict.get(user_id, self.make_default())
             for user_id in user_ids

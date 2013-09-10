@@ -69,8 +69,15 @@ class DatabaseTest(unittest.TestCase):
               self.editors      : the mediawiki editors from the cohort
               self.revisions    : the revisions added, in a two dimensional array
         """
+        if type(revision_timestamps) is int:
+            revision_timestamps = [
+                [revision_timestamps] * revisions_per_editor
+            ] * editor_count
+        
         if type(revision_lengths) is int:
-            revision_lengths = [[revision_lengths] * revisions_per_editor] * editor_count
+            revision_lengths = [
+                [revision_lengths] * revisions_per_editor
+            ] * editor_count
         
         self.project = 'enwiki'
         self.editors = []
@@ -119,7 +126,8 @@ class DatabaseTest(unittest.TestCase):
         self.mwSession.add_all(self.revisions)
         self.mwSession.commit()
         # add rev_parent_id chain in chronological order
-        ordered_revisions = sorted(self.revisions, key=lambda r: r.rev_timestamp)
+        real_revisions = filter(lambda r: r.rev_timestamp, self.revisions)
+        ordered_revisions = sorted(real_revisions, key=lambda r: r.rev_timestamp)
         for i, revision in enumerate(ordered_revisions):
             if i == 0:
                 revision.rev_parent_id = 0

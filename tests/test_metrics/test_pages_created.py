@@ -14,7 +14,7 @@ class PagesCreatedTest(DatabaseForPagesCreatedTest):
     def test_case_basic(self):
         metric = PagesCreated(
             namespaces=[301, 302, 303],
-            start_date='2013-06-20 00:00:00',
+            start_date='2013-06-19 00:00:00',
             end_date='2013-08-21 00:00:00'
         )
         results = metric(list(self.cohort), self.mwSession)
@@ -26,7 +26,7 @@ class PagesCreatedTest(DatabaseForPagesCreatedTest):
     def test_case_uses_date_range(self):
         metric = PagesCreated(
             namespaces=[301, 302, 303],
-            start_date='2013-06-20 00:00:00',
+            start_date='2013-06-19 00:00:00',
             end_date='2013-07-21 00:00:00'
         )
         results = metric(list(self.cohort), self.mwSession)

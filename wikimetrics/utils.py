@@ -1,8 +1,30 @@
 import json
-import datetime
+from datetime import datetime, timedelta, date
 import decimal
-from time import mktime
 from flask import Response
+
+
+# Format string for datetime.strptime for MediaWiki timestamps.
+# See <http://www.mediawiki.org/wiki/Manual:Timestamp>.
+MEDIAWIKI_TIMESTAMP = '%Y%m%d%H%M%S'
+# This format is used in the UI and output
+PRETTY_TIMESTAMP = '%Y-%m-%d %H:%M:%S'
+
+
+def parse_date(date_string):
+    return datetime.strptime(date_string, MEDIAWIKI_TIMESTAMP)
+
+
+def format_date(date_object):
+    return date_object.strftime(MEDIAWIKI_TIMESTAMP)
+
+
+def parse_pretty_date(date_string):
+    return datetime.strptime(date_string, PRETTY_TIMESTAMP)
+
+
+def format_pretty_date(date_object):
+    return date_object.strftime(PRETTY_TIMESTAMP)
 
 
 def stringify(*args, **kwargs):
@@ -47,11 +69,11 @@ class BetterEncoder(json.JSONEncoder):
     """
     
     def default(self, obj):
-        if isinstance(obj, datetime.datetime):
-            return int(mktime(obj.timetuple()))
+        if isinstance(obj, datetime):
+            return format_pretty_date(obj)
         
-        if isinstance(obj, datetime.date):
-            return int(mktime(obj.timetuple()))
+        if isinstance(obj, date):
+            return format_pretty_date(obj)
         
         if isinstance(obj, decimal.Decimal):
             return float(obj)
@@ -63,14 +85,14 @@ def today():
     """
     Callable that gets the date today, needed by WTForms DateFields
     """
-    return datetime.date.today()
+    return date.today()
 
 
 def thirty_days_ago():
     """
     Callable that gets the date 30 days ago, needed by WTForms DateFields
     """
-    return datetime.date.today() - datetime.timedelta(days=30)
+    return date.today() - timedelta(days=30)
 
 
 def deduplicate(sequence):

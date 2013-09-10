@@ -18,7 +18,7 @@
     <tbody data-bind="foreach: reports_sorted">
         <tr>
             <td>
-                <span data-bind="text: moment.unix(created).calendar()"></span>
+                <span data-bind="text: moment(created).calendar()"></span>
             </td>
             <td data-bind="text: status"></td>
             <td data-bind="text: name, attr:{ title: parameters }"></td>

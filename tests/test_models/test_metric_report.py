@@ -12,7 +12,7 @@ class MetricReportTest(DatabaseTest):
         metric = metric_classes['NamespaceEdits'](
             name='NamespaceEdits',
             namespaces=[0, 1, 2],
-            start_date='2013-06-01 00:00:00',
+            start_date='2013-05-01 00:00:00',
             end_date='2013-09-01 00:00:00',
         )
         mr = MetricReport(
@@ -32,7 +32,7 @@ class MetricReportTest(DatabaseTest):
         metric = metric_classes['NamespaceEdits'](
             name='NamespaceEdits',
             namespaces=[0, 1, 2],
-            start_date='2013-06-01 00:00:00',
+            start_date='2013-05-01 00:00:00',
             end_date='2013-09-01 00:00:00',
         )
         mr = MetricReport(

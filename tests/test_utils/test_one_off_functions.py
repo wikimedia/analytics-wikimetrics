@@ -11,13 +11,23 @@ from wikimetrics.metrics import NamespaceEdits
 class UtilsTest(TestCase):
     
     def test_better_encoder_date(self):
-        string = stringify(date_not_date_time=datetime.date(2013, 06, 01))
-        assert_true(string.find('"date_not_date_time"') >= 0)
+        result = stringify(date_not_date_time=datetime.date(2013, 06, 01))
+        print result
+        assert_true(result.find('"date_not_date_time"') >= 0)
+        assert_true(result.find('2013-06-01') >= 0)
+    
+    def test_better_encoder_datetime(self):
+        result = stringify(date_time=datetime.datetime(2013, 06, 01, 02, 03, 04))
+        print result
+        assert_true(result.find('"date_time"') >= 0)
+        assert_true(result.find('2013-06-01 02:03:04') >= 0)
     
     def test_better_encoder_decimal(self):
-        string = stringify(deci=decimal.Decimal(6.01))
-        assert_true(string.find('"deci"') >= 0)
+        result = stringify(deci=decimal.Decimal(6.01))
+        assert_true(result.find('"deci"') >= 0)
+        assert_true(result.find('6.01') >= 0)
     
     def test_better_encoder_default(self):
-        string = stringify(normal='hello world')
-        assert_true(string.find('"normal"') >= 0)
+        result = stringify(normal='hello world')
+        assert_true(result.find('"normal"') >= 0)
+        assert_true(result.find('normal') >= 0)
