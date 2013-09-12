@@ -47,13 +47,13 @@ class RevertRate(Metric):
         description='0, 2, 4, etc.',
     )
     
-    #def __call__(self, user_ids, session):
-        #"""
-        #Parameters:
-            #user_ids    : list of mediawiki user ids to find edit reverts for
-            #session     : sqlalchemy session open on a mediawiki database
+    def __call__(self, user_ids, session):
+        """
+        Parameters:
+            user_ids    : list of mediawiki user ids to find edit reverts for
+            session     : sqlalchemy session open on a mediawiki database
         
-        #Returns:
-            #dictionary from user ids to the number of edit reverts found.
-        #"""
-        #return {user: None for user in user_ids}
+        Returns:
+            dictionary from user ids to the number of edit reverts found.
+        """
+        return {user: None for user in user_ids}
