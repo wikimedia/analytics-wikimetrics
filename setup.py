@@ -1,4 +1,5 @@
 #!/usr/bin/python
+# follow the frog
 
 from setuptools import setup
 
