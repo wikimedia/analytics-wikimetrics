@@ -1,6 +1,6 @@
 from ..utils import thirty_days_ago, today
 from sqlalchemy import func
-from metric import Metric
+from timeseries_metric import TimeseriesMetric, TimeseriesChoices
 from form_fields import CommaSeparatedIntegerListField, BetterDateTimeField
 from wtforms.validators import Required
 from wikimetrics.models import Page, Revision
@@ -11,7 +11,7 @@ __all__ = [
 ]
 
 
-class NamespaceEdits(Metric):
+class NamespaceEdits(TimeseriesMetric):
     """
     This class implements namespace edits logic.
     An instance of the class is callable and will compute the number of edits
@@ -58,19 +58,54 @@ class NamespaceEdits(Metric):
         start_date = self.start_date.data
         end_date = self.end_date.data
         
-        # directly construct dict from query results
-        revisions_by_user = dict(
-            session
-            .query(Revision.rev_user, func.count(Revision.rev_id))
-            .join(Page)
-            .filter(Page.page_namespace.in_(self.namespaces.data))
-            .filter(Revision.rev_user.in_(user_ids))
-            .filter(Revision.rev_timestamp > start_date)
-            .filter(Revision.rev_timestamp <= end_date)
+        query = session\
+            .query(Revision.rev_user, func.count(Revision.rev_id))\
+            .join(Page)\
+            .filter(Page.page_namespace.in_(self.namespaces.data))\
+            .filter(Revision.rev_user.in_(user_ids))\
+            .filter(Revision.rev_timestamp > start_date)\
+            .filter(Revision.rev_timestamp <= end_date)\
             .group_by(Revision.rev_user)
-            .all()
-        )
+        
+        query = self.apply_timeseries(query)
+        
+        # construct dict from query results, taking into account timeseries
+        revisions_by_user = self.get_dictionary_by_user(query.all())
         return {
             user_id: {'edits': revisions_by_user.get(user_id, 0)}
             for user_id in user_ids
         }
+        
+    def get_dictionary_by_user(self, query_results):
+        """
+        Parameters
+            query_results   : list of tuples in the format:
+                              (user_id, edit_count[, year[, month[, day[, hour]]]])
+        Returns
+            dictionary of results by user, in the following format:
+                user_id: edit_count
+                
+                or
+                
+                user_id: {
+                    year[, month[, day[, hour]]]: edit_count,
+                    year[, month[, day[, hour]]]: edit_count,
+                    ...
+                }
+        """
+        # handle simple cases (no results or no timeseries)
+        if not query_results:
+            return
+        if self.timeseries.data == TimeseriesChoices.NONE:
+            return dict(query_results)
+        
+        # get results by user and by date
+        results = {}
+        for row in query_results:
+            user_id = row[0]
+            edits = row[1]
+            if not user_id in results:
+                results[user_id] = {}
+            results[user_id][self.get_date_from_tuple(row, 2, len(row))] = edits
+        
+        return results
