@@ -15,6 +15,7 @@ from tests.test_metrics.test_survivors import *
 from wikimetrics.metrics import Survivors
 from wikimetrics.configurables import db
 from pprint import pprint
+import calendar
 
 # Mediawiki database
 d = db.get_mw_session("enwiki")

@@ -64,6 +64,7 @@ class AggregateReport(ReportNode):
     
     def finish(self, result_dicts):
         aggregated_results = dict()
+        task_logger.info(str(result_dicts))
         result_values = [r.values() for r in result_dicts]
         child_results = [result for sublist in result_values for result in sublist]
         

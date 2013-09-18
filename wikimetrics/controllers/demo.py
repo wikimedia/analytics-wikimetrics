@@ -1,6 +1,9 @@
 from flask import render_template, redirect, request, jsonify
 from flask.ext.login import current_user
 from ..configurables import app, db
+
+from tests.fixtures import DatabaseWithSurvivorCohortTest
+
 from ..models import (
     WikiUser,
     User,
@@ -246,3 +249,31 @@ if app.config['DEBUG']:
         return 'OK, wiped out the database and added cohorts only for {0}'.format(
             current_user.email
         )
+
+    @app.route('/demo/create/survivors/')
+    def demo_add_survivors():
+        session = db.get_session()
+        user = session.query(User).filter_by(email=current_user.email).one()
+
+        delete_my_cohorts(session)
+
+        st = DatabaseWithSurvivorCohortTest()
+        st.session = session
+        st.mwSession = db.get_mw_session("enwiki")
+
+        st.clearMediawiki()
+        st.createUsers()
+        st.createCohort()
+        st.updateSurvivorRegistrationData()
+        st.createPageForSurvivors()
+        st.createRevisionsForSurvivors()
+
+        current_user_owns_demo = CohortUser(
+            user_id=user.id,
+            cohort_id=st.cohort.id,
+            role=CohortUserRole.OWNER,
+        )
+        session.add(current_user_owns_demo)
+        session.commit()
+
+        return "Modified"

@@ -186,3 +186,4 @@ class StyleGuide(object):
     def obvious_method(self):
         # no doc string comment on this function because it's obvious
 ````
+
