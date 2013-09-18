@@ -97,32 +97,68 @@ class AggregateReport(ReportNode):
         for results_by_user in list_of_results:
             for user_id in results_by_user.keys():
                 for key in results_by_user[user_id]:
-                    if not key in aggregation:
-                        aggregation[key] = 0
-                        helper[key] = dict()
-                        helper[key]['sum'] = Decimal(0.0)
-                        helper[key]['count'] = 0
-                    
                     value = results_by_user[user_id][key]
                     if not value:
+                        # NOTE: value should never be None in a timeseries result
                         value = Decimal(0)
                     
-                    helper[key]['sum'] += Decimal(value)
-                    helper[key]['count'] += 1
+                    # handle timeseries aggregation
+                    if isinstance(value, dict):
+                        if not key in aggregation:
+                            aggregation[key] = dict()
+                            helper[key] = dict()
+                            for subkey in value:
+                                aggregation[key][subkey] = 0
+                                helper[key][subkey] = dict()
+                                helper[key][subkey]['sum'] = Decimal(0.0)
+                                helper[key][subkey]['count'] = 0
+                        
+                        for subkey in value:
+                            value_subkey = value[subkey] or Decimal(0)
+                            
+                            helper[key][subkey]['sum'] += Decimal(value_subkey)
+                            helper[key][subkey]['count'] += 1
+                            
+                            if type_of_aggregate == Aggregation.SUM:
+                                aggregation[key][subkey] = round(
+                                    helper[key][subkey]['sum'],
+                                    4
+                                )
+                            elif type_of_aggregate == Aggregation.AVG:
+                                cummulative_sum = helper[key][subkey]['sum']
+                                count = helper[key][subkey]['count']
+                                aggregation[key][subkey] = round(
+                                    cummulative_sum / count,
+                                    4
+                                )
+                            elif type_of_aggregate == Aggregation.STD:
+                                aggregation[key][subkey] = 'Not Implemented'
+                                pass
                     
-                    if type_of_aggregate == Aggregation.SUM:
-                        aggregation[key] = round(
-                            helper[key]['sum'],
-                            4
-                        )
-                    elif type_of_aggregate == Aggregation.AVG:
-                        aggregation[key] = round(
-                            helper[key]['sum'] / helper[key]['count'],
-                            4
-                        )
-                    elif type_of_aggregate == Aggregation.STD:
-                        aggregation[key] = 'Not Implemented'
-                        pass
+                    # handle normal aggregation
+                    else:
+                        if not key in aggregation:
+                            aggregation[key] = 0
+                            helper[key] = dict()
+                            helper[key]['sum'] = Decimal(0.0)
+                            helper[key]['count'] = 0
+                        
+                        helper[key]['sum'] += Decimal(value)
+                        helper[key]['count'] += 1
+                        
+                        if type_of_aggregate == Aggregation.SUM:
+                            aggregation[key] = round(
+                                helper[key]['sum'],
+                                4
+                            )
+                        elif type_of_aggregate == Aggregation.AVG:
+                            aggregation[key] = round(
+                                helper[key]['sum'] / helper[key]['count'],
+                                4
+                            )
+                        elif type_of_aggregate == Aggregation.STD:
+                            aggregation[key] = 'Not Implemented'
+                            pass
         
         return aggregation
     

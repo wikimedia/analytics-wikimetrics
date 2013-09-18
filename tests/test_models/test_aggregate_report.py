@@ -1,6 +1,8 @@
 from decimal import Decimal
 from nose.tools import assert_equals, assert_true
-from wikimetrics.metrics import metric_classes
+from wikimetrics.metrics import (
+    metric_classes, NamespaceEdits, TimeseriesChoices,
+)
 from wikimetrics.models import (
     Aggregation, AggregateReport, PersistentReport, Cohort,
 )
@@ -96,7 +98,6 @@ class AggregateReportWithoutQueueTest(DatabaseTest):
         )
         assert_equals(
             finished[ar.result_key][Aggregation.AVG]['edits'],
-            # TODO: Again, figure out this crazy "None" user id
             Decimal(1.25)
         )
         assert_equals(
@@ -124,6 +125,127 @@ class AggregateReportWithoutQueueTest(DatabaseTest):
         )
         
         assert_true(str(ar).find('AggregateReport') >= 0)
+
+
+class AggregateReportTimeseriesTest(QueueDatabaseTest):
+    
+    def setUp(self):
+        DatabaseTest.setUp(self)
+        self.create_test_cohort(
+            editor_count=4,
+            revisions_per_editor=4,
+            revision_timestamps=[
+                [20121231230000, 20130101003000, 20130101010000, 20140101010000],
+                [20130101120000, 20130102000000, 20130102120000, 20130103120000],
+                [20130101000000, 20130108000000, 20130116000000, 20130216000000],
+                [20130101000000, 20130201000000, 20140101000000, 20140102000000],
+            ],
+            revision_lengths=10
+        )
+    
+    def test_timeseries_day(self):
+        metric = NamespaceEdits(
+            namespaces=[0],
+            start_date='2012-12-31 00:00:00',
+            end_date='2013-01-03 00:00:00',
+            timeseries=TimeseriesChoices.DAY,
+        )
+        ar = AggregateReport(
+            self.cohort,
+            metric,
+            individual=True,
+            aggregate=True,
+            aggregate_sum=True,
+            aggregate_average=True,
+            aggregate_std_deviation=True,
+            user_id=self.test_user_id,
+        )
+        results = ar.task.delay(ar).get()
+        
+        self.session.commit()
+        aggregate_key = self.session.query(PersistentReport)\
+            .filter(PersistentReport.id == ar.persistent_id)\
+            .one()\
+            .result_key
+        
+        assert_equals(
+            results[aggregate_key][Aggregation.IND][0][self.editors[0].user_id]['edits'],
+            {
+                '2012-12-31 00:00:00' : 1,
+                '2013-01-01 00:00:00' : 2,
+                '2013-01-02 00:00:00' : 0,
+            }
+        )
+        assert_equals(
+            results[aggregate_key][Aggregation.SUM]['edits'],
+            {
+                '2012-12-31 00:00:00' : 1,
+                '2013-01-01 00:00:00' : 5,
+                '2013-01-02 00:00:00' : 2,
+            }
+        )
+        assert_equals(
+            results[aggregate_key][Aggregation.AVG]['edits'],
+            {
+                '2012-12-31 00:00:00' : Decimal(0.25),
+                '2013-01-01 00:00:00' : Decimal(1.25),
+                '2013-01-02 00:00:00' : Decimal(0.5),
+            }
+        )
+    
+    def test_finish_timeseries(self):
+        metric = NamespaceEdits(
+            namespaces=[0],
+            start_date='2012-12-31 00:00:00',
+            end_date='2013-01-03 00:00:00',
+            timeseries=TimeseriesChoices.DAY,
+        )
+        ar = AggregateReport(
+            self.cohort,
+            metric,
+            individual=True,
+            aggregate=True,
+            aggregate_sum=True,
+            aggregate_average=True,
+            aggregate_std_deviation=True,
+            user_id=self.test_user_id,
+        )
+        
+        finished = ar.finish([
+            {
+                'namespace edits - fake cohort' : {
+                    1: {'edits': {'date1': 1, 'date2': 2}},
+                    2: {'edits': {'date1': 0, 'date2': 1}},
+                    3: {'edits': {'date1': 0, 'date2': 0}},
+                    None: {'edits': {'date1': None, 'date2': None}}
+                }
+            },
+            {
+                'some other metric - fake cohort' : {
+                    1: {'other_sub_metric': {'date3': Decimal(2.3), 'date4': 0}},
+                    2: {'other_sub_metric': {'date3': 0, 'date4': Decimal(3.4)}},
+                    3: {'other_sub_metric': {'date3': None, 'date4': None}},
+                    None: {'other_sub_metric': {'date3': None, 'date4': None}}
+                }
+            },
+        ])
+        
+        assert_equals(
+            finished[ar.result_key][Aggregation.SUM]['edits'],
+            {'date1': 1, 'date2': 3}
+        )
+        assert_equals(
+            finished[ar.result_key][Aggregation.SUM]['other_sub_metric'],
+            {'date3': Decimal(2.3), 'date4': Decimal(3.4)}
+        )
+        assert_equals(
+            finished[ar.result_key][Aggregation.AVG]['edits'],
+            {'date1': 0.25, 'date2': 0.75}
+        )
+        assert_equals(
+            finished[ar.result_key][Aggregation.AVG]['other_sub_metric'],
+            {'date3': 0.575, 'date4': 0.85}
+        )
 
 # NOTE: a sample output of AggregateReport:
 #{

@@ -1,6 +1,6 @@
 from ..utils import thirty_days_ago, today
 from sqlalchemy import func
-from metric import Metric
+from timeseries_metric import TimeseriesMetric
 from form_fields import CommaSeparatedIntegerListField, BetterDateTimeField
 from wtforms.validators import Required
 from wikimetrics.models import Page, Revision
@@ -9,7 +9,7 @@ from wikimetrics.models import Page, Revision
 __all__ = ['PagesCreated']
 
 
-class PagesCreated(Metric):
+class PagesCreated(TimeseriesMetric):
     """
     This class counts the pages created by editors over a period of time.
 
@@ -34,9 +34,6 @@ class PagesCreated(Metric):
          editor in a time interval'
     )
     
-    start_date  = BetterDateTimeField(default=thirty_days_ago)
-    end_date    = BetterDateTimeField(default=today)
-    
     namespaces = CommaSeparatedIntegerListField(
         None,
         [Required()],
@@ -57,20 +54,21 @@ class PagesCreated(Metric):
         start_date = self.start_date.data
         end_date = self.end_date.data
         
-        pages_by_user = dict(
-            session
-            .query(Revision.rev_user, func.count(Page.page_id))
-            .join(Page)
-            .filter(Page.page_namespace.in_(self.namespaces.data))
-            .filter(Revision.rev_parent_id == 0)
-            .filter(Revision.rev_user.in_(user_ids))
-            .filter(Revision.rev_timestamp > start_date)
-            .filter(Revision.rev_timestamp <= end_date)
+        pages_by_user = session\
+            .query(Revision.rev_user, func.count(Page.page_id))\
+            .join(Page)\
+            .filter(Page.page_namespace.in_(self.namespaces.data))\
+            .filter(Revision.rev_parent_id == 0)\
+            .filter(Revision.rev_user.in_(user_ids))\
+            .filter(Revision.rev_timestamp > start_date)\
+            .filter(Revision.rev_timestamp <= end_date)\
             .group_by(Revision.rev_user)
-            .all()
-        )
         
-        return {
-            user_id: {'pages_created': pages_by_user.get(user_id, 0)}
-            for user_id in user_ids
-        }
+        query = self.apply_timeseries(pages_by_user)
+        return self.results_by_user(
+            user_ids,
+            query,
+            [('pages_created', 1, 0)],
+            submetric_default=0,
+            date_index=2,
+        )

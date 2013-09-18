@@ -23,7 +23,7 @@ class Survivors(Metric):
 
     """
     
-    show_in_ui  = True
+    show_in_ui  = False
     id          = 'survivors'
     label       = 'Survivors'
     description = (
