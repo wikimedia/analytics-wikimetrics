@@ -10,7 +10,7 @@ $(document).ready(function(){
             reports = []
         }
         return this.reports().sort(function(report1, report2) {
-            return report2.created - report1.created;
+            return moment(report2.created) - moment(report1.created);
         });
     }, viewModel);
     
