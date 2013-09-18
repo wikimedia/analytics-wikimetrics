@@ -107,15 +107,15 @@ class AggregateReport(ReportNode):
                         if not key in aggregation:
                             aggregation[key] = dict()
                             helper[key] = dict()
-                            for subkey in value:
+                        
+                        for subkey in value:
+                            if not subkey in aggregation[key]:
                                 aggregation[key][subkey] = 0
                                 helper[key][subkey] = dict()
                                 helper[key][subkey]['sum'] = Decimal(0.0)
                                 helper[key][subkey]['count'] = 0
-                        
-                        for subkey in value:
-                            value_subkey = value[subkey] or Decimal(0)
                             
+                            value_subkey = value[subkey] or Decimal(0)
                             helper[key][subkey]['sum'] += Decimal(value_subkey)
                             helper[key][subkey]['count'] += 1
                             

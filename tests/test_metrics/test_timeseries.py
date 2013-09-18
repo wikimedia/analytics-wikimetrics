@@ -137,19 +137,22 @@ class TimeseriesTest(DatabaseTest):
         results = {
             1: {
                 'test': {
-                    '2013-01-02 00:00:00': 12,
-                    '2013-03-02 00:00:00': 1,
+                    '2013-01-01 00:00:00': 12,
+                    '2013-03-01 00:00:00': 1,
                 }
             },
         }
         r = m.fill_in_missing_datetimes(results, [('test', 1, 0)])
         
+        from pprint import pprint
+        pprint(r)
+        
         assert_equals(r, {
             1: {
                 'test': {
-                    '2013-01-02 00:00:00': 12,
-                    '2013-02-02 00:00:00': 0,
-                    '2013-03-02 00:00:00': 1,
+                    '2013-01-01 00:00:00': 12,
+                    '2013-02-01 00:00:00': 0,
+                    '2013-03-01 00:00:00': 1,
                 }
             },
         })
@@ -164,17 +167,20 @@ class TimeseriesTest(DatabaseTest):
         results = {
             1: {
                 'test': {
-                    '2013-03-10 00:00:00': 12,
+                    '2013-01-01 00:00:00': 12,
                 }
             },
         }
         r = m.fill_in_missing_datetimes(results, [('test', 1, 0)])
+        from pprint import pprint
+        pprint(r)
         
         assert_equals(r, {
             1: {
                 'test': {
-                    '2013-03-10 00:00:00': 12,
-                    '2014-03-10 00:00:00': 0,
+                    '2013-01-01 00:00:00': 12,
+                    '2014-01-01 00:00:00': 0,
+                    '2015-01-01 00:00:00': 0,
                 }
             },
         })

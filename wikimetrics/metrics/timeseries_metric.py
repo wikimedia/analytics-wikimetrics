@@ -183,7 +183,7 @@ class TimeseriesMetric(Metric):
         
         slice_delta = self.get_delta_from_choice()
         timeseries_slices = dict()
-        slice_to_default = self.start_date.data
+        slice_to_default = self.get_first_slice()
         while slice_to_default < self.end_date.data:
             date_key = format_pretty_date(slice_to_default)
             timeseries_slices[date_key] = None
@@ -201,6 +201,24 @@ class TimeseriesMetric(Metric):
                 user_submetrics[label] = defaults
         
         return results_by_user
+    
+    def get_first_slice(self):
+        """
+        Given a user's choice of timeseries grouping, and the value of the start_date,
+        return the first interval in the timeseries
+        """
+        if self.timeseries.data == TimeseriesChoices.NONE:
+            return None
+        
+        d = self.start_date.data
+        if self.timeseries.data == TimeseriesChoices.HOUR:
+            return datetime(d.year, d.month, d.day, d.hour)
+        if self.timeseries.data == TimeseriesChoices.DAY:
+            return datetime(d.year, d.month, d.day, 0)
+        if self.timeseries.data == TimeseriesChoices.MONTH:
+            return datetime(d.year, d.month, 1, 0)
+        if self.timeseries.data == TimeseriesChoices.YEAR:
+            return datetime(d.year, 1, 1, 0)
     
     def get_delta_from_choice(self):
         """
