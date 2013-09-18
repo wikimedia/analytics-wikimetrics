@@ -6,7 +6,6 @@ from wikimetrics.metrics import RevertRate, TimeseriesChoices
 from wikimetrics.models import Cohort, MetricReport
 
 
-
 class RevertRateTest(DatabaseTest):
     
     def setUp(self):
@@ -38,7 +37,7 @@ class RevertRateTest(DatabaseTest):
             self.editors[0].user_id: {
                 'edits': 3,
                 'reverts': 1,
-                'revert_rate': float(1)/float(3),
+                'revert_rate': float(1) / float(3),
             },
             # User B had no reverts
             self.editors[1].user_id: {
@@ -47,12 +46,15 @@ class RevertRateTest(DatabaseTest):
                 'revert_rate': 0,
             },
         }
-
+        
         # check user A's results
-        assert_equal(results[self.editors[0].user_id], results_should_be[self.editors[0].user_id])
-
+        assert_equal(
+            results[self.editors[0].user_id],
+            results_should_be[self.editors[0].user_id]
+        )
+        
         # check user B's results
-        assert_equal(results[self.editors[1].user_id], results_should_be[self.editors[0].user_id])
-
-
-
+        assert_equal(
+            results[self.editors[1].user_id],
+            results_should_be[self.editors[0].user_id]
+        )

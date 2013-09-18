@@ -1,6 +1,6 @@
 from nose.tools import assert_true, assert_equal
 from tests.fixtures import DatabaseTest
-from wikimetrics.metrics import BytesAdded
+from wikimetrics.metrics import BytesAdded, TimeseriesChoices
 
 
 class BytesAddedTest(DatabaseTest):
@@ -110,5 +110,129 @@ class BytesAddedTest(DatabaseTest):
         results = metric(list(self.cohort), self.mwSession)
         expected1 = {
             'net_sum': 100,
+        }
+        assert_equal(results[self.editors[0].user_id], expected1)
+
+
+class BytesAddedTimeseriesTest(DatabaseTest):
+    
+    def setUp(self):
+        DatabaseTest.setUp(self)
+        self.create_test_cohort(
+            editor_count=4,
+            revisions_per_editor=4,
+            # in order, all in 2013:
+            # 1/1, 1/5, 1/9, 1/13, 2/2, 2/6, 2/10, 2/14, 3/3, 3/7, 3/15, 4/4, 4/12, 4/16
+            revision_timestamps=[
+                [20130101010000, 20130202000000, 20130303000000, 20130404000000],
+                [20130105000000, 20130206000000, 20130307000000, 20130408000000],
+                [20130109000000, 20130210000000, 20130311000000, 20130412000000],
+                [20130113000000, 20130214000000, 20130315000000, 20130416000000],
+            ],
+            # in order:
+            # 100,1100,1200,1300,0,200,400,600,800,700,600,500,590,550,600,650
+            revision_lengths=[
+                [100, 0, 800, 590],
+                [1100, 200, 700, 550],
+                [1200, 400, 600, 600],
+                [1300, 600, 500, 650],
+            ],
+        )
+    
+    def test_timeseries_by_hour(self):
+        
+        metric = BytesAdded(
+            namespaces=[0],
+            start_date='2013-01-01 00:00:00',
+            end_date='2013-01-01 03:00:00',
+            positive_only_sum=False,
+            negative_only_sum=False,
+            absolute_sum=False,
+            timeseries=TimeseriesChoices.HOUR,
+        )
+        
+        results = metric(list(self.cohort), self.mwSession)
+        expected1 = {
+            'net_sum': {
+                '2013-01-01 00:00:00' : 0,
+                '2013-01-01 01:00:00' : 100,
+                '2013-01-01 02:00:00' : 0,
+            }
+        }
+        assert_equal(results[self.editors[0].user_id], expected1)
+    
+    def test_timeseries_by_day(self):
+        
+        metric = BytesAdded(
+            namespaces=[0],
+            start_date='2013-01-01 00:00:00',
+            end_date='2013-01-14 00:00:00',
+            positive_only_sum=False,
+            negative_only_sum=False,
+            absolute_sum=False,
+            timeseries=TimeseriesChoices.DAY,
+        )
+        
+        results = metric(list(self.cohort), self.mwSession)
+        expected1 = {
+            'net_sum': {
+                '2013-01-01 00:00:00' : 100,
+                '2013-01-02 00:00:00' : 0,
+                '2013-01-03 00:00:00' : 0,
+                '2013-01-04 00:00:00' : 0,
+                '2013-01-05 00:00:00' : 0,
+                '2013-01-06 00:00:00' : 0,
+                '2013-01-07 00:00:00' : 0,
+                '2013-01-08 00:00:00' : 0,
+                '2013-01-09 00:00:00' : 0,
+                '2013-01-10 00:00:00' : 0,
+                '2013-01-11 00:00:00' : 0,
+                '2013-01-12 00:00:00' : 0,
+                '2013-01-13 00:00:00' : 0,
+            }
+        }
+        assert_equal(results[self.editors[0].user_id], expected1)
+    
+    def test_timeseries_by_month(self):
+        
+        metric = BytesAdded(
+            namespaces=[0],
+            start_date='2013-01-01 00:00:00',
+            end_date='2013-04-06 00:00:00',
+            positive_only_sum=False,
+            negative_only_sum=False,
+            absolute_sum=False,
+            timeseries=TimeseriesChoices.MONTH,
+        )
+        
+        results = metric(list(self.cohort), self.mwSession)
+        expected1 = {
+            'net_sum': {
+                '2013-01-01 00:00:00' : 100,
+                '2013-02-01 00:00:00' : -1300,
+                '2013-03-01 00:00:00' : 200,
+                '2013-04-01 00:00:00' : 90,
+            }
+        }
+        assert_equal(results[self.editors[0].user_id], expected1)
+    
+    def test_timeseries_by_year(self):
+        
+        metric = BytesAdded(
+            namespaces=[0],
+            start_date='2013-01-01 00:00:00',
+            end_date='2014-01-14 00:00:00',
+            positive_only_sum=False,
+            negative_only_sum=False,
+            absolute_sum=False,
+            timeseries=TimeseriesChoices.YEAR,
+        )
+        
+        results = metric(list(self.cohort), self.mwSession)
+        expected1 = {
+            'net_sum': {
+                '2013-01-01 00:00:00' : -910,
+                '2014-01-01 00:00:00' : 0,
+            }
         }
         assert_equal(results[self.editors[0].user_id], expected1)

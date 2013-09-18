@@ -5,7 +5,7 @@ from flask import Response
 
 
 # Format string for datetime.strptime for MediaWiki timestamps.
-# See <http://www.mediawiki.org/wiki/Manual:Timestamp>.
+# See <https://www.mediawiki.org/wiki/Manual:Timestamp>.
 MEDIAWIKI_TIMESTAMP = '%Y%m%d%H%M%S'
 # This format is used in the UI and output
 PRETTY_TIMESTAMP = '%Y-%m-%d %H:%M:%S'

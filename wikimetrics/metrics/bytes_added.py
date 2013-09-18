@@ -1,6 +1,6 @@
 from ..utils import thirty_days_ago, today
 from ..models import Revision, Page
-from metric import Metric
+from timeseries_metric import TimeseriesMetric
 from form_fields import (
     BetterDateTimeField,
     BetterBooleanField,
@@ -16,7 +16,7 @@ __all__ = [
 ]
 
 
-class BytesAdded(Metric):
+class BytesAdded(TimeseriesMetric):
     """
     This class implements bytes added logic.
     An instance of the class is callable and will compute four different aggregations of
@@ -66,8 +66,6 @@ class BytesAdded(Metric):
     description = 'Compute different aggregations of the bytes\
                    contributed or removed from a mediawiki project'
     
-    start_date          = BetterDateTimeField(default=thirty_days_ago)
-    end_date            = BetterDateTimeField(default=today)
     namespaces          = CommaSeparatedIntegerListField(
         None,
         [Required()],
@@ -98,6 +96,7 @@ class BytesAdded(Metric):
         PreviousRevision = session.query(Revision.rev_len, Revision.rev_id).subquery()
         BC = session.query(
             Revision.rev_user,
+            Revision.rev_timestamp,
             label(
                 'byte_change',
                 cast(Revision.rev_len, Integer)
@@ -115,52 +114,43 @@ class BytesAdded(Metric):
             .filter(Revision.rev_timestamp > start_date)\
             .filter(Revision.rev_timestamp <= end_date)\
             .subquery()
-            # TODO: figure out why between isn't quite working with these timestamps
-            #.filter(between(
-            #    Revision.rev_timestamp, self.start_date.data, self.end_date.data
-            #))\
         
-        bytes_added_by_user = session.query(
-            BC.c.rev_user,
-            func.sum(BC.c.byte_change).label('net_sum'),
-            func.sum(func.abs(BC.c.byte_change)).label('absolute_sum'),
-            func.sum(case(
-                [(BC.c.byte_change > 0, BC.c.byte_change)], else_=0
-            )).label('positive_only_sum'),
-            func.sum(case(
-                [(BC.c.byte_change < 0, BC.c.byte_change)], else_=0
-            )).label('negative_only_sum'),
-        )\
-            .group_by(BC.c.rev_user)\
-            .all()
+        bytes_added_by_user = session.query(BC.c.rev_user).group_by(BC.c.rev_user)
         
-        result_dict = {}
-        for user_id, net, absolute, positive, negative in bytes_added_by_user:
-            
-            result_dict[user_id] = {}
-            if self.net_sum.data:
-                result_dict[user_id]['net_sum'] = net
-            if self.absolute_sum.data:
-                result_dict[user_id]['absolute_sum'] = absolute
-            if self.positive_only_sum.data:
-                result_dict[user_id]['positive_only_sum'] = positive
-            if self.negative_only_sum.data:
-                result_dict[user_id]['negative_only_sum'] = negative
-        
-        return {
-            user_id: result_dict.get(user_id, self.make_default())
-            for user_id in user_ids
-        }
-    
-    def make_default(self):
-        default = dict()
+        # add submetrics as columns to the output
+        submetrics = []
+        index = 1
         if self.net_sum.data:
-            default['net_sum'] = None
-        if self.absolute_sum.data:
-            default['absolute_sum'] = None
-        if self.positive_only_sum.data:
-            default['positive_only_sum'] = None
-        if self.negative_only_sum.data:
-            default['negative_only_sum'] = None
+            submetrics.append(('net_sum', index, 0))
+            bytes_added_by_user = bytes_added_by_user.add_column(
+                func.sum(BC.c.byte_change).label('net_sum')
+            )
+            index += 1
         
-        return default
+        if self.absolute_sum.data:
+            submetrics.append(('absolute_sum', index, 0))
+            bytes_added_by_user = bytes_added_by_user.add_column(
+                func.sum(func.abs(BC.c.byte_change)).label('absolute_sum'),
+            )
+            index += 1
+        
+        if self.positive_only_sum.data:
+            submetrics.append(('positive_only_sum', index, 0))
+            bytes_added_by_user = bytes_added_by_user.add_column(
+                func.sum(case(
+                    [(BC.c.byte_change > 0, BC.c.byte_change)], else_=0
+                )).label('positive_only_sum'),
+            )
+            index += 1
+        
+        if self.negative_only_sum.data:
+            submetrics.append(('negative_only_sum', index, 0))
+            bytes_added_by_user = bytes_added_by_user.add_column(
+                func.sum(case(
+                    [(BC.c.byte_change < 0, BC.c.byte_change)], else_=0
+                )).label('negative_only_sum'),
+            )
+            index += 1
+        
+        query = self.apply_timeseries(bytes_added_by_user, rev=BC.c)
+        return self.results_by_user(user_ids, query, submetrics, date_index=index)
