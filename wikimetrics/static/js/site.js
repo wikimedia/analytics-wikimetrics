@@ -54,7 +54,7 @@ var site = {
     },
     
     failure: function (error){
-        site.showError(error);
+        site.showError('Wikimetrics is experiencing problems.  Visit the Support page for help if this persists.  You can also check the console for details.');
         console.log(error);
     },
     
