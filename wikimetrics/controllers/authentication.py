@@ -10,8 +10,9 @@ from flask import (
 )
 from sqlalchemy.orm.exc import NoResultFound, MultipleResultsFound
 from flask.ext.login import login_user, logout_user, current_user
-from ..configurables import app, db, login_manager, google
-from ..models import User, UserRole
+from wikimetrics.configurables import app, db, login_manager, google
+from wikimetrics.models import User, UserRole
+from wikimetrics.utils import json_error
 
 
 def is_public(to_decorate):
@@ -34,13 +35,15 @@ def default_to_private():
     if current_user.is_authenticated():
         return
     
+    if request.is_xhr:
+        return json_error('Please Login to access {0}'.format(request.path))
+    
     if (
             request.endpoint
         and not request.path.startswith('/static/')
         and not request.path == 'favicon.ico'
         and not getattr(app.view_functions[request.endpoint], 'is_public', False)
     ):
-        # TODO: make request.url relative or check X-Forwarded-Proto to match the protocol
         flash('Please Login before visiting {0}'.format(request.path), 'info')
         return redirect(url_for('login', next=request.path))
 

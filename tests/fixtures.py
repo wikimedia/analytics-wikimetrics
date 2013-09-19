@@ -528,6 +528,8 @@ class WebTest(WebTestAnonymous):
     Creates a test flask client from the normally configured app.
     Makes sure that a user is authenticated as far as Flask-Login is concerned,
     so that any private routes are still served for testing purposes.
+    NOTE: to simulate ajax requests, do this
+        self.app.get('/', headers=[('X-Requested-With', 'XMLHttpRequest')])
     """
     
     def setUp(self):
