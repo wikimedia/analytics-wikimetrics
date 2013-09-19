@@ -1,6 +1,7 @@
 import imp
 import os
 import yaml
+import subprocess
 
 
 # TODO: does not work in labs environment
@@ -37,6 +38,10 @@ def config_web(args):
     if args.override_config:
         web_config = create_object_from_text_config_file(args.override_config)
         app.config.from_object(web_config)
+    
+    version, latest = get_wikimetrics_version()
+    app.config['WIKIMETRICS_LATEST'] = latest
+    app.config['WIKIMETRICS_VERSION'] = version
     
     global login_manager
     login_manager = LoginManager()
@@ -86,3 +91,22 @@ def config_celery(args):
     queue.config_from_object(celery_config)
     if args.override_config:
         queue.config_from_object(args.override_config)
+
+
+def get_wikimetrics_version():
+    """
+    Returns
+        a tuple of the form (pretty version string, latest commit sha)
+    """
+    cmd = ['git', 'log', '--date', 'relative', "--pretty=format:'%an %ar %h'", '-n', '1']
+    p = subprocess.Popen(cmd, shell=False, stdout=subprocess.PIPE)
+    version, err =  p.communicate()
+    if err is not None:
+        version = 'Unknown version'
+    cmd = ['git', 'log', '--date', 'relative', "--pretty=format:%h", '-n', '1']
+    p = subprocess.Popen(cmd, shell=False, stdout=subprocess.PIPE)
+    latest, err =  p.communicate()
+    if err is not None:
+        latest = 'unknown'
+    
+    return version, latest

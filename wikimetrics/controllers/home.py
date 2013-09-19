@@ -1,5 +1,5 @@
-from flask import render_template, send_from_directory
-from ..configurables import app
+from flask import render_template, send_from_directory, url_for
+from wikimetrics.configurables import app
 from authentication import is_public
 
 
@@ -34,3 +34,16 @@ def support_index():
 @is_public
 def favicon():
     return send_from_directory(app.static_folder, 'favicon.ico')
+
+
+@app.context_processor
+def override_url_for():
+    return dict(url_for=dated_url_for)
+
+def dated_url_for(endpoint, **values):
+    """
+    Cache-busting version of url_for, works only for static files
+    """
+    if endpoint and endpoint.strip() == 'static':
+        values['v'] = app.config['WIKIMETRICS_LATEST']
+    return url_for(endpoint, **values)
