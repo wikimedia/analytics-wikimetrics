@@ -41,8 +41,8 @@ def default_to_private():
         and not getattr(app.view_functions[request.endpoint], 'is_public', False)
     ):
         # TODO: make request.url relative or check X-Forwarded-Proto to match the protocol
-        flash('Please Login before visiting {0}'.format(request.url), 'info')
-        return redirect(url_for('login', next=request.url))
+        flash('Please Login before visiting {0}'.format(request.path), 'info')
+        return redirect(url_for('login', next=request.path))
 
 
 @login_manager.user_loader

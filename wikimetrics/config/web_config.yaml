@@ -1,3 +1,8 @@
+# Not to worry, these values are not used in production
+# I just include them here so you can get up and running with
+# wikimetrics without too much configuration.  But different
+# SECRET_KEY and GOOGLE_CLIENT_SECRET are in use in production,
+# generated to work with the production URL.
 SECRET_KEY  : 'sw3lo(*A98ijwl3i3n&&JEK MSL IESKU* WSkl#iIREJSslsijsle ssie'
 DEBUG       : True
 
