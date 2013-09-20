@@ -69,5 +69,5 @@ def metrics_configure(name):
     return render_template(
         'forms/metric_configuration.html',
         form=metric_form,
-        action=request.url,
+        action=request.path,
     )
