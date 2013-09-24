@@ -638,15 +638,13 @@ class DatabaseForPagesCreatedTest(DatabaseWithCohortTest):
 
 class DatabaseWithSurvivorCohortTest(unittest.TestCase):
 
-    def __init__(self):
-        self.survivors_namespace = 0
-
     def acquireDBHandles(self):
         project = 'enwiki'
         self.session = db.get_session()
         engine = db.get_mw_engine(project)
         db.MediawikiBase.metadata.create_all(engine, checkfirst=True)
         self.mwSession = db.get_mw_session(project)
+        self.survivors_namespace = 0
 
     def clearWikimetrics(self):
         self.session.query(CohortWikiUser).delete()

@@ -1,9 +1,6 @@
 from flask import render_template, redirect, request, jsonify
 from flask.ext.login import current_user
 from ..configurables import app, db
-
-from tests.fixtures import DatabaseWithSurvivorCohortTest
-
 from ..models import (
     WikiUser,
     User,
@@ -257,10 +254,9 @@ if app.config['DEBUG']:
 
         delete_my_cohorts(session)
 
+        from tests.fixtures import DatabaseWithSurvivorCohortTest
         st = DatabaseWithSurvivorCohortTest()
-        st.session = session
-        st.mwSession = db.get_mw_session("enwiki")
-
+        st.acquireDBHandles()
         st.clearMediawiki()
         st.createUsers()
         st.createCohort()
