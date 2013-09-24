@@ -74,7 +74,7 @@ class BetterDateTimeField(DateTimeField):
             return datetime.strptime(value, self.format)
         except ValueError:
             self.report_invalid()
-    
+
     def process_data(self, value):
         self.data = self.parse_datetime(value)
     

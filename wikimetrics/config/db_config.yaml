@@ -1,4 +1,4 @@
-SQL_ECHO                        : False
+SQL_ECHO                        : True
 #WIKIMETRICS_ENGINE_URL          : 'sqlite:///test.db'
 #MEDIAWIKI_ENGINE_URL_TEMPLATE   : 'sqlite:///{0}.db'
 # For testing with mysql locally (useful for manual connection survival tests)

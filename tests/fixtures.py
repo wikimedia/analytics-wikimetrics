@@ -2,6 +2,8 @@ import unittest
 import celery
 import sys
 from datetime import datetime
+from wikimetrics.utils import parse_date, \
+    format_date, parse_pretty_date, format_pretty_date
 from nose.tools import nottest
 
 __all__ = [
@@ -634,59 +636,144 @@ class DatabaseForPagesCreatedTest(DatabaseWithCohortTest):
         self.createTestDataMetricPagesCreated()
 
 
-class DatabaseWithSurvivorCohortTest(DatabaseWithCohortTest):
+class DatabaseWithSurvivorCohortTest(unittest.TestCase):
+
+    def __init__(self):
+        self.survivors_namespace = 0
+
+    def acquireDBHandles(self):
+        project = 'enwiki'
+        self.session = db.get_session()
+        engine = db.get_mw_engine(project)
+        db.MediawikiBase.metadata.create_all(engine, checkfirst=True)
+        self.mwSession = db.get_mw_session(project)
+
+    def clearWikimetrics(self):
+        self.session.query(CohortWikiUser).delete()
+        self.session.query(CohortUser).delete()
+        self.session.query(WikiUser).delete()
+        self.session.query(Cohort).delete()
+        self.session.query(User).delete()
+        self.session.query(PersistentReport).delete()
+        self.session.commit()
+        self.session.close()
+
+    def clearMediawiki(self):
+        self.mwSession.query(Logging).delete()
+        self.mwSession.query(Revision).delete()
+        self.mwSession.query(MediawikiUser).delete()
+        self.mwSession.query(Page).delete()
+        self.mwSession.commit()
+        self.mwSession.close()
+
+    def createUsers(self):
+        mw_user_dan = MediawikiUser(user_name='Dan')
+        mw_user_evan = MediawikiUser(user_name='Evan')
+        mw_user_andrew = MediawikiUser(user_name='Andrew')
+        mw_user_diederik = MediawikiUser(user_name='Diederik')
+        self.mwSession.add_all([mw_user_dan, mw_user_evan,
+                               mw_user_andrew, mw_user_diederik])
+        self.mwSession.commit()
+
+        wu_dan = WikiUser(mediawiki_username='Dan',
+                          mediawiki_userid=mw_user_dan.user_id, project='enwiki')
+        wu_evan = WikiUser(mediawiki_username='Evan',
+                           mediawiki_userid=mw_user_evan.user_id, project='enwiki')
+        wu_andrew = WikiUser(mediawiki_username='Andrew',
+                             mediawiki_userid=mw_user_andrew.user_id, project='enwiki')
+        wu_diederik = WikiUser(mediawiki_username='Diederik',
+                               mediawiki_userid=mw_user_diederik.user_id,
+                               project='enwiki')
+        self.session.add_all([wu_dan, wu_evan, wu_andrew, wu_diederik])
+        self.session.commit()
+
+        self.dan_id = wu_dan.id
+        self.evan_id = wu_evan.id
+        self.andrew_id = wu_andrew.id
+        self.diederik_id = wu_diederik.id
+
+        self.mw_dan_id = mw_user_dan.user_id
+        self.mw_evan_id = mw_user_evan.user_id
+        self.mw_andrew_id = mw_user_andrew.user_id
+        self.mw_diederik_id = mw_user_diederik.user_id
+
+    def createCohort(self):
+        self.cohort = Cohort(name='demo-survivor-cohort', enabled=True, public=True)
+        self.session.add(self.cohort)
+        self.session.commit()
+
+        ids = [self.dan_id, self.evan_id, self.andrew_id, self.diederik_id]
+        for wiki_editor_id in ids:
+            print "adding we_id=", wiki_editor_id, " to cohort=", self.cohort.id
+            cohort_wiki_editor = CohortWikiUser(
+                cohort_id=self.cohort.id,
+                wiki_user_id=wiki_editor_id,
+            )
+            self.session.add(cohort_wiki_editor)
+            self.session.commit()
 
     # update dan,evan,andrew,diederik user_registration timestamp
     def updateSurvivorRegistrationData(self):
-        registration_date_dan    = datetime.strptime("2013-01-01", "%Y-%m-%d")
-        registration_date_evan   = datetime.strptime("2013-01-02", "%Y-%m-%d")
-        registration_date_andrew = datetime.strptime("2013-01-03", "%Y-%m-%d")
-        self.mwSession.query(MediawikiUser.user_id == self.dan_id) \
+        registration_date_dan    = format_date(datetime(2013, 1, 1))
+        registration_date_evan   = format_date(datetime(2013, 1, 2))
+        registration_date_andrew = format_date(datetime(2013, 1, 3))
+
+        self.mwSession.query(MediawikiUser) \
+            .filter(MediawikiUser.user_id == self.mw_dan_id) \
             .update({"user_registration": registration_date_dan})
-        self.mwSession.query(MediawikiUser.user_id == self.evan_id) \
+
+        self.mwSession.query(MediawikiUser) \
+            .filter(MediawikiUser.user_id == self.mw_evan_id) \
             .update({"user_registration": registration_date_evan})
-        self.mwSession.query(MediawikiUser.user_id == self.andrew_id) \
+
+        self.mwSession.query(MediawikiUser) \
+            .filter(MediawikiUser.user_id == self.mw_andrew_id) \
             .update({"user_registration": registration_date_andrew})
 
     def createPageForSurvivors(self):
-        self.page = Page(page_namespace=304, page_title='SurvivorTestPage')
+        self.page = Page(page_namespace=self.survivors_namespace,
+                         page_title='SurvivorTestPage')
         self.mwSession.add_all([self.page])
         self.mwSession.commit()
 
     def createRevisionsForSurvivors(self):
 
-        new_revisions = []
-
         # create a revision for user with id uid at time t
         def createCustomRevision(uid, t):
+            print "page_id = ", self.page.page_id, "\n"
             r = Revision(
                 rev_page=self.page.page_id,
                 rev_user=uid,
                 rev_comment='Survivor Revision',
                 rev_parent_id=111,
                 rev_len=100,
-                rev_timestamp=t
+                rev_timestamp=format_date(t)
             )
-            new_revisions.append(r)
+            self.mwSession.add(r)
+            self.mwSession.commit()
 
-        createCustomRevision(self.dan_id, datetime(2013, 1, 1))
-        createCustomRevision(self.dan_id, datetime(2013, 1, 2))
-        createCustomRevision(self.dan_id, datetime(2013, 1, 3))
+        createCustomRevision(self.mw_dan_id, datetime(2013, 1, 1))
+        createCustomRevision(self.mw_dan_id, datetime(2013, 1, 2))
+        createCustomRevision(self.mw_dan_id, datetime(2013, 1, 3))
 
-        createCustomRevision(self.evan_id, datetime(2013, 1, 2))
-        createCustomRevision(self.evan_id, datetime(2013, 1, 3))
-        createCustomRevision(self.evan_id, datetime(2013, 1, 4))
+        createCustomRevision(self.mw_evan_id, datetime(2013, 1, 2))
+        createCustomRevision(self.mw_evan_id, datetime(2013, 1, 3))
+        createCustomRevision(self.mw_evan_id, datetime(2013, 1, 4))
 
-        createCustomRevision(self.andrew_id, datetime(2013, 1, 3))
-        createCustomRevision(self.andrew_id, datetime(2013, 1, 4))
-        createCustomRevision(self.andrew_id, datetime(2013, 1, 5))
-        createCustomRevision(self.andrew_id, datetime(2013, 1, 6))
-
-        self.mwSession.add_all(new_revisions)
-        self.mwSession.commit()
+        createCustomRevision(self.mw_andrew_id, datetime(2013, 1, 3))
+        createCustomRevision(self.mw_andrew_id, datetime(2013, 1, 4))
+        createCustomRevision(self.mw_andrew_id, datetime(2013, 1, 5))
+        createCustomRevision(self.mw_andrew_id, datetime(2013, 1, 6))
 
     def setUp(self):
-        DatabaseWithCohortTest.setUp(self)
+        self.acquireDBHandles()
+        self.clearWikimetrics()
+        self.clearMediawiki()
+        self.createUsers()
+        self.createCohort()
         self.updateSurvivorRegistrationData()
         self.createPageForSurvivors()
         self.createRevisionsForSurvivors()
+
+    def runTest(self):
+        pass

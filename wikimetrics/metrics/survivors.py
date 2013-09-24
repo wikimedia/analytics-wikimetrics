@@ -1,8 +1,9 @@
 from ..utils import thirty_days_ago, today
-from sqlalchemy import func
+from sqlalchemy import func, case
 from metric import Metric
 from form_fields import CommaSeparatedIntegerListField, BetterDateTimeField
 from wtforms.validators import Required
+from sqlalchemy.sql.expression import label, between, and_
 from wtforms import BooleanField, IntegerField
 from wikimetrics.models import Page, Revision, MediawikiUser
 import datetime
@@ -31,10 +32,9 @@ class Survivors(Metric):
          editor in a time interval'
     )
     
-    start_date            = BetterDateTimeField(default=thirty_days_ago)
-    end_date              = BetterDateTimeField(default=today)
-    survival_days         = IntegerField(default=0)
-    use_registration_date = BooleanField(default=False)
+    number_of_edits       = IntegerField(default=1)
+    survival_hours        = IntegerField(default=0)
+    sunset                = IntegerField(default=0)
     
     namespaces = CommaSeparatedIntegerListField(
         None,
@@ -43,28 +43,18 @@ class Survivors(Metric):
         description='0, 2, 4, etc.',
     )
 
-    def convert_dates_to_timestamps(self):
-        
-        start_date = None
-        end_date = None
-
-        if type(self.start_date.data) == str:
-            start_date = calendar.timegm(
-                datetime.datetime.strptime(self.start_date.data, "%Y-%m-%d").timetuple())
-        elif type(self.start_date.data) == datetime.date:
-            start_date = calendar.timegm(self.start_date.data.timetuple())
-        else:
-            raise Exception("Problems with start_date")
-
-        if type(self.end_date.data) == str:
-            end_date = calendar.timegm(
-                datetime.datetime.strptime(self.end_date.data, "%Y-%m-%d").timetuple())
-        elif type(self.end_date.data) == datetime.date:
-            end_date = calendar.timegm(self.end_date.data.timetuple())
-        else:
-            raise Exception("Problems with end_date")
-
-        return start_date, end_date
+    def debug_print(self, q, session, user_ids):
+        r = dict(q.all())
+        s = ""
+        for uid in user_ids:
+            if uid:
+                user_name = session \
+                    .query(MediawikiUser.user_name) \
+                    .filter(MediawikiUser.user_id == uid) \
+                    .first()[0]
+                val_survivor = r[uid] if uid in r else 0
+                s += user_name + " (" + str(uid) + ") ===> " + str(val_survivor) + "\n"
+        print s
 
     def __call__(self, user_ids, session):
         """
@@ -76,86 +66,51 @@ class Survivors(Metric):
             dictionary from user ids to the number of edit found.
         """
 
-        use_registration_date = self.use_registration_date.data
-        survival_days = int(self.survival_days.data)
+        survival_hours = int(self.survival_hours.data)
+        sunset = int(self.sunset.data)
+        number_of_edits = int(self.number_of_edits.data)
 
-        start_date, end_date = self.convert_dates_to_timestamps()
+        partial_query = session \
+            .query(Revision.rev_user, label("rev_count", func.count(Revision.rev_id))) \
+            .join(MediawikiUser) \
+            .join(Page) \
+            .filter(Page.page_namespace.in_(self.namespaces.data)) \
+            .filter(Revision.rev_user.in_(user_ids))
 
-        #print "use_registration_date=", use_registration_date
-
-        #start_date = self.start_date
-        #end_date = self.end_date
-
-        #if session.bind.name == 'mysql':
-
-        one_day_seconds = 3600 * 12
-
-        survivors_by_namespace = None
-
-        if use_registration_date:
-            if survival_days > 0:
-                print "\n\n[DBG] Case 1\n\n"
-                # survival_days YES ; registration YES
-
-                q = session \
-                    .query(Revision.rev_user) \
-                    .join(MediawikiUser) \
-                    .join(Page) \
-                    .filter(Page.page_namespace.in_(self.namespaces.data)) \
-                    .filter(func.strftime("%s", Revision.rev_timestamp) -
-                            func.strftime("%s", MediawikiUser.user_registration) >=
-                            survival_days * one_day_seconds) \
-                    .group_by(Revision.rev_user)
-
-                survivors_by_namespace = [x[0] for x in q.all()]
-            else:
-                # survival_days NO ; registration YES
-                #print "\n\n[DBG] Case 2\n\n"
-                #print "end_date=", end_date
-                q = session \
-                    .query(Revision.rev_user) \
-                    .join(MediawikiUser) \
-                    .join(Page) \
-                    .filter(Page.page_namespace.in_(self.namespaces.data)) \
-                    .filter(func.strftime("%s", Revision.rev_timestamp) - end_date >= 0) \
-                    .group_by(Revision.rev_user)
-
-                survivors_by_namespace = [x[0] for x in q.all()]
+       # sunset is zero, so we use the first case [T+t,today]
+        if sunset == 0:
+            q = partial_query.filter(
+                between(
+                    func.unix_timestamp(Revision.rev_timestamp)
+                    ,
+                    func.unix_timestamp(MediawikiUser.user_registration) +
+                    (survival_hours * 3600)
+                    ,
+                    func.unix_timestamp(func.now()) + 86400
+                )
+            )
+      # otherwise use the sunset [T+t,T+t+s]
         else:
-            if survival_days:
-                print "\n\n[DBG] Case 3\n\n"
-                # survival_days YES ; registration NO
-                q = session \
-                    .query(Revision.rev_user) \
-                    .join(MediawikiUser) \
-                    .join(Page) \
-                    .filter(Page.page_namespace.in_(self.namespaces.data)) \
-                    .filter(func.strftime("%s", Revision.rev_timestamp) - start_date >=
-                            (survival_days * one_day_seconds)) \
-                    .group_by(Revision.rev_user)
+            q = partial_query.filter(
+                between(
+                    func.unix_timestamp(Revision.rev_timestamp)
+                    ,
+                    func.unix_timestamp(MediawikiUser.user_registration) +
+                    (survival_hours * 3600)
+                    ,
+                    func.unix_timestamp(MediawikiUser.user_registration) +
+                    ((survival_hours + sunset) * 3600))
+            )
+        q = q.group_by(Revision.rev_user) \
+             .subquery()
+        
+        f = session.query(q.c.rev_user,
+                          case([(q.c.rev_count >= number_of_edits, 1)], else_=0))
 
-                survivors_by_namespace = [x[0] for x in q.all()]
+        #self.debug_print(f, session, user_ids)
 
-            else:
-                print "\n\n[DBG] Case 4\n\n"
-                # survival_days NO ; registration NO
-                q = session \
-                    .query(Revision.rev_user, "1") \
-                    .join(MediawikiUser) \
-                    .join(Page) \
-                    .filter(Page.page_namespace.in_(self.namespaces.data)) \
-                    .filter(func.strftime("%s", Revision.rev_timestamp) - end_date >= 0) \
-                    .group_by(Revision.rev_user)
-
-                survivors_by_namespace = [x[0] for x in q.all()]
-
-        retval = {}
-
-        pprint(survivors_by_namespace)
-        for user_id in user_ids:
-            if user_id in survivors_by_namespace:
-                retval[user_id] = {'survivors' : True}
-            else:
-                retval[user_id] = {'survivors' : False}
-
-        return retval
+        survivors = dict(f.all())
+        return {
+            user_id: {'survivors': survivors.get(user_id, 0)}
+            for user_id in user_ids
+        }

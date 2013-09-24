@@ -1,4 +1,4 @@
-from sqlalchemy import TypeDecorator, Unicode
+from sqlalchemy import TypeDecorator, Unicode, Interval
 from datetime import datetime
 from wikimetrics.utils import parse_date, format_date
 
