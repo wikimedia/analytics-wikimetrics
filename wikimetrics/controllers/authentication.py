@@ -90,7 +90,7 @@ def login_google():
     """
     Make a request to Google for Authentication.
     """
-    auth_callback = url_for('auth_google', _external=True)
+    auth_callback = app.config['GOOGLE_REDIRECT_URI']
     return google.authorize(callback=auth_callback)
 
 
