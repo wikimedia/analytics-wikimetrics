@@ -1,5 +1,6 @@
 import json
 import requests
+import urllib2
 from flask import (
     render_template,
     redirect,
@@ -142,6 +143,7 @@ def auth_google(resp):
                 user.detach_from(db_session)
                 db_session.close()
                 redirect_to = session.get('next') or url_for('home_index')
+                redirect_to = urllib2.unquote(redirect_to)
                 return redirect(redirect_to)
     
     flash('Was not allowed to authenticate you with Google.', 'error')
