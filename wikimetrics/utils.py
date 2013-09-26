@@ -109,3 +109,10 @@ def deduplicate_by_key(list_of_objects, key_function):
             uniques[key] = o
     
     return uniques.values()
+
+
+class Unauthorized(Exception):
+    """
+    Different exception type to separate "unauthorized" errors from the rest
+    """
+    pass

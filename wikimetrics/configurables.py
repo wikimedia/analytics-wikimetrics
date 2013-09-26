@@ -100,12 +100,12 @@ def get_wikimetrics_version():
     """
     cmd = ['git', 'log', '--date', 'relative', "--pretty=format:'%an %ar %h'", '-n', '1']
     p = subprocess.Popen(cmd, shell=False, stdout=subprocess.PIPE)
-    version, err =  p.communicate()
+    version, err = p.communicate()
     if err is not None:
         version = 'Unknown version'
     cmd = ['git', 'log', '--date', 'relative', "--pretty=format:%h", '-n', '1']
     p = subprocess.Popen(cmd, shell=False, stdout=subprocess.PIPE)
-    latest, err =  p.communicate()
+    latest, err = p.communicate()
     if err is not None:
         latest = 'unknown'
     

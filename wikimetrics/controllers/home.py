@@ -40,6 +40,7 @@ def favicon():
 def override_url_for():
     return dict(url_for=dated_url_for)
 
+
 def dated_url_for(endpoint, **values):
     """
     Cache-busting version of url_for, works only for static files

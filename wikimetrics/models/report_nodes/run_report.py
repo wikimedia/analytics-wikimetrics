@@ -1,3 +1,5 @@
+from sqlalchemy.orm.exc import NoResultFound
+
 from wikimetrics.configurables import db
 from wikimetrics.models.cohort_user import CohortUserRole
 from wikimetrics.models.cohort import Cohort
@@ -36,20 +38,13 @@ class RunReport(ReportNode):
         children = []
         metric_names = []
         cohort_names = []
-        allowed_roles = [CohortUserRole.OWNER, CohortUserRole.VIEWER]
+        
         for cohort_metric_dict in desired_responses:
             
             # get cohort
             cohort_dict = cohort_metric_dict['cohort']
             db_session = db.get_session()
-            cohort = db_session.query(Cohort)\
-                .join(CohortUser)\
-                .join(User)\
-                .filter(User.id == self.user_id)\
-                .filter(Cohort.id == cohort_dict['id'])\
-                .filter(Cohort.enabled)\
-                .filter(CohortUser.role.in_(allowed_roles))\
-                .one()
+            cohort = Cohort.get_safely(db_session, self.user_id, cohort_dict['id'])
             db_session.close()
             
             # construct metric

@@ -16,6 +16,19 @@ def filterStatus(collection, status):
 
 class ReportsControllerTest(WebTest):
     
+    def setUp(self):
+        WebTest.setUp(self)
+        self.create_test_cohort(
+            editor_count=2,
+            revisions_per_editor=4,
+            revision_timestamps=[
+                [20130101000001, 20130201010000, 20130201010100, 20130301020100],
+                [20130101000001, 20130201010000, 20130201010100, 20130301020100]
+            ],
+            revision_lengths=10,
+            owner_user_id=self.test_web_user_id,
+        )
+    
     def test_index(self):
         response = self.app.get('/reports/', follow_redirects=True)
         assert_true(
@@ -63,7 +76,7 @@ class ReportsControllerTest(WebTest):
         desired_responses = [{
             'name': 'Edits - test',
             'cohort': {
-                'id': self.test_cohort_id,
+                'id': self.cohort.id,
             },
             'metric': {
                 'name': 'NamespaceEdits',
@@ -141,13 +154,13 @@ class ReportsControllerTest(WebTest):
         desired_responses = [{
             'name': 'Edits - test',
             'cohort': {
-                'id': self.test_cohort_id,
+                'id': self.cohort.id,
             },
             'metric': {
                 'name': 'NamespaceEdits',
                 'namespaces': [0, 1, 2],
-                'start_date': '2013-06-01 00:00:00',
-                'end_date': '2013-09-01 00:00:00',
+                'start_date': '2013-01-01 00:00:00',
+                'end_date': '2013-05-01 00:00:00',
                 'individualResults': False,
                 'aggregateResults': True,
                 'aggregateSum': False,
@@ -172,7 +185,7 @@ class ReportsControllerTest(WebTest):
         
         # Check the csv result
         response = self.app.get('/reports/result/{0}.csv'.format(result_key))
-        assert_true(response.data.find('Average') >= 0)
+        assert_true(response.data.find('Average,4.0') >= 0)
 
         # Testing to see if the parameters are also in the CSV
         # (related to Mingle 1089)
@@ -187,13 +200,13 @@ class ReportsControllerTest(WebTest):
         desired_responses = [{
             'name': 'Edits - test',
             'cohort': {
-                'id': self.test_cohort_id,
+                'id': self.cohort.id,
             },
             'metric': {
                 'name': 'NamespaceEdits',
                 'namespaces': [0, 1, 2],
-                'start_date': '2013-06-01 00:00:00',
-                'end_date': '2013-09-01 00:00:00',
+                'start_date': '2013-01-01 00:00:00',
+                'end_date': '2013-04-01 00:00:00',
                 'individualResults': False,
                 'aggregateResults': True,
                 'aggregateSum': True,
@@ -218,20 +231,20 @@ class ReportsControllerTest(WebTest):
         
         # Check the csv result
         response = self.app.get('/reports/result/{0}.csv'.format(result_key))
-        assert_true(response.data.find('Sum') >= 0)
+        assert_true(response.data.find('Sum,8.0') >= 0)
     
     def test_report_result_std_dev_only_csv(self):
         # Make the request
         desired_responses = [{
             'name': 'Edits - test',
             'cohort': {
-                'id': self.test_cohort_id,
+                'id': self.cohort.id,
             },
             'metric': {
                 'name': 'NamespaceEdits',
                 'namespaces': [0, 1, 2],
-                'start_date': '2013-06-01 00:00:00',
-                'end_date': '2013-09-01 00:00:00',
+                'start_date': '2013-01-01 00:00:00',
+                'end_date': '2013-04-01 00:00:00',
                 'individualResults': False,
                 'aggregateResults': True,
                 'aggregateSum': False,
@@ -257,3 +270,62 @@ class ReportsControllerTest(WebTest):
         # Check the csv result
         response = self.app.get('/reports/result/{0}.csv'.format(result_key))
         assert_true(response.data.find('Standard Deviation') >= 0)
+    
+    def test_report_result_timeseries_csv(self):
+        # Make the request
+        desired_responses = [{
+            'name': 'Edits - test',
+            'cohort': {
+                'id': self.cohort.id,
+            },
+            'metric': {
+                'name': 'NamespaceEdits',
+                'timeseries': 'month',
+                'namespaces': [0, 1, 2],
+                'start_date': '2013-01-01 00:00:00',
+                'end_date': '2013-05-01 00:00:00',
+                'individualResults': True,
+                'aggregateResults': True,
+                'aggregateSum': False,
+                'aggregateAverage': True,
+                'aggregateStandardDeviation': False,
+            },
+        }]
+        json_to_post = json.dumps(desired_responses)
+        
+        response = self.app.post('/reports/create/', data=dict(
+            responses=json_to_post
+        ))
+        
+        # Wait a second for the task to get processed
+        time.sleep(1)
+        
+        # Check that the task has been created
+        response = self.app.get('/reports/list/')
+        parsed = json.loads(response.data)
+        result_key = parsed['reports'][-1]['result_key']
+        task, report = get_celery_task(result_key)
+        
+        # Check the csv result
+        response = self.app.get('/reports/result/{0}.csv'.format(result_key))
+        assert_true(response.data.find(
+            'user_id,submetric,'
+            '2013-01-01 00:00:00,2013-02-01 00:00:00,'
+            '2013-03-01 00:00:00,2013-04-01 00:00:00'
+        ) >= 0)
+        assert_true(response.data.find(
+            '{0},edits,1,2,1,0'.format(self.editors[0].user_id)
+        ) >= 0)
+        assert_true(response.data.find(
+            '{0},edits,1,2,1,0'.format(self.editors[1].user_id)
+        ) >= 0)
+        assert_true(response.data.find(
+            'Average,edits,1.0,2.0,1.0,0.0'
+        ) >= 0)
+
+        # Testing to see if the parameters are also in the CSV
+        assert_true(response.data.find('parameters') >= 0)
+        assert_true(response.data.find('start_date') >= 0)
+        assert_true(response.data.find('end_date') >= 0)
+        assert_true(response.data.find('namespaces') >= 0)
+        assert_true(response.data.find('metric/cohort') >= 0)

@@ -10,6 +10,7 @@ __all__ = [
 class CohortUserRole(object):
     OWNER = 'OWNER'
     VIEWER = 'VIEWER'
+    SAFE_ROLES = [OWNER, VIEWER]
 
 
 class CohortUser(db.WikimetricsBase):

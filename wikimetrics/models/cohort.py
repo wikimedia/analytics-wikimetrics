@@ -1,9 +1,13 @@
 import itertools
 from operator import itemgetter
 from sqlalchemy import Column, Integer, Boolean, DateTime, String, func
+
+from wikimetrics.utils import Unauthorized
 from wikimetrics.configurables import db
 from wikiuser import WikiUser
 from cohort_wikiuser import CohortWikiUser
+from cohort_user import CohortUser, CohortUserRole
+from user import User
 
 
 __all__ = ['Cohort']
@@ -80,3 +84,33 @@ class Cohort(db.WikimetricsBase):
         #return ((project, (r[0] for r in users)) for project, users in groups)
         for project, users in groups:
             yield project or self.default_project, (r[0] for r in users)
+    
+    @staticmethod
+    def get_safely(db_session, user_id, cohort_id):
+        """
+        Gets a cohort but first checks permissions on it
+        
+        Parameters
+            db_session  : the database session to query
+            user_id     : the user that should have access to the cohort
+            cohort_id   : the cohort to get
+        
+        Returns
+            If found, a Cohort instance with id == cohort_id
+        
+        Raises
+            NoResultFound   : cohort did not exist
+            Unauthorized    : user_id is not allowed to access this cohort
+        """
+        cohort, role = db_session.query(Cohort, CohortUser.role)\
+            .join(CohortUser)\
+            .join(User)\
+            .filter(User.id == user_id)\
+            .filter(Cohort.id == cohort_id)\
+            .filter(Cohort.enabled)\
+            .one()
+        
+        if role in CohortUserRole.SAFE_ROLES:
+            return cohort
+        else:
+            raise Unauthorized('You are not allowed to use this cohort')

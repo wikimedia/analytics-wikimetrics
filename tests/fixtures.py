@@ -51,6 +51,7 @@ class DatabaseTest(unittest.TestCase):
         revisions_per_editor=0,
         revision_timestamps=[],
         revision_lengths=[],
+        owner_user_id=None,
     ):
         """
         Parameters
@@ -63,6 +64,7 @@ class DatabaseTest(unittest.TestCase):
             revision_lengths        : two dimensional array indexed same as above OR
                                         a single integer so all revisions will
                                         have the same length
+            owner_user_id           : record in the User table that owns this cohort
         
         Returns
             Nothing but creates the following, to be accessed in a test:
@@ -137,6 +139,22 @@ class DatabaseTest(unittest.TestCase):
                 revision.rev_parent_id = ordered_revisions[i - 1].rev_id
         
         self.mwSession.commit()
+        
+        # establish ownership for this cohort
+        if not owner_user_id:
+            #owner_user = User(username='test cohort owner')
+            #self.session.add(owner_user)
+            #self.session.commit()
+            #owner_user_id = owner_user.id
+            # TODO: break dependency on old complicated setUp
+            owner_user_id = self.test_web_user_id
+        
+        self.session.add(CohortUser(
+            user_id=owner_user_id,
+            cohort_id=self.cohort.id,
+            role=CohortUserRole.OWNER,
+        ))
+        self.session.commit()
     
     # create test data for metric PagesCreated
     @nottest

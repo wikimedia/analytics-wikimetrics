@@ -107,13 +107,12 @@ def report_result_csv(result_key):
     
     if celery_task.ready():
         task_result = get_celery_task_result(celery_task, pj)
-        parameters = json.loads(pj.parameters)
+        p = json.loads(pj.parameters)
         
-        if 'timeseries' in parameters\
-            and parameters['timeseries'] != TimeseriesChoices.NONE:
-            csv_io = get_timeseries_csv(task_result, pj, parameters)
+        if 'timeseries' in p and p['timeseries'] != TimeseriesChoices.NONE:
+            csv_io = get_timeseries_csv(task_result, pj, p)
         else:
-            csv_io = get_simple_csv(task_result, pj, parameters)
+            csv_io = get_simple_csv(task_result, pj, p)
         
         res = Response(csv_io.getvalue(), mimetype='text/csv')
         res.headers['Content-Disposition'] =\
