@@ -3,6 +3,7 @@
 
 from setuptools import setup
 
+
 setup(
     name='wikimetrics',
     version='0.0.1',
