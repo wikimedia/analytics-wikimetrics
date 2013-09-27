@@ -93,20 +93,30 @@ def config_celery(args):
         queue.config_from_object(args.override_config)
 
 
+def get_absolute_path():
+    return os.path.dirname(os.path.abspath(__file__)) + '/'
+
 def get_wikimetrics_version():
     """
     Returns
         a tuple of the form (pretty version string, latest commit sha)
     """
-    cmd = ['git', 'log', '--date', 'relative', "--pretty=format:'%an %ar %h'", '-n', '1']
-    p = subprocess.Popen(cmd, shell=False, stdout=subprocess.PIPE)
-    version, err = p.communicate()
-    if err is not None:
-        version = 'Unknown version'
-    cmd = ['git', 'log', '--date', 'relative', "--pretty=format:%h", '-n', '1']
-    p = subprocess.Popen(cmd, shell=False, stdout=subprocess.PIPE)
-    latest, err = p.communicate()
-    if err is not None:
-        latest = 'unknown'
-    
+    path = get_absolute_path()
+    orig_wd = os.getcwd() # remember our original working directory
+    try:
+        os.chdir(path)
+        cmd = ['git', 'log', '--date', 'relative', "--pretty=format:'%an %ar %h'", '-n', '1']
+        p = subprocess.Popen(cmd, shell=False, stdout=subprocess.PIPE)
+        version, err = p.communicate()
+        if err is not None:
+            version = 'Unknown version'
+        cmd = ['git', 'log', '--date', 'relative', "--pretty=format:%h", '-n', '1']
+        p = subprocess.Popen(cmd, shell=False, stdout=subprocess.PIPE)
+        latest, err = p.communicate()
+        if err is not None:
+            latest = 'unknown'
+    except:
+        pass
+    finally:
+        os.chdir(orig_wd)
     return version, latest
