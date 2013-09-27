@@ -25,6 +25,7 @@ $(document).ready(function(){
                     $.get('/metrics/configure/' + metric.name)
                         .done(site.handleWith(function(configureForm){
                             metric.configure(configureForm);
+                            enableDateTimePicker(metric)
                         }))
                         .fail(site.failure);
                 } else {
@@ -87,6 +88,7 @@ $(document).ready(function(){
             $.ajax({ type: 'post', url: form.attr('action'), data: data })
                 .done(site.handleWith(function(response){
                     metric.configure(response);
+                    enableDateTimePicker(metric)
                     if (site.hasValidationErrors()){
                         site.showWarning('The configuration was not all valid.  Please check all the metrics below.');
                     } else {
@@ -216,6 +218,17 @@ $(document).ready(function(){
         });
     };
     
+    function enableDateTimePicker(metric){
+        var parentId = metric.tabId();
+        var controls = $('#' + parentId + ' div.datetimepicker');
+        controls.datetimepicker({language: 'en'});
+        // TODO: this might be cleaner if it metric[name] was an observable
+        controls.on('changeDate', function(e){
+            var input = $(this).find('input');
+            var name = input.attr('name');
+            metric[name] = input.val();
+        });
+    };
     
     // tabs that are dynamically added won't work - fix by re-initializing
     $(".sample-result .tabbable").on("click", "a", function(e){
