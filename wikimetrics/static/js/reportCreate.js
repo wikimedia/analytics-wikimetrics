@@ -25,6 +25,7 @@ $(document).ready(function(){
                     $.get('/metrics/configure/' + metric.name)
                         .done(site.handleWith(function(configureForm){
                             metric.configure(configureForm);
+                            enableDateTimePicker(metric.tabId())
                         }))
                         .fail(site.failure);
                 } else {
@@ -87,6 +88,7 @@ $(document).ready(function(){
             $.ajax({ type: 'post', url: form.attr('action'), data: data })
                 .done(site.handleWith(function(response){
                     metric.configure(response);
+                    enableDateTimePicker(metric.tabId())
                     if (site.hasValidationErrors()){
                         site.showWarning('The configuration was not all valid.  Please check all the metrics below.');
                     } else {
@@ -216,6 +218,9 @@ $(document).ready(function(){
         });
     };
     
+    function enableDateTimePicker(parentId){
+        $('#' + parentId + ' div.datetimepicker').datetimepicker({language: 'en'});
+    };
     
     // tabs that are dynamically added won't work - fix by re-initializing
     $(".sample-result .tabbable").on("click", "a", function(e){
