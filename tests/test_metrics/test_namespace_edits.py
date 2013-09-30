@@ -206,7 +206,7 @@ class NamespaceEditsTimeseriesTest(DatabaseTest):
     def test_timeseries_day(self):
         metric = NamespaceEdits(
             namespaces=[0],
-            start_date='2012-12-31 00:00:00',
+            start_date='2012-12-31 10:00:00',
             end_date='2013-01-02 00:00:00',
             timeseries=TimeseriesChoices.DAY,
         )
@@ -216,7 +216,7 @@ class NamespaceEditsTimeseriesTest(DatabaseTest):
         assert_equal(
             results[self.editors[0].user_id]['edits'],
             {
-                '2012-12-31 00:00:00' : 1,
+                '2012-12-31 10:00:00' : 1,
                 '2013-01-01 00:00:00' : 2,
             }
         )

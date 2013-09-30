@@ -1,8 +1,10 @@
+from collections import OrderedDict
 from decimal import Decimal
+from celery.utils.log import get_task_logger
+
 from wikimetrics.utils import stringify
 from report import ReportNode
 from multi_project_metric_report import MultiProjectMetricReport
-from celery.utils.log import get_task_logger
 
 
 __all__ = ['AggregateReport', 'Aggregation']
@@ -106,7 +108,7 @@ class AggregateReport(ReportNode):
                     # handle timeseries aggregation
                     if isinstance(value, dict):
                         if not key in aggregation:
-                            aggregation[key] = dict()
+                            aggregation[key] = OrderedDict()
                             helper[key] = dict()
                         
                         for subkey in value:

@@ -22,7 +22,7 @@ def run_test():
 
 def run_celery():
     from configurables import queue
-    queue.start(argv=['celery', 'worker', '-l', 'DEBUG'])
+    queue.start(argv=['celery', 'worker', '-l', queue.conf['LOG_LEVEL']])
 
 
 def setup_parser():

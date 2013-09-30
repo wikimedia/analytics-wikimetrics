@@ -96,16 +96,25 @@ def config_celery(args):
 def get_absolute_path():
     return os.path.dirname(os.path.abspath(__file__)) + '/'
 
+
 def get_wikimetrics_version():
     """
     Returns
         a tuple of the form (pretty version string, latest commit sha)
     """
     path = get_absolute_path()
-    orig_wd = os.getcwd() # remember our original working directory
+    orig_wd = os.getcwd()  # remember our original working directory
     try:
         os.chdir(path)
-        cmd = ['git', 'log', '--date', 'relative', "--pretty=format:'%an %ar %h'", '-n', '1']
+        cmd = [
+            'git',
+            'log',
+            '--date',
+            'relative',
+            "--pretty=format:'%an %ar %h'",
+            '-n',
+            '1',
+        ]
         p = subprocess.Popen(cmd, shell=False, stdout=subprocess.PIPE)
         version, err = p.communicate()
         if err is not None:

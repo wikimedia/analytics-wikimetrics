@@ -1,3 +1,4 @@
+from collections import OrderedDict
 from sqlalchemy import func
 from datetime import datetime
 from dateutil.relativedelta import relativedelta
@@ -130,7 +131,7 @@ class TimeseriesMetric(Metric):
         }
         
         # in timeseries results, fill in missing date-times
-        results = self.fill_in_missing_datetimes(results, submetrics)
+        results = self.normalize_datetime_slices(results, submetrics)
         return results
     
     def submetrics_by_user(self, query, submetrics, date_index=None):
@@ -139,17 +140,17 @@ class TimeseriesMetric(Metric):
         the query_results list.
         """
         query_results = query.all()
+        results = OrderedDict()
         
         # handle simple cases (no results or no timeseries)
         if not query_results:
-            return dict()
+            return results
         
         # get results by user and by date
-        results = {}
         for row in query_results:
             user_id = row[0]
             if not user_id in results:
-                results[user_id] = {}
+                results[user_id] = OrderedDict()
             
             date_slice = None
             if self.timeseries.data != TimeseriesChoices.NONE:
@@ -165,11 +166,12 @@ class TimeseriesMetric(Metric):
         
         return results
     
-    def fill_in_missing_datetimes(self, results_by_user, submetrics):
+    def normalize_datetime_slices(self, results_by_user, submetrics):
         """
         Starting from a sparse set of timeseries results, fill in default values
-        for the specified list of sub-metrics.  If self.timeseries is NONE, this
-        is a simple identity function.
+        for the specified list of sub-metrics.  Also make sure the chronological
+        first timeseries slice is >= self.start_date.
+        If self.timeseries is NONE, this is a simple identity function.
         
         Parameters
             results_by_user : dictionary of submetrics dictionaries by user
@@ -182,8 +184,13 @@ class TimeseriesMetric(Metric):
             return results_by_user
         
         slice_delta = self.get_delta_from_choice()
-        timeseries_slices = dict()
-        slice_to_default = self.get_first_slice()
+        timeseries_slices = OrderedDict()
+        start_slice_key = format_pretty_date(self.start_date.data)
+        timeseries_slices[start_slice_key] = None
+        
+        first_slice = self.get_first_slice()
+        first_slice_key = format_pretty_date(first_slice)
+        slice_to_default = first_slice
         while slice_to_default < self.end_date.data:
             date_key = format_pretty_date(slice_to_default)
             timeseries_slices[date_key] = None
@@ -198,6 +205,10 @@ class TimeseriesMetric(Metric):
                 for k, v in defaults.iteritems():
                     if not v:
                         defaults[k] = default
+                
+                # coerce the first datetime slice to be self.start_date
+                defaults[start_slice_key] = defaults.pop(first_slice_key)
+                
                 user_submetrics[label] = defaults
         
         return results_by_user

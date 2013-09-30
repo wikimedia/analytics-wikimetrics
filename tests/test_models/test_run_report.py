@@ -1,9 +1,10 @@
 from nose.tools import assert_equals, assert_true, raises
 from celery.exceptions import SoftTimeLimitExceeded
+from tests.fixtures import QueueDatabaseTest
 from wikimetrics.models import (
     RunReport, Aggregation, PersistentReport
 )
-from ..fixtures import QueueDatabaseTest
+from wikimetrics.metrics import TimeseriesChoices
 
 
 class RunReportTest(QueueDatabaseTest):
@@ -80,6 +81,52 @@ class RunReportTest(QueueDatabaseTest):
         assert_equals(
             results[Aggregation.SUM]['edits'],
             5,
+        )
+    
+    def test_aggregated_response_namespace_edits_with_timeseries(self):
+        desired_responses = [{
+            'name': 'Edits - test',
+            'cohort': {
+                'id': self.test_cohort_id,
+            },
+            'metric': {
+                'name': 'NamespaceEdits',
+                'namespaces': [0, 1, 2],
+                'start_date': '2013-05-01 10:00:00',
+                'end_date': '2013-09-01 00:00:00',
+                'timeseries': TimeseriesChoices.MONTH,
+                'individualResults': True,
+                'aggregateResults': True,
+                'aggregateSum': True,
+                'aggregateAverage': False,
+                'aggregateStandardDeviation': False,
+            },
+        }]
+        jr = RunReport(desired_responses, user_id=self.test_user_id)
+        results = jr.task.delay(jr).get()
+        self.session.commit()
+        result_key = self.session.query(PersistentReport)\
+            .filter(PersistentReport.id == jr.children[0].persistent_id)\
+            .one()\
+            .result_key
+        results = results[result_key]
+        
+        user_id = self.test_mediawiki_user_id
+        key = results[Aggregation.IND][0][user_id]['edits'].items()[0][0]
+        assert_equals(key, '2013-05-01 10:00:00')
+        
+        assert_equals(
+            results[Aggregation.SUM]['edits'].items()[0][0],
+            '2013-05-01 10:00:00',
+        )
+        
+        assert_equals(
+            results[Aggregation.SUM]['edits']['2013-05-01 10:00:00'],
+            0,
+        )
+        assert_equals(
+            results[Aggregation.SUM]['edits']['2013-06-01 00:00:00'],
+            2,
         )
     
     def test_aggregated_response_bytes_added(self):

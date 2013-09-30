@@ -176,7 +176,7 @@ class BytesAddedTimeseriesTest(DatabaseTest):
         results = metric(list(self.cohort), self.mwSession)
         expected1 = {
             'net_sum': {
-                '2012-12-31 00:00:00' : 0,
+                '2012-12-31 09:00:00' : 0,
                 '2013-01-01 00:00:00' : 100,
                 '2013-01-02 00:00:00' : 0,
                 '2013-01-03 00:00:00' : 0,

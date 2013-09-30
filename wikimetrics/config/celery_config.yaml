@@ -7,3 +7,4 @@ CELERYD_CONCURRENCY                 : 16
 CELERYD_TASK_TIME_LIMIT             : 60
 CELERYD_TASK_SOFT_TIME_LIMIT        : 30
 DEBUG                               : True
+LOG_LEVEL                           : 'WARNING'

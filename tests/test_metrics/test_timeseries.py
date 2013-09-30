@@ -37,7 +37,7 @@ class TimeseriesTest(DatabaseTest):
         )
         assert_equals(t4, '2010-01-02 03:00:00')
     
-    def test_fill_in_missing_datetimes_hour(self):
+    def normalize_datetime_slices(self):
         m = TimeseriesMetric(
             start_date='2013-01-01 23:00:00',
             end_date='2013-01-03 00:00:00',
@@ -52,7 +52,7 @@ class TimeseriesTest(DatabaseTest):
                 }
             }
         }
-        r = m.fill_in_missing_datetimes(results, [('test', 1, 0)])
+        r = m.normalize_datetime_slices(results, [('test', 1, 0)])
         assert_equals(r, {
             1: {
                 'test': {
@@ -85,7 +85,7 @@ class TimeseriesTest(DatabaseTest):
             }
         })
     
-    def test_fill_in_missing_datetimes_day(self):
+    def test_normalize_datetime_slices_day(self):
         m = TimeseriesMetric(
             start_date='2013-01-01 00:00:00',
             end_date='2013-01-05 00:00:00',
@@ -106,7 +106,7 @@ class TimeseriesTest(DatabaseTest):
                 }
             }
         }
-        r = m.fill_in_missing_datetimes(results, [('test', 1, 0)])
+        r = m.normalize_datetime_slices(results, [('test', 1, 0)])
         
         assert_equals(r, {
             1: {
@@ -127,7 +127,7 @@ class TimeseriesTest(DatabaseTest):
             }
         })
     
-    def test_fill_in_missing_datetimes_month(self):
+    def test_normalize_datetime_slices_month(self):
         m = TimeseriesMetric(
             start_date='2013-01-02 00:00:00',
             end_date='2013-03-05 00:00:00',
@@ -142,22 +142,19 @@ class TimeseriesTest(DatabaseTest):
                 }
             },
         }
-        r = m.fill_in_missing_datetimes(results, [('test', 1, 0)])
-        
-        from pprint import pprint
-        pprint(r)
+        r = m.normalize_datetime_slices(results, [('test', 1, 0)])
         
         assert_equals(r, {
             1: {
                 'test': {
-                    '2013-01-01 00:00:00': 12,
+                    '2013-01-02 00:00:00': 12,
                     '2013-02-01 00:00:00': 0,
                     '2013-03-01 00:00:00': 1,
                 }
             },
         })
     
-    def test_fill_in_missing_datetimes_year(self):
+    def test_normalize_datetime_slices_year(self):
         m = TimeseriesMetric(
             start_date='2013-03-10 00:00:00',
             end_date='2015-03-05 00:00:00',
@@ -171,16 +168,42 @@ class TimeseriesTest(DatabaseTest):
                 }
             },
         }
-        r = m.fill_in_missing_datetimes(results, [('test', 1, 0)])
-        from pprint import pprint
-        pprint(r)
+        r = m.normalize_datetime_slices(results, [('test', 1, 0)])
         
         assert_equals(r, {
             1: {
                 'test': {
-                    '2013-01-01 00:00:00': 12,
+                    '2013-03-10 00:00:00': 12,
                     '2014-01-01 00:00:00': 0,
                     '2015-01-01 00:00:00': 0,
+                }
+            },
+        })
+    
+    def test_normalize_datetime_slices_start_date_forces_first_interval(self):
+        m = TimeseriesMetric(
+            start_date='2013-01-02 00:00:00',
+            end_date='2013-03-05 00:00:00',
+            timeseries=TimeseriesChoices.MONTH,
+        )
+        
+        results = {
+            1: {
+                'test': {
+                    '2013-01-01 00:00:00': 12,
+                    '2013-03-01 00:00:00': 1,
+                }
+            },
+        }
+        r = m.normalize_datetime_slices(results, [('test', 1, 0)])
+        
+        assert_equals(r, {
+            1: {
+                'test': {
+                    # The first interval starts on the 2nd and not the 1st
+                    '2013-01-02 00:00:00': 12,
+                    '2013-02-01 00:00:00': 0,
+                    '2013-03-01 00:00:00': 1,
                 }
             },
         })
