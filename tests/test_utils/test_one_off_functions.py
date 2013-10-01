@@ -4,6 +4,7 @@ from nose.tools import assert_true, assert_equals
 from unittest import TestCase
 from wikimetrics.utils import (
     stringify,
+    deduplicate_by_key,
 )
 from wikimetrics.metrics import NamespaceEdits
 
@@ -31,3 +32,27 @@ class UtilsTest(TestCase):
         result = stringify(normal='hello world')
         assert_true(result.find('"normal"') >= 0)
         assert_true(result.find('normal') >= 0)
+    
+    def test_deduplicate_by_key(self):
+        collection_of_dicts = [
+            {'index': 'one', 'other': '1'},
+            {'index': 'two', 'other': '2'},
+            {'index': 'two', 'other': '3'},
+        ]
+        no_duplicates = deduplicate_by_key(collection_of_dicts, lambda r: r['index'])
+        expected = collection_of_dicts[0:2]
+        assert_equals(sorted(no_duplicates), expected)
+    
+    def test_deduplicate_by_key_tuple(self):
+        collection_of_dicts = [
+            {'index': 'one', 'other': '1'},
+            {'index': 'two', 'other': '2'},
+            {'index': 'two', 'other': '3'},
+            {'index': 'two', 'other': '2'},
+        ]
+        no_duplicates = deduplicate_by_key(
+            collection_of_dicts,
+            lambda r: (r['index'], r['other'])
+        )
+        expected = collection_of_dicts[0:3]
+        assert_equals(sorted(no_duplicates), expected)

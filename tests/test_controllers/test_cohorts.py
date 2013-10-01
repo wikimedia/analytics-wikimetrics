@@ -18,7 +18,7 @@ from wikimetrics.controllers.cohorts import (
 from wikimetrics.models import Cohort
 
 
-class TestCohortsController(WebTest):
+class CohortsControllerTest(WebTest):
     
     def test_index(self):
         response = self.app.get('/cohorts/', follow_redirects=True)

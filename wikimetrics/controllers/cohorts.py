@@ -415,5 +415,5 @@ def validate_records(records):
         record['user_id'], record['username'] = normalized_user
         valid.append(record)
     
-    valid = deduplicate_by_key(valid, lambda record: record['username'])
+    valid = deduplicate_by_key(valid, lambda r: (r['username'], r['project']))
     return (valid, invalid)
