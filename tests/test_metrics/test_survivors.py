@@ -49,7 +49,7 @@ class SurvivorsTest(DatabaseWithSurvivorCohortTest):
             namespaces=[self.survivors_namespace],
             survival_hours=1 * 24,
             number_of_edits=3,
-            sunset=3 * 24
+            sunset_in_hours=3 * 24
         )
         results = m(list(self.cohort), self.mwSession)
 
@@ -71,13 +71,13 @@ class SurvivorsTest(DatabaseWithSurvivorCohortTest):
     # for [T+t,today] the observation is censored
     def test_censored1(self):
         
-        # NOTE: setting sunset 10000 days in the future
+        # NOTE: setting sunset_in_hours 10000 days in the future
         # This means that in 82 years, this test will break
         m = Survivors(
             namespaces=[self.survivors_namespace],
             number_of_edits=6,
             survival_hours=30000 * 24,
-            sunset=30000 * 24
+            sunset_in_hours=30000 * 24
         )
         results = m(list(self.cohort), self.mwSession)
         assert_equal(results, {
