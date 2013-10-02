@@ -1,17 +1,11 @@
-from nose.tools import (
-    assert_true,
-    assert_not_equal,
-    assert_equal,
-    assert_in,
-    assert_not_in,
-)
-from tests.fixtures import DatabaseWithSurvivorCohortTest
+from datetime import datetime
+from nose.tools import assert_equal
 
+from tests.fixtures import DatabaseWithSurvivorCohortTest
 from wikimetrics.metrics import Survivors
 from wikimetrics.models import (
     Cohort, MetricReport, WikiUser, CohortWikiUser, MediawikiUser,
 )
-from datetime import datetime
 
 
 class SurvivorsTest(DatabaseWithSurvivorCohortTest):
@@ -82,7 +76,13 @@ class SurvivorsTest(DatabaseWithSurvivorCohortTest):
         m = Survivors(
             namespaces=[self.survivors_namespace],
             number_of_edits=6,
-            survival_hours=30000*24,
-            sunset=30000*24
+            survival_hours=30000 * 24,
+            sunset=30000 * 24
         )
         results = m(list(self.cohort), self.mwSession)
+        assert_equal(results, {
+            self.mw_dan_id: {'censored': 1, 'survivor': 0},
+            self.mw_evan_id: {'censored': 1, 'survivor': 0},
+            self.mw_andrew_id: {'censored': 1, 'survivor': 0},
+            self.mw_diederik_id: {'censored': 0, 'survivor': 0},
+        })

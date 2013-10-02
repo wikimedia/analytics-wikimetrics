@@ -10,9 +10,6 @@ from sqlalchemy import Integer
 import datetime
 import calendar
 
-from pprint import pprint
-import sys
-
 
 __all__ = ['Survivors']
 
@@ -20,10 +17,6 @@ __all__ = ['Survivors']
 class Survivors(Metric):
     """
     This class counts the survivors over a period of time.
-
-    This sql query was used as a starting point for the sqlalchemy query:
-
-
     """
     
     show_in_ui  = True
@@ -44,7 +37,7 @@ class Survivors(Metric):
         default='0',
         description='0, 2, 4, etc.',
     )
-
+    
     def debug_print(self, r, session, user_ids):
         s = ""
         for uid in user_ids:
@@ -53,9 +46,11 @@ class Survivors(Metric):
                     .query(MediawikiUser.user_name) \
                     .filter(MediawikiUser.user_id == uid) \
                     .first()[0]
-                s += user_name + " (" + str(uid) + ") ===> [" + str(r[uid]["survivor"]) + "] [" + str(r[uid]["censored"]) + "] \n"
-        print s
-
+                s += '{0} ({1}) ===> [{2}] [{3}] \n'.format(
+                    user_name, str(uid), str(r[uid]["survivor"]), str(r[uid]["censored"])
+                )
+        print(s)
+    
     def __call__(self, user_ids, session):
         """
         Parameters:
@@ -107,10 +102,13 @@ class Survivors(Metric):
         
         revisions = revisions.subquery()
         revs = session.query(
-                MediawikiUser.user_id,
-                MediawikiUser.user_registration,
-                label("rev_count", func.sum(func.IF(revisions.c.user_id != None, 1, 0)))
-            ) \
+            MediawikiUser.user_id,
+            MediawikiUser.user_registration,
+            label(
+                "rev_count",
+                func.sum(func.IF(revisions.c.user_id != None, 1, 0))
+            )
+        ) \
             .outerjoin(revisions, MediawikiUser.user_id == revisions.c.user_id) \
             .group_by(MediawikiUser.user_id) \
             .subquery()
@@ -120,40 +118,38 @@ class Survivors(Metric):
             func.unix_timestamp(func.now()),
             func.IF(
                 func.unix_timestamp(func.now()) <
-                    func.unix_timestamp(revs.c.user_registration) +
-                    (survival_hours + sunset)*3600,
+                func.unix_timestamp(revs.c.user_registration) +
+                (survival_hours + sunset) * 3600,
                 1, 0
             ),
             revs.c.rev_count,
-            label("survived", func.IF(revs.c.rev_count >= number_of_edits, 1,0) ),
+            label("survived", func.IF(revs.c.rev_count >= number_of_edits, 1, 0)),
             label("censored", func.IF(
                 revs.c.rev_count >= number_of_edits,
                 0,
                 func.IF(
                     func.unix_timestamp(func.now()) <
-                        func.unix_timestamp(revs.c.user_registration) +
-                        (survival_hours + sunset)*3600,
+                    func.unix_timestamp(revs.c.user_registration) +
+                    (survival_hours + sunset) * 3600,
                     1, 0
                 )
             ))
-         )
+        )
         
         data = metric.all()
         
-        survivor_data = dict()
-        censored_data = dict()
-        r = dict()
-
-        for u in data:
-            uid = u.user_id
-            survivor_data[uid] = u.survived
-            censored_data[uid] = u.censored
-
-        for uid in user_ids:
-            r[uid] = dict()
-            r[uid]["survivor"] = survivor_data.get(uid, 0)
-            r[uid]["censored"] = censored_data.get(uid, 0)
-
-        self.debug_print(r, session, user_ids)
-
-        return r
+        metric_results = {
+            u.user_id: {
+                'survivor': u.survived,
+                'censored': u.censored,
+            }
+            for u in data
+        }
+        
+        return {
+            uid: metric_results.get(uid, {
+                'survivor': None,
+                'censored': None,
+            })
+            for uid in user_ids
+        }
