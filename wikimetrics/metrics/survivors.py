@@ -3,9 +3,10 @@ from sqlalchemy import func, case
 from metric import Metric
 from form_fields import CommaSeparatedIntegerListField, BetterDateTimeField
 from wtforms.validators import Required
-from sqlalchemy.sql.expression import label, between, and_
+from sqlalchemy.sql.expression import label, between, and_, or_
 from wtforms import BooleanField, IntegerField
 from wikimetrics.models import Page, Revision, MediawikiUser
+from sqlalchemy import Integer
 import datetime
 import calendar
 
@@ -21,6 +22,7 @@ class Survivors(Metric):
     This class counts the survivors over a period of time.
 
     This sql query was used as a starting point for the sqlalchemy query:
+
 
     """
     
@@ -43,8 +45,7 @@ class Survivors(Metric):
         description='0, 2, 4, etc.',
     )
 
-    def debug_print(self, q, session, user_ids):
-        r = dict(q.all())
+    def debug_print(self, r, session, user_ids):
         s = ""
         for uid in user_ids:
             if uid:
@@ -52,8 +53,7 @@ class Survivors(Metric):
                     .query(MediawikiUser.user_name) \
                     .filter(MediawikiUser.user_id == uid) \
                     .first()[0]
-                val_survivor = r[uid] if uid in r else 0
-                s += user_name + " (" + str(uid) + ") ===> " + str(val_survivor) + "\n"
+                s += user_name + " (" + str(uid) + ") ===> [" + str(r[uid]["survivor"]) + "] [" + str(r[uid]["censored"]) + "] \n"
         print s
 
     def __call__(self, user_ids, session):
@@ -69,17 +69,18 @@ class Survivors(Metric):
         survival_hours = int(self.survival_hours.data)
         sunset = int(self.sunset.data)
         number_of_edits = int(self.number_of_edits.data)
-
-        partial_query = session \
-            .query(Revision.rev_user, label("rev_count", func.count(Revision.rev_id))) \
-            .join(MediawikiUser) \
+        
+        revisions = session \
+            .query(MediawikiUser.user_id) \
+            .join(Revision) \
             .join(Page) \
-            .filter(Page.page_namespace.in_(self.namespaces.data)) \
-            .filter(Revision.rev_user.in_(user_ids))
-
-       # sunset is zero, so we use the first case [T+t,today]
+            .filter(MediawikiUser.user_id.in_(user_ids)) \
+            .filter(Page.page_namespace.in_(self.namespaces.data))
+        
+        # sunset is zero, so we use the first case [T+t,today]
+        # TODO: censored is 0
         if sunset == 0:
-            q = partial_query.filter(
+            revisions = revisions.filter(
                 between(
                     func.unix_timestamp(Revision.rev_timestamp)
                     ,
@@ -89,9 +90,10 @@ class Survivors(Metric):
                     func.unix_timestamp(func.now()) + 86400
                 )
             )
-      # otherwise use the sunset [T+t,T+t+s]
+        # otherwise use the sunset [T+t,T+t+s]
+        # TODO: censored is 0 if now() >= T+t+s
         else:
-            q = partial_query.filter(
+            revisions = revisions.filter(
                 between(
                     func.unix_timestamp(Revision.rev_timestamp)
                     ,
@@ -99,18 +101,59 @@ class Survivors(Metric):
                     (survival_hours * 3600)
                     ,
                     func.unix_timestamp(MediawikiUser.user_registration) +
-                    ((survival_hours + sunset) * 3600))
+                    ((survival_hours + sunset) * 3600)
+                )
             )
-        q = q.group_by(Revision.rev_user) \
-             .subquery()
         
-        f = session.query(q.c.rev_user,
-                          case([(q.c.rev_count >= number_of_edits, 1)], else_=0))
+        revisions = revisions.subquery()
+        revs = session.query(
+                MediawikiUser.user_id,
+                MediawikiUser.user_registration,
+                label("rev_count", func.sum(func.IF(revisions.c.user_id != None, 1, 0)))
+            ) \
+            .outerjoin(revisions, MediawikiUser.user_id == revisions.c.user_id) \
+            .group_by(MediawikiUser.user_id) \
+            .subquery()
+        
+        metric = session.query(
+            revs.c.user_id,
+            func.unix_timestamp(func.now()),
+            func.IF(
+                func.unix_timestamp(func.now()) <
+                    func.unix_timestamp(revs.c.user_registration) +
+                    (survival_hours + sunset)*3600,
+                1, 0
+            ),
+            revs.c.rev_count,
+            label("survived", func.IF(revs.c.rev_count >= number_of_edits, 1,0) ),
+            label("censored", func.IF(
+                revs.c.rev_count >= number_of_edits,
+                0,
+                func.IF(
+                    func.unix_timestamp(func.now()) <
+                        func.unix_timestamp(revs.c.user_registration) +
+                        (survival_hours + sunset)*3600,
+                    1, 0
+                )
+            ))
+         )
+        
+        data = metric.all()
+        
+        survivor_data = dict()
+        censored_data = dict()
+        r = dict()
 
-        #self.debug_print(f, session, user_ids)
+        for u in data:
+            uid = u.user_id
+            survivor_data[uid] = u.survived
+            censored_data[uid] = u.censored
 
-        survivors = dict(f.all())
-        return {
-            user_id: {'survivors': survivors.get(user_id, 0)}
-            for user_id in user_ids
-        }
+        for uid in user_ids:
+            r[uid] = dict()
+            r[uid]["survivor"] = survivor_data.get(uid, 0)
+            r[uid]["censored"] = censored_data.get(uid, 0)
+
+        self.debug_print(r, session, user_ids)
+
+        return r
