@@ -104,6 +104,14 @@ $(document).ready(function(){
         .done(site.handleWith(function(data){
             setSelected(data.cohorts);
             viewModel.cohorts(data.cohorts);
+            // pre-select any selected cohorts
+            if (location.hash){
+                try {
+                    viewModel.cohorts().filter(function(c){
+                        return c.id == location.hash.substring(1);
+                    })[0].selected(true);
+                } catch(e) {}
+            }
         }))
         .fail(site.failure);
     

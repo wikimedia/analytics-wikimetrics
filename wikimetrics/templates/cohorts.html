@@ -21,7 +21,7 @@
             <div class="hero-unit">
                 <h5 data-bind="text: name"></h5>
                 <p data-bind="text: description"></p>
-                <a href="{{url_for('reports_request')}}" class="btn btn-primary">
+                <a data-bind="attr:{href:'{{url_for('reports_request')}}#'+id}" class="btn btn-primary">
                     Create Report
                 </a>
             </div>

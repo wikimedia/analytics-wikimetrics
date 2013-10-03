@@ -41,7 +41,7 @@ $(document).ready(function(){
         .done(site.handleWith(function(data){
             setWikiusers(data.cohorts);
             viewModel.cohorts(data.cohorts);
-            $('ul.nav-tabs li a').first().click();
+            site.enableTabNavigation();
         }))
         .fail(site.failure);
     

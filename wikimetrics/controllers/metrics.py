@@ -19,7 +19,7 @@ def get_metrics(add_class=False):
                 new_record['metricClass'] = metric
             
             records.append(new_record)
-    return records
+    return sorted(records, key=lambda r: r['label'])
 
 
 @app.route('/metrics/')

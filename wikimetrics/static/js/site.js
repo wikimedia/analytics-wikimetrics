@@ -102,6 +102,20 @@ var site = {
             .fail(site.failure);
     },
     
+    // persists the bootstrap tab hash in the url and navigates to it on page load
+    enableTabNavigation: function(){
+        $('ul.nav-tabs li a').on('shown', function (e) {
+            location.hash = e.target.hash;
+            // negate jumping down to the tab anchor
+            window.scrollTo(0, 0);
+        })
+        if (location.hash){
+            $('ul.nav-tabs li a[href='+location.hash+']').click();
+        } else {
+            $('ul.nav-tabs li a').first().click();
+        }
+    },
+    
     // ***********************************************************
     // Just some util functions so I don't have to
     // import huge libraries like Underscore
