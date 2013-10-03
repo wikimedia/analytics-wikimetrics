@@ -2,6 +2,7 @@ $(document).ready(function(){
     
     var viewModel = {
         reports: ko.observableArray([]),
+        refreshEvery: 5,
     };
     
     viewModel.reports_sorted = ko.computed(function() {
@@ -19,7 +20,7 @@ $(document).ready(function(){
         site.populateReports(viewModel);
     };
     getReports();
-    setInterval(getReports, 10000);
+    setInterval(getReports, viewModel.refreshEvery * 1000);
     
     ko.applyBindings(viewModel);
 });
