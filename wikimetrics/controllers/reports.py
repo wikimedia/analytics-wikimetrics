@@ -9,7 +9,9 @@ from wikimetrics.configurables import app, db
 from wikimetrics.models import Report, RunReport, PersistentReport
 from wikimetrics.metrics import TimeseriesChoices
 from wikimetrics.models.report_nodes import Aggregation
-from wikimetrics.utils import json_response, json_error, json_redirect, thirty_days_ago
+from wikimetrics.utils import (
+    json_response, json_error, json_redirect, thirty_days_ago
+)
 
 
 @app.route('/reports/')
@@ -84,13 +86,11 @@ def get_celery_task(result_key):
 
 
 def get_celery_task_result(celery_task, db_report):
-    # this indicates an old style result, the celery task result can be returned directly
-    # TODO: delete this logic on October 1st, as all old results will have expired by then
-    if db_report.result_key == db_report.queue_result_key:
-        return celery_task.get()
-    # otherwise, it's a new style result, the celery task is a dictionary
+    result = celery_task.get()
+    if result:
+        return result[db_report.result_key]
     else:
-        return celery_task.get()[db_report.result_key]
+        return {'failure': 'result not available'}
 
 
 @app.route('/reports/status/<result_key>')
@@ -105,7 +105,7 @@ def report_result_csv(result_key):
     if not celery_task:
         return json_error('no task exists with id: {0}'.format(result_key))
     
-    if celery_task.ready():
+    if celery_task.ready() and celery_task.successful():
         task_result = get_celery_task_result(celery_task, pj)
         p = json.loads(pj.parameters)
         
@@ -284,7 +284,7 @@ def report_result_json(result_key):
     if not celery_task:
         return json_error('no task exists with id: {0}'.format(result_key))
     
-    if celery_task.ready():
+    if celery_task.ready() and celery_task.successful():
         task_result = get_celery_task_result(celery_task, pj)
         
         return json_response(

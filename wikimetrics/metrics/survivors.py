@@ -1,14 +1,14 @@
-from ..utils import thirty_days_ago, today
-from sqlalchemy import func, case
+import datetime
+import calendar
+from sqlalchemy import func, case, Integer
+from sqlalchemy.sql.expression import label, between, and_, or_
+
+from wikimetrics.models import Page, Revision, MediawikiUser
+from wikimetrics.utils import thirty_days_ago, today, CENSORED
 from metric import Metric
 from form_fields import CommaSeparatedIntegerListField, BetterDateTimeField
 from wtforms.validators import Required
-from sqlalchemy.sql.expression import label, between, and_, or_
 from wtforms import BooleanField, IntegerField
-from wikimetrics.models import Page, Revision, MediawikiUser
-from sqlalchemy import Integer
-import datetime
-import calendar
 
 
 __all__ = ['Survivors']
@@ -27,7 +27,7 @@ class Survivors(Metric):
 
    FROM (SELECT user.user_id AS user_id,
                 user.user_registration AS user_registration,
-                coalesce(rev_count.rev_count, 0) AS rev_count
+                coalesce(rev_counts.rev_count, 0) AS rev_count
            FROM user
                         LEFT OUTER JOIN
                 (SELECT user.user_id AS user_id,
@@ -44,7 +44,7 @@ class Survivors(Metric):
                             BETWEEN
                         <survival> AND <survival + sunset>
                   GROUP BY user.user_id
-                ) AS rev_count     ON user.user_id = rev_count.user_id
+                ) AS rev_counts     ON user.user_id = rev_count.user_id
           WHERE user.user_id IN (<cohort>)
         ) AS revs
     """
@@ -53,9 +53,10 @@ class Survivors(Metric):
     id          = 'survival'
     label       = 'Survival'
     description = (
-        'Compute whether editors "survived" by making n edits in the time period\
-        starting at their registration + survival hours and ending at\
-        their registration + survival hours + sunset hours'
+        'Compute whether editors "survived" by making <<number_of_edits>> edits from \
+        <<registration + survival hours>> to \
+        <<registration + survival hours + sunset hours>>.  If <<sunset hours>> is 0, \
+        look for edits until the current time.'
     )
     
     number_of_edits       = IntegerField(default=1)
@@ -78,7 +79,7 @@ class Survivors(Metric):
                     .filter(MediawikiUser.user_id == uid) \
                     .first()[0]
                 s += '{0} ({1}) ===> [{2}] [{3}] \n'.format(
-                    user_name, str(uid), str(r[uid]['survivor']), str(r[uid]['censored'])
+                    user_name, str(uid), str(r[uid]['survivor']), str(r[uid][CENSORED])
                 )
         print(s)
     
@@ -156,7 +157,7 @@ class Survivors(Metric):
             ),
             revs.c.rev_count,
             label('survived', func.IF(revs.c.rev_count >= number_of_edits, 1, 0)),
-            label('censored', func.IF(
+            label(CENSORED, func.IF(
                 revs.c.rev_count >= number_of_edits,
                 0,
                 func.IF(
@@ -173,7 +174,7 @@ class Survivors(Metric):
         metric_results = {
             u.user_id: {
                 'survivor': u.survived,
-                'censored': u.censored,
+                CENSORED: u.censored,
             }
             for u in data
         }
@@ -181,7 +182,7 @@ class Survivors(Metric):
         return {
             uid: metric_results.get(uid, {
                 'survivor': None,
-                'censored': None,
+                CENSORED: None,
             })
             for uid in user_ids
         }

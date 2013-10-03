@@ -133,13 +133,6 @@ class ReportsControllerTest(WebTest):
         self.session.expunge(report_new)
         report_new.update_status()
         assert_equal(report_new.status, celery.states.SUCCESS)
-        
-        # Change this report to look like the old style, to test that still works
-        # TODO: delete this test on October 1st
-        report.result_key = report.queue_result_key
-        self.session.commit()
-        result = get_celery_task_result(task, report)
-        assert_true(result is not None)
     
     def test_report_result_csv_error(self):
         response = self.app.get('/reports/result/blah.csv')

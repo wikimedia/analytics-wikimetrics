@@ -206,8 +206,9 @@ class TimeseriesMetric(Metric):
                     if not v:
                         defaults[k] = default
                 
-                # coerce the first datetime slice to be self.start_date
-                defaults[start_slice_key] = defaults.pop(first_slice_key)
+                if start_slice_key != first_slice_key:
+                    # coerce the first datetime slice to be self.start_date
+                    defaults[start_slice_key] = defaults.pop(first_slice_key)
                 
                 user_submetrics[label] = defaults
         

@@ -10,6 +10,8 @@ from flask import Response
 MEDIAWIKI_TIMESTAMP = '%Y%m%d%H%M%S'
 # This format is used in the UI and output
 PRETTY_TIMESTAMP = '%Y-%m-%d %H:%M:%S'
+# This is used to mean that a result was censored in some way
+CENSORED = 'censored'
 
 
 def parse_date(date_string):
