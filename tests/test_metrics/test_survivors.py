@@ -10,6 +10,9 @@ from wikimetrics.models import (
 )
 
 
+metric_name = Survivors.id
+
+
 class SurvivorsTest(DatabaseWithSurvivorCohortTest):
     
     def test_case1_24h_count1(self):
@@ -19,9 +22,9 @@ class SurvivorsTest(DatabaseWithSurvivorCohortTest):
         )
         results = m(list(self.cohort), self.mwSession)
 
-        assert_equal(results[self.mw_dan_id]["survivor"], True)
-        assert_equal(results[self.mw_evan_id]["survivor"], True)
-        assert_equal(results[self.mw_andrew_id]["survivor"] , True)
+        assert_equal(results[self.mw_dan_id][metric_name], True)
+        assert_equal(results[self.mw_evan_id][metric_name], True)
+        assert_equal(results[self.mw_andrew_id][metric_name] , True)
     
     def test_case1_72h_count1(self):
         m = Survivors(
@@ -30,9 +33,9 @@ class SurvivorsTest(DatabaseWithSurvivorCohortTest):
         )
         results = m(list(self.cohort), self.mwSession)
 
-        assert_equal(results[self.mw_dan_id]["survivor"], False)
-        assert_equal(results[self.mw_evan_id]["survivor"], False)
-        assert_equal(results[self.mw_andrew_id]["survivor"] , True)
+        assert_equal(results[self.mw_dan_id][metric_name], False)
+        assert_equal(results[self.mw_evan_id][metric_name], False)
+        assert_equal(results[self.mw_andrew_id][metric_name] , True)
     
     def test_case1_24h_count3(self):
         m = Survivors(
@@ -42,9 +45,9 @@ class SurvivorsTest(DatabaseWithSurvivorCohortTest):
         )
         results = m(list(self.cohort), self.mwSession)
 
-        assert_equal(results[self.mw_dan_id]["survivor"], False)
-        assert_equal(results[self.mw_evan_id]["survivor"], False)
-        assert_equal(results[self.mw_andrew_id]["survivor"] , True)
+        assert_equal(results[self.mw_dan_id][metric_name], False)
+        assert_equal(results[self.mw_evan_id][metric_name], False)
+        assert_equal(results[self.mw_andrew_id][metric_name] , True)
     
     def test_case2_24h_count3_sunset72h(self):
         m = Survivors(
@@ -55,9 +58,9 @@ class SurvivorsTest(DatabaseWithSurvivorCohortTest):
         )
         results = m(list(self.cohort), self.mwSession)
 
-        assert_equal(results[self.mw_dan_id]["survivor"], False)
-        assert_equal(results[self.mw_evan_id]["survivor"], False)
-        assert_equal(results[self.mw_andrew_id]["survivor"] , True)
+        assert_equal(results[self.mw_dan_id][metric_name], False)
+        assert_equal(results[self.mw_evan_id][metric_name], False)
+        assert_equal(results[self.mw_andrew_id][metric_name] , True)
     
     def test_default(self):
         m = Survivors(
@@ -66,9 +69,9 @@ class SurvivorsTest(DatabaseWithSurvivorCohortTest):
         results = m(list(self.cohort), self.mwSession)
         #self.debug_query = m.debug_query
 
-        assert_equal(results[self.mw_dan_id]["survivor"], True)
-        assert_equal(results[self.mw_evan_id]["survivor"], True)
-        assert_equal(results[self.mw_andrew_id]["survivor"] , True)
+        assert_equal(results[self.mw_dan_id][metric_name], True)
+        assert_equal(results[self.mw_evan_id][metric_name], True)
+        assert_equal(results[self.mw_andrew_id][metric_name] , True)
     
     def test_censored1(self):
         
@@ -82,10 +85,10 @@ class SurvivorsTest(DatabaseWithSurvivorCohortTest):
         )
         results = m(list(self.cohort), self.mwSession)
         assert_equal(results, {
-            self.mw_dan_id: {'censored': 1, 'survivor': 0},
-            self.mw_evan_id: {'censored': 1, 'survivor': 0},
-            self.mw_andrew_id: {'censored': 1, 'survivor': 0},
-            self.mw_diederik_id: {'censored': 0, 'survivor': 0},
+            self.mw_dan_id: {'censored': 1, metric_name: 0},
+            self.mw_evan_id: {'censored': 1, metric_name: 0},
+            self.mw_andrew_id: {'censored': 1, metric_name: 0},
+            self.mw_diederik_id: {'censored': 0, metric_name: 0},
         })
 
     def test_censored2(self):
@@ -115,8 +118,8 @@ class SurvivorsTest(DatabaseWithSurvivorCohortTest):
         results = m(list(self.cohort), self.mwSession)
 
         assert_equal(results, {
-            self.mw_dan_id: {'censored': 0, 'survivor': 0},
-            self.mw_evan_id: {'censored': 0, 'survivor': 0},
-            self.mw_andrew_id: {'censored': 0, 'survivor': 1},
-            self.mw_diederik_id: {'censored': 0, 'survivor': 0},
+            self.mw_dan_id: {'censored': 0, metric_name: 0},
+            self.mw_evan_id: {'censored': 0, metric_name: 0},
+            self.mw_andrew_id: {'censored': 0, metric_name: 1},
+            self.mw_diederik_id: {'censored': 0, metric_name: 0},
         })

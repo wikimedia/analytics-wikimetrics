@@ -1,22 +1,17 @@
-import datetime
-import calendar
-from sqlalchemy import func, case, Integer
-from sqlalchemy.sql.expression import label, between, and_, or_
-
-from wikimetrics.models import Page, Revision, MediawikiUser
-from wikimetrics.utils import thirty_days_ago, today, CENSORED
-from metric import Metric
-from form_fields import CommaSeparatedIntegerListField, BetterDateTimeField
-from wtforms.validators import Required
 from wtforms import BooleanField, IntegerField
+from wikimetrics.metrics import Threshold
 
 
 __all__ = ['Survivors']
 
 
-class Survivors(Metric):
+class Survivors(Threshold):
     """
-    This metric counts the survivors .
+    Survivor is a metric that determines whether an editor has performed a certain
+    activity at least n times in a specified time window. It is used to measure early
+    user activation (when t is measured from account creation) or
+    during a certain window of interest
+    (for example in an A/B test or a usability test for an editing gadget/feature)
     
     The SQL query that inspired this metric was:
     
@@ -42,150 +37,18 @@ class Survivors(Metric):
                     AND unix_timestamp(revision.rev_timestamp) -
                         unix_timestamp(user.user_registration)
                             BETWEEN
-                        <survival> AND <survival + sunset>
+                        <survival> AND <now>
                   GROUP BY user.user_id
                 ) AS rev_counts     ON user.user_id = rev_count.user_id
           WHERE user.user_id IN (<cohort>)
         ) AS revs
     """
-    
-    show_in_ui  = True
-    id          = 'survival'
-    label       = 'Survival'
+    id = 'survival'
+    label = 'Survival'
     description = (
         'Compute whether editors "survived" by making <<number_of_edits>> edits from \
         <<registration + survival hours>> to \
         <<registration + survival hours + sunset hours>>.  If <<sunset hours>> is 0, \
-        look for edits until the current time.'
+        look for edits from registration up to today.'
     )
-    
-    number_of_edits       = IntegerField(default=1)
-    survival_hours        = IntegerField(default=0)
     sunset_in_hours       = IntegerField(default=0)
-    
-    namespaces = CommaSeparatedIntegerListField(
-        None,
-        [Required()],
-        default='0',
-        description='0, 2, 4, etc.',
-    )
-    
-    def debug_print(self, r, session, user_ids):
-        s = ''
-        for uid in user_ids:
-            if uid:
-                user_name = session \
-                    .query(MediawikiUser.user_name) \
-                    .filter(MediawikiUser.user_id == uid) \
-                    .first()[0]
-                s += '{0} ({1}) ===> [{2}] [{3}] \n'.format(
-                    user_name, str(uid), str(r[uid]['survivor']), str(r[uid][CENSORED])
-                )
-        print(s)
-    
-    def __call__(self, user_ids, session):
-        """
-        Parameters:
-            user_ids    : list of mediawiki user ids to find edit for
-            session     : sqlalchemy session open on a mediawiki database
-        
-        Returns:
-            dictionary from user ids to the number of edit found.
-        """
-
-        survival_hours = int(self.survival_hours.data)
-        sunset_in_hours = int(self.sunset_in_hours.data)
-        number_of_edits = int(self.number_of_edits.data)
-        
-        revisions = session \
-            .query(
-                MediawikiUser.user_id,
-                label('rev_count', func.count())
-            ) \
-            .join(Revision) \
-            .join(Page) \
-            .group_by(MediawikiUser.user_id) \
-            .filter(MediawikiUser.user_id.in_(user_ids)) \
-            .filter(Page.page_namespace.in_(self.namespaces.data))
-        
-        # sunset_in_hours is zero, so we use the first case [T+t,today]
-        if sunset_in_hours == 0:
-            revisions = revisions.filter(
-                between(
-                    func.unix_timestamp(Revision.rev_timestamp) -
-                    func.unix_timestamp(MediawikiUser.user_registration)
-                    ,
-                    (survival_hours * 3600)
-                    ,
-                    func.unix_timestamp(func.now()) + 86400
-                )
-            )
-        # otherwise use the sunset_in_hours [T+t,T+t+s]
-        else:
-            revisions = revisions.filter(
-                between(
-                    func.unix_timestamp(Revision.rev_timestamp) -
-                    func.unix_timestamp(MediawikiUser.user_registration)
-                    ,
-                    (survival_hours * 3600)
-                    ,
-                    ((survival_hours + sunset_in_hours) * 3600)
-                )
-            )
-        
-        revisions = revisions.subquery()
-        revs = session.query(
-            MediawikiUser.user_id,
-            MediawikiUser.user_registration,
-            label(
-                'rev_count',
-                func.coalesce(revisions.c.rev_count, 0)
-            )
-        ) \
-            .outerjoin(revisions, MediawikiUser.user_id == revisions.c.user_id) \
-            .filter(MediawikiUser.user_id.in_(user_ids)) \
-            .subquery()
-        
-        metric = session.query(
-            revs.c.user_id,
-            func.unix_timestamp(func.now()),
-            func.IF(
-                func.unix_timestamp(func.now()) <
-                func.unix_timestamp(revs.c.user_registration) +
-                (survival_hours + sunset_in_hours) * 3600,
-                1, 0
-            ),
-            revs.c.rev_count,
-            label('survived', func.IF(revs.c.rev_count >= number_of_edits, 1, 0)),
-            label(CENSORED, func.IF(
-                revs.c.rev_count >= number_of_edits,
-                0,
-                func.IF(
-                    func.unix_timestamp(func.now()) <
-                    func.unix_timestamp(revs.c.user_registration) +
-                    (survival_hours + sunset_in_hours) * 3600,
-                    1, 0
-                )
-            ))
-        )
-        
-        data = metric.all()
-        
-        metric_results = {
-            u.user_id: {
-                'survivor': u.survived,
-                CENSORED: u.censored,
-            }
-            for u in data
-        }
-
-        r = {
-            uid: metric_results.get(uid, {
-                'survivor': None,
-                CENSORED: None,
-            })
-            for uid in user_ids
-        }
-
-        #self.debug_print(r, session, user_ids)
-        return r
