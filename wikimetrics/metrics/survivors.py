@@ -178,11 +178,14 @@ class Survivors(Metric):
             }
             for u in data
         }
-        
-        return {
+
+        r = {
             uid: metric_results.get(uid, {
                 'survivor': None,
                 CENSORED: None,
             })
             for uid in user_ids
         }
+
+        #self.debug_print(r, session, user_ids)
+        return r
