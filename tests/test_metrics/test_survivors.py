@@ -5,10 +5,9 @@ from nose.tools import assert_equal
 from tests.fixtures import DatabaseWithSurvivorCohortTest
 from wikimetrics.metrics import Survivors
 from wikimetrics.models import (
-    Cohort, MetricReport, WikiUser, CohortWikiUser, MediawikiUser, 
-    Revision
+    Cohort, MetricReport, WikiUser, CohortWikiUser, MediawikiUser,
+    Revision,
 )
-
 
 
 class SurvivorsTest(DatabaseWithSurvivorCohortTest):
@@ -93,17 +92,25 @@ class SurvivorsTest(DatabaseWithSurvivorCohortTest):
         
         # NOTE: setting sunset_in_hours 10000 days in the future
         # This means that in 82 years, this test will break
-        andrew_user = self.mwSession.query(MediawikiUser).filter(MediawikiUser.user_id == self.mw_andrew_id).first()
-        andrew_revs = self.mwSession.query(Revision).join(MediawikiUser) \
-                .filter(MediawikiUser.user_id==self.mw_andrew_id) \
-                .order_by(Revision.rev_timestamp) \
-                .all()
+        andrew_user = self.mwSession.query(MediawikiUser) \
+            .filter(MediawikiUser.user_id == self.mw_andrew_id) \
+            .first()
+        andrew_revs = self.mwSession.query(Revision) \
+            .join(MediawikiUser) \
+            .filter(MediawikiUser.user_id == self.mw_andrew_id) \
+            .order_by(Revision.rev_timestamp) \
+            .all()
 
         m = Survivors(
             namespaces=[self.survivors_namespace],
             number_of_edits=2,
-            survival_hours=int(((andrew_revs[2].rev_timestamp - andrew_user.user_registration).total_seconds())/(3600)),
-            sunset_in_hours=2*48
+            survival_hours=int(
+                ((andrew_revs[2].rev_timestamp - andrew_user.user_registration)
+                    .total_seconds())
+                /
+                (3600)
+            ),
+            sunset_in_hours=2 * 48
         )
         results = m(list(self.cohort), self.mwSession)
 
