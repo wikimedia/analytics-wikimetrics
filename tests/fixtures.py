@@ -720,7 +720,6 @@ class DatabaseWithSurvivorCohortTest(unittest.TestCase):
 
         ids = [self.dan_id, self.evan_id, self.andrew_id, self.diederik_id]
         for wiki_editor_id in ids:
-            print "adding we_id=", wiki_editor_id, " to cohort=", self.cohort.id
             cohort_wiki_editor = CohortWikiUser(
                 cohort_id=self.cohort.id,
                 wiki_user_id=wiki_editor_id,
@@ -756,7 +755,6 @@ class DatabaseWithSurvivorCohortTest(unittest.TestCase):
 
         # create a revision for user with id uid at time t
         def createCustomRevision(uid, t):
-            print "page_id = ", self.page.page_id, "\n"
             r = Revision(
                 rev_page=self.page.page_id,
                 rev_user=uid,

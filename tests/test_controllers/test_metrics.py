@@ -57,7 +57,6 @@ class TestMetricsController(WebTest):
         response = self.app.post('/metrics/configure/NamespaceEdits', data=dict(
             namespaces='abcd',
         ))
-        print response.data
         assert_not_equal(
             response.data.find('<li class="text-error">'),
             -1,

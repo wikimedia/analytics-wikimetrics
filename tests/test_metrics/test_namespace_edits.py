@@ -78,8 +78,6 @@ class NamespaceEditsFullTest(QueueDatabaseTest):
         results = report.task.delay(report).get()
         
         assert_true(results is not None)
-        print self.test_mediawiki_user_id_evan
-        print results
         assert_equal(results[self.test_mediawiki_user_id_evan]['edits'], 0)
     
     def test_namespace_edits_namespace_filter_no_namespace(self):
@@ -211,7 +209,6 @@ class NamespaceEditsTimeseriesTest(DatabaseTest):
             timeseries=TimeseriesChoices.DAY,
         )
         results = metric(list(self.cohort), self.mwSession)
-        print results
         
         assert_equal(
             results[self.editors[0].user_id]['edits'],

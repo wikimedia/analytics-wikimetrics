@@ -1,6 +1,5 @@
 import json
 import decimal
-from pprint import pprint
 from datetime import datetime, timedelta, date
 from flask import Response
 
@@ -68,7 +67,7 @@ class BetterEncoder(json.JSONEncoder):
     json library because there is no agreed upon standard of how to do so
     This class can be used as follows to allow your json.dumps to serialize
     dates properly.  You should make sure your client is happy with this serialization:
-        print json.dumps(obj, cls=BetterEncoder)
+        print(json.dumps(obj, cls=BetterEncoder))
     """
     
     def default(self, obj):

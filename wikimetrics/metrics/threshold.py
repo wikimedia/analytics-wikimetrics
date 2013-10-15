@@ -95,7 +95,9 @@ class Threshold(Metric):
 
         survival_hours = int(self.survival_hours.data)
 
-        if self.sunset_in_hours:
+        # NOTE: this kind of breaks OOP because it handles a child class need
+        # in the parent class.  TODO: fix
+        if hasattr(self, 'sunset_in_hours'):
             sunset_in_hours = int(self.sunset_in_hours.data)
         else:
             sunset_in_hours = 0

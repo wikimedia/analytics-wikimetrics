@@ -13,13 +13,11 @@ class UtilsTest(TestCase):
     
     def test_better_encoder_date(self):
         result = stringify(date_not_date_time=datetime.date(2013, 06, 01))
-        print result
         assert_true(result.find('"date_not_date_time"') >= 0)
         assert_true(result.find('2013-06-01') >= 0)
     
     def test_better_encoder_datetime(self):
         result = stringify(date_time=datetime.datetime(2013, 06, 01, 02, 03, 04))
-        print result
         assert_true(result.find('"date_time"') >= 0)
         assert_true(result.find('2013-06-01 02:03:04') >= 0)
     

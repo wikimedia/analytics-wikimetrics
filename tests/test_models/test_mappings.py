@@ -89,7 +89,6 @@ class TestMappings(DatabaseTest):
             .filter(CohortUser.role == CohortUserRole.OWNER)\
             .filter(User.username == 'Evan')\
             .all()
-        print cohorts
         assert_equal(len(cohorts), 2, "User Evan should own 2 cohorts")
     
     #***********

@@ -11,7 +11,6 @@ class DatabaseSetupTest(TestCase):
         (host_one, projects) = get_host_projects(1)
         assert_equals(host_one, 1)
         assert_true('enwiki' in projects)
-        print projects
     
     def test_get_host_projects_map(self):
         project_host_map = get_host_projects_map()
