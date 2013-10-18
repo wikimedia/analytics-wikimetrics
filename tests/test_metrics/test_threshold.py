@@ -10,7 +10,7 @@ from wikimetrics.models import (
 )
 
 
-metric_name = Threshold.id
+metric_name = 'threshold'
 
 
 class ThresholdTest(DatabaseWithSurvivorCohortTest):

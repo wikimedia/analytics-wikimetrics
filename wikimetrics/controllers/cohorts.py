@@ -122,7 +122,7 @@ def cohort_upload():
             'csv_upload.html',
             projects=json.dumps(db.project_host_map.keys()),
         )
-
+    
     elif request.method == 'POST':
         try:
             csv_file = request.files['csv']

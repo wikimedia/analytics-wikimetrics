@@ -2,12 +2,12 @@ from wtforms import BooleanField, IntegerField
 from wikimetrics.metrics import Threshold
 
 
-__all__ = ['Survivors']
+__all__ = ['Survival']
 
 
-class Survivors(Threshold):
+class Survival(Threshold):
     """
-    Survivor is a metric that determines whether an editor has performed a certain
+    Survival is a metric that determines whether an editor has performed a certain
     activity at least n times in a specified time window. It is used to measure early
     user activation (when t is measured from account creation) or
     during a certain window of interest
@@ -37,18 +37,19 @@ class Survivors(Threshold):
                     AND unix_timestamp(revision.rev_timestamp) -
                         unix_timestamp(user.user_registration)
                             BETWEEN
-                        <survival> AND <now>
+                        <survival_hours> AND <now>
                   GROUP BY user.user_id
                 ) AS rev_counts     ON user.user_id = rev_count.user_id
           WHERE user.user_id IN (<cohort>)
         ) AS revs
     """
-    id = 'survival'
+    id = 'survived'
     label = 'Survival'
     description = (
-        'Compute whether editors "survived" by making <<number_of_edits>> edits from \
-        <<registration + survival hours>> to \
-        <<registration + survival hours + sunset hours>>.  If <<sunset hours>> is 0, \
-        look for edits from registration up to today.'
+        'Compute whether editors "survived" by making <number_of_edits> from \
+        <registration> + <survival_hours> to \
+        <registration> + <survival_hours> + <sunset_in_hours>. \
+        If sunset_in_hours is 0, look for edits from \
+        <registration> + <survival_hours> to <today>.'
     )
     sunset_in_hours       = IntegerField(default=0)

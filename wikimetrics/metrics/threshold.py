@@ -24,7 +24,7 @@ class Threshold(Metric):
     The SQL query that inspired this metric was:
     
  SELECT revs.user_id AS revs_user_id,
-        IF(revs.rev_count >= 1, 1, 0) AS survived,
+        IF(revs.rev_count >= 1, 1, 0) AS threshold,
         IF(revs.rev_count >= 1, 0, IF(unix_timestamp(now())
             < unix_timestamp(revs.user_registration) + 2595600, 1, 0)) AS censored
 
@@ -45,7 +45,7 @@ class Threshold(Metric):
                     AND unix_timestamp(revision.rev_timestamp) -
                         unix_timestamp(user.user_registration)
                             BETWEEN
-                        <survival> AND <now>
+                        <survival_hours> AND <now>
                   GROUP BY user.user_id
                 ) AS rev_counts     ON user.user_id = rev_count.user_id
           WHERE user.user_id IN (<cohort>)
@@ -56,8 +56,8 @@ class Threshold(Metric):
     id          = 'threshold'
     label       = 'Threshold'
     description = (
-        'Compute whether editors "survived" if they have at least \
-         number_of_edits up to today.'
+        'Compute whether editors made <number_of_edits> from \
+        <registration> + <survival_hours> to <today>.'
     )
     
     number_of_edits       = IntegerField(default=1)
@@ -69,19 +69,6 @@ class Threshold(Metric):
         default='0',
         description='0, 2, 4, etc.',
     )
-    
-    def debug_print(self, r, session, user_ids):
-        s = ''
-        for uid in user_ids:
-            if uid:
-                user_name = session \
-                    .query(MediawikiUser.user_name) \
-                    .filter(MediawikiUser.user_id == uid) \
-                    .first()[0]
-                s += '{0} ({1}) ===> [{2}] [{3}] \n'.format(
-                    user_name, str(uid), str(r[uid]['survivor']), str(r[uid][CENSORED])
-                )
-        print(s)
     
     def __call__(self, user_ids, session):
         """
@@ -163,7 +150,7 @@ class Threshold(Metric):
                 1, 0
             ),
             revs.c.rev_count,
-            label('survived', func.IF(revs.c.rev_count >= number_of_edits, 1, 0)),
+            label('metric_result', func.IF(revs.c.rev_count >= number_of_edits, 1, 0)),
             label(CENSORED, func.IF(
                 revs.c.rev_count >= number_of_edits,
                 0,
@@ -180,7 +167,7 @@ class Threshold(Metric):
         
         metric_results = {
             u.user_id: {
-                self.id: u.survived,
+                self.id: u.metric_result,
                 CENSORED: u.censored,
             }
             for u in data

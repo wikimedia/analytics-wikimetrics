@@ -22,7 +22,7 @@ d = db.get_mw_session("enwiki")
 # Wikimetrics database
 m = db.get_session()
 
-s = SurvivorsTest()
+s = SurvivalTest()
 s.setUp()
 
 # %load_ext autoreload
