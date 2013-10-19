@@ -2,32 +2,26 @@
 # follow the frog
 
 from setuptools import setup
+from pip.req import parse_requirements
+
+# parse_requirements() returns generator of pip.req.InstallRequirement objects
+install_reqs = parse_requirements('requirements.txt')
+
+# reqs is a list of requirement
+# e.g. ['flask==0.9', 'sqlalchemye==0.8.1']
+reqs = [str(ir.req) for ir in install_reqs]
 
 setup(
-    name='wikimetrics',
-    version='0.0.1',
-    description='Wikipedia User Analysis Tool',
-    url='http://www.github.com/wikimedia/analytics-wikimetrics',
-    author='Andrew Otto, Dan Andreescu, Evan Rosen',
-    packages=[
+    name = 'wikimetrics',
+    version = '0.0.1',
+    description = 'Wikipedia Cohort Analysis Tool',
+    url = 'http://www.github.com/wikimedia/analytics-wikimetrics',
+    author = 'Andrew Otto, Dan Andreescu, Evan Rosen, Stefan Petrea'
+    packages = [
         'wikimetrics',
     ],
-    install_requires=[
-        'sqlalchemy == 0.8.1',
-        'mysql-python == 1.2.4',
-        'requests == 1.2.3',
-        'flask == 0.9',
-        'flask-login == 0.2.4',
-        'flask-oauth == 0.12',
-        'wtforms == 1.0.4',
-        # needed to run tests but bad in prod environment
-        # because tests are currently distructive 'nose == 1.3.0',
-        'coverage == 3.6',
-        'celery == 3.0',
-        'celery-with-redis == 3.0',
-        'PyYAML==3.10'
-    ],
-    entry_points={
+    install_requires = reqs 
+    entry_points = {
         'console_scripts': [
             'wikimetrics = wikimetrics.run:main'
         ]
