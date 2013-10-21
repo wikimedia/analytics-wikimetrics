@@ -16,14 +16,14 @@ setup(
     version = '0.0.1',
     description = 'Wikipedia Cohort Analysis Tool',
     url = 'http://www.github.com/wikimedia/analytics-wikimetrics',
-    author = 'Andrew Otto, Dan Andreescu, Evan Rosen, Stefan Petrea'
+    author = 'Andrew Otto, Dan Andreescu, Evan Rosen, Stefan Petrea',
     packages = [
         'wikimetrics',
     ],
-    install_requires = reqs 
+    install_requires = reqs,
     entry_points = {
         'console_scripts': [
             'wikimetrics = wikimetrics.run:main'
         ]
-    }
+    },
 )

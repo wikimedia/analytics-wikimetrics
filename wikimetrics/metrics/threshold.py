@@ -15,11 +15,8 @@ __all__ = ['Threshold']
 
 class Threshold(Metric):
     """
-    Threshold is a metric that determines whether an editor has performed a certain
-    activity at least n times in a specified time window. It is used to measure early
-    user activation (when t is measured from account creation) or
-    during a certain window of interest
-    (for example in an A/B test or a usability test for an editing gadget/feature)
+    Threshold is a metric that determines whether an editor has performed n edits
+    in a specified time window. It is used to measure early user activation.
     
     The SQL query that inspired this metric was:
     
@@ -57,7 +54,7 @@ class Threshold(Metric):
     label       = 'Threshold'
     description = (
         'Compute whether editors made <number_of_edits> from \
-        <registration> + <survival_hours> to <today>.'
+        <registration> to <registration> + <survival_hours>.'
     )
     
     number_of_edits       = IntegerField(default=1)
