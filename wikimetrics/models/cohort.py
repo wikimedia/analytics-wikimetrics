@@ -36,6 +36,7 @@ class Cohort(db.WikimetricsBase):
     changed = Column(DateTime)
     enabled = Column(Boolean)
     public = Column(Boolean, default=False)
+    validated = Column(Boolean, default=False)
     
     def __repr__(self):
         return '<Cohort("{0}")>'.format(self.id)

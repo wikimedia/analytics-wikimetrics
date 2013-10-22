@@ -1,0 +1,26 @@
+language: python
+python:
+  - "2.7"
+  #- "3.2"
+  #- "3.3"
+
+before_install:
+   - sudo apt-get update  -qq
+   - sudo apt-get install -qq mysql-server mysql-client redis-server mlocate
+   - echo "create database wikimetrics;" | mysql -uroot
+   - echo "create database enwiki;" | mysql -uroot
+   - cat seed.sql | mysql -uroot
+   - echo "CREATE USER 'wikimetrics'@'localhost' IDENTIFIED BY 'wikimetrics';" | mysql -uroot
+   - echo "GRANT ALL PRIVILEGES ON wikimetrics.* TO 'wikimetrics'@'localhost';" | mysql -uroot
+   - echo "GRANT ALL PRIVILEGES ON enwiki.*      TO 'wikimetrics'@'localhost';" | mysql -uroot
+   - pip install -r requirements.txt
+   - pip install -e .
+   #- git config --global user.email "test@test.com"
+   #- git config --global user.name "Mr Test"
+
+script: "nosetests -v .;"
+
+after_install: echo "finished install"
+
+notifications:
+    irc: "chat.freenode.net#wikimedia-analytics"

@@ -141,7 +141,12 @@ class DatabaseTest(unittest.TestCase):
         
         self.project = 'enwiki'
         
-        self.cohort = Cohort(name='{0}-cohort'.format(name), enabled=True, public=False)
+        self.cohort = Cohort(
+            name='{0}-cohort'.format(name),
+            enabled=True,
+            public=False,
+            validated=True,
+        )
         self.session.add(self.cohort)
         self.session.commit()
         
@@ -169,6 +174,7 @@ class DatabaseTest(unittest.TestCase):
                     'mediawiki_username'    : editor.user_name,
                     'mediawiki_userid'      : editor.user_id,
                     'project'               : self.project,
+                    'valid'                 : True,
                 }
                 for editor in self.editors
             ]

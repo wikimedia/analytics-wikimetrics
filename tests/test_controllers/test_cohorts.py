@@ -15,7 +15,7 @@ from wikimetrics.controllers.cohorts import (
     link_to_user_page,
     validate_records,
 )
-from wikimetrics.models import Cohort
+from wikimetrics.models import Cohort, CohortUser, CohortUserRole
 
 
 class CohortsControllerTest(WebTest):
@@ -28,6 +28,25 @@ class CohortsControllerTest(WebTest):
         response = self.app.get('/cohorts/list', follow_redirects=True)
         parsed = json.loads(response.data)
         assert_equal(parsed['cohorts'][0]['name'], self.cohort.name)
+    
+    def test_list_includes_only_validated(self):
+        cohorts = [Cohort(name='c1', validated=False), Cohort(name='c2', validated=True)]
+        self.session.add_all(cohorts)
+        owners = [
+            CohortUser(
+                cohort_id=c.id,
+                user_id=self.owner_user_id,
+                role=CohortUserRole.OWNER
+            )
+            for c in cohorts
+        ]
+        self.session.add_all(owners)
+        
+        response = self.app.get('/cohorts/list', follow_redirects=True)
+        parsed = json.loads(response.data)
+        assert_equal(len(parsed['cohorts']), 2)
+        assert_equal(parsed['cohorts'][0].validated, True)
+        assert_equal(parsed['cohorts'][1].validated, True)
     
     def test_detail(self):
         response = self.app.get('/cohorts/detail/{0}'.format(self.cohort.id))

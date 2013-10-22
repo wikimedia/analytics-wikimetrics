@@ -4,7 +4,7 @@ from tests.fixtures import QueueDatabaseTest
 from wikimetrics.models import (
     RunReport, Aggregation, PersistentReport
 )
-from wikimetrics.metrics import TimeseriesChoices
+from wikimetrics.metrics import TimeseriesChoices, metric_classes
 
 
 class RunReportTest(QueueDatabaseTest):
@@ -49,6 +49,36 @@ class RunReportTest(QueueDatabaseTest):
             results[Aggregation.IND][0][self.editors[0].user_id]['edits'],
             2,
         )
+    
+    def test_does_not_run_invalid_cohort_for_any_metric(self):
+        self.cohort.validated = False
+        self.session.commit()
+        
+        for name, metric in metric_classes.iteritems():
+            desired_responses = [{
+                'name': '{0} - test'.format(name),
+                'cohort': {
+                    'id': self.cohort.id,
+                },
+                'metric': {
+                    'name': name,
+                    'namespaces': [0, 1, 2],
+                    'start_date': '2013-01-01 00:00:00',
+                    'end_date': '2013-01-02 00:00:00',
+                    'individualResults': True,
+                    'aggregateResults': False,
+                    'aggregateSum': False,
+                    'aggregateAverage': False,
+                    'aggregateStandardDeviation': False,
+                },
+            }]
+            jr = RunReport(desired_responses, user_id=self.owner_user_id)
+            celery_task = jr.task.delay(jr)
+            # return value is not used from this .get() call
+            celery_task.get()
+            error_message = '{0} ran with invalid cohort'.format(name)
+            assert_equals(celery_task.ready(), True, error_message)
+            assert_equals(celery_task.failed(), True, error_message)
     
     def test_aggregated_response_namespace_edits(self):
         desired_responses = [{

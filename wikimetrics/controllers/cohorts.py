@@ -7,7 +7,8 @@ from ..utils import json_response, json_error, json_redirect, deduplicate_by_key
 from ..configurables import app, db
 from ..models import (
     Cohort, CohortUser, CohortUserRole,
-    User, WikiUser, CohortWikiUser, MediawikiUser
+    User, WikiUser, CohortWikiUser, MediawikiUser,
+    ValidateCohort
 )
 
 
@@ -140,14 +141,20 @@ def cohort_upload():
             
             unparsed = csv.reader(normalize_newlines(csv_file.stream))
             unvalidated = parse_records(unparsed, project)
-            (valid, invalid) = validate_records(unvalidated)
-            
+            #(valid, invalid) = validate_records(unvalidated)
+            vcohort = ValidateCohort(unvalidated, name, description, project)
+            vcohort.task.delay(vcohort)
+
             return render_template(
                 'csv_upload_review.html',
-                valid=valid,
-                invalid=invalid,
-                valid_json=to_safe_json(valid),
-                invalid_json=to_safe_json(invalid),
+                #valid=valid,
+                #invalid=invalid,
+                valid=[],
+                invalid=[],
+                #valid_json=to_safe_json(valid),
+                #invalid_json=to_safe_json(invalid),
+                valid_json=to_safe_json({}),
+                invalid_json=to_safe_json({}),
                 name=name,
                 project=project,
                 description=description,
