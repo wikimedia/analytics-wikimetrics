@@ -2,6 +2,7 @@ from wikimetrics.metrics import Metric
 import datetime
 import calendar
 from sqlalchemy import func, case, Integer
+from sqlalchemy.orm import aliased
 from sqlalchemy.sql.expression import label, between, and_, or_
 
 from wikimetrics.models import Page, Revision, MediawikiUser
@@ -19,43 +20,14 @@ class Threshold(Metric):
     Threshold is a metric that determines whether an editor has performed >= n edits
     in a specified time window. It is used to measure early user activation.  It also
     computes the time it took a user to reach the threshold, if they did.
-    
-    The SQL query that inspired this metric was:
-    
- SELECT revs.user_id AS revs_user_id,
-        IF(revs.rev_count >= <number_of_edits>, 1, 0)
-            AS threshold,
-        IF(revs.rev_count >= <number_of_edits>, 0, IF(unix_timestamp(now())
-            < unix_timestamp(revs.user_registration) + <threshold_hours>, 1, 0))
-            AS censored
-
-   FROM (SELECT user.user_id AS user_id,
-                user.user_registration AS user_registration,
-                coalesce(rev_counts.rev_count, 0) AS rev_count
-           FROM user
-                        LEFT OUTER JOIN
-                (SELECT user.user_id AS user_id,
-                        count(*) as rev_count
-                   FROM user
-                                INNER JOIN
-                        revision    ON user.user_id = revision.rev_user
-                                INNER JOIN
-                        page        ON page.page_id = revision.rev_page
-                  WHERE user.user_id IN (<cohort>)
-                    AND page.page_namespace IN (<namespaces>)
-                    AND unix_timestamp(revision.rev_timestamp) -
-                        unix_timestamp(user.user_registration)
-                            <= <threshold_hours>
-                  GROUP BY user.user_id
-                ) AS rev_counts     ON user.user_id = rev_count.user_id
-          WHERE user.user_id IN (<cohort>)
-        ) AS revs
-
-    And the Time to Threshold sub-metric is also computed by this metric.  This is the number
+    Time to Threshold is also computed by this metric.  This is the number
     of hours that it took an editor to reach exactly n edits.  If the editor did not
-    reach the threshold, None is returned.  The inspiration SQL for this is:
+    reach the threshold, None is returned.
+    
+    The SQL that inspired this metric was:
     
  SELECT user_id,
+        IF(rev_timestamp is not null, 1, 0) as threshold,
         IF(rev_timestamp is not null,
             (unix_timestamp(rev_timestamp) - unix_timestamp(user_registration)) / 3600,
             null
@@ -64,7 +36,7 @@ class Threshold(Metric):
                 r1.rev_timestamp,
                 COUNT(*) AS number
            FROM revision r1
-                  JOIN
+                    INNER JOIN
                 revision r2  ON r1.rev_user = r2.rev_user
                              AND r1.rev_timestamp >= r2.rev_timestamp
           WHERE user.user_id IN (<cohort>)
@@ -82,9 +54,10 @@ class Threshold(Metric):
   WHERE user_id IN (<cohort>)
     """
     
-    show_in_ui  = True
-    id          = 'threshold'
-    label       = 'Threshold'
+    show_in_ui              = True
+    id                      = 'threshold'
+    time_to_threshold_id    = 'time_to_threshold'
+    label                   = 'Threshold'
     description = (
         'Compute whether editors made <number_of_edits> from \
         <registration> to <registration> + <threshold_hours>.  \
@@ -114,4 +87,79 @@ class Threshold(Metric):
                 'censored': 1 for True, 0 for False
             }
         """
-        return 'Not Implemented'
+        
+        threshold_hours = int(self.threshold_hours.data)
+        threshold_secs  = threshold_hours * 3600
+        number_of_edits = int(self.number_of_edits.data)
+        
+        Revision2 = aliased(Revision, name='r2')
+        ordered_revisions = session \
+            .query(
+                Revision.rev_user,
+                Revision.rev_timestamp,
+                label('number', func.count()),
+            ) \
+            .join(MediawikiUser) \
+            .join(Page) \
+            .join(
+                Revision2,
+                and_(
+                    Revision.rev_user == Revision2.rev_user,
+                    Revision.rev_timestamp >= Revision2.rev_timestamp
+                )
+            ) \
+            .group_by(Revision.rev_user) \
+            .group_by(Revision.rev_timestamp) \
+            .filter(Revision.rev_user.in_(user_ids)) \
+            .filter(Page.page_namespace.in_(self.namespaces.data)) \
+            .filter(
+                func.unix_timestamp(Revision.rev_timestamp) -
+                func.unix_timestamp(MediawikiUser.user_registration) <= threshold_secs
+            )
+        
+        o_r = ordered_revisions.subquery()
+        
+        metric = session.query(
+            MediawikiUser.user_id,
+            label(
+                Threshold.id,
+                func.IF(o_r.c.rev_timestamp != None, 1, 0)
+            ),
+            label(
+                Threshold.time_to_threshold_id,
+                func.IF(
+                    o_r.c.rev_timestamp != None,
+                    (func.unix_timestamp(o_r.c.rev_timestamp) -
+                        func.unix_timestamp(MediawikiUser.user_registration)) / 3600,
+                    None
+                )
+            ),
+            label(CENSORED, func.IF(
+                o_r.c.rev_timestamp != None,
+                0,
+                func.IF(
+                    func.unix_timestamp(MediawikiUser.user_registration) + threshold_secs
+                    >
+                    func.unix_timestamp(func.now()),
+                    1,
+                    0
+                )
+            ))
+        ) \
+            .outerjoin(
+                o_r,
+                and_(
+                    MediawikiUser.user_id == o_r.c.rev_user,
+                    o_r.c.number == number_of_edits
+                )
+            ) \
+            .filter(MediawikiUser.user_id.in_(user_ids))
+        
+        return {
+            u.user_id: {
+                Threshold.id                    : u.threshold,
+                Threshold.time_to_threshold_id  : u.time_to_threshold,
+                CENSORED                        : u.censored,
+            }
+            for u in metric.all()
+        }

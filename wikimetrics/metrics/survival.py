@@ -88,14 +88,7 @@ class Survival(Metric):
         """
         
         survival_hours = int(self.survival_hours.data)
-        
-        # NOTE: this kind of breaks OOP because it handles a child class need
-        # in the parent class.  TODO: fix
-        if hasattr(self, 'sunset_in_hours'):
-            sunset_in_hours = int(self.sunset_in_hours.data)
-        else:
-            sunset_in_hours = 0
-        
+        sunset_in_hours = int(self.sunset_in_hours.data)
         number_of_edits = int(self.number_of_edits.data)
         
         revisions = session \
@@ -149,15 +142,7 @@ class Survival(Metric):
         
         metric = session.query(
             revs.c.user_id,
-            func.unix_timestamp(func.now()),
-            func.IF(
-                func.unix_timestamp(func.now()) <
-                func.unix_timestamp(revs.c.user_registration) +
-                (survival_hours + sunset_in_hours) * 3600,
-                1, 0
-            ),
-            revs.c.rev_count,
-            label('metric_result', func.IF(revs.c.rev_count >= number_of_edits, 1, 0)),
+            label(Survival.id, func.IF(revs.c.rev_count >= number_of_edits, 1, 0)),
             label(CENSORED, func.IF(
                 revs.c.rev_count >= number_of_edits,
                 0,
@@ -174,16 +159,16 @@ class Survival(Metric):
         
         metric_results = {
             u.user_id: {
-                self.id: u.metric_result,
-                CENSORED: u.censored,
+                Survival.id : u.survived,
+                CENSORED    : u.censored,
             }
             for u in data
         }
         
         r = {
             uid: metric_results.get(uid, {
-                self.id: None,
-                CENSORED: None,
+                Survival.id : None,
+                CENSORED    : None,
             })
             for uid in user_ids
         }
