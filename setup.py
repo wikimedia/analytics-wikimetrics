@@ -12,16 +12,16 @@ install_reqs = parse_requirements('requirements.txt')
 reqs = [str(ir.req) for ir in install_reqs]
 
 setup(
-    name = 'wikimetrics',
-    version = '0.0.1',
-    description = 'Wikipedia Cohort Analysis Tool',
-    url = 'http://www.github.com/wikimedia/analytics-wikimetrics',
-    author = 'Andrew Otto, Dan Andreescu, Evan Rosen, Stefan Petrea',
-    packages = [
+    name='wikimetrics',
+    version='0.0.1',
+    description='Wikipedia Cohort Analysis Tool',
+    url='http://www.github.com/wikimedia/analytics-wikimetrics',
+    author='Andrew Otto, Dan Andreescu, Evan Rosen, Stefan Petrea',
+    packages=[
         'wikimetrics',
     ],
-    install_requires = reqs,
-    entry_points = {
+    install_requires=reqs,
+    entry_points={
         'console_scripts': [
             'wikimetrics = wikimetrics.run:main'
         ]
