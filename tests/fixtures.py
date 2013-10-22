@@ -14,7 +14,15 @@ __all__ = [
     'QueueTest',
     'QueueDatabaseTest',
     'WebTest',
+    'i'
 ]
+
+
+def i(date_object):
+    """
+    helper function to convert dates into integers representing mediawiki timestamps
+    """
+    return int(format_date(date_object))
 
 
 from wikimetrics.configurables import db
@@ -48,6 +56,7 @@ class DatabaseTest(unittest.TestCase):
         self,
         name='test-specific',
         editor_count=0,
+        user_registrations=20130101000000,
         revisions_per_editor=0,
         revision_timestamps=[],
         revision_lengths=[],
@@ -57,13 +66,20 @@ class DatabaseTest(unittest.TestCase):
         Parameters
             name                    : a unique name to append to everything
             editor_count            : count of editors we want in this cohort
+            user_registrations      : the registration date of each editor either as
+                                        an integer that applies to all OR
+                                        an array of length editor_count
             revisions_per_editor    : count of revisions we want for each editor
-            revision_timestamps     : two dimensional array indexed by
-                                        editor from 0 to editor_count-1
-                                        revision from 0 to revisions_per_editor-1
-            revision_lengths        : two dimensional array indexed same as above OR
-                                        a single integer so all revisions will
-                                        have the same length
+            revision_timestamps     : the timestamp of each revision either as
+                                        an integer that applies to all revisions OR
+                                        a two dimensional array indexed by
+                                            editor from 0 to editor_count-1
+                                            revision from 0 to revisions_per_editor-1
+            revision_timestamps     : the length of each revision either as
+                                        an integer that applies to all revisions OR
+                                        a two dimensional array indexed by
+                                            editor from 0 to editor_count-1
+                                            revision from 0 to revisions_per_editor-1
             owner_user_id           : record in the User table that owns this cohort
         
         Returns
@@ -83,6 +99,9 @@ class DatabaseTest(unittest.TestCase):
                 [revision_lengths] * revisions_per_editor
             ] * editor_count
         
+        if type(user_registrations) is int:
+            user_registrations = [user_registrations] * editor_count
+        
         self.project = 'enwiki'
         self.editors = []
         self.revisions = []
@@ -96,7 +115,10 @@ class DatabaseTest(unittest.TestCase):
         self.mwSession.commit()
         
         for e in range(editor_count):
-            editor = MediawikiUser(user_name='Editor {0}-{1}'.format(name, e))
+            editor = MediawikiUser(
+                user_name='Editor {0}-{1}'.format(name, e),
+                user_registration=user_registrations[e],
+            )
             self.mwSession.add(editor)
             self.mwSession.commit()
             self.editors.append(editor)

@@ -10,20 +10,24 @@ from form_fields import CommaSeparatedIntegerListField, BetterDateTimeField
 from wtforms.validators import Required
 from wtforms import BooleanField, IntegerField
 
+
 __all__ = ['Threshold']
 
 
 class Threshold(Metric):
     """
-    Threshold is a metric that determines whether an editor has performed n edits
-    in a specified time window. It is used to measure early user activation.
+    Threshold is a metric that determines whether an editor has performed >= n edits
+    in a specified time window. It is used to measure early user activation.  It also
+    computes the time it took a user to reach the threshold, if they did.
     
     The SQL query that inspired this metric was:
     
  SELECT revs.user_id AS revs_user_id,
-        IF(revs.rev_count >= 1, 1, 0) AS threshold,
-        IF(revs.rev_count >= 1, 0, IF(unix_timestamp(now())
-            < unix_timestamp(revs.user_registration) + 2595600, 1, 0)) AS censored
+        IF(revs.rev_count >= <number_of_edits>, 1, 0)
+            AS threshold,
+        IF(revs.rev_count >= <number_of_edits>, 0, IF(unix_timestamp(now())
+            < unix_timestamp(revs.user_registration) + <threshold_hours>, 1, 0))
+            AS censored
 
    FROM (SELECT user.user_id AS user_id,
                 user.user_registration AS user_registration,
@@ -38,15 +42,44 @@ class Threshold(Metric):
                                 INNER JOIN
                         page        ON page.page_id = revision.rev_page
                   WHERE user.user_id IN (<cohort>)
-                    AND page.page_namespace IN (0)
+                    AND page.page_namespace IN (<namespaces>)
                     AND unix_timestamp(revision.rev_timestamp) -
                         unix_timestamp(user.user_registration)
-                            BETWEEN
-                        <survival_hours> AND <now>
+                            <= <threshold_hours>
                   GROUP BY user.user_id
                 ) AS rev_counts     ON user.user_id = rev_count.user_id
           WHERE user.user_id IN (<cohort>)
         ) AS revs
+
+    And the Time to Threshold sub-metric is also computed by this metric.  This is the number
+    of hours that it took an editor to reach exactly n edits.  If the editor did not
+    reach the threshold, None is returned.  The inspiration SQL for this is:
+    
+ SELECT user_id,
+        IF(rev_timestamp is not null,
+            (unix_timestamp(rev_timestamp) - unix_timestamp(user_registration)) / 3600,
+            null
+        ) as time_to_threshold
+   FROM (SELECT r1.rev_user,
+                r1.rev_timestamp,
+                COUNT(*) AS number
+           FROM revision r1
+                  JOIN
+                revision r2  ON r1.rev_user = r2.rev_user
+                             AND r1.rev_timestamp >= r2.rev_timestamp
+          WHERE user.user_id IN (<cohort>)
+            AND page.page_namespace IN (<namespaces>)
+            AND unix_timestamp(revision.rev_timestamp) -
+                unix_timestamp(user.user_registration)
+                    <= <threshold_hours>
+          GROUP BY
+                r1.rev_user,
+                r1.rev_timestamp
+        ) ordered_revisions
+            LEFT JOIN
+        user            on user.user_id = ordered_revisions.rev_user
+                        and ordered_revisions.number = <number_of_edits>
+  WHERE user_id IN (<cohort>)
     """
     
     show_in_ui  = True
@@ -54,13 +87,13 @@ class Threshold(Metric):
     label       = 'Threshold'
     description = (
         'Compute whether editors made <number_of_edits> from \
-        <registration> to <registration> + <survival_hours>.'
+        <registration> to <registration> + <threshold_hours>.  \
+        Also compute the time it took them to reach that threshold, in hours.'
     )
     
-    number_of_edits       = IntegerField(default=1)
-    survival_hours        = IntegerField(default=0)
-    
-    namespaces = CommaSeparatedIntegerListField(
+    number_of_edits = IntegerField(default=1)
+    threshold_hours = IntegerField(default=24)
+    namespaces      = CommaSeparatedIntegerListField(
         None,
         [Required()],
         default='0',
@@ -74,109 +107,11 @@ class Threshold(Metric):
             session     : sqlalchemy session open on a mediawiki database
         
         Returns:
-            dictionary from user ids to the number of edit found.
-        """
-
-        survival_hours = int(self.survival_hours.data)
-
-        # NOTE: this kind of breaks OOP because it handles a child class need
-        # in the parent class.  TODO: fix
-        if hasattr(self, 'sunset_in_hours'):
-            sunset_in_hours = int(self.sunset_in_hours.data)
-        else:
-            sunset_in_hours = 0
-
-        number_of_edits = int(self.number_of_edits.data)
-        
-        revisions = session \
-            .query(
-                MediawikiUser.user_id,
-                label('rev_count', func.count())
-            ) \
-            .join(Revision) \
-            .join(Page) \
-            .group_by(MediawikiUser.user_id) \
-            .filter(MediawikiUser.user_id.in_(user_ids)) \
-            .filter(Page.page_namespace.in_(self.namespaces.data))
-        
-        # sunset_in_hours is zero, so we use the first case [T+t,today]
-        if sunset_in_hours == 0:
-            revisions = revisions.filter(
-                between(
-                    func.unix_timestamp(Revision.rev_timestamp) -
-                    func.unix_timestamp(MediawikiUser.user_registration)
-                    ,
-                    (survival_hours * 3600)
-                    ,
-                    func.unix_timestamp(func.now()) + 86400
-                )
-            )
-        # otherwise use the sunset_in_hours [T+t,T+t+s]
-        else:
-            revisions = revisions.filter(
-                between(
-                    func.unix_timestamp(Revision.rev_timestamp) -
-                    func.unix_timestamp(MediawikiUser.user_registration)
-                    ,
-                    (survival_hours * 3600)
-                    ,
-                    ((survival_hours + sunset_in_hours) * 3600)
-                )
-            )
-        
-        revisions = revisions.subquery()
-        revs = session.query(
-            MediawikiUser.user_id,
-            MediawikiUser.user_registration,
-            label(
-                'rev_count',
-                func.coalesce(revisions.c.rev_count, 0)
-            )
-        ) \
-            .outerjoin(revisions, MediawikiUser.user_id == revisions.c.user_id) \
-            .filter(MediawikiUser.user_id.in_(user_ids)) \
-            .subquery()
-        
-        metric = session.query(
-            revs.c.user_id,
-            func.unix_timestamp(func.now()),
-            func.IF(
-                func.unix_timestamp(func.now()) <
-                func.unix_timestamp(revs.c.user_registration) +
-                (survival_hours + sunset_in_hours) * 3600,
-                1, 0
-            ),
-            revs.c.rev_count,
-            label('metric_result', func.IF(revs.c.rev_count >= number_of_edits, 1, 0)),
-            label(CENSORED, func.IF(
-                revs.c.rev_count >= number_of_edits,
-                0,
-                func.IF(
-                    func.unix_timestamp(func.now()) <
-                    func.unix_timestamp(revs.c.user_registration) +
-                    (survival_hours + sunset_in_hours) * 3600,
-                    1, 0
-                )
-            ))
-        )
-        
-        data = metric.all()
-        
-        metric_results = {
-            u.user_id: {
-                self.id: u.metric_result,
-                CENSORED: u.censored,
+            dictionary from user ids to a dictionary of the form:
+            {
+                'threshold': 1 for True, 0 for False,
+                'time_to_threshold': number in hours or None,
+                'censored': 1 for True, 0 for False
             }
-            for u in data
-        }
-
-        r = {
-            uid: metric_results.get(uid, {
-                self.id: None,
-                CENSORED: None,
-            })
-            for uid in user_ids
-        }
-
-        #self.debug_print(r, session, user_ids)
-        return r
+        """
+        return 'Not Implemented'
