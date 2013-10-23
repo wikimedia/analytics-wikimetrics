@@ -87,3 +87,14 @@ class ThresholdTest(DatabaseTest):
         assert_equal(results[self.e2][Threshold.time_to_threshold_id], None)
         assert_equal(results[self.e1][CENSORED], False)
         assert_equal(results[self.e2][CENSORED], False)
+    
+    def test_time_to_thershold(self):
+        m = Threshold(
+            namespaces=[self.survivors_namespace],
+            threshold_hours=1 * 25,
+            number_of_edits=2,
+        )
+        results = m(list(self.cohort), self.mwSession)
+        
+        assert_equal(results[self.e1][Threshold.time_to_threshold_id], 25)
+        assert_equal(results[self.e2][Threshold.time_to_threshold_id], None)
