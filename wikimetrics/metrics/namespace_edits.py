@@ -70,6 +70,5 @@ class NamespaceEdits(TimeseriesMetric):
             user_ids,
             query,
             [('edits', 1, 0)],
-            submetric_default=0,
             date_index=2,
         )

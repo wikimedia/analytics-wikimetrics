@@ -88,8 +88,8 @@ class BytesAddedTest(DatabaseTest):
             'absolute_sum': 110,
         }
         expected3 = {
-            'net_sum': None,
-            'absolute_sum': None,
+            'net_sum': 0,
+            'absolute_sum': 0,
         }
         assert_equal(results[self.editors[0].user_id], expected1)
         assert_equal(results[self.editors[2].user_id], expected3)

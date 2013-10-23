@@ -90,7 +90,7 @@ class ThresholdTest(DatabaseTest):
     
     def test_time_to_thershold(self):
         m = Threshold(
-            namespaces=[self.survivors_namespace],
+            namespaces=[0],
             threshold_hours=1 * 25,
             number_of_edits=2,
         )

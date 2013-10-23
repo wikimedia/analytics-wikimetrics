@@ -69,6 +69,5 @@ class PagesCreated(TimeseriesMetric):
             user_ids,
             query,
             [('pages_created', 1, 0)],
-            submetric_default=0,
             date_index=2,
         )

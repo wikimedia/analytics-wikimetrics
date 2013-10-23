@@ -109,10 +109,6 @@ class AggregateReport(ReportNode):
                     value_is_not_censored = not CENSORED in results_by_user[user_id]\
                         or results_by_user[user_id][CENSORED] != 1
                     
-                    if not value:
-                        # NOTE: value should never be None in a timeseries result
-                        value = Decimal(0)
-                    
                     # handle timeseries aggregation
                     if isinstance(value, dict):
                         if not key in aggregation:
@@ -126,9 +122,8 @@ class AggregateReport(ReportNode):
                                 helper[key][subkey]['sum'] = Decimal(0.0)
                                 helper[key][subkey]['count'] = 0
                             
-                            if value_is_not_censored:
-                                value_subkey = value[subkey] or Decimal(0)
-                                helper[key][subkey]['sum'] += Decimal(value_subkey)
+                            if value_is_not_censored and not value[subkey] is None:
+                                helper[key][subkey]['sum'] += Decimal(value[subkey])
                                 helper[key][subkey]['count'] += 1
                             
                             if type_of_aggregate == Aggregation.SUM:
@@ -158,7 +153,7 @@ class AggregateReport(ReportNode):
                             helper[key]['sum'] = Decimal(0.0)
                             helper[key]['count'] = 0
                         
-                        if value_is_not_censored:
+                        if value_is_not_censored and not value is None:
                             helper[key]['sum'] += Decimal(value)
                             helper[key]['count'] += 1
                         

@@ -301,6 +301,7 @@ class ReportsControllerTest(WebTest):
         
         # Check the csv result
         response = self.app.get('/reports/result/{0}.csv'.format(result_key))
+        print response
         assert_true(response.data.find(
             'user_id,submetric,'
             '2013-01-01 00:00:00,2013-02-01 00:00:00,'

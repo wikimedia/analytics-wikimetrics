@@ -83,8 +83,7 @@ class TimeseriesMetric(Metric):
         if choice == TimeseriesChoices.HOUR:
             return query
     
-    def results_by_user(self, user_ids, query, submetrics,
-                        submetric_default=None, date_index=None):
+    def results_by_user(self, user_ids, query, submetrics, date_index=None):
         """
         Get results by user for a timeseries-enabled metric
         
@@ -92,7 +91,6 @@ class TimeseriesMetric(Metric):
             user_ids            : list of integer ids to return results for
             query               : sqlalchemy query to fetch results
             submetrics          : list of tuples of the form (label, index, default)
-            submetric_default   : default value to assign at the submetric level
             date_index          : index of the year date part in the result row,
                                   in case this is a timeseries query
         
@@ -120,7 +118,7 @@ class TimeseriesMetric(Metric):
         submetric_defaults = dict()
         for label, index, default in submetrics:
             if self.timeseries.data == TimeseriesChoices.NONE:
-                submetric_defaults[label] = submetric_default
+                submetric_defaults[label] = default
             else:
                 submetric_defaults[label] = dict()
         

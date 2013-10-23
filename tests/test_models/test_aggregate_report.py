@@ -36,6 +36,7 @@ class AggregateReportTest(QueueDatabaseTest):
             .filter(PersistentReport.id == ar.persistent_id)\
             .one()\
             .result_key
+        print result
         
         assert_equals(
             result[aggregate_key][Aggregation.IND][0][self.test_mediawiki_user_id]
@@ -103,6 +104,41 @@ class AggregateReportWithoutQueueTest(DatabaseTest):
         assert_equals(
             finished[ar.result_key][Aggregation.AVG]['other_sub_metric'],
             Decimal(1.425)
+        )
+    
+    def test_does_not_aggregate_null_values(self):
+        cohort = self.session.query(Cohort).get(self.test_cohort_id)
+        metric = metric_classes['Threshold'](
+            name='Threshold',
+        )
+        ar = AggregateReport(
+            cohort,
+            metric,
+            individual=True,
+            aggregate=True,
+            aggregate_sum=True,
+            aggregate_average=True,
+            user_id=self.test_user_id,
+        )
+        
+        finished = ar.finish([
+            {
+                'namespace edits - fake cohort' : {
+                    1: {'edits': 2, 'submetric': 1},
+                    2: {'edits': 3, 'submetric': None},
+                    3: {'edits': 0, 'submetric': 3},
+                    None: {'edits': 0}
+                }
+            },
+        ])
+        
+        assert_equals(
+            finished[ar.result_key][Aggregation.SUM]['submetric'],
+            4
+        )
+        assert_equals(
+            finished[ar.result_key][Aggregation.AVG]['submetric'],
+            2
         )
     
     def test_repr(self):
@@ -240,11 +276,11 @@ class AggregateReportTimeseriesTest(QueueDatabaseTest):
         )
         assert_equals(
             finished[ar.result_key][Aggregation.AVG]['edits'],
-            {'date1': 0.25, 'date2': 0.75}
+            {'date1': 0.3333, 'date2': 1.0}
         )
         assert_equals(
             finished[ar.result_key][Aggregation.AVG]['other_sub_metric'],
-            {'date3': 0.575, 'date4': 0.85}
+            {'date3': 1.15, 'date4': 1.7}
         )
 
 # NOTE: a sample output of AggregateReport:
