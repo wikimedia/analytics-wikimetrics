@@ -20,7 +20,7 @@ class ThresholdTest(DatabaseTest):
         DatabaseTest.setUp(self)
         self.create_test_cohort(
             editor_count=2,
-            revisions_per_editor=3,
+            revisions_per_editor=2,
             user_registrations=i(reg),
             revision_timestamps=[
                 [i(reg + one_hour)     , i(reg + one_hour * 25)],
@@ -77,3 +77,16 @@ class ThresholdTest(DatabaseTest):
         assert_equal(results[self.editors[1].user_id][Threshold.id], False)
         assert_equal(results[self.editors[0].user_id][CENSORED], False)
         assert_equal(results[self.editors[1].user_id][CENSORED], False)
+
+    def test_time_to_thershold(self):
+        m = Threshold(
+            namespaces=[self.survivors_namespace],
+            threshold_hours=1 * 25,
+            number_of_edits=2,
+        )
+        results = m(list(self.cohort), self.mwSession)
+
+        assert_equal(results[self.editors[0].user_id][Threshold.time_to_threshold_id], 25)
+        assert_equal(results[self.editors[1].user_id][Threshold.time_to_threshold_id], None)
+
+

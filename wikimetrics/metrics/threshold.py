@@ -82,9 +82,10 @@ class Threshold(Metric):
   WHERE user_id IN (<cohort>)
     """
     
-    show_in_ui  = True
-    id          = 'threshold'
-    label       = 'Threshold'
+    show_in_ui              = True
+    id                      = 'threshold'
+    label                   = 'Threshold'
+    time_to_threshold_id    = 'time_to_threshold'
     description = (
         'Compute whether editors made <number_of_edits> from \
         <registration> to <registration> + <threshold_hours>.  \
