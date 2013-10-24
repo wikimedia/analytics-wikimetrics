@@ -25,6 +25,13 @@ def i(date_object):
     return int(format_date(date_object))
 
 
+def d(integer):
+    """
+    helper function to parse dates from integers in the mediawiki timestamp format
+    """
+    return parse_date(str(integer))
+
+
 from wikimetrics.configurables import db
 from wikimetrics.models import (
     User,
