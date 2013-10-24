@@ -26,7 +26,7 @@ $(document).ready(function(){
     
     viewModel.filteredCohorts = ko.computed(function(){
         if (this.cohorts().length && this.filter().length) {
-            filter = this.filter().toLowerCase();
+            var filter = this.filter().toLowerCase();
             return this.cohorts().filter(function(it){
                 var name = it.name.toLowerCase();
                 return name.indexOf(filter) >= 0;
