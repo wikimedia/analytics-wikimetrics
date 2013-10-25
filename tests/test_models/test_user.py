@@ -1,19 +1,22 @@
-from nose.tools import assert_equals, assert_true, raises
+from nose.tools import assert_equal
 from wikimetrics.models import User
 from ..fixtures import DatabaseTest
 
 
 class UserTest(DatabaseTest):
+    def setUp(self):
+        DatabaseTest.setUp(self)
+        self.common_cohort_1()
     
     def test_logout(self):
-        user = self.session.query(User).get(self.test_web_user_id)
+        user = self.session.query(User).get(self.owner_user_id)
         user.logout(self.session)
-        user = self.session.query(User).get(self.test_web_user_id)
-        assert_equals(user.authenticated, False)
-        assert_equals(user.active, False)
+        user = self.session.query(User).get(self.owner_user_id)
+        assert_equal(user.authenticated, False)
+        assert_equal(user.active, False)
     
     def test_detach_from(self):
-        user = self.session.query(User).get(self.test_web_user_id)
+        user = self.session.query(User).get(self.owner_user_id)
         user.authenticated = False
         self.session.commit()
         
@@ -21,12 +24,12 @@ class UserTest(DatabaseTest):
         user.authenticated = True
         self.session.commit()
         
-        user = self.session.query(User).get(self.test_web_user_id)
-        assert_equals(user.authenticated, False)
+        user = self.session.query(User).get(self.owner_user_id)
+        assert_equal(user.authenticated, False)
     
     def test_is_anonymous(self):
-        user = self.session.query(User).get(self.test_web_user_id)
+        user = self.session.query(User).get(self.owner_user_id)
         user.authenticated = False
         self.session.commit()
         
-        assert_equals(user.is_anonymous(), True)
+        assert_equal(user.is_anonymous(), True)

@@ -1,12 +1,16 @@
 from nose.tools import assert_true, assert_not_equal, assert_equal
-from tests.fixtures import DatabaseForPagesCreatedTest
+from tests.fixtures import DatabaseTest
 
 from wikimetrics import app
 from wikimetrics.metrics import PagesCreated
 from wikimetrics.models import Cohort, MetricReport, WikiUser, CohortWikiUser
 
 
-class PagesCreatedTest(DatabaseForPagesCreatedTest):
+class PagesCreatedTest(DatabaseTest):
+    def setUp(self):
+        DatabaseTest.setUp(self)
+        self.common_cohort_4()
+    
     # Evan has 3 pages created, one in namespace 301, one in 302, and one in 303
     # (see tests/fixtures.py for details)
     # So here we just test if the number of pages created in those namespaces is
@@ -18,8 +22,8 @@ class PagesCreatedTest(DatabaseForPagesCreatedTest):
             end_date='2013-08-21 00:00:00'
         )
         results = metric(list(self.cohort), self.mwSession)
-        assert_equal(results[self.evan_id]["pages_created"], 3)
-        assert_equal(results[self.dan_id]["pages_created"], 1)
+        assert_equal(results[self.editors[0].user_id]["pages_created"], 3)
+        assert_equal(results[self.editors[1].user_id]["pages_created"], 1)
 
     # same thing as before, but this time we leave one page created
     # out of the date range to see if date ranges work properly
@@ -30,4 +34,4 @@ class PagesCreatedTest(DatabaseForPagesCreatedTest):
             end_date='2013-07-21 00:00:00'
         )
         results = metric(list(self.cohort), self.mwSession)
-        assert_equal(results[self.evan_id]["pages_created"], 2)
+        assert_equal(results[self.editors[0].user_id]["pages_created"], 2)

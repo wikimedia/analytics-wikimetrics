@@ -10,24 +10,26 @@ from ..fixtures import QueueDatabaseTest, DatabaseTest
 
 
 class AggregateReportTest(QueueDatabaseTest):
+    def setUp(self):
+        QueueDatabaseTest.setUp(self)
+        self.common_cohort_1()
     
     def test_basic_response(self):
-        cohort = self.session.query(Cohort).get(self.test_cohort_id)
         metric = metric_classes['NamespaceEdits'](
             name='NamespaceEdits',
             namespaces=[0, 1, 2],
-            start_date='2013-05-01 00:00:00',
-            end_date='2013-09-01 00:00:00',
+            start_date='2013-01-01 00:00:00',
+            end_date='2013-01-02 00:00:00',
         )
         ar = AggregateReport(
-            cohort,
+            self.cohort,
             metric,
             individual=True,
             aggregate=True,
             aggregate_sum=True,
             aggregate_average=True,
             aggregate_std_deviation=True,
-            user_id=self.test_user_id,
+            user_id=self.owner_user_id,
         )
         result = ar.task.delay(ar).get()
         
@@ -36,23 +38,24 @@ class AggregateReportTest(QueueDatabaseTest):
             .filter(PersistentReport.id == ar.persistent_id)\
             .one()\
             .result_key
-        print result
         
         assert_equals(
-            result[aggregate_key][Aggregation.IND][0][self.test_mediawiki_user_id]
+            result[aggregate_key][Aggregation.IND][0][self.editors[0].user_id]
             ['edits'],
             2
         )
         assert_equals(
             result[aggregate_key][Aggregation.AVG]['edits'],
-            Decimal(1.25)
+            Decimal(1.0)
         )
 
 
 class AggregateReportWithoutQueueTest(DatabaseTest):
+    def setUp(self):
+        DatabaseTest.setUp(self)
+        self.common_cohort_1()
     
     def test_finish(self):
-        cohort = self.session.query(Cohort).get(self.test_cohort_id)
         metric = metric_classes['NamespaceEdits'](
             name='NamespaceEdits',
             namespaces=[0, 1, 2],
@@ -60,14 +63,14 @@ class AggregateReportWithoutQueueTest(DatabaseTest):
             end_date='2013-09-01 00:00:00',
         )
         ar = AggregateReport(
-            cohort,
+            self.cohort,
             metric,
             individual=True,
             aggregate=True,
             aggregate_sum=True,
             aggregate_average=True,
             aggregate_std_deviation=True,
-            user_id=self.test_user_id,
+            user_id=self.owner_user_id,
         )
         
         finished = ar.finish([
@@ -107,18 +110,17 @@ class AggregateReportWithoutQueueTest(DatabaseTest):
         )
     
     def test_does_not_aggregate_null_values(self):
-        cohort = self.session.query(Cohort).get(self.test_cohort_id)
         metric = metric_classes['Threshold'](
             name='Threshold',
         )
         ar = AggregateReport(
-            cohort,
+            self.cohort,
             metric,
             individual=True,
             aggregate=True,
             aggregate_sum=True,
             aggregate_average=True,
-            user_id=self.test_user_id,
+            user_id=self.owner_user_id,
         )
         
         finished = ar.finish([
@@ -142,7 +144,6 @@ class AggregateReportWithoutQueueTest(DatabaseTest):
         )
     
     def test_repr(self):
-        cohort = self.session.query(Cohort).get(self.test_cohort_id)
         metric = metric_classes['NamespaceEdits'](
             name='NamespaceEdits',
             namespaces=[0, 1, 2],
@@ -150,14 +151,14 @@ class AggregateReportWithoutQueueTest(DatabaseTest):
             end_date='2013-09-01 00:00:00',
         )
         ar = AggregateReport(
-            cohort,
+            self.cohort,
             metric,
             individual=True,
             aggregate=True,
             aggregate_sum=True,
             aggregate_average=True,
             aggregate_std_deviation=True,
-            user_id=self.test_user_id,
+            user_id=self.owner_user_id,
         )
         
         assert_true(str(ar).find('AggregateReport') >= 0)
@@ -166,18 +167,8 @@ class AggregateReportWithoutQueueTest(DatabaseTest):
 class AggregateReportTimeseriesTest(QueueDatabaseTest):
     
     def setUp(self):
-        DatabaseTest.setUp(self)
-        self.create_test_cohort(
-            editor_count=4,
-            revisions_per_editor=4,
-            revision_timestamps=[
-                [20121231230000, 20130101003000, 20130101010000, 20140101010000],
-                [20130101120000, 20130102000000, 20130102120000, 20130103120000],
-                [20130101000000, 20130108000000, 20130116000000, 20130216000000],
-                [20130101000000, 20130201000000, 20140101000000, 20140102000000],
-            ],
-            revision_lengths=10
-        )
+        QueueDatabaseTest.setUp(self)
+        self.common_cohort_1()
     
     def test_timeseries_day(self):
         metric = NamespaceEdits(
@@ -194,7 +185,7 @@ class AggregateReportTimeseriesTest(QueueDatabaseTest):
             aggregate_sum=True,
             aggregate_average=True,
             aggregate_std_deviation=True,
-            user_id=self.test_user_id,
+            user_id=self.owner_user_id,
         )
         results = ar.task.delay(ar).get()
         
@@ -244,7 +235,7 @@ class AggregateReportTimeseriesTest(QueueDatabaseTest):
             aggregate_sum=True,
             aggregate_average=True,
             aggregate_std_deviation=True,
-            user_id=self.test_user_id,
+            user_id=self.owner_user_id,
         )
         
         finished = ar.finish([

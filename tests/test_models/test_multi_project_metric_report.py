@@ -7,16 +7,18 @@ from ..fixtures import QueueDatabaseTest, DatabaseTest
 
 
 class MultiProjectMetricReportTest(QueueDatabaseTest):
+    def setUp(self):
+        QueueDatabaseTest.setUp(self)
+        self.common_cohort_1()
     
     def test_basic_response(self):
-        cohort = self.session.query(Cohort).get(self.test_cohort_id)
         metric = metric_classes['NamespaceEdits'](
             name='NamespaceEdits',
             namespaces=[0, 1, 2],
-            start_date='2013-05-01 00:00:00',
-            end_date='2013-09-01 00:00:00',
+            start_date='2013-01-01 00:00:00',
+            end_date='2013-01-02 00:00:00',
         )
-        mr = MultiProjectMetricReport(cohort, metric, 'enwiki')
+        mr = MultiProjectMetricReport(self.cohort, metric, 'enwiki')
         
         result = mr.task.delay(mr).get()
         
@@ -26,20 +28,22 @@ class MultiProjectMetricReportTest(QueueDatabaseTest):
             .one()\
             .result_key
         
-        assert_equals(result[result_key][self.test_mediawiki_user_id]['edits'], 2)
+        assert_equals(result[result_key][self.editors[0].user_id]['edits'], 2)
 
 
 class MultiProjectMetricReportWithoutQueueTest(DatabaseTest):
+    def setUp(self):
+        DatabaseTest.setUp(self)
+        self.common_cohort_1()
     
     def test_finish(self):
-        cohort = self.session.query(Cohort).get(self.test_cohort_id)
         metric = metric_classes['NamespaceEdits'](
             name='NamespaceEdits',
             namespaces=[0, 1, 2],
             start_date='2013-05-01 00:00:00',
             end_date='2013-09-01 00:00:00',
         )
-        mr = MultiProjectMetricReport(cohort, metric, 'enwiki')
+        mr = MultiProjectMetricReport(self.cohort, metric, 'enwiki')
         
         finished = mr.finish([
             {
@@ -54,13 +58,12 @@ class MultiProjectMetricReportWithoutQueueTest(DatabaseTest):
         assert_equals(finished[mr.result_key][2]['edits'], 3)
     
     def test_repr(self):
-        cohort = self.session.query(Cohort).get(self.test_cohort_id)
         metric = metric_classes['NamespaceEdits'](
             name='NamespaceEdits',
             namespaces=[0, 1, 2],
             start_date='2013-05-01 00:00:00',
             end_date='2013-09-01 00:00:00',
         )
-        mr = MultiProjectMetricReport(cohort, metric, 'enwiki')
+        mr = MultiProjectMetricReport(self.cohort, metric, 'enwiki')
         
         assert_true(str(mr).find('MultiProjectMetricReport') >= 0)
