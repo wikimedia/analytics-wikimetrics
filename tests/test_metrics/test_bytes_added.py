@@ -7,20 +7,7 @@ class BytesAddedTest(DatabaseTest):
     
     def setUp(self):
         DatabaseTest.setUp(self)
-        self.create_test_cohort(
-            editor_count=3,
-            revisions_per_editor=3,
-            revision_timestamps=[
-                [20121231230000, 20130101003000, 20130101010000],
-                [20130101120000, 20130102000000, 20130102120000],
-                [None, None, None],
-            ],
-            revision_lengths=[
-                [100, 0, 10],
-                [100, 140, 136],
-                [None, None, None],
-            ],
-        )
+        self.common_cohort_2()
     
     def test_adds_negatives_and_positives(self):
         
@@ -118,26 +105,7 @@ class BytesAddedTimeseriesTest(DatabaseTest):
     
     def setUp(self):
         DatabaseTest.setUp(self)
-        self.create_test_cohort(
-            editor_count=4,
-            revisions_per_editor=4,
-            # in order, all in 2013:
-            # 1/1, 1/5, 1/9, 1/13, 2/2, 2/6, 2/10, 2/14, 3/3, 3/7, 3/15, 4/4, 4/12, 4/16
-            revision_timestamps=[
-                [20130101010000, 20130202000000, 20130303000000, 20130404000000],
-                [20130105000000, 20130206000000, 20130307000000, 20130408000000],
-                [20130109000000, 20130210000000, 20130311000000, 20130412000000],
-                [20130113000000, 20130214000000, 20130315000000, 20130416000000],
-            ],
-            # in order:
-            # 100,1100,1200,1300,0,200,400,600,800,700,600,500,590,550,600,650
-            revision_lengths=[
-                [100, 0, 800, 590],
-                [1100, 200, 700, 550],
-                [1200, 400, 600, 600],
-                [1300, 600, 500, 650],
-            ],
-        )
+        self.common_cohort_3()
     
     def test_timeseries_by_hour(self):
         

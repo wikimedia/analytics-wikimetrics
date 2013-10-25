@@ -2,7 +2,7 @@ from datetime import datetime, timedelta
 from time import time
 from nose.tools import assert_equal
 
-from tests.fixtures import DatabaseTest, i
+from tests.fixtures import DatabaseTest, i, tz_note
 from wikimetrics.utils import format_date, CENSORED
 from wikimetrics.metrics import Threshold
 from wikimetrics.models import (
@@ -38,12 +38,12 @@ class ThresholdTest(DatabaseTest):
         )
         results = m(list(self.cohort), self.mwSession)
         
-        assert_equal(results[self.e1][Threshold.id], True)
-        assert_equal(results[self.e2][Threshold.id], False)
-        assert_equal(results[self.e1][Threshold.time_to_threshold_id], 1)
-        assert_equal(results[self.e2][Threshold.time_to_threshold_id], None)
-        assert_equal(results[self.e1][CENSORED], False)
-        assert_equal(results[self.e2][CENSORED], False)
+        assert_equal(results[self.e1][Threshold.id], True, tz_note)
+        assert_equal(results[self.e2][Threshold.id], False, tz_note)
+        assert_equal(results[self.e1][Threshold.time_to_threshold_id], 1, tz_note)
+        assert_equal(results[self.e2][Threshold.time_to_threshold_id], None, tz_note)
+        assert_equal(results[self.e1][CENSORED], False, tz_note)
+        assert_equal(results[self.e2][CENSORED], False, tz_note)
     
     def test_case1_72h_count1(self):
         m = Threshold(
@@ -52,12 +52,12 @@ class ThresholdTest(DatabaseTest):
         )
         results = m(list(self.cohort), self.mwSession)
         
-        assert_equal(results[self.e1][Threshold.id], True)
-        assert_equal(results[self.e2][Threshold.id], True)
-        assert_equal(results[self.e1][Threshold.time_to_threshold_id], 1)
-        assert_equal(results[self.e2][Threshold.time_to_threshold_id], 30)
-        assert_equal(results[self.e1][CENSORED], False)
-        assert_equal(results[self.e2][CENSORED], False)
+        assert_equal(results[self.e1][Threshold.id], True, tz_note)
+        assert_equal(results[self.e2][Threshold.id], True, tz_note)
+        assert_equal(results[self.e1][Threshold.time_to_threshold_id], 1, tz_note)
+        assert_equal(results[self.e2][Threshold.time_to_threshold_id], 30, tz_note)
+        assert_equal(results[self.e1][CENSORED], False, tz_note)
+        assert_equal(results[self.e2][CENSORED], False, tz_note)
     
     def test_case1_72h_count3(self):
         m = Threshold(
@@ -67,12 +67,12 @@ class ThresholdTest(DatabaseTest):
         )
         results = m(list(self.cohort), self.mwSession)
         
-        assert_equal(results[self.e1][Threshold.id], False)
-        assert_equal(results[self.e2][Threshold.id], False)
-        assert_equal(results[self.e1][Threshold.time_to_threshold_id], None)
-        assert_equal(results[self.e2][Threshold.time_to_threshold_id], None)
-        assert_equal(results[self.e1][CENSORED], True)
-        assert_equal(results[self.e2][CENSORED], True)
+        assert_equal(results[self.e1][Threshold.id], False, tz_note)
+        assert_equal(results[self.e2][Threshold.id], False, tz_note)
+        assert_equal(results[self.e1][Threshold.time_to_threshold_id], None, tz_note)
+        assert_equal(results[self.e2][Threshold.time_to_threshold_id], None, tz_note)
+        assert_equal(results[self.e1][CENSORED], True, tz_note)
+        assert_equal(results[self.e2][CENSORED], True, tz_note)
     
     def test_case1_24h_count3(self):
         m = Threshold(
@@ -81,12 +81,12 @@ class ThresholdTest(DatabaseTest):
         )
         results = m(list(self.cohort), self.mwSession)
         
-        assert_equal(results[self.e1][Threshold.id], False)
-        assert_equal(results[self.e2][Threshold.id], False)
-        assert_equal(results[self.e1][Threshold.time_to_threshold_id], None)
-        assert_equal(results[self.e2][Threshold.time_to_threshold_id], None)
-        assert_equal(results[self.e1][CENSORED], False)
-        assert_equal(results[self.e2][CENSORED], False)
+        assert_equal(results[self.e1][Threshold.id], False, tz_note)
+        assert_equal(results[self.e2][Threshold.id], False, tz_note)
+        assert_equal(results[self.e1][Threshold.time_to_threshold_id], None, tz_note)
+        assert_equal(results[self.e2][Threshold.time_to_threshold_id], None, tz_note)
+        assert_equal(results[self.e1][CENSORED], False, tz_note)
+        assert_equal(results[self.e2][CENSORED], False, tz_note)
     
     def test_time_to_thershold(self):
         m = Threshold(
@@ -96,5 +96,5 @@ class ThresholdTest(DatabaseTest):
         )
         results = m(list(self.cohort), self.mwSession)
         
-        assert_equal(results[self.e1][Threshold.time_to_threshold_id], 25)
-        assert_equal(results[self.e2][Threshold.time_to_threshold_id], None)
+        assert_equal(results[self.e1][Threshold.time_to_threshold_id], 25, tz_note)
+        assert_equal(results[self.e2][Threshold.time_to_threshold_id], None, tz_note)

@@ -1,5 +1,5 @@
 from nose.tools import assert_not_equals
-from tests.fixtures import QueueTest, WebTest
+from tests.fixtures import QueueTest
 from wikimetrics.models import MetricReport
 from wikimetrics.metrics import RandomMetric
 

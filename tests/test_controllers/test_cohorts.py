@@ -1,6 +1,6 @@
 # -*- coding:utf-8 -*-
 import json
-from nose.tools import assert_equal, assert_not_equal, raises, assert_true
+from nose.tools import assert_equal, raises, assert_true
 from tests.fixtures import WebTest
 from wikimetrics.controllers.cohorts import (
     parse_username,
@@ -27,28 +27,23 @@ class CohortsControllerTest(WebTest):
     def test_list(self):
         response = self.app.get('/cohorts/list', follow_redirects=True)
         parsed = json.loads(response.data)
-        assert_equal(
-            len(filter(lambda c : c['name'] == 'test_private', parsed['cohorts'])),
-            1,
-            '/cohorts/list should include a cohort named test_private, '
-            'but instead returned:\n{0}'.format(response.data)
-        )
+        assert_equal(parsed['cohorts'][0]['name'], self.cohort.name)
     
     def test_detail(self):
-        response = self.app.get('/cohorts/detail/{0}'.format(self.test_cohort_id))
+        response = self.app.get('/cohorts/detail/{0}'.format(self.cohort.id))
         parsed = json.loads(response.data)
         assert_equal(response.status_code, 200)
         assert_equal(len(parsed['wikiusers']), 3)
     
     def test_detail_by_name(self):
-        response = self.app.get('/cohorts/detail/{0}'.format(self.test_cohort_name))
+        response = self.app.get('/cohorts/detail/{0}'.format(self.cohort.name))
         parsed = json.loads(response.data)
         assert_equal(response.status_code, 200)
         assert_equal(len(parsed['wikiusers']), 3)
     
     def test_full_detail(self):
         response = self.app.get('/cohorts/detail/{0}?full_detail=true'.format(
-            self.test_cohort_id
+            self.cohort.id
         ))
         parsed = json.loads(response.data)
         assert_equal(response.status_code, 200)
@@ -59,11 +54,12 @@ class CohortsControllerTest(WebTest):
         # 1. normal ascii space in front
         # 2. lowercase
         # 3. nasty trailing unicode space (the reason this file has coding:utf-8)
-        problem_username = ' dan '
+        problem_username = ' editor test-specific-0 '
         
         parsed_user = parse_username(problem_username, decode=False)
         valid_user = normalize_user(parsed_user, 'enwiki')
-        assert_not_equal(valid_user, None)
+        assert_equal(valid_user[0], self.editors[0].user_id)
+        assert_equal(valid_user[1], 'Editor test-specific-0')
     
     def test_get_cohort_by_name_not_found(self):
         response = self.app.get('/cohorts/detail/1-OI--LASJLI---LIJSL$EIOJ')
@@ -75,7 +71,7 @@ class CohortsControllerTest(WebTest):
     
     def test_cohort_upload_finish_existing_name(self):
         response = self.app.post('/cohorts/create', data=dict(
-            name=self.test_cohort_name,
+            name=self.cohort.name,
         ))
         assert_true(response.data.find('isError') >= 0)
         assert_true(response.data.find('There was a problem') >= 0)
@@ -110,8 +106,8 @@ class CohortsControllerTest(WebTest):
             {{"username":"Dan","project":"enwiki","user_id":{0}}},
             {{"username":"Evan","project":"dewiki","user_id":{1}}}
         ]'''.format(
-            self.test_mediawiki_user_id,
-            self.test_mediawiki_user_id_evan,
+            self.editors[0].user_id,
+            self.editors[1].user_id,
         )
         response = self.app.post('/cohorts/create', data=dict(
             name=new_cohort_name,
@@ -134,8 +130,8 @@ class CohortsControllerTest(WebTest):
             {{"username":"Dan","project":"enwiki","user_id":{0}}},
             {{"username":"Evan","project":"enwiki","user_id":{1}}}
         ]'''.format(
-            self.test_mediawiki_user_id,
-            self.test_mediawiki_user_id_evan,
+            self.editors[0].user_id,
+            self.editors[1].user_id,
         )
         self.app.post('/cohorts/create', data=dict(
             name=new_cohort_name,
@@ -150,7 +146,7 @@ class CohortsControllerTest(WebTest):
     
     def test_validate_cohort_name_allowed(self):
         response = self.app.get('/cohorts/validate/name?name={0}'.format(
-            self.test_cohort_name)
+            self.cohort.name)
         )
         
         assert_equal(response.status_code, 200)
@@ -247,34 +243,34 @@ class CohortsControllerTest(WebTest):
         assert_equal(normal, None)
     
     def test_get_wikiuser_by_name(self):
-        user = get_wikiuser_by_name('Dan', 'enwiki')
-        assert_equal(user.user_name, 'Dan')
+        user = get_wikiuser_by_name('Editor test-specific-0', 'enwiki')
+        assert_equal(user.user_name, 'Editor test-specific-0')
     
     def test_get_wikiuser_by_name_nonexistent(self):
         nonexistent = get_wikiuser_by_name('blahblahblah', 'enwiki')
         assert_equal(nonexistent, None)
     
     def test_get_wikiuser_by_id(self):
-        user = get_wikiuser_by_id(self.test_mediawiki_user_id, 'enwiki')
-        assert_equal(user.user_name, 'Dan')
+        user = get_wikiuser_by_id(self.editors[0].user_id, 'enwiki')
+        assert_equal(user.user_name, self.editors[0].user_name)
     
     def test_get_wikiuser_by_id_nonexistent(self):
         nonexistent = get_wikiuser_by_id(123124124, 'enwiki')
         assert_equal(nonexistent, None)
     
     def test_normalize_user_by_name(self):
-        normalized_user = normalize_user('Dan', 'enwiki')
-        assert_equal(normalized_user[0], self.test_mediawiki_user_id)
-        assert_equal(normalized_user[1], 'Dan')
+        normalized_user = normalize_user('Editor test-specific-0', 'enwiki')
+        assert_equal(normalized_user[0], self.editors[0].user_id)
+        assert_equal(normalized_user[1], self.editors[0].user_name)
     
     def test_normalize_user_by_name_nonexistent(self):
         normalized_user = normalize_user('DanNotExists', 'enwiki')
         assert_equal(normalized_user, None)
     
     def test_normalize_user_by_id(self):
-        normalized_user = normalize_user(str(self.test_mediawiki_user_id), 'enwiki')
-        assert_equal(normalized_user[0], self.test_mediawiki_user_id)
-        assert_equal(normalized_user[1], 'Dan')
+        normalized_user = normalize_user(str(self.editors[0].user_id), 'enwiki')
+        assert_equal(normalized_user[0], self.editors[0].user_id)
+        assert_equal(normalized_user[1], self.editors[0].user_name)
     
     def test_normalize_user_by_id_nonexistent(self):
         normalized_user = normalize_user('123124124', 'enwiki')
@@ -289,8 +285,8 @@ class CohortsControllerTest(WebTest):
         assert_equal(project, 'en')
     
     def test_link_to_user_page(self):
-        link = link_to_user_page('Dan', 'en')
-        assert_equal(link, 'https://en.wikipedia.org/wiki/User:Dan')
+        link = link_to_user_page('Dan has-spaces', 'en')
+        assert_equal(link, 'https://en.wikipedia.org/wiki/User:Dan has-spaces')
     
     def test_link_to_user_page_unicode(self):
         link_to_user_page('ولاء عبد المنعم', 'ar')
@@ -301,13 +297,13 @@ class CohortsControllerTest(WebTest):
         (valid, invalid) = validate_records([
             {
                 'project': 'enwiki',
-                'username': 'Dan',
-                'raw_username': 'Dan',
+                'username': 'Editor test-specific-0',
+                'raw_username': 'Editor test-specific-0',
             },
             {
                 'project': 'blah',
-                'username': 'Dan',
-                'raw_username': 'Dan',
+                'username': 'Editor test-specific-0',
+                'raw_username': 'Editor test-specific-0',
             },
             {
                 'project': 'enwiki',
@@ -318,6 +314,6 @@ class CohortsControllerTest(WebTest):
         
         assert_equal(len(valid), 1)
         assert_equal(len(invalid), 2)
-        assert_equal(valid[0]['user_id'], self.test_mediawiki_user_id)
+        assert_equal(valid[0]['user_id'], self.editors[0].user_id)
         assert_equal(invalid[0]['reason_invalid'], 'invalid project: blah')
         assert_equal(invalid[1]['reason_invalid'], 'invalid user_name / user_id: blah')
