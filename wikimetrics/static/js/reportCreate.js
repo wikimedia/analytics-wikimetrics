@@ -152,7 +152,7 @@ $(document).ready(function(){
         var ret = [];
         ko.utils.arrayForEach(request.metrics(), function(metric){
             ko.utils.arrayForEach(request.cohorts(), function(cohort){
-                response = {
+                var response = {
                     name: metric.label + ' - ' + cohort.name,
                     cohort: cohort,
                     metric: metric,
@@ -168,7 +168,7 @@ $(document).ready(function(){
     
     viewModel.filteredCohorts = ko.computed(function(){
         if (this.cohorts().length && this.filter().length) {
-            filter = this.filter().toLowerCase();
+            var filter = this.filter().toLowerCase();
             return this.cohorts().filter(function(it){
                 var name = it.name.toLowerCase();
                 return name.indexOf(filter) >= 0;
@@ -179,21 +179,21 @@ $(document).ready(function(){
     }, viewModel);
     
     function setSelected(list){
-        bareList = ko.utils.unwrapObservable(list);
+        var bareList = ko.utils.unwrapObservable(list);
         ko.utils.arrayForEach(bareList, function(item){
             item.selected = ko.observable(false);
         });
     }
     
     function setConfigure(list){
-        bareList = ko.utils.unwrapObservable(list);
+        var bareList = ko.utils.unwrapObservable(list);
         ko.utils.arrayForEach(bareList, function(item){
             item.configure = ko.observable('');
         });
     }
     
     function setAggregationOptions(list){
-        bareList = ko.utils.unwrapObservable(list);
+        var bareList = ko.utils.unwrapObservable(list);
         ko.utils.arrayForEach(bareList, function(item){
             item.individualResults = ko.observable(false);
             item.aggregateResults = ko.observable(true);
@@ -218,7 +218,7 @@ $(document).ready(function(){
         if (!prefix) {
             prefix = 'should-be-unique';
         }
-        bareList = ko.utils.unwrapObservable(list);
+        var bareList = ko.utils.unwrapObservable(list);
         ko.utils.arrayForEach(bareList, function(item){
             
             item.tabId = ko.computed(function(){
@@ -236,7 +236,7 @@ $(document).ready(function(){
         var controls = $('#' + parentId + ' div.datetimepicker');
         controls.datetimepicker({language: 'en'});
         // TODO: this might be cleaner if it metric[name] was an observable
-        controls.on('changeDate', function(e){
+        controls.on('changeDate', function(){
             var input = $(this).find('input');
             var name = input.attr('name');
             metric[name] = input.val();
