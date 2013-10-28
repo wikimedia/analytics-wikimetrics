@@ -1,3 +1,8 @@
+// Hack to make linters complain less
+// TODO: maybe use a js loader here
+var ko = ko;
+var site = site;
+
 $(document).ready(function(){
     
     var viewModel = {
@@ -25,7 +30,7 @@ $(document).ready(function(){
                     $.get('/metrics/configure/' + metric.name)
                         .done(site.handleWith(function(configureForm){
                             metric.configure(configureForm);
-                            enableDateTimePicker(metric)
+                            enableDateTimePicker(metric);
                         }))
                         .fail(site.failure);
                 } else {
@@ -43,7 +48,7 @@ $(document).ready(function(){
             }
             
             var vm = ko.dataFor(formElement);
-            if (vm.request().responses().length == 0){
+            if (vm.request().responses().length === 0){
                 site.showWarning('Please select at least one cohort and one metric.');
                 return;
             }
@@ -88,7 +93,7 @@ $(document).ready(function(){
             $.ajax({ type: 'post', url: form.attr('action'), data: data })
                 .done(site.handleWith(function(response){
                     metric.configure(response);
-                    enableDateTimePicker(metric)
+                    enableDateTimePicker(metric);
                     if (site.hasValidationErrors()){
                         site.showWarning('The configuration was not all valid.  Please check all the metrics below.');
                     } else {
@@ -108,7 +113,7 @@ $(document).ready(function(){
             if (location.hash){
                 try {
                     viewModel.cohorts().filter(function(c){
-                        return c.id == location.hash.substring(1);
+                        return c.id === location.hash.substring(1);
                     })[0].selected(true);
                 } catch(e) {}
             }
@@ -143,7 +148,7 @@ $(document).ready(function(){
     
     // second level computed pieces of the viewModel
     viewModel.request().responses = ko.computed(function(){
-        request = this;
+        var request = this;
         var ret = [];
         ko.utils.arrayForEach(request.metrics(), function(metric){
             ko.utils.arrayForEach(request.cohorts(), function(cohort){
@@ -178,14 +183,14 @@ $(document).ready(function(){
         ko.utils.arrayForEach(bareList, function(item){
             item.selected = ko.observable(false);
         });
-    };
+    }
     
     function setConfigure(list){
         bareList = ko.utils.unwrapObservable(list);
         ko.utils.arrayForEach(bareList, function(item){
             item.configure = ko.observable('');
         });
-    };
+    }
     
     function setAggregationOptions(list){
         bareList = ko.utils.unwrapObservable(list);
@@ -207,7 +212,7 @@ $(document).ready(function(){
                        );
             }, item);
         });
-    };
+    }
     
     function setTabIds(list, prefix){
         if (!prefix) {
@@ -224,7 +229,7 @@ $(document).ready(function(){
                 return '#' + prefix + '-' + this.id;
             }, item);
         });
-    };
+    }
     
     function enableDateTimePicker(metric){
         var parentId = metric.tabId();
@@ -236,7 +241,7 @@ $(document).ready(function(){
             var name = input.attr('name');
             metric[name] = input.val();
         });
-    };
+    }
     
     // tabs that are dynamically added won't work - fix by re-initializing
     $(".sample-result .tabbable").on("click", "a", function(e){
