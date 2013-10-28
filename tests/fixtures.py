@@ -15,7 +15,16 @@ __all__ = [
     'WebTest',
     'i',
     'd',
+    'tz_note',
 ]
+
+
+tz_note = 'NOTE: if this test is failing by + or - one hour, '\
+          'it is *most* likely that Daylight Savings Time is '\
+          'in between registration and the revisions you are '\
+          'checking.  Wikimetrics should only run on servers '\
+          'configured with UTC, and we have decided to ignore'\
+          ' these failures rather than complicate the tests.'
 
 
 def i(date_object):
