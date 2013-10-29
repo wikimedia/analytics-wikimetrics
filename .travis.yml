@@ -20,3 +20,5 @@ script: sudo pip install -r requirements.txt; sudo pip install -e .; nosetests -
 
 after_install: echo "finished install"
 
+notifications:
+    irc: "chat.freenode.net#wikimedia-analytics"
