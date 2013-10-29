@@ -6,7 +6,7 @@ python:
 
 before_install:
    - sudo apt-get update  -qq
-   - sudo apt-get install -qq mysql-server mysql-client redis-server
+   - sudo apt-get install -qq mysql-server mysql-client redis-server mlocate
    - echo "create database wikimetrics;" | mysql -uroot
    - echo "CREATE USER 'wikimetrics'@'localhost' IDENTIFIED BY 'wikimetrics';" | mysql -uroot
    - echo "GRANT ALL PRIVILEGES ON wikimetrics.* TO 'wikimetrics'@'localhost';" | mysql -uroot
