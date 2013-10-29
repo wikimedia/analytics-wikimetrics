@@ -15,9 +15,10 @@ before_install:
 
 install: 
    - "pip install -r requirements.txt"
-   - "sudo pip install -e wikimetrics"
+   - "sudo pip install -e ."
 # command to run tests
-script: nosetests -v .
+#script: nosetests -v .
+script: wikimetrics --mode celery
 
 after_install: echo "finished install"
 
