@@ -6,7 +6,10 @@ python:
 
 before_install:
    - sudo apt-get update  -qq
-   - sudo apt-get install -qq mysql-server mysql-client
+   - sudo apt-get install -qq mysql-server mysql-client redis-server
+   - mysql -utravis -ptravis -e "create database wikimetrics;"
+   - mysql -utravis -ptravis -e "CREATE USER 'wikimetrics'@'localhost' IDENTIFIED BY 'wikimetrics';";
+   - mysql -utravis -ptravis -e "GRANT ALL PRIVILEGES ON wikimetrics.* TO 'wikimetrics'@'localhost';";
    #- git config --global user.email "test@test.com"
    #- git config --global user.name "Mr Test"
 
