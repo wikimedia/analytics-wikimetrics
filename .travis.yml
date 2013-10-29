@@ -18,7 +18,7 @@ install:
    - "sudo pip install -e ."
 # command to run tests
 #script: nosetests -v .
-script: sudo wikimetrics --mode celery
+script: sudo nosetests -v .
 
 after_install: echo "finished install"
 
