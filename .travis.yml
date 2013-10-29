@@ -14,7 +14,7 @@ before_install:
    #- git config --global user.name "Mr Test"
 
 install: 
-   - "pip install -r requirements.txt"
+   - "sudo pip install -r requirements.txt"
    - "sudo pip install -e ."
 # command to run tests
 #script: nosetests -v .
