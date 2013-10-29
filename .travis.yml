@@ -16,12 +16,12 @@ before_install:
 #install: 
 # command to run tests
 #script: nosetests -v .
-script: 
-    - sudo pip install -r requirements.txt
-    - sudo pip install -e .
-    - sudo pip install nose
-    - sudo nosetests -v .
-    - nosetests -v .
+script: "pip install -r requirements.txt; pip install -e .; nosetests -v . ; nosetests -v .;"
+    #- sudo pip install -r requirements.txt
+    #- sudo pip install -e .
+    #- sudo pip install nose
+    #- sudo nosetests -v .
+    #- nosetests -v .
 
 after_install: echo "finished install"
 
