@@ -1,0 +1,15 @@
+language: python
+python:
+  - "2.7"
+  #- "3.2"
+  #- "3.3"
+
+before_install:
+   - sudo apt-get update  -qq
+   - sudo apt-get install -qq mysql-server mysql-client
+   #- git config --global user.email "test@test.com"
+   #- git config --global user.name "Mr Test"
+
+install: "pip install -r requirements.txt"
+# command to run tests
+script: nosetests
