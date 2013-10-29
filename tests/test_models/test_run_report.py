@@ -55,6 +55,8 @@ class RunReportTest(QueueDatabaseTest):
         self.session.commit()
         
         for name, metric in metric_classes.iteritems():
+            if not metric.show_in_ui: continue
+            
             desired_responses = [{
                 'name': '{0} - test'.format(name),
                 'cohort': {
@@ -74,11 +76,11 @@ class RunReportTest(QueueDatabaseTest):
             }]
             jr = RunReport(desired_responses, user_id=self.owner_user_id)
             celery_task = jr.task.delay(jr)
-            # return value is not used from this .get() call
-            celery_task.get()
-            error_message = '{0} ran with invalid cohort'.format(name)
-            assert_equals(celery_task.ready(), True, error_message)
-            assert_equals(celery_task.failed(), True, error_message)
+            results = celery_task.get()
+            assert_true(
+                results['FAILURE'].find('ran with invalid cohort') >= 0,
+                '{0} ran with invalid cohort'.format(name)
+            )
     
     def test_aggregated_response_namespace_edits(self):
         desired_responses = [{

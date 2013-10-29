@@ -1,6 +1,6 @@
 # -*- coding:utf-8 -*-
 import json
-from nose.tools import assert_equal, raises, assert_true
+from nose.tools import assert_equal, raises, assert_true, assert_false
 from tests.fixtures import WebTest
 from wikimetrics.controllers.cohorts import (
     parse_username,
@@ -30,8 +30,13 @@ class CohortsControllerTest(WebTest):
         assert_equal(parsed['cohorts'][0]['name'], self.cohort.name)
     
     def test_list_includes_only_validated(self):
-        cohorts = [Cohort(name='c1', validated=False), Cohort(name='c2', validated=True)]
+        # There is already one cohort, add one more validated and one not validated
+        cohorts = [
+            Cohort(name='c1', enabled=True, validated=False),
+            Cohort(name='c2', enabled=True, validated=True)
+        ]
         self.session.add_all(cohorts)
+        self.session.commit()
         owners = [
             CohortUser(
                 cohort_id=c.id,
@@ -41,12 +46,13 @@ class CohortsControllerTest(WebTest):
             for c in cohorts
         ]
         self.session.add_all(owners)
+        self.session.commit()
         
         response = self.app.get('/cohorts/list', follow_redirects=True)
         parsed = json.loads(response.data)
         assert_equal(len(parsed['cohorts']), 2)
-        assert_equal(parsed['cohorts'][0].validated, True)
-        assert_equal(parsed['cohorts'][1].validated, True)
+        assert_false('c1' in [c['name'] for c in parsed['cohorts']])
+        assert_true('c2' in [c['name'] for c in parsed['cohorts']])
     
     def test_detail(self):
         response = self.app.get('/cohorts/detail/{0}'.format(self.cohort.id))
@@ -79,14 +85,6 @@ class CohortsControllerTest(WebTest):
         valid_user = normalize_user(parsed_user, 'enwiki')
         assert_equal(valid_user[0], self.editors[0].user_id)
         assert_equal(valid_user[1], 'Editor test-specific-0')
-    
-    def test_get_cohort_by_name_not_found(self):
-        response = self.app.get('/cohorts/detail/1-OI--LASJLI---LIJSL$EIOJ')
-        assert_equal(response.status_code, 404)
-    
-    def test_get_cohort_by_id_not_found(self):
-        response = self.app.get('/cohorts/detail/133715435033')
-        assert_equal(response.status_code, 404)
     
     def test_cohort_upload_finish_existing_name(self):
         response = self.app.post('/cohorts/create', data=dict(
@@ -164,6 +162,12 @@ class CohortsControllerTest(WebTest):
         assert_equal(cohort.default_project, 'enwiki')
     
     def test_validate_cohort_name_allowed(self):
+        response = self.app.get('/cohorts/validate/name?name=sleijslij')
+        
+        assert_equal(response.status_code, 200)
+        assert_equal(json.loads(response.data), True)
+    
+    def test_validate_cohort_name_not_allowed(self):
         response = self.app.get('/cohorts/validate/name?name={0}'.format(
             self.cohort.name)
         )

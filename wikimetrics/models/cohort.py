@@ -46,13 +46,11 @@ class Cohort(db.WikimetricsBase):
     def __iter__(self):
         """ returns list of user_ids """
         db_session = db.get_session()
-        tuples_with_ids = db_session\
-            .query(WikiUser.mediawiki_userid)\
-            .join(CohortWikiUser)\
-            .filter(CohortWikiUser.cohort_id == self.id)\
-            .all()
+        wikiusers = self.filter_wikiuser_query(
+            db_session.query(WikiUser.mediawiki_userid)
+        ).all()
         db_session.close()
-        return (t[0] for t in tuples_with_ids)
+        return (r.mediawiki_userid for r in wikiusers)
     
     def group_by_project(self):
         """
@@ -68,49 +66,67 @@ class Cohort(db.WikimetricsBase):
         into a set of project-homogenous cohorts, which can be
         analyzed using a single database connection
         """
-        
         db_session = db.get_session()
-        user_id_projects = db_session\
-            .query(WikiUser.mediawiki_userid, WikiUser.project)\
-            .join(CohortWikiUser)\
-            .filter(CohortWikiUser.cohort_id == self.id)\
-            .order_by(WikiUser.project)\
-            .all()
+        user_id_projects = self.filter_wikiuser_query(
+            db_session.query(WikiUser.mediawiki_userid, WikiUser.project)
+        ).order_by(WikiUser.project).all()
         db_session.close()
         # TODO: push this logic into sqlalchemy.  The solution
         # includes subquery(), but I can't seem to get anything working
         groups = itertools.groupby(user_id_projects, key=itemgetter(1))
-
-        # note: the below line is more concise but harder to read
-        #return ((project, (r[0] for r in users)) for project, users in groups)
-        for project, users in groups:
-            yield project or self.default_project, (r[0] for r in users)
+        
+        return (
+            (project or self.default_project, (r[0] for r in users))
+            for project, users in groups
+        )
+    
+    def filter_wikiuser_query(self, wikiusers_query):
+        """
+        Parameters:
+            wikiusers_query : a sqlalchemy query object asking for one or more
+                                properties of WikiUser
+        
+        Return:
+            the query object passed in, filtered and joined to the
+            appropriate tables, and restricted to this cohort
+        """
+        return wikiusers_query\
+            .join(CohortWikiUser)\
+            .join(Cohort)\
+            .filter(Cohort.id == self.id)\
+            .filter(Cohort.validated)\
+            .filter(WikiUser.valid)
     
     @staticmethod
-    def get_safely(db_session, user_id, cohort_id):
+    def get_safely(db_session, user_id, by_id=None, by_name=None):
         """
         Gets a cohort but first checks permissions on it
         
         Parameters
             db_session  : the database session to query
             user_id     : the user that should have access to the cohort
-            cohort_id   : the cohort to get
+            by_id       : the cohort id to get.  <by_id> or <by_name> is True
+            by_name     : the cohort name to get.  <by_id> or <by_name> is True
         
         Returns
-            If found, a Cohort instance with id == cohort_id
+            If found, a Cohort instance with id == cohort_id or name == cohort_name
         
         Raises
             NoResultFound   : cohort did not exist
             Unauthorized    : user_id is not allowed to access this cohort
         """
-        cohort, role = db_session.query(Cohort, CohortUser.role)\
+        query = db_session.query(Cohort, CohortUser.role)\
             .join(CohortUser)\
             .join(User)\
             .filter(User.id == user_id)\
-            .filter(Cohort.id == cohort_id)\
-            .filter(Cohort.enabled)\
-            .one()
+            .filter(Cohort.enabled)
         
+        if by_id:
+            query = query.filter(Cohort.id == by_id)
+        if by_name:
+            query = query.filter(Cohort.name == by_name)
+        
+        cohort, role = query.one()
         if role in CohortUserRole.SAFE_ROLES:
             return cohort
         else:

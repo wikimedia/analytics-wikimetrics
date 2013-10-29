@@ -3,7 +3,9 @@ import csv
 from flask import url_for, flash, render_template, redirect, request
 from flask.ext.login import current_user
 from sqlalchemy.orm.exc import NoResultFound, MultipleResultsFound
-from ..utils import json_response, json_error, json_redirect, deduplicate_by_key
+from ..utils import (
+    json_response, json_error, json_redirect, deduplicate_by_key, Unauthorized
+)
 from ..configurables import app, db
 from ..models import (
     Cohort, CohortUser, CohortUserRole,
@@ -28,8 +30,9 @@ def cohorts_list():
         .join(CohortUser)\
         .join(User)\
         .filter(User.id == current_user.id)\
-        .filter(CohortUser.role.in_([CohortUserRole.OWNER, CohortUserRole.VIEWER]))\
+        .filter(CohortUser.role.in_(CohortUserRole.SAFE_ROLES))\
         .filter(Cohort.enabled)\
+        .filter(Cohort.validated)\
         .all()
     
     db_session.close()
@@ -54,61 +57,43 @@ def cohort_detail(name_or_id):
     full_detail = request.args.get('full_detail', 0)
     
     cohort = None
-    if str(name_or_id).isdigit():
-        cohort = get_cohort_by_id(int(name_or_id))
-    else:
-        cohort = get_cohort_by_name(name_or_id)
-    
-    if cohort:
-        limit = None if full_detail == 'true' else 3
-        cohort_with_wikiusers = populate_cohort_wikiusers(cohort, limit)
-        return json_response(cohort_with_wikiusers)
-    
-    return '{}', 404
-
-
-def get_cohort_query():
-    allowed_roles = [CohortUserRole.OWNER, CohortUserRole.VIEWER]
     db_session = db.get_session()
-    return (
-        db_session.query(Cohort)
-                  .join(CohortUser)
-                  .join(User)
-                  .filter(User.id == current_user.id)
-                  .filter(CohortUser.role.in_(allowed_roles))
-                  .filter(Cohort.enabled),
-        db_session
-    )
-
-
-def get_cohort_by_id(id):
     try:
-        query, db_session = get_cohort_query()
-        cohort = query.filter(Cohort.id == id).one()
+        if str(name_or_id).isdigit():
+            cohort = Cohort.get_safely(db_session, current_user.id, by_id=int(name_or_id))
+        else:
+            cohort = Cohort.get_safely(db_session, current_user.id, by_name=name_or_id)
+    except Unauthorized:
+        return 'You are not allowed to access this Cohort', 401
+    except NoResultFound:
+        return 'Could not find this Cohort', 404
+    finally:
         db_session.close()
-        return cohort
-    except (MultipleResultsFound, NoResultFound):
-        return None
+    
+    limit = None if full_detail == 'true' else 3
+    cohort_with_wikiusers = populate_cohort_wikiusers(cohort, limit)
+    return json_response(cohort_with_wikiusers)
 
 
 def get_cohort_by_name(name):
+    """
+    Gets a cohort by name, without checking access or worrying about duplicates
+    """
     try:
-        query, db_session = get_cohort_query()
-        cohort = query.filter(Cohort.name == name).one()
+        db_session = db.get_session()
+        return db_session.query(Cohort).filter(Cohort.name == name).first()
+    finally:
         db_session.close()
-        return cohort
-    except (MultipleResultsFound, NoResultFound):
-        return None
 
 
 def populate_cohort_wikiusers(cohort, limit):
+    """
+    Fetches up to <limit> WikiUser records belonging to <cohort>
+    """
     db_session = db.get_session()
-    wikiusers = db_session.query(WikiUser)\
-        .join(CohortWikiUser)\
-        .filter(CohortWikiUser.cohort_id == cohort.id)\
-        .limit(limit)\
-        .all()
-    
+    wikiusers = cohort.filter_wikiuser_query(
+        db_session.query(WikiUser)
+    ).limit(limit).all()
     db_session.close()
     cohort_dict = cohort._asdict()
     cohort_dict['wikiusers'] = [wu._asdict() for wu in wikiusers]

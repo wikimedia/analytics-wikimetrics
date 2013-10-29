@@ -1,5 +1,5 @@
 from nose.tools import assert_equal
-from wikimetrics.models import Cohort
+from wikimetrics.models import Cohort, WikiUser
 from ..fixtures import DatabaseTest
 
 
@@ -9,26 +9,42 @@ class CohortTest(DatabaseTest):
         self.common_cohort_1()
     
     def test_iter(self):
-        self.editors[0].valid = False
-        self.editors[1].valid = None
+        user_ids = list(self.cohort)
+        assert_equal([e.user_id for e in self.editors], user_ids)
+    
+    def test_empty_iter(self):
+        self.cohort.validated = False
         self.session.commit()
         
         user_ids = list(self.cohort)
-        assert_equal(self.editors[0].user_id in user_ids, False)
-        assert_equal(self.editors[1].user_id in user_ids, False)
-        assert_equal(self.editors[2].user_id in user_ids, True)
-        assert_equal(self.editors[3].user_id in user_ids, True)
+        assert_equal(user_ids, [])
+    
+    def test_iter_with_invalid(self):
+        wikiusers = self.session.query(WikiUser).all()
+        wikiusers[0].valid = False
+        wikiusers[1].valid = None
+        self.session.commit()
+        
+        user_ids = list(self.cohort)
+        assert_equal(wikiusers[0].mediawiki_userid in user_ids, False)
+        assert_equal(wikiusers[1].mediawiki_userid in user_ids, False)
+        assert_equal(wikiusers[2].mediawiki_userid in user_ids, True)
+        assert_equal(wikiusers[3].mediawiki_userid in user_ids, True)
         assert_equal(len(user_ids), 2)
     
     def test_group_by_project(self):
-        self.editors[0].valid = False
-        self.editors[1].valid = None
+        wikiusers = self.session.query(WikiUser).all()
+        print [(w.mediawiki_userid, w.valid, w.mediawiki_username) for w in wikiusers]
+        wikiusers[0].valid = False
+        wikiusers[1].valid = None
         self.session.commit()
         
-        grouped = self.cohort.group_by_project()
-        user_ids = list(list(grouped)[0])
-        assert_equal(self.editors[0].user_id in user_ids, False)
-        assert_equal(self.editors[1].user_id in user_ids, False)
-        assert_equal(self.editors[2].user_id in user_ids, True)
-        assert_equal(self.editors[3].user_id in user_ids, True)
+        user_ids = []
+        for project, uids in self.cohort.group_by_project():
+            user_ids += list(uids)
+        
+        assert_equal(wikiusers[0].mediawiki_userid in user_ids, False)
+        assert_equal(wikiusers[1].mediawiki_userid in user_ids, False)
+        assert_equal(wikiusers[2].mediawiki_userid in user_ids, True)
+        assert_equal(wikiusers[3].mediawiki_userid in user_ids, True)
         assert_equal(len(user_ids), 2)

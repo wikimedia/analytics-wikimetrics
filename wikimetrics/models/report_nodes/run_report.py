@@ -9,6 +9,7 @@ from wikimetrics.metrics import metric_classes
 from wikimetrics.utils import deduplicate
 from report import ReportNode
 from aggregate_report import AggregateReport
+from validate_report import ValidateReport
 
 
 __all__ = ['RunReport']
@@ -44,7 +45,7 @@ class RunReport(ReportNode):
             # get cohort
             cohort_dict = cohort_metric_dict['cohort']
             db_session = db.get_session()
-            cohort = Cohort.get_safely(db_session, self.user_id, cohort_dict['id'])
+            cohort = Cohort.get_safely(db_session, self.user_id, by_id=cohort_dict['id'])
             db_session.close()
             
             # construct metric
@@ -54,7 +55,12 @@ class RunReport(ReportNode):
             metric = metric_class(**metric_dict)
             # TODO: don't think csrf can work here, but see if there's another way
             metric.fake_csrf()
-            if metric.validate():
+            
+            metric_names.append(metric.label)
+            cohort_names.append(cohort.name)
+            
+            validate_report = ValidateReport(metric, cohort)
+            if validate_report.valid():
                 # construct and start RunReport
                 output_child = AggregateReport(
                     cohort,
@@ -68,10 +74,8 @@ class RunReport(ReportNode):
                     user_id=self.user_id,
                 )
                 children.append(output_child)
-                metric_names.append(metric.label)
-                cohort_names.append(cohort.name)
             else:
-                raise Exception('{0} was incorrectly configured'.format(metric.label))
+                children.append(validate_report)
         
         metric_names = deduplicate(metric_names)
         cohort_names = deduplicate(cohort_names)
