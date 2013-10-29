@@ -9,7 +9,7 @@ before_install:
    - sudo apt-get install -qq mysql-server mysql-client redis-server mlocate
    - echo "create database wikimetrics;" | mysql -uroot
    - echo "create database enwiki;" | mysql -uroot
-   - cat seed.sql | mysql -uroot -
+   - cat seed.sql | mysql -uroot
    - echo "CREATE USER 'wikimetrics'@'localhost' IDENTIFIED BY 'wikimetrics';" | mysql -uroot
    - echo "GRANT ALL PRIVILEGES ON wikimetrics.* TO 'wikimetrics'@'localhost';" | mysql -uroot
    - echo "GRANT ALL PRIVILEGES ON enwiki.*      TO 'wikimetrics'@'localhost';" | mysql -uroot
