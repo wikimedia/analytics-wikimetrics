@@ -13,18 +13,12 @@ before_install:
    - echo "CREATE USER 'wikimetrics'@'localhost' IDENTIFIED BY 'wikimetrics';" | mysql -uroot
    - echo "GRANT ALL PRIVILEGES ON wikimetrics.* TO 'wikimetrics'@'localhost';" | mysql -uroot
    - echo "GRANT ALL PRIVILEGES ON enwiki.*      TO 'wikimetrics'@'localhost';" | mysql -uroot
+   - pip install -r requirements.txt
+   - pip install -e .
    #- git config --global user.email "test@test.com"
    #- git config --global user.name "Mr Test"
 
-#install: 
-# command to run tests
-#script: nosetests -v .
-script: "pip install -r requirements.txt; pip install -e .; nosetests -v . ; nosetests -v .;"
-    #- sudo pip install -r requirements.txt
-    #- sudo pip install -e .
-    #- sudo pip install nose
-    #- sudo nosetests -v .
-    #- nosetests -v .
+script: "nosetests -v .;"
 
 after_install: echo "finished install"
 
