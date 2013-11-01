@@ -1,21 +1,13 @@
-# -*- coding:utf-8 -*-
 import json
-from nose.tools import assert_equal, raises, assert_true, assert_false
+import time
+from StringIO import StringIO
+from nose.tools import assert_equal, assert_true, assert_false, raises, nottest
+
 from tests.fixtures import WebTest
-from wikimetrics.controllers.cohorts import (
-    parse_username,
-    parse_records,
-    normalize_user,
-    normalize_newlines,
-    normalize_project,
-    to_safe_json,
-    get_wikiuser_by_name,
-    get_wikiuser_by_id,
-    project_name_for_link,
-    link_to_user_page,
-    validate_records,
+from wikimetrics.models import (
+    Cohort, CohortUser, CohortUserRole, ValidateCohort,
+    CohortWikiUser, WikiUser,
 )
-from wikimetrics.models import Cohort, CohortUser, CohortUserRole
 
 
 class CohortsControllerTest(WebTest):
@@ -65,6 +57,24 @@ class CohortsControllerTest(WebTest):
         parsed = json.loads(response.data)
         assert_equal(response.status_code, 200)
         assert_equal(len(parsed['wikiusers']), 3)
+        # this cohort did not go through async validation
+        assert_equal(parsed['validation_status'], 'UNKNOWN')
+        assert_equal(parsed['validated_count'], 3)
+        assert_equal(parsed['total_count'], 3)
+    
+    def test_detail_by_name_after_async_validate(self):
+        self.helper_reset_validation()
+        
+        validate_cohort = ValidateCohort(self.cohort.id)
+        async_result = validate_cohort.task.delay(validate_cohort)
+        self.cohort.validation_queue_key = async_result.task_id
+        async_result.get()
+        
+        response = self.app.get('/cohorts/detail/{0}'.format(self.cohort.name))
+        parsed = json.loads(response.data)
+        assert_equal(parsed['validation_status'], 'SUCCESS')
+        assert_equal(parsed['validated_count'], 4)
+        assert_equal(parsed['total_count'], 4)
     
     def test_full_detail(self):
         response = self.app.get('/cohorts/detail/{0}?full_detail=true'.format(
@@ -74,92 +84,16 @@ class CohortsControllerTest(WebTest):
         assert_equal(response.status_code, 200)
         assert_equal(len(parsed['wikiusers']), 4)
     
-    def test_validate_username(self):
-        # this username has a few problems that the normalize call should handle
-        # 1. normal ascii space in front
-        # 2. lowercase
-        # 3. nasty trailing unicode space (the reason this file has coding:utf-8)
-        problem_username = ' editor test-specific-0 '
-        
-        parsed_user = parse_username(problem_username, decode=False)
-        valid_user = normalize_user(parsed_user, 'enwiki')
-        assert_equal(valid_user[0], self.editors[0].user_id)
-        assert_equal(valid_user[1], 'Editor test-specific-0')
+    def test_detail_not_allowed(self):
+        self.helper_remove_authorization()
+        response = self.app.get('/cohorts/detail/{0}'.format(self.cohort.id))
+        assert_equal(response.status_code, 401)
+        assert_equal(response.data, 'You are not allowed to access this Cohort')
     
-    def test_cohort_upload_finish_existing_name(self):
-        response = self.app.post('/cohorts/create', data=dict(
-            name=self.cohort.name,
-        ))
-        assert_true(response.data.find('isError') >= 0)
-        assert_true(response.data.find('There was a problem') >= 0)
-    
-    def test_cohort_upload_finish_no_users_error(self):
-        response = self.app.post('/cohorts/create', data=dict(
-            name='blijalsijelij',
-            project='enwiki',
-            description='test',
-            users='',  # invalid JSON should throw an error
-        ))
-        assert_true(response.data.find('isError') >= 0)
-        assert_true(response.data.find('There was a problem') >= 0)
-    
-    def test_cohort_upload_finish_no_project_error(self):
-        users = '''[
-            {"username":"Dan","user_id":1,"project":"en"},
-            {"username":"Stefan","user_id":2,"project":"ar"}
-        ]'''
-        response = self.app.post('/cohorts/create', data=dict(
-            name='blijalsijelij',
-            description='test',
-            users=users,
-        ))
-        assert_true(response.data.find('isError') >= 0)
-        assert_true(response.data.find('If all the users do not belong') >= 0)
-    
-    def test_cohort_upload_finish(self):
-        new_cohort_name = 'New Test Cohort'
-        new_cohort_description = 'test enwiki cohort'
-        users = '''[
-            {{"username":"Dan","project":"enwiki","user_id":{0}}},
-            {{"username":"Evan","project":"dewiki","user_id":{1}}}
-        ]'''.format(
-            self.editors[0].user_id,
-            self.editors[1].user_id,
-        )
-        response = self.app.post('/cohorts/create', data=dict(
-            name=new_cohort_name,
-            description=new_cohort_description,
-            project='enwiki',
-            users=users,
-        ))
-        assert_true(response.data.find('isRedirect') >= 0)
-        assert_true(response.data.find('/cohorts/') >= 0)
-        
-        # look for the newly created cohort
-        self.session.commit()
-        cohort = self.session.query(Cohort).filter(Cohort.name == new_cohort_name).one()
-        assert_equal(cohort.description, new_cohort_description)
-    
-    def test_cohort_upload_finish_sets_project_from_users(self):
-        new_cohort_name = 'New Test Cohort'
-        new_cohort_description = 'test enwiki cohort'
-        users = '''[
-            {{"username":"Dan","project":"enwiki","user_id":{0}}},
-            {{"username":"Evan","project":"enwiki","user_id":{1}}}
-        ]'''.format(
-            self.editors[0].user_id,
-            self.editors[1].user_id,
-        )
-        self.app.post('/cohorts/create', data=dict(
-            name=new_cohort_name,
-            description=new_cohort_description,
-            users=users,
-        ))
-        
-        # look for the newly created cohort
-        self.session.commit()
-        cohort = self.session.query(Cohort).filter(Cohort.name == new_cohort_name).one()
-        assert_equal(cohort.default_project, 'enwiki')
+    def test_detail_not_found(self):
+        response = self.app.get('/cohorts/detail/{0}'.format(-999))
+        assert_equal(response.status_code, 404)
+        assert_equal(response.data, 'Could not find this Cohort')
     
     def test_validate_cohort_name_allowed(self):
         response = self.app.get('/cohorts/validate/name?name=sleijslij')
@@ -181,162 +115,85 @@ class CohortsControllerTest(WebTest):
         assert_equal(response.status_code, 200)
         assert_equal(json.loads(response.data), True)
     
-    def test_normalize_newlines(self):
-        stream = [
-            'blahblah\r',
-            'blahblahblahnor',
-            'blahblah1\rblahblah2',
-        ]
-        lines = list(normalize_newlines(stream))
-        assert_equal(len(lines), 5)
-        assert_equal(lines[0], 'blahblah')
-        assert_equal(lines[1], '')
-        assert_equal(lines[2], 'blahblahblahnor')
-        assert_equal(lines[3], 'blahblah1')
-        assert_equal(lines[4], 'blahblah2')
-    
-    def test_to_safe_json(self):
-        unsafe_json = '{"quotes":"He''s said: \"Real Artists Ship.\""}'
-        safe_json = to_safe_json(unsafe_json)
+    def test_validate_nonexistent_cohort(self):
+        response = self.app.post('/cohorts/validate/0')
         
-        assert_equal(
-            safe_json,
-            '\\"{\\\\"quotes\\\\":\\\\"Hes said: \\\\"Real Artists Ship.\\\\"\\\\"}\\"'
-        )
+        assert_true(response.data.find('isError') >= 0)
+        assert_true(response.data.find('This cohort does not exist') >= 0)
     
-    def test_parse_records_with_project(self):
-        parsed = parse_records(
-            [
-                ['dan', 'enwiki']
-            ],
-            None
-        )
-        assert_equal(len(parsed), 1)
-        assert_equal(parsed[0]['username'], 'Dan')
-        assert_equal(parsed[0]['raw_username'], 'Dan')
-        assert_equal(parsed[0]['project'], 'enwiki')
-    
-    def test_parse_records_without_project(self):
-        parsed = parse_records(
-            [
-                ['dan']
-            ],
-            'enwiki'
-        )
-        assert_equal(len(parsed), 1)
-        assert_equal(parsed[0]['username'], 'Dan')
-        assert_equal(parsed[0]['raw_username'], 'Dan')
-        assert_equal(parsed[0]['project'], 'enwiki')
-    
-    def test_parse_records_with_shorthand_project(self):
-        parsed = parse_records(
-            [
-                ['dan', 'en']
-            ],
-            None
-        )
-        assert_equal(len(parsed), 1)
-        assert_equal(parsed[0]['username'], 'Dan')
-        assert_equal(parsed[0]['raw_username'], 'Dan')
-        assert_equal(parsed[0]['project'], 'en')
-    
-    def test_parse_records_with_utf8(self):
-        parsed = parse_records(
-            [
-                # TODO: use weird characters U+0064	d	&#100;
-                [u'dan', 'en']
-            ],
-            None
-        )
-        assert_equal(len(parsed), 1)
-        assert_equal(parsed[0]['username'], 'Dan')
-        assert_equal(parsed[0]['raw_username'], 'Dan')
-        assert_equal(parsed[0]['project'], 'en')
-    
-    def test_normalize_project_shorthand(self):
-        normal = normalize_project('en')
-        assert_equal(normal, 'enwiki')
-    
-    def test_normalize_project_uppercase(self):
-        normal = normalize_project('ENWIKI')
-        assert_equal(normal, 'enwiki')
-    
-    def test_normalize_project_nonexistent(self):
-        normal = normalize_project('blah')
-        assert_equal(normal, None)
-    
-    def test_get_wikiuser_by_name(self):
-        user = get_wikiuser_by_name('Editor test-specific-0', 'enwiki')
-        assert_equal(user.user_name, 'Editor test-specific-0')
-    
-    def test_get_wikiuser_by_name_nonexistent(self):
-        nonexistent = get_wikiuser_by_name('blahblahblah', 'enwiki')
-        assert_equal(nonexistent, None)
-    
-    def test_get_wikiuser_by_id(self):
-        user = get_wikiuser_by_id(self.editors[0].user_id, 'enwiki')
-        assert_equal(user.user_name, self.editors[0].user_name)
-    
-    def test_get_wikiuser_by_id_nonexistent(self):
-        nonexistent = get_wikiuser_by_id(123124124, 'enwiki')
-        assert_equal(nonexistent, None)
-    
-    def test_normalize_user_by_name(self):
-        normalized_user = normalize_user('Editor test-specific-0', 'enwiki')
-        assert_equal(normalized_user[0], self.editors[0].user_id)
-        assert_equal(normalized_user[1], self.editors[0].user_name)
-    
-    def test_normalize_user_by_name_nonexistent(self):
-        normalized_user = normalize_user('DanNotExists', 'enwiki')
-        assert_equal(normalized_user, None)
-    
-    def test_normalize_user_by_id(self):
-        normalized_user = normalize_user(str(self.editors[0].user_id), 'enwiki')
-        assert_equal(normalized_user[0], self.editors[0].user_id)
-        assert_equal(normalized_user[1], self.editors[0].user_name)
-    
-    def test_normalize_user_by_id_nonexistent(self):
-        normalized_user = normalize_user('123124124', 'enwiki')
-        assert_equal(normalized_user, None)
-    
-    def test_project_name_for_link(self):
-        project = project_name_for_link('en')
-        assert_equal(project, 'en')
-    
-    def test_project_name_for_link_with_wiki(self):
-        project = project_name_for_link('enwiki')
-        assert_equal(project, 'en')
-    
-    def test_link_to_user_page(self):
-        link = link_to_user_page('Dan has-spaces', 'en')
-        assert_equal(link, 'https://en.wikipedia.org/wiki/User:Dan has-spaces')
-    
-    def test_link_to_user_page_unicode(self):
-        link_to_user_page('ولاء عبد المنعم', 'ar')
-        # just want to make sure no exceptions are raised
-        assert_true(True)
-    
-    def test_validate_records(self):
-        (valid, invalid) = validate_records([
-            {
-                'project': 'enwiki',
-                'username': 'Editor test-specific-0',
-                'raw_username': 'Editor test-specific-0',
-            },
-            {
-                'project': 'blah',
-                'username': 'Editor test-specific-0',
-                'raw_username': 'Editor test-specific-0',
-            },
-            {
-                'project': 'enwiki',
-                'username': 'blah',
-                'raw_username': 'blah',
-            },
-        ])
+    def test_validate_unauthorized_cohort(self):
+        self.helper_remove_authorization()
+        response = self.app.post('/cohorts/validate/{0}'.format(self.cohort.id))
         
-        assert_equal(len(valid), 1)
-        assert_equal(len(invalid), 2)
-        assert_equal(valid[0]['user_id'], self.editors[0].user_id)
-        assert_equal(invalid[0]['reason_invalid'], 'invalid project: blah')
-        assert_equal(invalid[1]['reason_invalid'], 'invalid user_name / user_id: blah')
+        assert_true(response.data.find('isError') >= 0)
+        assert_true(response.data.find('You are not allowed to access this cohort') >= 0)
+    
+    def test_validate_cohort_again_after_upload(self):
+        self.helper_reset_validation()
+        response = self.app.post('/cohorts/validate/{0}'.format(self.cohort.id))
+        
+        assert_true(response.data.find('message') >= 0)
+        assert_true(
+            response.data.find('Validating cohort') >= 0
+        )
+    
+    def test_delete_cohort(self):
+        response = self.app.post('/cohorts/delete/{0}'.format(self.cohort.id))
+        
+        assert_equal(response.status_code, 200)
+        assert_true(response.data.find('isRedirect') >= 0)
+        assert_true(response.data.find('/cohorts/') >= 0)
+        self.session.commit()
+        cu = self.session.query(CohortUser) \
+            .filter(CohortUser.cohort_id == self.cohort.id) \
+            .first()
+        assert_equal(cu, None)
+    
+    def test_delete_unauthorized_cohort(self):
+        self.session.query(CohortUser).delete()
+        self.session.commit()
+        response = self.app.post('/cohorts/delete/{0}'.format(self.cohort.id))
+        
+        assert_true(response.data.find('isError') >= 0)
+        assert_true(response.data.find('This Cohort can not be deleted') >= 0)
+
+
+class CohortsControllerUploadTest(WebTest):
+    
+    def test_get_upload_form(self):
+        response = self.app.get('/cohorts/upload')
+        assert_equal(response.status_code, 200)
+        assert_true(response.data.find('<h3>Create a Cohort by Uploading a CSV') >= 0)
+    
+    def test_upload_invalid_form(self):
+        response = self.app.post('/cohorts/upload')
+        assert_equal(response.status_code, 200)
+        assert_true(response.data.find('<h3>Create a Cohort by Uploading a CSV') >= 0)
+        assert_true(response.data.find('Please fix validation problems') >= 0)
+    
+    def test_upload_taken_cohort_name(self):
+        response = self.app.post('/cohorts/upload', data=dict(
+            name=self.cohort.name,
+            project='enwiki',
+            csv='just has to be set to something for this test',
+        ))
+        assert_equal(response.status_code, 200)
+        assert_true(response.data.find('<h3>Create a Cohort by Uploading a CSV') >= 0)
+        assert_true(response.data.find('That Cohort name is already taken') >= 0)
+    
+    def test_upload_works(self):
+        response = self.app.post('/cohorts/upload', data=dict(
+            name='new_cohort_name',
+            project='enwiki',
+            csv=(StringIO('actual validation tested elsewhere'), 'cohort.csv'),
+        ))
+        assert_equal(response.status_code, 302)
+        assert_true(response.data.find('href="/cohorts/#') >= 0)
+    
+    def test_upload_raises_exception(self):
+        response = self.app.post('/cohorts/upload', data=dict(
+            name='new_cohort_name',
+            project='enwiki',
+            csv='not a file',
+        ))
+        assert_true(response.data.find('Server error while processing your upload') >= 0)

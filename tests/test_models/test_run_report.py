@@ -55,7 +55,8 @@ class RunReportTest(QueueDatabaseTest):
         self.session.commit()
         
         for name, metric in metric_classes.iteritems():
-            if not metric.show_in_ui: continue
+            if not metric.show_in_ui:
+                continue
             
             desired_responses = [{
                 'name': '{0} - test'.format(name),

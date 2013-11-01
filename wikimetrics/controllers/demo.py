@@ -1,5 +1,7 @@
 from flask import render_template, redirect, request, jsonify
 from flask.ext.login import current_user
+from sqlalchemy import func
+
 from ..configurables import app, db
 from ..models import (
     WikiUser,
@@ -93,10 +95,12 @@ if app.config['DEBUG']:
         cohort9 = Cohort(name='A/B September', description='', enabled=True)
         cohort10 = Cohort(name='A/B August', description='', enabled=True)
         cohort11 = Cohort(name='A/B July', description='', enabled=True)
-        db_sess.add_all([
+        cohorts = [
             cohort1, cohort2, cohort3, cohort4, cohort5, cohort6,
             cohort7, cohort8, cohort9, cohort10, cohort11
-        ])
+        ]
+        mark_cohorts_validated(cohorts)
+        db_sess.add_all(cohorts)
         db_sess.commit()
         
         db_sess.add(
@@ -246,14 +250,14 @@ if app.config['DEBUG']:
         return 'OK, wiped out the database and added cohorts only for {0}'.format(
             current_user.email
         )
-
+    
     @app.route('/demo/create/survivors/')
     def demo_add_survivors():
         session = db.get_session()
         user = session.query(User).filter_by(email=current_user.email).one()
-
+        
         delete_my_cohorts(session)
-
+        
         from tests.fixtures import DatabaseWithSurvivorCohortTest
         st = DatabaseWithSurvivorCohortTest()
         st.acquireDBHandles()
@@ -263,7 +267,7 @@ if app.config['DEBUG']:
         st.updateSurvivorRegistrationData()
         st.createPageForSurvivors()
         st.createRevisionsForSurvivors()
-
+        
         current_user_owns_demo = CohortUser(
             user_id=user.id,
             cohort_id=st.cohort.id,
@@ -271,5 +275,29 @@ if app.config['DEBUG']:
         )
         session.add(current_user_owns_demo)
         session.commit()
-
+        
         return "Modified"
+    
+    @app.route('/demo/create/fake-<string:project>-users/<int:n>')
+    def add_fake_enwiki_users(project, n):
+        session = db.get_mw_session(project)
+        start = session.query(func.max(MediawikiUser.user_id)).one()[0] + 1
+        session.bind.engine.execute(
+            MediawikiUser.__table__.insert(),
+            [
+                {
+                    'user_name'         : 'user-{0}'.format(r),
+                    'user_id'           : r,
+                    'user_registration' : '20130101000000'
+                }
+                for r in range(start, start + n)
+            ]
+        )
+        session.commit()
+        session.close()
+        return '{0} user records created in {1}'.format(n, project)
+
+
+def mark_cohorts_validated(cohorts):
+    for c in cohorts:
+        c.validated = True

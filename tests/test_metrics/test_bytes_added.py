@@ -1,4 +1,4 @@
-from nose.tools import assert_true, assert_equal
+from nose.tools import assert_true, assert_equal, assert_false
 from tests.fixtures import DatabaseTest
 from wikimetrics.metrics import BytesAdded, TimeseriesChoices
 
@@ -36,16 +36,15 @@ class BytesAddedTest(DatabaseTest):
     def test_uses_date_range(self):
         
         metric = BytesAdded(
-            namespaces=[0],
+            start_date='blah'
         )
-        assert_true(not metric.validate())
+        assert_false(metric.validate())
         
         metric = BytesAdded(
             namespaces=[0],
             start_date='2013-01-01 00:40:00',
             end_date='2013-02-01 01:01:00',
         )
-        metric.fake_csrf()
         assert_true(metric.validate())
         
         results = metric(list(self.cohort), self.mwSession)
@@ -66,7 +65,6 @@ class BytesAddedTest(DatabaseTest):
             positive_only_sum=False,
             negative_only_sum=False,
         )
-        metric.fake_csrf()
         assert_true(metric.validate())
         
         results = metric(list(self.cohort), self.mwSession)
@@ -91,7 +89,6 @@ class BytesAddedTest(DatabaseTest):
             negative_only_sum=False,
             absolute_sum=False,
         )
-        metric.fake_csrf()
         assert_true(metric.validate())
         
         results = metric(list(self.cohort), self.mwSession)

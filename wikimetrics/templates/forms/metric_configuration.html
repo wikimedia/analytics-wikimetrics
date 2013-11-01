@@ -1,4 +1,4 @@
-<form class="form-horizontal metric-configuration" method="POST" action="{{action}}" data-bind="submit: $root.saveMetricConfiguration">
+{% import 'forms/field_validation.html' as validation %}<form class="form-horizontal metric-configuration" method="POST" action="{{action}}" data-bind="submit: $root.saveMetricConfiguration">
     {% for f in form %}
     {% if f.name != 'csrf_token' %}
         <div class="control-group">
@@ -19,13 +19,7 @@
                 {% else %}
                     {{ f(placeholder=f.description, **{'data-bind':'value: '+f.name}) }}
                 {% endif %}
-                {% if f.errors %}
-                    <ul class="unstyled error-list">
-                        {% for e in f.errors %}
-                        <li class="text-error">{{ e }}</li>
-                        {% endfor %}
-                    </ul>
-                {% endif %}
+                {{ validation.messages(f) }}
             </div>
             {% if f.name == 'namespaces' %}
                 <div class="controls">

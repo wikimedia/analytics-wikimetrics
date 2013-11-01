@@ -3,6 +3,8 @@ from os import devnull
 from signal import SIGINT
 from time import sleep
 
+from wikimetrics.configurables import app
+
 
 celery_proc = None
 
@@ -21,6 +23,9 @@ def celery_is_alive():
 
 
 def setUp():
+    # Set TESTING to true so we can know to not check CSRF
+    app.config['TESTING'] = True
+    
     celery_out = open(devnull, "w")
     celery_cmd = ['wikimetrics', '--mode', 'celery']
     global celery_proc

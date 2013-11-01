@@ -19,7 +19,6 @@ a.openid-logo {
     background-image: url(//cdn.sstatic.net/Img/openid/openid-logos.png?v=8);
 }
 a.openid-logo.google {
-    background-posiiton: -1px -1px;
     width: 103px;
     height: 63px;
 }
@@ -32,7 +31,7 @@ a.openid-logo.twitter {
 
 /* creating a new report */
 div.pick-cohorts .navbar-search { margin: 16px 0 0 0; }
-div.pick-cohorts .cohorts { margin: 14px 0 0 14px; max-height: 160px; overflow-x: hide; overflow-y: auto; }
+div.pick-cohorts .cohorts { margin: 14px 0 0 14px; max-height: 160px; overflow-x: hidden; overflow-y: auto; }
 div.pick-metrics, .sample-result { background-color: #fff; }
 div.pick-metrics .tabbable, .sample-result .tabbable { margin: 22px 0 0 0; }
 td.blur-completely { text-shadow: 0 0 20px rgba(0,0,0,0.6); color: transparent; }

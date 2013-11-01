@@ -1,0 +1,9 @@
+{% macro messages(field) -%}
+    {% if field.errors %}
+        <ul class="unstyled error-list">
+            {% for e in field.errors %}
+            <li class="text-error">{{ e }}</li>
+            {% endfor %}
+        </ul>
+    {% endif %}
+{%- endmacro %}

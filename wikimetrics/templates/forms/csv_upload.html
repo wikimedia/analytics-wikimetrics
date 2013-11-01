@@ -1,35 +1,52 @@
-<form enctype="multipart/form-data" action="{{url_for('cohort_upload')}}" method="POST" class="upload-cohort form-horizontal">
+{% import 'forms/field_validation.html' as validation %}
+
+<form
+    enctype="multipart/form-data"
+    action="{{url_for('cohort_upload')}}"
+    method="POST"
+    class="upload-cohort form-horizontal">
+    
+    {{ form.csrf_token }}
+    
     <div class="navbar-inner">
         <h3>Create a Cohort by Uploading a CSV</h3>
     </div>
     <div class="control-group">
         <label for="name" class="control-label">Name</label>
         <div class="controls">
-            <input type="text" name="name" class="required" id="name" value="{% if name %}{{name}}{% endif %}"/>
+            <input type="text" name="name" id="name"
+                class="required"
+                value="{{form.name.data or ''}}"/>
             <label for="name">(automatically checks availability)</label>
+            {{ validation.messages(form.name) }}
         </div>
     </div>
     <div class="control-group">
         <label for="description" class="control-label">Description</label>
         <div class="controls">
-            <textarea rows="4" cols="50" name="description" id="description">{% if description %}{{description}}{% endif %}</textarea>
+            <textarea name="description" id="description"
+                rows="4"
+                cols="50">{{form.description.data or ''}}</textarea>
+            {{ validation.messages(form.description) }}
         </div>
     </div>
     <div class="control-group">
         <label for="project" class="control-label">Default Project</label>
         <div class="controls">
             <input type="text" name="project" id="project"
-                   value="{% if project %}{{project}}{% endif %}"
-                   data-provide="typeahead"
-                   data-source='{{projects}}'
-                   autocomplete="off"
+                value="{{form.project.data or ''}}"
+                data-provide="typeahead"
+                data-source='{{projects}}'
+                autocomplete="off"
             />
+            {{ validation.messages(form.project) }}
         </div>
     </div>
     <div class="control-group">
         <label for="csv" class="control-label">CSV File</label>
         <div class="controls">
             <input type="file" name="csv" id="csv"/>
+            {{ validation.messages(form.csv) }}
         </div>
     </div>
     <div class="form-actions">

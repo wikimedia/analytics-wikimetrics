@@ -87,7 +87,7 @@ def get_celery_task(result_key):
 
 def get_celery_task_result(celery_task, db_report):
     result = celery_task.get()
-    if result:
+    if result and isinstance(result, dict) and db_report.result_key in result:
         return result[db_report.result_key]
     else:
         return {'failure': 'result not available'}

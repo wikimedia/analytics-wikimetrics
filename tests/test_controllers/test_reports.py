@@ -1,6 +1,7 @@
 import json
 import celery
 import time
+import unittest
 from nose.tools import assert_true, assert_equal
 from tests.fixtures import WebTest
 from wikimetrics.models import PersistentReport
@@ -50,6 +51,68 @@ class ReportsControllerTest(WebTest):
         ])
         self.session.commit()
     
+    def test_full_report_create_and_result(self):
+        # Make the request
+        desired_responses = [{
+            'name': 'Edits - test',
+            'cohort': {
+                'id': self.cohort.id,
+            },
+            'metric': {
+                'name': 'NamespaceEdits',
+                'namespaces': [0, 1, 2],
+                'start_date': '2013-06-01 00:00:00',
+                'end_date': '2013-09-01 00:00:00',
+                'individualResults': True,
+                'aggregateResults': True,
+                'aggregateSum': True,
+                'aggregateAverage': True,
+                'aggregateStandardDeviation': True,
+            },
+        }]
+        json_to_post = json.dumps(desired_responses)
+        
+        response = self.app.post('/reports/create/', data=dict(
+            responses=json_to_post
+        ))
+        assert_equal(response.status_code, 200)
+        assert_true(response.data.find('isRedirect') >= 0)
+        assert_true(response.data.find('/reports/') >= 0)
+        
+        # Wait a second for the task to get processed
+        time.sleep(1)
+        
+        response = self.app.get('/reports/list/')
+        parsed = json.loads(response.data)
+        result_key = parsed['reports'][-1]['result_key']
+        task, report = get_celery_task(result_key)
+        assert_true(task is not None)
+        
+        # Get the result directly
+        result = get_celery_task_result(task, report)
+        assert_true(result is not None)
+        
+        # Check the status via get
+        response = self.app.get('/reports/status/{0}'.format(result_key))
+        assert_true(response.data.find('SUCCESS') >= 0)
+        
+        # Check the csv result
+        response = self.app.get('/reports/result/{0}.csv'.format(result_key))
+        assert_true(response.data.find('Average') >= 0)
+        
+        # Check the json result
+        response = self.app.get('/reports/result/{0}.json'.format(result_key))
+        assert_true(response.data.find('Average') >= 0)
+        
+        # Purposefully change the report status to make sure update_status works
+        report.status = celery.states.STARTED
+        self.session.add(report)
+        self.session.commit()
+        report_new = self.session.query(PersistentReport).get(report.id)
+        self.session.expunge(report_new)
+        report_new.update_status()
+        assert_equal(report_new.status, celery.states.SUCCESS)
+    
     def test_index(self):
         response = self.app.get('/reports/', follow_redirects=True)
         assert_true(
@@ -91,69 +154,6 @@ class ReportsControllerTest(WebTest):
         response = self.app.get('/reports/create/')
         assert_equal(response.status_code, 200)
         assert_true(response.data.find('Create Analysis Report') >= 0)
-    
-    def test_full_report_create_and_result(self):
-        # Make the request
-        desired_responses = [{
-            'name': 'Edits - test',
-            'cohort': {
-                'id': self.cohort.id,
-            },
-            'metric': {
-                'name': 'NamespaceEdits',
-                'namespaces': [0, 1, 2],
-                'start_date': '2013-06-01 00:00:00',
-                'end_date': '2013-09-01 00:00:00',
-                'individualResults': True,
-                'aggregateResults': True,
-                'aggregateSum': True,
-                'aggregateAverage': True,
-                'aggregateStandardDeviation': True,
-            },
-        }]
-        json_to_post = json.dumps(desired_responses)
-        
-        response = self.app.post('/reports/create/', data=dict(
-            responses=json_to_post
-        ))
-        assert_equal(response.status_code, 200)
-        assert_true(response.data.find('isRedirect') >= 0)
-        assert_true(response.data.find('/reports/') >= 0)
-        
-        # Wait a second for the task to get processed
-        time.sleep(1)
-        
-        # Check that the task has been created
-        response = self.app.get('/reports/list/')
-        parsed = json.loads(response.data)
-        result_key = parsed['reports'][-1]['result_key']
-        task, report = get_celery_task(result_key)
-        assert_true(task is not None)
-        
-        # Get the result directly
-        result = get_celery_task_result(task, report)
-        assert_true(result is not None)
-        
-        # Check the status via get
-        response = self.app.get('/reports/status/{0}'.format(result_key))
-        assert_true(response.data.find('SUCCESS') >= 0)
-        
-        # Check the csv result
-        response = self.app.get('/reports/result/{0}.csv'.format(result_key))
-        assert_true(response.data.find('Average') >= 0)
-        
-        # Check the json result
-        response = self.app.get('/reports/result/{0}.json'.format(result_key))
-        assert_true(response.data.find('Average') >= 0)
-        
-        # Purposefully change the report status to make sure update_status works
-        report.status = celery.states.STARTED
-        self.session.add(report)
-        self.session.commit()
-        report_new = self.session.query(PersistentReport).get(report.id)
-        self.session.expunge(report_new)
-        report_new.update_status()
-        assert_equal(report_new.status, celery.states.SUCCESS)
     
     def test_report_result_csv_error(self):
         response = self.app.get('/reports/result/blah.csv')
@@ -245,6 +245,7 @@ class ReportsControllerTest(WebTest):
         
         # Check the csv result
         response = self.app.get('/reports/result/{0}.csv'.format(result_key))
+        print(response.data)
         assert_true(response.data.find('Sum,8.0') >= 0)
     
     def test_report_result_std_dev_only_csv(self):
@@ -343,3 +344,39 @@ class ReportsControllerTest(WebTest):
         assert_true(response.data.find('end_date') >= 0)
         assert_true(response.data.find('namespaces') >= 0)
         assert_true(response.data.find('metric/cohort') >= 0)
+
+
+class BasicTests(unittest.TestCase):
+    
+    def test_get_celery_task_no_key(self):
+        (r1, r2) = get_celery_task(None)
+        assert_equal(r1, None)
+        assert_equal(r2, None)
+    
+    def test_get_celery_task_result_when_invalid(self):
+        mock_task = MockTask(True)
+        mock_report = MockReport()
+        failure = get_celery_task_result(mock_task, mock_report)
+        assert_true(failure['failure'], 'result not available')
+    
+    def test_get_celery_task_result_when_empty(self):
+        mock_task = MockTask(False)
+        mock_report = MockReport()
+        failure = get_celery_task_result(mock_task, mock_report)
+        assert_true(failure['failure'], 'result not available')
+
+
+class MockTask(object):
+    def __init__(self, invalid):
+        self.invalid = invalid
+        
+    def get(self):
+        if self.invalid:
+            return 'invalid task result'
+        else:
+            return {}
+
+
+class MockReport(object):
+    def __init__(self):
+        self.result_key = 'blah'

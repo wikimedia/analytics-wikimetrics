@@ -1,12 +1,14 @@
 import json
-import csv
 from flask import url_for, flash, render_template, redirect, request
 from flask.ext.login import current_user
+from sqlalchemy import func
 from sqlalchemy.orm.exc import NoResultFound, MultipleResultsFound
+from sqlalchemy.sql.expression import or_
 from ..utils import (
     json_response, json_error, json_redirect, deduplicate_by_key, Unauthorized
 )
 from ..configurables import app, db
+from ..controllers.forms import CohortUpload
 from ..models import (
     Cohort, CohortUser, CohortUserRole,
     User, WikiUser, CohortWikiUser, MediawikiUser,
@@ -25,17 +27,23 @@ def cohorts_index():
 
 @app.route('/cohorts/list/')
 def cohorts_list():
+    include_invalid = request.args.get('include_invalid', 'false')
     db_session = db.get_session()
-    cohorts = db_session.query(Cohort.id, Cohort.name, Cohort.description)\
-        .join(CohortUser)\
-        .join(User)\
-        .filter(User.id == current_user.id)\
-        .filter(CohortUser.role.in_(CohortUserRole.SAFE_ROLES))\
-        .filter(Cohort.enabled)\
-        .filter(Cohort.validated)\
-        .all()
+    try:
+        cohorts = db_session.query(Cohort.id, Cohort.name, Cohort.description)\
+            .join(CohortUser)\
+            .join(User)\
+            .filter(User.id == current_user.id)\
+            .filter(CohortUser.role.in_(CohortUserRole.SAFE_ROLES))\
+            .filter(Cohort.enabled)\
+            .filter(or_(
+                Cohort.validated,
+                (include_invalid == 'true')
+            ))\
+            .all()
+    finally:
+        db_session.close()
     
-    db_session.close()
     return json_response(cohorts=[{
         'id': c.id,
         'name': c.name,
@@ -70,9 +78,89 @@ def cohort_detail(name_or_id):
     finally:
         db_session.close()
     
-    limit = None if full_detail == 'true' else 3
+    limit = 200 if full_detail == 'true' else 3
     cohort_with_wikiusers = populate_cohort_wikiusers(cohort, limit)
-    return json_response(cohort_with_wikiusers)
+    cohort_with_status = populate_cohort_validation_status(cohort_with_wikiusers)
+    return json_response(cohort_with_status)
+
+
+def populate_cohort_wikiusers(cohort, limit):
+    """
+    Fetches up to <limit> WikiUser records belonging to <cohort>
+    """
+    session = db.get_session()
+    try:
+        wikiusers = cohort.filter_wikiuser_query(
+            session.query(WikiUser)
+        ).limit(limit).all()
+    finally:
+        session.close()
+    cohort_dict = cohort._asdict()
+    cohort_dict['wikiusers'] = [wu._asdict() for wu in wikiusers]
+    return cohort_dict
+
+
+def populate_cohort_validation_status(cohort_dict):
+    task_key = cohort_dict['validation_queue_key']
+    if not task_key:
+        cohort_dict['validation_status'] = 'UNKNOWN'
+        cohort_dict['validated_count'] = len(cohort_dict['wikiusers'])
+        cohort_dict['total_count'] = len(cohort_dict['wikiusers'])
+        return cohort_dict
+    
+    validation_task = ValidateCohort.task.AsyncResult(task_key)
+    cohort_dict['validation_status'] = validation_task.status
+    
+    session = db.get_session()
+    try:
+        cohort_dict['invalid_count'] = session.query(func.count(WikiUser)) \
+            .filter(WikiUser.validating_cohort == cohort_dict['id']) \
+            .filter(WikiUser.valid.in_([False])) \
+            .one()[0]
+        cohort_dict['valid_count'] = session.query(func.count(WikiUser)) \
+            .filter(WikiUser.validating_cohort == cohort_dict['id']) \
+            .filter(WikiUser.valid) \
+            .one()[0]
+        cohort_dict['validated_count'] = cohort_dict['valid_count'] \
+            + cohort_dict['invalid_count']
+        cohort_dict['total_count'] = session.query(func.count(WikiUser)) \
+            .filter(WikiUser.validating_cohort == cohort_dict['id']) \
+            .one()[0]
+    finally:
+        session.close()
+    return cohort_dict
+
+
+@app.route('/cohorts/upload', methods=['GET', 'POST'])
+def cohort_upload():
+    """ View for uploading and validating a new cohort via CSV """
+    form = CohortUpload()
+    
+    if request.method == 'POST':
+        form = CohortUpload.from_request(request)
+        try:
+            if not form.validate():
+                flash('Please fix validation problems.', 'warning')
+            elif get_cohort_by_name(form.name.data):
+                flash('That Cohort name is already taken.', 'warning')
+            else:
+                form.parse_records()
+                vc = ValidateCohort.from_upload(form, current_user.id)
+                vc.task.delay(vc)
+                return redirect('{0}#{1}'.format(
+                    url_for('cohorts_index'),
+                    vc.cohort_id
+                ))
+        
+        except Exception, e:
+            app.logger.exception(str(e))
+            flash('Server error while processing your upload', 'error')
+    
+    return render_template(
+        'csv_upload.html',
+        projects=json.dumps(db.project_host_map.keys()),
+        form=form,
+    )
 
 
 def get_cohort_by_name(name):
@@ -84,156 +172,6 @@ def get_cohort_by_name(name):
         return db_session.query(Cohort).filter(Cohort.name == name).first()
     finally:
         db_session.close()
-
-
-def populate_cohort_wikiusers(cohort, limit):
-    """
-    Fetches up to <limit> WikiUser records belonging to <cohort>
-    """
-    db_session = db.get_session()
-    wikiusers = cohort.filter_wikiuser_query(
-        db_session.query(WikiUser)
-    ).limit(limit).all()
-    db_session.close()
-    cohort_dict = cohort._asdict()
-    cohort_dict['wikiusers'] = [wu._asdict() for wu in wikiusers]
-    return cohort_dict
-
-
-@app.route('/cohorts/upload', methods=['GET', 'POST'])
-def cohort_upload():
-    """ View for uploading and validating a new cohort via CSV """
-    if request.method == 'GET':
-        return render_template(
-            'csv_upload.html',
-            projects=json.dumps(db.project_host_map.keys()),
-        )
-    
-    elif request.method == 'POST':
-        try:
-            csv_file = request.files['csv']
-            name = request.form['name']
-            project = request.form['project']
-            description = request.form['description']
-            if not csv_file or not name or len(name) is 0:
-                flash('The form was invalid, please'
-                      'select a file and name the cohort.', 'error')
-                return redirect(url_for('cohort_upload'))
-            
-            if get_cohort_by_name(name):
-                flash('That Cohort name is already taken.', 'warning')
-                return redirect(url_for('cohort_upload'))
-            
-            unparsed = csv.reader(normalize_newlines(csv_file.stream))
-            unvalidated = parse_records(unparsed, project)
-            #(valid, invalid) = validate_records(unvalidated)
-            vcohort = ValidateCohort(unvalidated, name, description, project)
-            vcohort.task.delay(vcohort)
-
-            return render_template(
-                'csv_upload_review.html',
-                #valid=valid,
-                #invalid=invalid,
-                valid=[],
-                invalid=[],
-                #valid_json=to_safe_json(valid),
-                #invalid_json=to_safe_json(invalid),
-                valid_json=to_safe_json({}),
-                invalid_json=to_safe_json({}),
-                name=name,
-                project=project,
-                description=description,
-                projects=json.dumps(db.project_host_map.keys()),
-            )
-        except Exception, e:
-            app.logger.exception(str(e))
-            flash(
-                'The file you uploaded was not in a valid format, could not be validated,'
-                'or the project you specified is not configured on this instance of '
-                'Wiki Metrics.', 'error'
-            )
-            return redirect(url_for('cohort_upload'))
-
-
-@app.route('/cohorts/create', methods=['POST'])
-def cohort_upload_finish():
-    try:
-        name = request.form.get('name')
-        # re-validate the name
-        if get_cohort_by_name(name):
-            raise Exception('Cohort name {0} is already used'.format(name))
-        
-        project = request.form.get('project')
-        description = request.form.get('description')
-        users_json = request.form.get('users')
-        users = json.loads(users_json)
-        
-        # NOTE: If we don't re-validate here, the user can change the cohort client-side
-        # This will produce weird results but we sort of don't care.
-        
-        # Save the cohort
-        valid = users
-        for valid_user in valid:
-            # SQLAlchemy complains about the names unless we encode them
-            valid_user['username'] = valid_user['username'].encode('utf8')
-        
-        if not project:
-            if all([user['project'] == users[0]['project'] for user in users]):
-                project = users[0]['project']
-        
-        if not project:
-            return json_error('If all the users do not belong to the same project, '
-                              'your cohort needs a default project.')
-        
-        create_cohort(name, description, project, valid)
-        return json_redirect(url_for('cohorts_index'))
-    
-    except Exception, e:
-        app.logger.exception(str(e))
-        return json_error(
-            'There was a problem finishing the upload.  The cohort was not saved.'
-        )
-
-
-def create_cohort(name, description, project, valid_users):
-    db_session = db.get_session()
-    cohort = Cohort(
-        name=name,
-        default_project=project,
-        description=description,
-        enabled=True,
-    )
-    db_session.add(cohort)
-    db_session.commit()
-    
-    cohort_owner = CohortUser(
-        cohort_id=cohort.id,
-        user_id=current_user.id,
-        role=CohortUserRole.OWNER,
-    )
-    db_session.add(cohort_owner)
-    
-    wikiusers = []
-    for valid_user in valid_users:
-        wikiuser = WikiUser(
-            mediawiki_userid=valid_user['user_id'],
-            mediawiki_username=valid_user['username'],
-        )
-        wikiusers.append(wikiuser)
-    db_session.add_all(wikiusers)
-    db_session.commit()
-    
-    cohort_wikiusers = []
-    for wikiuser in wikiusers:
-        cohort_wikiuser = CohortWikiUser(
-            cohort_id=cohort.id,
-            wiki_user_id=wikiuser.id,
-        )
-        cohort_wikiusers.append(cohort_wikiuser)
-    db_session.add_all(cohort_wikiusers)
-    db_session.commit()
-    
-    db_session.close()
 
 
 @app.route('/cohorts/validate/name')
@@ -250,162 +188,42 @@ def validate_cohort_project_allowed():
     return json.dumps(valid)
 
 
-def normalize_newlines(stream):
-    for line in stream:
-        if '\r' in line:
-            for tok in line.split('\r'):
-                yield tok
-        else:
-            yield line
+@app.route('/cohorts/validate/<int:cohort_id>', methods=['POST'])
+def validate_cohort(cohort_id):
+    name = None
+    session = db.get_session()
+    try:
+        cohort = Cohort.get_safely(session, current_user.id, by_id=cohort_id)
+        name = cohort.name
+    except Unauthorized:
+        return json_error('You are not allowed to access this cohort')
+    except NoResultFound:
+        return json_error('This cohort does not exist')
+    finally:
+        session.close()
+    
+    vc = ValidateCohort(cohort_id)
+    vc.task.delay(vc)
+    return json_response(message='Validating cohort "{0}"'.format(name))
 
 
-def to_safe_json(s):
-    return json.dumps(s).replace("'", "\\'").replace('"', '\\"')
-
-
-def parse_records(records, default_project):
-    # NOTE: the reason for the crazy -1 and comma joins
-    # is that some users can have commas in their name
-    # NOTE: This makes it impossible to add fields to the csv in the future,
-    # so maybe require the project to be the first field and the username to be the last
-    # or maybe change to a tsv format
-    parsed = []
-    for r in records:
-        if r:
-            if len(r) > 1:
-                username = ",".join([str(p) for p in r[:-1]])
-                project = r[-1].decode('utf8') or default_project
-            else:
-                username = r[0]
-                project = default_project
-            
-            parsed.append({
-                'raw_username': parse_username(username, decode=False),
-                'username': parse_username(username),
-                'project': project,
-            })
-    return parsed
-
-
-def parse_username(username, decode=True):
+@app.route('/cohorts/delete/<int:cohort_id>', methods=['POST'])
+def delete_cohort(cohort_id):
     """
-    parses uncapitalized, whitespace-padded, and weird-charactered mediawiki
-    user names into ones that have a chance of being found in the database
+    Deletes a cohort and all its wikiusers if it belongs to only current_user
+    Removes the relationship between current_user and this cohort if it belongs
+    to more than just current_user
     """
-    username = str(username)
-    username = username.decode('utf8')
-    stripped = username.strip()
-    if not decode:
-        stripped = stripped.encode('utf8')
-    # Capitalize the username according to the Mediawiki standard
-    # NOTE: unfortunately .title() or .capitalize() don't work
-    # because 'miliMetric'.capitalize() == 'Milimetric'
-    return stripped[0].upper() + stripped[1:]
-
-
-def normalize_project(project):
-    project = project.strip().lower()
-    if project in db.project_host_map:
-        return project
-    else:
-        # try adding wiki to end
-        new_proj = project + 'wiki'
-        if new_proj not in db.project_host_map:
-            return None
+    session = db.get_session()
+    try:
+        result = session.query(CohortUser) \
+            .filter(CohortUser.cohort_id == cohort_id) \
+            .filter(CohortUser.user_id == current_user.id) \
+            .delete()
+        session.commit()
+        if result > 0:
+            return json_redirect(url_for('cohorts_index'))
         else:
-            return new_proj
-
-
-def get_wikiuser_by_name(username, project):
-    db_session = db.get_mw_session(project)
-    try:
-        wikiuser = db_session.query(MediawikiUser)\
-            .filter(MediawikiUser.user_name == username)\
-            .one()
-        db_session.close()
-        return wikiuser
-    except (MultipleResultsFound, NoResultFound):
-        db_session.close()
-        return None
-
-
-def get_wikiuser_by_id(id, project):
-    db_session = db.get_mw_session(project)
-    try:
-        wikiuser = db_session.query(MediawikiUser)\
-            .filter(MediawikiUser.user_id == id)\
-            .one()
-        db_session.close()
-        return wikiuser
-    except (MultipleResultsFound, NoResultFound):
-        db_session.close()
-        return None
-
-
-def normalize_user(user_str, project):
-    wikiuser = get_wikiuser_by_name(user_str, project)
-    if wikiuser is not None:
-        return (wikiuser.user_id, wikiuser.user_name)
-    
-    if not user_str.isdigit():
-        return None
-    
-    wikiuser = get_wikiuser_by_id(user_str, project)
-    if wikiuser is not None:
-        return (wikiuser.user_id, wikiuser.user_name)
-    
-    return None
-
-
-def project_name_for_link(project):
-    if project.endswith('wiki'):
-        return project[:len(project) - 4]
-    return project
-
-
-def link_to_user_page(username, project):
-    project = project_name_for_link(project)
-    user_link = 'https://{0}.wikipedia.org/wiki/User:{1}'
-    user_not_found_link = 'https://{0}.wikipedia.org/wiki/Username_could_not_be_parsed'
-    # TODO: python 2 has insane unicode handling, switch to python 3
-    try:
-        return user_link.format(project, username)
-    except UnicodeEncodeError:
-        try:
-            return user_link.format(project, username.encode('utf8'))
-        except:
-            return user_not_found_link.format(project)
-
-
-def validate_records(records):
-    valid = []
-    invalid = []
-    for record in records:
-        normalized_project = normalize_project(record['project'])
-        link_project = normalized_project or record['project'] or 'invalid'
-        record['user_str'] = record['username']
-        record['link'] = link_to_user_page(record['username'], link_project)
-        if normalized_project is None:
-            record['reason_invalid'] = 'invalid project: %s' % record['project']
-            invalid.append(record)
-            continue
-        normalized_user = normalize_user(record['raw_username'], normalized_project)
-        # make a link to the potential user page even if user doesn't exist
-        # this gives a chance to see any misspelling etc.
-        if normalized_user is None:
-            app.logger.info(
-                'invalid user: {0} in project {1}'
-                .format(record['raw_username'], normalized_project)
-            )
-            record['reason_invalid'] = 'invalid user_name / user_id: {0}'.format(
-                record['raw_username']
-            )
-            invalid.append(record)
-            continue
-        # set the normalized values and append to valid
-        record['project'] = normalized_project
-        record['user_id'], record['username'] = normalized_user
-        valid.append(record)
-    
-    valid = deduplicate_by_key(valid, lambda r: (r['username'], r['project']))
-    return (valid, invalid)
+            return json_error('This Cohort can not be deleted')
+    finally:
+        session.close()

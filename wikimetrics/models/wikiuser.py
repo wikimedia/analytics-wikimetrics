@@ -17,15 +17,17 @@ class WikiUser(db.WikimetricsBase):
     
     __tablename__ = 'wiki_user'
     
-    id = Column(Integer, primary_key=True)
-    mediawiki_username = Column(String(50))
-    mediawiki_userid = Column(Integer(50))
-    project = Column(String(45))
+    id                  = Column(Integer, primary_key=True)
+    mediawiki_username  = Column(String(50))
+    mediawiki_userid    = Column(Integer(50))
+    project             = Column(String(45))
     # valid = None means it's not been validated yet
     # valid = True means it's valid
     # valid = False means it's invalid
-    valid = Column(Boolean, default=None)
-    reason_invalid = Column(String(200))
+    valid               = Column(Boolean, default=None)
+    reason_invalid      = Column(String(200))
+    # The cohort id that this wikiuser is being validated for
+    validating_cohort   = Column(Integer)
     
     def __repr__(self):
         return '<WikiUser("{0}")>'.format(self.id)

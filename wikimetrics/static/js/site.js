@@ -11,13 +11,18 @@ var site = {
         if (response.isError){
             site.showError(response.message);
             return false;
-        } else if (response.isRedirect){
+        }
+        if (response.isRedirect){
             site.redirect(response.redirectTo);
             return false;
-        } else {
-            site.clearMessages();
-            return true;
         }
+        site.clearMessages();
+        return true;
+    },
+    
+    confirmDanger: function(event){
+        var title = $(event.target).attr('title');
+        return confirm('Are you sure you want to ' + title + '?');
     },
     
     showError: function (message){
@@ -86,18 +91,17 @@ var site = {
             .done(site.handleWith(function(data){
                 reports = viewModel.reports();
                 reportsDict = {};
-                for(j in reports){
-                    reportsDict[reports[j].id] = reports[j];
-                }
-                for(dj in data.reports){
-                    report = data.reports[dj];
-                    if (report.id in reportsDict && report.status === reportsDict[report.id].status){
-                        continue;
+                reports.forEach(function(report){
+                    reportsDict[report.id] = report;
+                });
+                data.reports.forEach(function(report){
+                    if (reportsDict[report.id] !== undefined && report.status === reportsDict[report.id].status){
+                        return true;
                     }
                     // if there's a difference, just replace the whole thing
                     viewModel.reports(data.reports);
-                    return;
-                }
+                    return false;
+                });
             }))
             .fail(site.failure);
     },
@@ -108,7 +112,7 @@ var site = {
             location.hash = e.target.hash;
             // negate jumping down to the tab anchor
             window.scrollTo(0, 0);
-        })
+        });
         if (location.hash){
             $('ul.nav-tabs li a[href='+location.hash+']').click();
         } else {
@@ -122,13 +126,14 @@ var site = {
     // ***********************************************************
     keys: function(obj){
         var keys = [];
-
-        for(var key in obj){
+        var key;
+        
+        for(key in obj){
             if(obj.hasOwnProperty(key)){
                 keys.push(key);
             }
         }
-
+        
         return keys;
-    },
+    }
 };

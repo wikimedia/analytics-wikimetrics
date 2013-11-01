@@ -4,24 +4,55 @@ $(document).ready(function(){
         filter: ko.observable(''),
         cohorts: ko.observableArray([]),
         
-        view: function(cohort){
-            if (cohort.wikiusers && cohort.wikiusers().length > 0) { return; }
-            
+        populate: function(cohort, data){
+            cohort.validated(data.validated);
+            cohort.validated_count(data.validated_count);
+            cohort.valid_count(data.valid_count);
+            cohort.invalid_count(data.invalid_count);
+            cohort.total_count(data.total_count);
+            cohort.validation_status(data.validation_status);
+            cohort.wikiusers(data.wikiusers);
+        },
+        
+        view: function(cohort, event, callback){
             $.get('/cohorts/detail/' + cohort.id)
                 .done(site.handleWith(function(data){
-                    cohort.wikiusers(data.wikiusers);
+                    viewModel.populate(cohort, data);
+                    if (callback){
+                        callback.call();
+                    }
                 }))
                 .fail(site.failure);
         },
         
-        viewFull: function(cohort, event){
+        loadWikiusers: function(cohort, event){
             $.get('/cohorts/detail/' + cohort.id + '?full_detail=true')
                 .done(site.handleWith(function(data){
-                    cohort.wikiusers(data.wikiusers);
-                    $(event.target).remove()
+                    viewModel.populate(cohort, data);
+                    $(event.target).remove();
                 }))
                 .fail(site.failure);
         },
+        
+        deleteCohort: function(cohort, event){
+            if (site.confirmDanger(event)){
+                $.post('/cohorts/delete/' + cohort.id)
+                    .done(site.handleWith(function(){
+                        site.showWarning('Something is wrong, you should be redirected');
+                    }))
+                    .fail(site.failure);
+            }
+        },
+        
+        validateWikiusers: function(cohort, event){
+            $.post('/cohorts/validate/' + cohort.id)
+                .done(site.handleWith(function(data){
+                    viewModel.view(cohort, event, function(){
+                        site.showInfo(data.message);
+                    });
+                }))
+                .fail(site.failure);
+        }
     };
     
     viewModel.filteredCohorts = ko.computed(function(){
@@ -31,15 +62,14 @@ $(document).ready(function(){
                 var name = it.name.toLowerCase();
                 return name.indexOf(filter) >= 0;
             });
-        } else {
-            return this.cohorts();
         }
+        return this.cohorts();
     }, viewModel);
     
     // fetch this user's cohorts
-    $.get('/cohorts/list/')
+    $.get('/cohorts/list/?include_invalid=true')
         .done(site.handleWith(function(data){
-            setWikiusers(data.cohorts);
+            setBlankProperties(data.cohorts);
             viewModel.cohorts(data.cohorts);
             site.enableTabNavigation();
         }))
@@ -47,10 +77,17 @@ $(document).ready(function(){
     
     ko.applyBindings(viewModel);
     
-    function setWikiusers(list){
+    function setBlankProperties(list){
         bareList = ko.utils.unwrapObservable(list);
         ko.utils.arrayForEach(bareList, function(item){
+            // TODO: auto-map the new properties
             item.wikiusers = ko.observableArray([]);
+            item.validated = ko.observable(false);
+            item.validated_count = ko.observable(0);
+            item.invalid_count = ko.observable(0);
+            item.valid_count = ko.observable(0);
+            item.total_count = ko.observable(0);
+            item.validation_status = ko.observable();
         });
-    };
+    }
 });

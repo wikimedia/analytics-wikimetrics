@@ -277,6 +277,26 @@ class DatabaseTest(unittest.TestCase):
         self.mwSession.commit()
     
     @nottest
+    def helper_reset_validation(self):
+        wikiusers = self.session.query(WikiUser) \
+            .join(CohortWikiUser) \
+            .filter(CohortWikiUser.cohort_id == self.cohort.id) \
+            .all()
+        for wu in wikiusers:
+            wu.validating_cohort = self.cohort.id
+            wu.valid = None
+        self.cohort.validated = False
+        self.session.commit()
+    
+    @nottest
+    def helper_remove_authorization(self):
+        cu = self.session.query(CohortUser) \
+            .filter(CohortUser.cohort_id == self.cohort.id) \
+            .one()
+        cu.role = 'ALL_ROLES_HAVE_RIGHTS_NOW_SO_CHANGE_TO_UNAUTHORIZED_ROLE_LATER'
+        self.session.commit()
+    
+    @nottest
     def common_cohort_1(self):
         self.create_test_cohort(
             editor_count=4,
@@ -490,13 +510,13 @@ class DatabaseWithSurvivorCohortTest(unittest.TestCase):
                                mw_user_andrew, mw_user_diederik])
         self.mwSession.commit()
 
-        wu_dan = WikiUser(mediawiki_username='Dan',
+        wu_dan = WikiUser(mediawiki_username='Dan', valid=True,
                           mediawiki_userid=mw_user_dan.user_id, project='enwiki')
-        wu_evan = WikiUser(mediawiki_username='Evan',
+        wu_evan = WikiUser(mediawiki_username='Evan', valid=True,
                            mediawiki_userid=mw_user_evan.user_id, project='enwiki')
-        wu_andrew = WikiUser(mediawiki_username='Andrew',
+        wu_andrew = WikiUser(mediawiki_username='Andrew', valid=True,
                              mediawiki_userid=mw_user_andrew.user_id, project='enwiki')
-        wu_diederik = WikiUser(mediawiki_username='Diederik',
+        wu_diederik = WikiUser(mediawiki_username='Diederik', valid=True,
                                mediawiki_userid=mw_user_diederik.user_id,
                                project='enwiki')
         self.session.add_all([wu_dan, wu_evan, wu_andrew, wu_diederik])
@@ -513,7 +533,12 @@ class DatabaseWithSurvivorCohortTest(unittest.TestCase):
         self.mw_diederik_id = mw_user_diederik.user_id
 
     def createCohort(self):
-        self.cohort = Cohort(name='demo-survivor-cohort', enabled=True, public=True)
+        self.cohort = Cohort(
+            name='demo-survivor-cohort',
+            enabled=True,
+            public=True,
+            validated=True
+        )
         self.session.add(self.cohort)
         self.session.commit()
 

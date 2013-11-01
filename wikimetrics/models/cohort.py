@@ -28,15 +28,16 @@ class Cohort(db.WikimetricsBase):
     
     __tablename__ = 'cohort'
     
-    id = Column(Integer, primary_key=True)
-    name = Column(String(50))
-    description = Column(String(254))
-    default_project = Column(String(50))
-    created = Column(DateTime, default=func.now())
-    changed = Column(DateTime)
-    enabled = Column(Boolean)
-    public = Column(Boolean, default=False)
-    validated = Column(Boolean, default=False)
+    id                      = Column(Integer, primary_key=True)
+    name                    = Column(String(50))
+    description             = Column(String(254))
+    default_project         = Column(String(50))
+    created                 = Column(DateTime, default=func.now())
+    changed                 = Column(DateTime)
+    enabled                 = Column(Boolean)
+    public                  = Column(Boolean, default=False)
+    validated               = Column(Boolean, default=False)
+    validation_queue_key    = Column(String(50))
     
     def __repr__(self):
         return '<Cohort("{0}")>'.format(self.id)
@@ -121,9 +122,9 @@ class Cohort(db.WikimetricsBase):
             .filter(User.id == user_id)\
             .filter(Cohort.enabled)
         
-        if by_id:
+        if not by_id is None:
             query = query.filter(Cohort.id == by_id)
-        if by_name:
+        if not by_name is None:
             query = query.filter(Cohort.name == by_name)
         
         cohort, role = query.one()

@@ -101,7 +101,7 @@ $(document).ready(function(){
                     }
                 }))
                 .fail(site.failure);
-        },
+        }
     };
     
     // fetch this user's cohorts
@@ -113,7 +113,7 @@ $(document).ready(function(){
             if (location.hash){
                 try {
                     viewModel.cohorts().filter(function(c){
-                        return c.id === location.hash.substring(1);
+                        return c.id === parseInt(location.hash.substring(1), 10);
                     })[0].selected(true);
                 } catch(e) {}
             }
@@ -143,7 +143,7 @@ $(document).ready(function(){
             return this.metrics().filter(function(metric){
                 return metric.selected();
             });
-        }, viewModel).extend({ throttle: 1 }),
+        }, viewModel).extend({ throttle: 1 })
     });
     
     // second level computed pieces of the viewModel
@@ -156,7 +156,7 @@ $(document).ready(function(){
                     name: metric.label + ' - ' + cohort.name,
                     cohort: cohort,
                     metric: metric,
-                    tabId: 'response-to-' + metric.id + '-for-' + cohort.id,
+                    tabId: 'response-to-' + metric.id + '-for-' + cohort.id
                 };
                 response.tabIdSelector = '#' + response.tabId;
                 ret.push(response);
@@ -173,9 +173,8 @@ $(document).ready(function(){
                 var name = it.name.toLowerCase();
                 return name.indexOf(filter) >= 0;
             });
-        } else {
-            return this.cohorts();
         }
+        return this.cohorts();
     }, viewModel);
     
     function setSelected(list){
@@ -201,15 +200,7 @@ $(document).ready(function(){
             item.aggregateAverage = ko.observable(false);
             item.aggregateStandardDeviation = ko.observable(false);
             item.outputConfigured = ko.computed(function(){
-                return this.individualResults()
-                    || (
-                            this.aggregateResults()
-                         && (
-                                this.aggregateSum()
-                             || this.aggregateAverage()
-                             || this.aggregateStandardDeviation()
-                            )
-                       );
+                return this.individualResults() || (this.aggregateResults() && (this.aggregateSum() || this.aggregateAverage() || this.aggregateStandardDeviation()));
             }, item);
         });
     }

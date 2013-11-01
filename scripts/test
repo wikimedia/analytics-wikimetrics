@@ -1,4 +1,4 @@
 # for example:
 # scripts/test "tests/test_controllers/test_cohorts.py:CohortsControllerTest"
 # rm .coverage *.db
-find . -name *.pyc | xargs rm ; nosetests -s --cover-erase $1
+find . -name *.pyc | xargs rm ; nosetests --cover-erase $1

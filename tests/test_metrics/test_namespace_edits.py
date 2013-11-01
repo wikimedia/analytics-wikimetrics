@@ -36,23 +36,21 @@ class NamespaceEditsDatabaseTest(DatabaseTest):
 
     def test_validates_properly(self):
         
-        metric = NamespaceEdits(
-            namespaces=[0],
-        )
-        assert_true(not metric.validate())
+        metric = NamespaceEdits()
+        # defaults allow this to validate
+        assert_true(metric.validate())
         
         metric = NamespaceEdits(
             namespaces=[0],
             start_date='2013-06-30 00:00:00',
             end_date='2013-07-01 00:00:00',
         )
-        metric.fake_csrf()
+        # values above are valid
         assert_true(metric.validate())
         
         metric = NamespaceEdits(
             start_date='blah',
         )
-        metric.fake_csrf()
         assert_true(not metric.validate())
 
 

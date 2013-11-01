@@ -53,8 +53,6 @@ class RunReport(ReportNode):
             class_name = metric_dict['name']
             metric_class = metric_classes[class_name]
             metric = metric_class(**metric_dict)
-            # TODO: don't think csrf can work here, but see if there's another way
-            metric.fake_csrf()
             
             metric_names.append(metric.label)
             cohort_names.append(cohort.name)

@@ -4,7 +4,7 @@ CELERY_TASK_RESULT_EXPIRES          : 3600
 CELERY_DISABLE_RATE_LIMITS          : True
 CELERY_STORE_ERRORS_EVEN_IF_IGNORED : True
 CELERYD_CONCURRENCY                 : 16
-CELERYD_TASK_TIME_LIMIT             : 60
-CELERYD_TASK_SOFT_TIME_LIMIT        : 30
+CELERYD_TASK_TIME_LIMIT             : 3630
+CELERYD_TASK_SOFT_TIME_LIMIT        : 3600
 DEBUG                               : True
 LOG_LEVEL                           : 'DEBUG'

@@ -81,14 +81,17 @@ class Report(object):
         # note that queue_result_key is always empty at this stage
         pj = PersistentReport(user_id=self.user_id,
                               status=self.status,
-                              name=self.name,
                               show_in_ui=self.show_in_ui,
                               parameters=parameters)
-        db_session = db.get_session()
-        db_session.add(pj)
-        db_session.commit()
-        self.persistent_id = pj.id
-        db_session.close()
+        session = db.get_session()
+        try:
+            session.add(pj)
+            session.commit()
+            self.persistent_id = pj.id
+            pj.name = self.name or str(self)
+            session.commit()
+        finally:
+            session.close()
     
     def __repr__(self):
         return '<Report("{0}")>'.format(self.persistent_id)
@@ -98,14 +101,15 @@ class Report(object):
         helper function for updating database status after celery
         task has been started
         """
-        db_session = db.get_session()
-        pj = db_session.query(PersistentReport).get(self.persistent_id)
-        pj.status = status
-        if task_id:
-            pj.queue_result_key = task_id
-        db_session.add(pj)
-        db_session.commit()
-        db_session.close()
+        session = db.get_session()
+        try:
+            pj = session.query(PersistentReport).get(self.persistent_id)
+            pj.status = status
+            if task_id:
+                pj.queue_result_key = task_id
+            session.commit()
+        finally:
+            session.close()
     
     def run(self):
         """

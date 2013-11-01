@@ -1,4 +1,6 @@
-from nose.tools import assert_equal
+from nose.tools import assert_equal, raises
+from sqlalchemy.orm.exc import NoResultFound
+
 from wikimetrics.models import Cohort, WikiUser
 from ..fixtures import DatabaseTest
 
@@ -48,3 +50,19 @@ class CohortTest(DatabaseTest):
         assert_equal(wikiusers[2].mediawiki_userid in user_ids, True)
         assert_equal(wikiusers[3].mediawiki_userid in user_ids, True)
         assert_equal(len(user_ids), 2)
+    
+    def test_get_safely(self):
+        c = Cohort.get_safely(self.session, self.owner_user_id, by_id=self.cohort.id)
+        assert_equal(c.name, self.cohort.name)
+        c = Cohort.get_safely(self.session, self.owner_user_id, by_name=self.cohort.name)
+        assert_equal(c.id, self.cohort.id)
+    
+    @raises(NoResultFound)
+    def test_get_safely_raises_exception_for_not_found_by_id(self):
+        c = Cohort.get_safely(self.session, self.owner_user_id, by_id=0)
+        assert_equal(c, None)
+    
+    @raises(NoResultFound)
+    def test_get_safely_raises_exception_for_not_found_by_name(self):
+        c = Cohort.get_safely(self.session, self.owner_user_id, by_name='')
+        assert_equal(c, None)

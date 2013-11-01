@@ -1,11 +1,7 @@
-from wtforms.ext.csrf.session import SessionSecureForm
-from wikimetrics.configurables import app
+from wikimetrics.controllers.forms.secure_form import WikimetricsSecureForm
 
 
-__all__ = ['Metric']
-
-
-class Metric(SessionSecureForm):
+class Metric(WikimetricsSecureForm):
     """
     This class is the parent of all Metric implementations.
     Child implementations should be callable and should take in users
@@ -34,21 +30,3 @@ class Metric(SessionSecureForm):
             dictionary from user ids to the metric results.
         """
         return {user: None for user in user_ids}
-    
-    def __init__(self, *args, **kwargs):
-        """
-        Initialize the things required by SessionSecureForm to do its duty
-        This __init__ handles the problem with calling SessionSecureForm.__init__()
-        outside of a flask request context.
-        """
-        self.SECRET_KEY = 'not really secret, this will only happen in a testing context'
-        csrf_context = {}
-        
-        if app:
-            # TODO: need to set csrf_context to something? (the flask session maybe?)
-            self.SECRET_KEY = app.config['SECRET_KEY']
-        
-        SessionSecureForm.__init__(self, csrf_context=csrf_context, *args, **kwargs)
-    
-    def fake_csrf(self):
-        self.csrf_token.data = self.generate_csrf_token({})

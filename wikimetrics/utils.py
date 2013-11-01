@@ -113,6 +113,30 @@ def deduplicate_by_key(list_of_objects, key_function):
     return uniques.values()
 
 
+def to_safe_json(s):
+    return json.dumps(s).replace("'", "\\'").replace('"', '\\"')
+
+
+def project_name_for_link(project):
+    if project.endswith('wiki'):
+        return project[:len(project) - 4]
+    return project
+
+
+def link_to_user_page(username, project):
+    project = project_name_for_link(project)
+    user_link = 'https://{0}.wikipedia.org/wiki/User:{1}'
+    user_not_found_link = 'https://{0}.wikipedia.org/wiki/Username_could_not_be_parsed'
+    # TODO: python 2 has insane unicode handling, switch to python 3
+    try:
+        return user_link.format(project, username)
+    except UnicodeEncodeError:
+        try:
+            return user_link.format(project, username.decode('utf8'))
+        except:
+            return user_not_found_link.format(project)
+
+
 class Unauthorized(Exception):
     """
     Different exception type to separate "unauthorized" errors from the rest
