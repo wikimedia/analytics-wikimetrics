@@ -10,6 +10,8 @@ class AsyncTaskTest(QueueTest):
         metric = RandomMetric()
         report = MetricReport(metric, [1, 2], 'enwiki')
         async_result = report.task.delay(report)
+        
+        # .get() blocks until task finishes executing
         sync_result = async_result.get()
         assert_not_equals(
             sync_result[1],
