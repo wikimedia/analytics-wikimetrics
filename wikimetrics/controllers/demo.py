@@ -281,7 +281,8 @@ if app.config['DEBUG']:
     @app.route('/demo/create/fake-<string:project>-users/<int:n>')
     def add_fake_enwiki_users(project, n):
         session = db.get_mw_session(project)
-        start = session.query(func.max(MediawikiUser.user_id)).one()[0] + 1
+        max_id = session.query(func.max(MediawikiUser.user_id)).one()[0] or 0
+        start = max_id + 1
         session.bind.engine.execute(
             MediawikiUser.__table__.insert(),
             [
