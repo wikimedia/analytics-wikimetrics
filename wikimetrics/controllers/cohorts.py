@@ -106,6 +106,8 @@ def populate_cohort_validation_status(cohort_dict):
         cohort_dict['validation_status'] = 'UNKNOWN'
         cohort_dict['validated_count'] = len(cohort_dict['wikiusers'])
         cohort_dict['total_count'] = len(cohort_dict['wikiusers'])
+        cohort_dict['valid_count'] = cohort_dict['total_count']
+        cohort_dict['invalid_count'] = 0
         return cohort_dict
     
     validation_task = ValidateCohort.task.AsyncResult(task_key)
