@@ -45,13 +45,15 @@ $(document).ready(function(){
         },
         
         validateWikiusers: function(cohort, event){
-            $.post('/cohorts/validate/' + cohort.id)
-                .done(site.handleWith(function(data){
-                    viewModel.view(cohort, event, function(){
-                        site.showInfo(data.message);
-                    });
-                }))
-                .fail(site.failure);
+            if (site.confirmDanger(event)){
+                $.post('/cohorts/validate/' + cohort.id)
+                    .done(site.handleWith(function(data){
+                        viewModel.view(cohort, event, function(){
+                            site.showInfo(data.message);
+                        });
+                    }))
+                    .fail(site.failure);
+            }
         }
     };
     
