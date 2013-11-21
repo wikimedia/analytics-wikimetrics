@@ -4,30 +4,11 @@ from tests.fixtures import WebTest, QueueDatabaseTest
 from wikimetrics.controllers.forms import CohortUpload
 from wikimetrics.models import (
     MediawikiUser, Cohort, WikiUser, ValidateCohort, User,
-    normalize_user, normalize_project,
-    get_mediawiki_user_by_name, get_mediawiki_user_by_id,
+    normalize_project,
 )
 
 
 class ValidateCohortTest(WebTest):
-    
-    def test_normalize_user_by_name(self):
-        normalized_user = normalize_user('Editor test-specific-0', 'enwiki')
-        assert_equal(normalized_user[0], self.editors[0].user_id)
-        assert_equal(normalized_user[1], self.editors[0].user_name)
-    
-    def test_normalize_user_by_name_nonexistent(self):
-        normalized_user = normalize_user('DanNotExists', 'enwiki')
-        assert_equal(normalized_user, None)
-    
-    def test_normalize_user_by_id(self):
-        normalized_user = normalize_user(str(self.editors[0].user_id), 'enwiki')
-        assert_equal(normalized_user[0], self.editors[0].user_id)
-        assert_equal(normalized_user[1], self.editors[0].user_name)
-    
-    def test_normalize_user_by_id_nonexistent(self):
-        normalized_user = normalize_user('123124124', 'enwiki')
-        assert_equal(normalized_user, None)
     
     def test_normalize_project_shorthand(self):
         normal = normalize_project('en')
@@ -40,22 +21,6 @@ class ValidateCohortTest(WebTest):
     def test_normalize_project_nonexistent(self):
         normal = normalize_project('blah')
         assert_equal(normal, None)
-    
-    def test_get_wikiuser_by_name(self):
-        user = get_mediawiki_user_by_name('Editor test-specific-0', 'enwiki')
-        assert_equal(user.user_name, 'Editor test-specific-0')
-    
-    def test_get_wikiuser_by_name_nonexistent(self):
-        nonexistent = get_mediawiki_user_by_name('blahblahblah', 'enwiki')
-        assert_equal(nonexistent, None)
-    
-    def test_get_wikiuser_by_id(self):
-        user = get_mediawiki_user_by_id(self.editors[0].user_id, 'enwiki')
-        assert_equal(user.user_name, self.editors[0].user_name)
-    
-    def test_get_wikiuser_by_id_nonexistent(self):
-        nonexistent = get_mediawiki_user_by_id(123124124, 'enwiki')
-        assert_equal(nonexistent, None)
     
     def test_validate_cohorts(self):
         self.helper_reset_validation()

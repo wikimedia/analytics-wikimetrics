@@ -25,6 +25,13 @@
                     <a data-bind="attr:{href:'{{url_for('reports_request')}}#'+id}"
                        class="btn btn-primary">Create Report</a>
                 </div>
+                <div data-bind="if: validated_count() === total_count() && !validated()">
+                    <hr/>
+                    <p>
+                        Validation: <span>FINISHING UP</span>
+                        <a class="btn" data-bind="attr: {href: '#' + id}, click: $root.view"><span class="icon-refresh"></span> refresh</a>
+                    </p>
+                </div>
                 <div data-bind="if: validated_count() < total_count()">
                     <hr/>
                     <p>

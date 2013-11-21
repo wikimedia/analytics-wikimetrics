@@ -122,6 +122,9 @@ class ValidateCohort(object):
                 WikiUser.validating_cohort == cohort.id
             )
         )
+        session.execute(CohortWikiUser.__table__.delete().where(
+            CohortWikiUser.cohort_id == cohort.id
+        ))
         session.commit()
         
         wikiusers = session.query(WikiUser) \
@@ -133,38 +136,32 @@ class ValidateCohort(object):
             lambda r: (r.mediawiki_username, r.project)
         )
         
-        flush = 0
+        wikiusers_by_project = {}
         for wu in deduplicated:
-            # flush bunches of records to update the UI but not kill performance
-            flush += 1
-            if flush > 500:
-                flush = 1
-                session.commit()
-            
             try:
                 normalized_project = normalize_project(wu.project)
-                
                 if normalized_project is None:
                     wu.reason_invalid = 'invalid project: {0}'.format(wu.project)
                     wu.valid = False
                     continue
                 
-                normalized_user = normalize_user(
-                    wu.mediawiki_username,
-                    normalized_project
-                )
-                if normalized_user is None:
-                    wu.reason_invalid = 'invalid user_name / user_id: {0}'.format(
-                        wu.mediawiki_username
-                    )
-                    wu.valid = False
-                    continue
-                
                 wu.project = normalized_project
-                wu.mediawiki_userid, wu.mediawiki_username = normalized_user
-                wu.valid = True
+                if not wu.project in wikiusers_by_project:
+                    wikiusers_by_project[wu.project] = []
+                wikiusers_by_project[wu.project].append(wu)
+                
+                # validate bunches of records to update the UI but not kill performance
+                if len(wikiusers_by_project[wu.project]) > 999:
+                    validate_users(wikiusers_by_project[wu.project], wu.project)
+                    session.commit()
+                    wikiusers_by_project[wu.project] = []
             except:
                 continue
+        
+        # validate anything that wasn't big enough for a batch
+        for project, wikiusers in wikiusers_by_project.iteritems():
+            if len(wikiusers) > 0:
+                validate_users(wikiusers, project)
         session.commit()
         
         unique_and_validated = deduplicate_by_key(
@@ -206,40 +203,46 @@ def normalize_project(project):
             return new_proj
 
 
-def normalize_user(user_name_or_id, project):
-    mediawiki_user = get_mediawiki_user_by_name(user_name_or_id, project)
-    if mediawiki_user is not None:
-        return (mediawiki_user.user_id, mediawiki_user.user_name)
-    
-    if not user_name_or_id.isdigit():
-        return None
-    
-    mediawiki_user = get_mediawiki_user_by_id(user_name_or_id, project)
-    if mediawiki_user is not None:
-        return (mediawiki_user.user_id, mediawiki_user.user_name)
-    
-    return None
-
-
-def get_mediawiki_user_by_name(username, project):
+def validate_users(wikiusers, project):
     session = db.get_mw_session(project)
+    users_dict = {wu.mediawiki_username: wu for wu in wikiusers}
+    
     try:
-        return session.query(MediawikiUser)\
-            .filter(MediawikiUser.user_name == username)\
-            .one()
-    except (MultipleResultsFound, NoResultFound):
-        return None
+        # validate any user_name matches and get them out of the dictionary
+        matches = session.query(MediawikiUser) \
+            .filter(MediawikiUser.user_name.in_(users_dict.keys())) \
+            .all()
+        for match in matches:
+            update_valid_user(users_dict, match.user_name, match)
+        
+        # weed out any keys that are not integers, turn others into integers
+        for key in users_dict.keys():
+            wu = users_dict.pop(key)
+            if key.isdigit():
+                users_dict[int(key)] = wu
+            else:
+                update_invalid_user(wu, key)
+        
+        matches = session.query(MediawikiUser) \
+            .filter(MediawikiUser.user_id.in_(users_dict.keys())) \
+            .all()
+        for match in matches:
+            update_valid_user(users_dict, match.user_id, match)
+        
+        for key, invalid in users_dict.iteritems():
+            update_invalid_user(invalid, key)
     finally:
         session.close()
 
 
-def get_mediawiki_user_by_id(id, project):
-    session = db.get_mw_session(project)
-    try:
-        return session.query(MediawikiUser)\
-            .filter(MediawikiUser.user_id == id)\
-            .one()
-    except (MultipleResultsFound, NoResultFound):
-        return None
-    finally:
-        session.close()
+def update_valid_user(users_dict, key, match):
+    users_dict[key].mediawiki_username = match.user_name
+    users_dict[key].mediawiki_userid = match.user_id
+    users_dict[key].valid = True
+    users_dict[key].reason_invalid = None
+    users_dict.pop(key)
+
+
+def update_invalid_user(wikiuser, key):
+    wikiuser.reason_invalid = 'invalid user_name/user_id: {0}'.format(key)
+    wikiuser.valid = False
