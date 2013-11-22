@@ -18,7 +18,7 @@ class WikiUser(db.WikimetricsBase):
     __tablename__ = 'wiki_user'
     
     id                  = Column(Integer, primary_key=True)
-    mediawiki_username  = Column(String(50))
+    mediawiki_username  = Column(String(255))
     mediawiki_userid    = Column(Integer(50))
     project             = Column(String(45))
     # valid = None means it's not been validated yet
