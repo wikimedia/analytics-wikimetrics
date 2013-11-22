@@ -335,7 +335,7 @@ class ReportsControllerTest(WebTest):
             '{0},edits,1,2,1,0'.format(self.editors[1].user_id)
         ) >= 0)
         assert_true(response.data.find(
-            'Average,edits,0.5,1.0,0.5,0.0'
+            'Average,edits,0.5000,1.0000,0.5000,0.0000'
         ) >= 0)
 
         # Testing to see if the parameters are also in the CSV

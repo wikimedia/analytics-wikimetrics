@@ -1,5 +1,6 @@
-from decimal import Decimal
 from nose.tools import assert_equals, assert_true
+
+from wikimetrics.utils import r
 from wikimetrics.metrics import (
     metric_classes, NamespaceEdits, TimeseriesChoices,
 )
@@ -46,7 +47,11 @@ class AggregateReportTest(QueueDatabaseTest):
         )
         assert_equals(
             result[aggregate_key][Aggregation.AVG]['edits'],
-            Decimal(1.0)
+            r(1.0)
+        )
+        assert_equals(
+            result[aggregate_key][Aggregation.STD]['edits'],
+            r(1.0)
         )
 
 
@@ -84,9 +89,9 @@ class AggregateReportWithoutQueueTest(DatabaseTest):
             },
             {
                 'some other metric - fake cohort' : {
-                    1: {'other_sub_metric': Decimal(2.3)},
-                    2: {'other_sub_metric': Decimal(3.4)},
-                    3: {'other_sub_metric': Decimal(0.0)},
+                    1: {'other_sub_metric': r(2.3)},
+                    2: {'other_sub_metric': r(3.4)},
+                    3: {'other_sub_metric': r(0.0)},
                     None: {'other_sub_metric': 0}
                 }
             },
@@ -98,15 +103,19 @@ class AggregateReportWithoutQueueTest(DatabaseTest):
         )
         assert_equals(
             finished[ar.result_key][Aggregation.SUM]['other_sub_metric'],
-            Decimal(5.7)
+            r(5.7)
         )
         assert_equals(
             finished[ar.result_key][Aggregation.AVG]['edits'],
-            Decimal(1.25)
+            r(1.25)
         )
         assert_equals(
             finished[ar.result_key][Aggregation.AVG]['other_sub_metric'],
-            Decimal(1.425)
+            r(1.425)
+        )
+        assert_equals(
+            finished[ar.result_key][Aggregation.STD]['other_sub_metric'],
+            r(1.4771)
         )
     
     def test_does_not_aggregate_null_values(self):
@@ -214,9 +223,17 @@ class AggregateReportTimeseriesTest(QueueDatabaseTest):
         assert_equals(
             results[aggregate_key][Aggregation.AVG]['edits'],
             {
-                '2012-12-31 00:00:00' : Decimal(0.25),
-                '2013-01-01 00:00:00' : Decimal(1.25),
-                '2013-01-02 00:00:00' : Decimal(0.5),
+                '2012-12-31 00:00:00' : r(0.25),
+                '2013-01-01 00:00:00' : r(1.25),
+                '2013-01-02 00:00:00' : r(0.5),
+            }
+        )
+        assert_equals(
+            results[aggregate_key][Aggregation.STD]['edits'],
+            {
+                '2012-12-31 00:00:00' : r(0.4330),
+                '2013-01-01 00:00:00' : r(0.4330),
+                '2013-01-02 00:00:00' : r(0.8660),
             }
         )
     
@@ -249,8 +266,8 @@ class AggregateReportTimeseriesTest(QueueDatabaseTest):
             },
             {
                 'some other metric - fake cohort' : {
-                    1: {'other_sub_metric': {'date3': Decimal(2.3), 'date4': 0}},
-                    2: {'other_sub_metric': {'date3': 0, 'date4': Decimal(3.4)}},
+                    1: {'other_sub_metric': {'date3': r(2.3), 'date4': 0}},
+                    2: {'other_sub_metric': {'date3': 0, 'date4': r(3.4)}},
                     3: {'other_sub_metric': {'date3': None, 'date4': None}},
                     None: {'other_sub_metric': {'date3': None, 'date4': None}}
                 }
@@ -263,15 +280,23 @@ class AggregateReportTimeseriesTest(QueueDatabaseTest):
         )
         assert_equals(
             finished[ar.result_key][Aggregation.SUM]['other_sub_metric'],
-            {'date3': Decimal(2.3), 'date4': Decimal(3.4)}
+            {'date3': r(2.3), 'date4': r(3.4)}
         )
         assert_equals(
             finished[ar.result_key][Aggregation.AVG]['edits'],
-            {'date1': 0.3333, 'date2': 1.0}
+            {'date1': r(0.3333), 'date2': r(1.0)}
         )
         assert_equals(
             finished[ar.result_key][Aggregation.AVG]['other_sub_metric'],
-            {'date3': 1.15, 'date4': 1.7}
+            {'date3': r(1.15), 'date4': r(1.7)}
+        )
+        assert_equals(
+            finished[ar.result_key][Aggregation.STD]['edits'],
+            {'date1': r(0.4714), 'date2': r(0.8165)}
+        )
+        assert_equals(
+            finished[ar.result_key][Aggregation.STD]['other_sub_metric'],
+            {'date3': r(1.15), 'date4': r(1.7)}
         )
 
 # NOTE: a sample output of AggregateReport:

@@ -1,8 +1,9 @@
-from collections import OrderedDict
+from math import sqrt
 from decimal import Decimal
+from collections import OrderedDict
 from celery.utils.log import get_task_logger
 
-from wikimetrics.utils import stringify, CENSORED
+from wikimetrics.utils import stringify, CENSORED, r
 from report import ReportNode
 from multi_project_metric_report import MultiProjectMetricReport
 
@@ -67,7 +68,7 @@ class AggregateReport(ReportNode):
     def finish(self, result_dicts):
         aggregated_results = dict()
         task_logger.info(str(result_dicts))
-        result_values = [r.values() for r in result_dicts]
+        result_values = [res.values() for res in result_dicts]
         child_results = [result for sublist in result_values for result in sublist]
         
         if self.aggregate:
@@ -82,9 +83,14 @@ class AggregateReport(ReportNode):
                     Aggregation.AVG
                 )
             if self.aggregate_std_deviation:
+                if not Aggregation.AVG in aggregated_results:
+                    average = self.calculate(child_results, Aggregation.AVG)
+                else:
+                    average = aggregated_results[Aggregation.AVG]
                 aggregated_results[Aggregation.STD] = self.calculate(
                     child_results,
-                    Aggregation.STD
+                    Aggregation.STD,
+                    average=average
                 )
         
         if self.individual:
@@ -93,8 +99,21 @@ class AggregateReport(ReportNode):
         result = self.report_result(aggregated_results, child_results=result_dicts)
         return result
     
-    def calculate(self, list_of_results, type_of_aggregate):
+    def calculate(self, list_of_results, type_of_aggregate, average=None):
         # TODO: terrible redo this
+        """
+        Calculates one type of aggregate by just iterating over the individual results
+        Takes into account that results and aggregates may be split up by timeseries
+        Also makes sure to ignore censored records when appropriate
+        
+        Parameters
+            list_of_results     : list of individual results
+            type_of_aggregate   : can be SUM, AVG, STD
+            average             : None by default but required when computing STD
+        
+        Returns
+            The aggregate specified, computed at the timeseries level if applicable
+        """
         aggregation = dict()
         helper = dict()
         for results_by_user in list_of_results:
@@ -120,30 +139,30 @@ class AggregateReport(ReportNode):
                                 aggregation[key][subkey] = 0
                                 helper[key][subkey] = dict()
                                 helper[key][subkey]['sum'] = Decimal(0.0)
+                                helper[key][subkey]['square_diffs'] = Decimal(0.0)
                                 helper[key][subkey]['count'] = 0
                             
                             if value_is_not_censored and not value[subkey] is None:
                                 helper[key][subkey]['sum'] += Decimal(value[subkey])
                                 helper[key][subkey]['count'] += 1
+                                if type_of_aggregate == Aggregation.STD:
+                                    diff = Decimal(value[subkey]) - average[key][subkey]
+                                    helper[key][subkey]['square_diffs'] += Decimal(
+                                        pow(diff, 2)
+                                    )
                             
                             if type_of_aggregate == Aggregation.SUM:
-                                aggregation[key][subkey] = round(
-                                    helper[key][subkey]['sum'],
-                                    4
-                                )
+                                aggregation[key][subkey] = r(helper[key][subkey]['sum'])
                             elif type_of_aggregate == Aggregation.AVG:
-                                cummulative_sum = helper[key][subkey]['sum']
-                                count = helper[key][subkey]['count']
-                                if count != 0:
-                                    aggregation[key][subkey] = round(
-                                        cummulative_sum / count,
-                                        4
-                                    )
-                                else:
-                                    aggregation[key][subkey] = None
+                                aggregation[key][subkey] = r(safe_average(
+                                    helper[key][subkey]['sum'],
+                                    helper[key][subkey]['count']
+                                ))
                             elif type_of_aggregate == Aggregation.STD:
-                                aggregation[key][subkey] = 'Not Implemented'
-                                pass
+                                aggregation[key][subkey] = r(sqrt(safe_average(
+                                    helper[key][subkey]['square_diffs'],
+                                    helper[key][subkey]['count']
+                                )))
                     
                     # handle normal aggregation
                     else:
@@ -151,31 +170,37 @@ class AggregateReport(ReportNode):
                             aggregation[key] = 0
                             helper[key] = dict()
                             helper[key]['sum'] = Decimal(0.0)
+                            helper[key]['square_diffs'] = Decimal(0.0)
                             helper[key]['count'] = 0
                         
                         if value_is_not_censored and not value is None:
                             helper[key]['sum'] += Decimal(value)
                             helper[key]['count'] += 1
+                            if type_of_aggregate == Aggregation.STD:
+                                diff = Decimal(value) - average[key]
+                                helper[key]['square_diffs'] += Decimal(pow(diff, 2))
                         
                         if type_of_aggregate == Aggregation.SUM:
-                            aggregation[key] = round(
-                                helper[key]['sum'],
-                                4
-                            )
+                            aggregation[key] = r(helper[key]['sum'])
                         elif type_of_aggregate == Aggregation.AVG:
-                            count = helper[key]['count']
-                            if count != 0:
-                                aggregation[key] = round(
-                                    helper[key]['sum'] / count,
-                                    4
-                                )
-                            else:
-                                aggregation[key] = None
+                            aggregation[key] = r(safe_average(
+                                helper[key]['sum'],
+                                helper[key]['count']
+                            ))
                         elif type_of_aggregate == Aggregation.STD:
-                            aggregation[key] = 'Not Implemented'
-                            pass
+                            aggregation[key] = r(sqrt(safe_average(
+                                helper[key]['square_diffs'],
+                                helper[key]['count']
+                            )))
         
         return aggregation
     
     def __repr__(self):
         return '<AggregateReport("{0}")>'.format(self.persistent_id)
+
+
+def safe_average(cummulative_sum, count):
+    if count != 0:
+        return r(cummulative_sum / count)
+    else:
+        return None

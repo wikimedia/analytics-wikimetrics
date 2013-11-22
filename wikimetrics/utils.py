@@ -1,5 +1,5 @@
 import json
-import decimal
+from decimal import Decimal, ROUND_HALF_UP
 from datetime import datetime, timedelta, date
 from flask import Response
 
@@ -39,7 +39,7 @@ def json_response(*args, **kwargs):
     Takes care of the following custom encoding duties:
         * datetime.datetime objects encoded via BetterEncoder
         * datetime.date objects encoded via BetterEncoder
-        * decimal.Decimal objects encoded via BetterEncoder
+        * Decimal objects encoded via BetterEncoder
     """
     data = stringify(*args, **kwargs)
     return Response(data, mimetype='application/json')
@@ -77,7 +77,7 @@ class BetterEncoder(json.JSONEncoder):
         if isinstance(obj, date):
             return format_pretty_date(obj)
         
-        if isinstance(obj, decimal.Decimal):
+        if isinstance(obj, Decimal):
             return float(obj)
         
         return json.JSONEncoder.default(self, obj)
@@ -135,6 +135,12 @@ def link_to_user_page(username, project):
             return user_link.format(project, username.decode('utf8'))
         except:
             return user_not_found_link.format(project)
+
+
+def r(num, places=4):
+    """Rounds and returns a Decimal"""
+    precision = '1.{0}'.format('0' * places)
+    return Decimal(num).quantize(Decimal(precision), rounding=ROUND_HALF_UP)
 
 
 class Unauthorized(Exception):
