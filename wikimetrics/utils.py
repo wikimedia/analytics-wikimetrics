@@ -140,7 +140,7 @@ def link_to_user_page(username, project):
 def r(num, places=4):
     """Rounds and returns a Decimal"""
     precision = '1.{0}'.format('0' * places)
-    return Decimal(num).quantize(Decimal(precision), rounding=ROUND_HALF_UP)
+    return Decimal(num or 0).quantize(Decimal(precision), rounding=ROUND_HALF_UP)
 
 
 class Unauthorized(Exception):
