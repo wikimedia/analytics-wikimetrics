@@ -203,4 +203,4 @@ def safe_average(cummulative_sum, count):
     if count != 0:
         return r(cummulative_sum / count)
     else:
-        return None
+        return 0
