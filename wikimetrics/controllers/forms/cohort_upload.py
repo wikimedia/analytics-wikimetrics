@@ -65,10 +65,11 @@ def parse_records(unparsed, default_project):
                 username = r[0]
                 project = default_project
             
-            records.append({
-                'username'  : parse_username(username),
-                'project'   : project,
-            })
+            if username is not None and len(username):
+                records.append({
+                    'username'  : parse_username(username),
+                    'project'   : project,
+                })
     return records
 
 
@@ -84,7 +85,10 @@ def parse_username(username):
     # Capitalize the username according to the Mediawiki standard
     # NOTE: unfortunately .title() or .capitalize() don't work
     # because 'miliMetric'.capitalize() == 'Milimetric'
-    return stripped[0].upper() + stripped[1:]
+    parsed = stripped[0].upper()
+    if len(stripped) > 1:
+        parsed += stripped[1:]
+    return parsed
 
 
 def normalize_newlines(lines):

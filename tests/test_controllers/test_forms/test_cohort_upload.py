@@ -39,24 +39,31 @@ class CohortsControllerTest(unittest.TestCase):
     def test_parse_records_with_project(self):
         parsed = parse_records(
             [
-                ['dan', 'enwiki']
+                ['dan', 'enwiki'],
+                ['v', 'enwiki'],
+                [',', 'enwiki']
             ],
             None
         )
-        assert_equal(len(parsed), 1)
+        assert_equal(len(parsed), 3)
         assert_equal(parsed[0]['username'], 'Dan')
         assert_equal(parsed[0]['project'], 'enwiki')
+        assert_equal(parsed[1]['username'], 'V')
+        assert_equal(parsed[1]['project'], 'enwiki')
     
     def test_parse_records_without_project(self):
         parsed = parse_records(
             [
-                ['dan']
+                ['dan'],
+                ['v']
             ],
             'enwiki'
         )
-        assert_equal(len(parsed), 1)
+        assert_equal(len(parsed), 2)
         assert_equal(parsed[0]['username'], 'Dan')
         assert_equal(parsed[0]['project'], 'enwiki')
+        assert_equal(parsed[1]['username'], 'V')
+        assert_equal(parsed[1]['project'], 'enwiki')
     
     def test_parse_records_with_shorthand_project(self):
         parsed = parse_records(
