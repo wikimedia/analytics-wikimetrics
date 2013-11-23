@@ -175,6 +175,7 @@ class DatabaseTest(unittest.TestCase):
                     'mediawiki_userid'      : editor.user_id,
                     'project'               : self.project,
                     'valid'                 : True,
+                    'validating_cohort'     : self.cohort.id,
                 }
                 for editor in self.editors
             ]

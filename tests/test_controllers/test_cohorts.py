@@ -197,3 +197,20 @@ class CohortsControllerUploadTest(WebTest):
             csv='not a file',
         ))
         assert_true(response.data.find('Server error while processing your upload') >= 0)
+    
+    def test_invalid_wiki_user_view(self):
+        invalid = self.session.query(WikiUser).first()
+        invalid.valid = False
+        invalid.reason_invalid = 'check for this in an assert'
+        self.session.commit()
+        response = self.app.get('/cohorts/detail/invalid-users/{0}'.format(
+            self.cohort.id
+        ))
+        assert_equal(response.status_code, 200)
+        assert_true(response.data.find(invalid.mediawiki_username) >= 0)
+        assert_true(response.data.find(invalid.reason_invalid) >= 0)
+    
+    def test_invalid_wiki_user_view_error(self):
+        response = self.app.get('/cohorts/detail/invalid-users/0')
+        assert_equal(response.status_code, 200)
+        assert_true(response.data.find('Error fetching invalid users for') >= 0)

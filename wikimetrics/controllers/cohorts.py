@@ -51,6 +51,22 @@ def cohorts_list():
     } for c in cohorts])
 
 
+@app.route('/cohorts/detail/invalid-users/<int:cohort_id>')
+def cohort_invalid_detail(cohort_id):
+    session = db.get_session()
+    try:
+        cohort = Cohort.get_safely(session, current_user.id, by_id=cohort_id)
+        wikiusers = session.query(WikiUser.mediawiki_username, WikiUser.reason_invalid)\
+            .filter(WikiUser.validating_cohort == cohort.id) \
+            .filter(WikiUser.valid.in_([False, None])) \
+            .all()
+        return json_response(invalid_wikiusers=[wu._asdict() for wu in wikiusers])
+    except:
+        return json_error('Error fetching invalid users for {0}'.format(cohort_id))
+    finally:
+        session.close()
+
+
 @app.route('/cohorts/detail/<string:name_or_id>')
 def cohort_detail(name_or_id):
     """
