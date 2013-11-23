@@ -287,6 +287,7 @@ class DatabaseTest(unittest.TestCase):
             wu.validating_cohort = self.cohort.id
             wu.valid = None
         self.cohort.validated = False
+        self.cohort.validate_as_user_ids = True
         self.session.commit()
     
     @nottest
@@ -538,7 +539,8 @@ class DatabaseWithSurvivorCohortTest(unittest.TestCase):
             name='demo-survivor-cohort',
             enabled=True,
             public=True,
-            validated=True
+            validated=True,
+            validate_as_user_ids=True,
         )
         self.session.add(self.cohort)
         self.session.commit()

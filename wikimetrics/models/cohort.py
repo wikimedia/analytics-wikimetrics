@@ -37,6 +37,7 @@ class Cohort(db.WikimetricsBase):
     enabled                 = Column(Boolean)
     public                  = Column(Boolean, default=False)
     validated               = Column(Boolean, default=False)
+    validate_as_user_ids    = Column(Boolean, default=True)
     validation_queue_key    = Column(String(50))
     
     def __repr__(self):

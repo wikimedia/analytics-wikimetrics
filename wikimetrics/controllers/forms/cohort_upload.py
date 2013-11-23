@@ -1,5 +1,5 @@
 import csv
-from wtforms import StringField, FileField, TextAreaField
+from wtforms import StringField, FileField, TextAreaField, RadioField
 from wtforms.validators import Required
 
 from secure_form import WikimetricsSecureForm
@@ -9,10 +9,14 @@ class CohortUpload(WikimetricsSecureForm):
     """
     Defines the fields necessary to upload a cohort from a csv file
     """
-    name        = StringField([Required()])
-    description = TextAreaField()
-    project     = StringField('Default Project', [Required()])
-    csv         = FileField('CSV File', [Required()])
+    name                    = StringField([Required()])
+    description             = TextAreaField()
+    project                 = StringField('Default Project', [Required()])
+    csv                     = FileField('CSV File', [Required()])
+    validate_as_user_ids    = RadioField('Validate As', [Required()], choices=[
+        ('True', 'User Ids (Numbers found in the user_id column of the user table)'),
+        ('False', 'User Names (Names found in the user_name column of the user table)')
+    ])
     
     @classmethod
     def from_request(cls, request):

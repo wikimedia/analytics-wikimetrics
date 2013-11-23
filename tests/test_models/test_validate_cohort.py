@@ -24,7 +24,9 @@ class ValidateCohortTest(WebTest):
     
     def test_validate_cohorts(self):
         self.helper_reset_validation()
-        v = ValidateCohort(self.cohort.id)
+        self.cohort.validate_as_user_ids = False
+        self.session.commit()
+        v = ValidateCohort(self.cohort)
         v.validate_records(self.session, self.cohort)
         
         assert_equal(self.cohort.validated, True)
@@ -37,11 +39,12 @@ class ValidateCohortTest(WebTest):
     
     def test_validate_cohorts_with_invalid_wikiusers(self):
         self.helper_reset_validation()
+        self.cohort.validate_as_user_ids = False
         wikiusers = self.session.query(WikiUser).all()
         wikiusers[0].project = 'blah'
         wikiusers[1].mediawiki_username = 'blah'
         self.session.commit()
-        v = ValidateCohort(self.cohort.id)
+        v = ValidateCohort(self.cohort)
         v.validate_records(self.session, self.cohort)
         
         assert_equal(self.cohort.validated, True)
@@ -113,5 +116,6 @@ class ValidateCohortQueueTest(QueueDatabaseTest):
 class BasicTests(unittest.TestCase):
     
     def test_repr(self):
-        v = ValidateCohort(1)
+        cohort = Cohort(id=1)
+        v = ValidateCohort(cohort)
         assert_equal(str(v), '<ValidateCohort("1")>')

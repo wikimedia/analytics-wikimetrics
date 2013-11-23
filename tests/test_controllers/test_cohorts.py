@@ -65,7 +65,7 @@ class CohortsControllerTest(WebTest):
     def test_detail_by_name_after_async_validate(self):
         self.helper_reset_validation()
         
-        validate_cohort = ValidateCohort(self.cohort.id)
+        validate_cohort = ValidateCohort(self.cohort)
         async_result = validate_cohort.task.delay(validate_cohort)
         self.cohort.validation_queue_key = async_result.task_id
         async_result.get()
@@ -176,6 +176,7 @@ class CohortsControllerUploadTest(WebTest):
             name=self.cohort.name,
             project='enwiki',
             csv='just has to be set to something for this test',
+            validate_as_user_ids='True',
         ))
         assert_equal(response.status_code, 200)
         assert_true(response.data.find('<h3>Create a Cohort by Uploading a CSV') >= 0)
@@ -186,6 +187,7 @@ class CohortsControllerUploadTest(WebTest):
             name='new_cohort_name',
             project='enwiki',
             csv=(StringIO('actual validation tested elsewhere'), 'cohort.csv'),
+            validate_as_user_ids='True',
         ))
         assert_equal(response.status_code, 302)
         assert_true(response.data.find('href="/cohorts/#') >= 0)
@@ -195,6 +197,7 @@ class CohortsControllerUploadTest(WebTest):
             name='new_cohort_name',
             project='enwiki',
             csv='not a file',
+            validate_as_user_ids='True',
         ))
         assert_true(response.data.find('Server error while processing your upload') >= 0)
     

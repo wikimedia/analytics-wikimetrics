@@ -6,6 +6,7 @@ from wikimetrics.configurables import app, db, queue
 from sqlalchemy.orm.exc import NoResultFound, MultipleResultsFound
 from sqlalchemy.sql.expression import label, between, and_, or_
 from wikimetrics.utils import deduplicate_by_key
+from wikimetrics.controllers.forms.cohort_upload import parse_username
 from wikimetrics.models import (
     MediawikiUser, Cohort, CohortUser, CohortUserRole, WikiUser, CohortWikiUser
 )
@@ -31,14 +32,18 @@ class ValidateCohort(object):
     """
     task = async_validate
     
-    def __init__(self, cohort_id):
+    def __init__(self, cohort):
         """
-        Initialize validation, set metadata
-        
         Parameters:
-            cohort_id   : an existing cohort with validated == False
+            cohort  : an existing cohort
+        
+        Instantiates with these properties:
+            cohort_id               : id of an existing cohort with validated == False
+            validate_as_user_ids    : if True, records will be checked against user_id
+                                      if False, records are checked against user_name
         """
-        self.cohort_id = cohort_id
+        self.cohort_id = cohort.id
+        self.validate_as_user_ids = cohort.validate_as_user_ids
     
     @classmethod
     def from_upload(cls, cohort_upload, owner_user_id):
@@ -59,6 +64,7 @@ class ValidateCohort(object):
             enabled=True,
             public=False,
             validated=False,
+            validate_as_user_ids=cohort_upload.validate_as_user_ids.data == 'True',
         )
         session = db.get_session()
         try:
@@ -85,8 +91,9 @@ class ValidateCohort(object):
                 ]
             )
             session.commit()
-            return cls(cohort.id)
-        except:
+            return cls(cohort)
+        except Exception, e:
+            app.logger.error(str(e))
             return None
         finally:
             session.close()
@@ -152,7 +159,11 @@ class ValidateCohort(object):
                 
                 # validate bunches of records to update the UI but not kill performance
                 if len(wikiusers_by_project[wu.project]) > 999:
-                    validate_users(wikiusers_by_project[wu.project], wu.project)
+                    validate_users(
+                        wikiusers_by_project[wu.project],
+                        wu.project,
+                        self.validate_as_user_ids
+                    )
                     session.commit()
                     wikiusers_by_project[wu.project] = []
             except:
@@ -161,7 +172,7 @@ class ValidateCohort(object):
         # validate anything that wasn't big enough for a batch
         for project, wikiusers in wikiusers_by_project.iteritems():
             if len(wikiusers) > 0:
-                validate_users(wikiusers, project)
+                validate_users(wikiusers, project, self.validate_as_user_ids)
         session.commit()
         
         unique_and_validated = deduplicate_by_key(
@@ -203,46 +214,50 @@ def normalize_project(project):
             return new_proj
 
 
-def validate_users(wikiusers, project):
+def validate_users(wikiusers, project, validate_as_user_ids):
+    """
+    Parameters
+        wikiusers               : the wikiusers with a candidate mediawiki_username
+        project                 : the project these wikiusers should belong to
+        validate_as_user_ids    : if True, records will be checked against user_id
+                                  if False, records are checked against user_name
+    """
     session = db.get_mw_session(project)
     users_dict = {wu.mediawiki_username: wu for wu in wikiusers}
     
     try:
-        # validate any user_name matches and get them out of the dictionary
-        matches = session.query(MediawikiUser) \
-            .filter(MediawikiUser.user_name.in_(users_dict.keys())) \
-            .all()
-        for match in matches:
-            update_valid_user(users_dict, match.user_name, match)
+        # validate
+        if validate_as_user_ids:
+            keys_as_ints = [int(k) for k in users_dict.keys() if k.isdigit()]
+            clause = MediawikiUser.user_id.in_(keys_as_ints)
+        else:
+            clause = MediawikiUser.user_name.in_(users_dict.keys())
         
-        # weed out any keys that are not integers, turn others into integers
-        for key in users_dict.keys():
-            wu = users_dict.pop(key)
-            if key.isdigit():
-                users_dict[int(key)] = wu
+        matches = session.query(MediawikiUser).filter(clause).all()
+        # update results
+        for match in matches:
+            if validate_as_user_ids:
+                key = str(match.user_id)
             else:
-                update_invalid_user(wu, key)
+                key = parse_username(match.user_name)
+            users_dict[key].mediawiki_username = match.user_name
+            users_dict[key].mediawiki_userid = match.user_id
+            users_dict[key].valid = True
+            users_dict[key].reason_invalid = None
+            # remove valid matches
+            users_dict.pop(key)
         
-        matches = session.query(MediawikiUser) \
-            .filter(MediawikiUser.user_id.in_(users_dict.keys())) \
-            .all()
-        for match in matches:
-            update_valid_user(users_dict, match.user_id, match)
-        
-        for key, invalid in users_dict.iteritems():
-            update_invalid_user(invalid, key)
+        # mark the rest invalid
+        for key in users_dict.keys():
+            if validate_as_user_ids:
+                users_dict[key].reason_invalid = 'invalid user_id: {0}'.format(key)
+            else:
+                users_dict[key].reason_invalid = 'invalid user_name: {0}'.format(key)
+            users_dict[key].valid = False
+    except Exception, e:
+        # clear out the dictionary in case of an exception, and raise the exception
+        for key in users_dict.keys():
+            users_dict.pop(key)
+        raise e
     finally:
         session.close()
-
-
-def update_valid_user(users_dict, key, match):
-    users_dict[key].mediawiki_username = match.user_name
-    users_dict[key].mediawiki_userid = match.user_id
-    users_dict[key].valid = True
-    users_dict[key].reason_invalid = None
-    users_dict.pop(key)
-
-
-def update_invalid_user(wikiuser, key):
-    wikiuser.reason_invalid = 'invalid user_name/user_id: {0}'.format(key)
-    wikiuser.valid = False

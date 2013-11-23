@@ -49,6 +49,16 @@
             {{ validation.messages(form.csv) }}
         </div>
     </div>
+    <div class="control-group">
+        <label class="control-label">{{form.validate_as_user_ids.label}}</label>
+        <div class="controls">
+            {% for radio in form.validate_as_user_ids %}
+            {{ radio(class="required") }} {{ radio.label(style="display: inline-block;") }}
+            <br/>
+            {% endfor %}
+            {{ validation.messages(form.validate_as_user_ids) }}
+        </div>
+    </div>
     <div class="form-actions">
         <input type="submit" class="btn btn-primary" value="Upload CSV"/>
     </div>

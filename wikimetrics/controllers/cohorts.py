@@ -213,16 +213,15 @@ def validate_cohort(cohort_id):
     try:
         cohort = Cohort.get_safely(session, current_user.id, by_id=cohort_id)
         name = cohort.name
+        vc = ValidateCohort(cohort)
+        vc.task.delay(vc)
+        return json_response(message='Validating cohort "{0}"'.format(name))
     except Unauthorized:
         return json_error('You are not allowed to access this cohort')
     except NoResultFound:
         return json_error('This cohort does not exist')
     finally:
         session.close()
-    
-    vc = ValidateCohort(cohort_id)
-    vc.task.delay(vc)
-    return json_response(message='Validating cohort "{0}"'.format(name))
 
 
 @app.route('/cohorts/delete/<int:cohort_id>', methods=['POST'])

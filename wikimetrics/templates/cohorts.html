@@ -40,6 +40,8 @@
                         <a class="btn" data-bind="attr: {href: '#' + id}, click: $root.view"><span class="icon-refresh"></span> refresh</a>
                         <!-- /ko -->
                     </p>
+                </div>
+                <div data-bind="if: valid_count() < total_count()">
                     <p>
                         <a data-bind="click: $root.deleteCohort"
                            class="btn btn-danger"
@@ -55,7 +57,7 @@
                 <span data-bind="text: validated_count"></span> of
                 <span data-bind="text: total_count"></span> cohort members.
                 <span data-bind="text: valid_count"></span> are valid,
-                <a data-bind="attr: {href: '/cohorts/detail/invalid-users/' + id()}" target="_blank">
+                <a data-bind="attr: {href: '/cohorts/detail/invalid-users/' + id}" target="_blank">
                     <span data-bind="text: invalid_count"></span> are invalid.
                 </a>
             </p>
@@ -69,7 +71,7 @@
                         <td data-bind="text: mediawiki_username"></td>
                     </tr>
                 </tbody>
-                <tfoot data-bind="if: validated_count() > 0 && total_count() > 3">
+                <tfoot data-bind="if: valid_count() > 3">
                     <tr>
                         <td colspan="2">
                             <a data-bind="click: $root.loadWikiusers"

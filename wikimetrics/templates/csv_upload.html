@@ -3,15 +3,22 @@
 {% include "forms/csv_upload.html" %}
 <div>
     <h6>File Format</h6>
-    <p>User Metrics expects a CSV file with the following format (the username, project header row is not required)</p>
-    <pre><code>username,project
-Evan (WMF),en</code></pre>
-    <ul>
-        <li><strong>username</strong>: straightforward utf-8 encoded name or a user id.</li>
-        <li><strong>project</strong>: the langauge or project code on which that username exists.</li>
-        <!--li><strong>reference date</strong>: a user-specific date which can be used as a reference point to compute certain metrics over relative time periods (i.e. the first month after signing up).  Also, <code>userstats</code> uses <code>datutil.parser</code> to interpret date strings, so you have a little flexibility in the exact date format you use.</li>
-        <li><strong>cohort id</strong>: an arbitrary string identifier which will be used to group users with the same identifier into a cohort, on which you can then aggregate statistics and compare.</li-->
-    </ul>
+    <p>Wikimetrics expects a CSV file in one of the two formats below.  Project is the langauge or project code in which that username or userid exists.  Project is optional and will default to the cohort's default project.
+    <pre>user_name,project</pre>
+    <pre>user_id,project</pre>
+    </p>
+    
+    <br/>
+    <h6>For Example</h6>
+    Specify EITHER user names:
+    <pre>Evan (WMF),en
+Milimetric,en
+Without project is ok too
+User Names can even contain commas, and projects at the end,enwiki</pre>
+    OR User Ids:
+    <pre>123,en
+234,en
+456</pre>
 </div>
 {% endblock %}
 
