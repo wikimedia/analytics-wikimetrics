@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/env python
 # follow the frog
 
 from setuptools import setup
