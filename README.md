@@ -16,6 +16,8 @@ $ cd wikimetrics
 $ sudo pip install -e .
 ````
 
+A fairly recent version of pip is required. Version 1.4.1 is known working, 1.0.2 is known not working.
+
 Wikimetrics has over 90% unit test coverage.  We use Nose to write unit and integration tests to achieve this, and you should too.
 
 ````
