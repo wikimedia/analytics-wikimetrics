@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/env python
 import celery
 from wikimetrics.models import add
 
