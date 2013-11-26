@@ -19,7 +19,7 @@ task_logger = get_task_logger(__name__)
 def async_validate(validate_cohort):
     task_logger.info('Running Cohort Validation job')
     validate_cohort.run()
-    return validate_cohort
+    return 'DONE'
 
 
 class ValidateCohort(object):

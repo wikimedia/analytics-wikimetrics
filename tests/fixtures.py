@@ -294,7 +294,7 @@ class DatabaseTest(unittest.TestCase):
         cu = self.session.query(CohortUser) \
             .filter(CohortUser.cohort_id == self.cohort.id) \
             .one()
-        cu.role = 'ALL_ROLES_HAVE_RIGHTS_NOW_SO_CHANGE_TO_UNAUTHORIZED_ROLE_LATER'
+        cu.role = 'UNAUTHORIZED'
         self.session.commit()
     
     @nottest

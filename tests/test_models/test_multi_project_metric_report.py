@@ -18,7 +18,7 @@ class MultiProjectMetricReportTest(QueueDatabaseTest):
             start_date='2013-01-01 00:00:00',
             end_date='2013-01-02 00:00:00',
         )
-        mr = MultiProjectMetricReport(self.cohort, metric, 'enwiki')
+        mr = MultiProjectMetricReport(self.cohort, metric)
         
         result = mr.task.delay(mr).get()
         
