@@ -43,7 +43,7 @@ class MultiProjectMetricReportWithoutQueueTest(DatabaseTest):
             start_date='2013-05-01 00:00:00',
             end_date='2013-09-01 00:00:00',
         )
-        mr = MultiProjectMetricReport(self.cohort, metric, 'enwiki')
+        mr = MultiProjectMetricReport(self.cohort, metric)
         
         finished = mr.finish([
             {
@@ -64,6 +64,6 @@ class MultiProjectMetricReportWithoutQueueTest(DatabaseTest):
             start_date='2013-05-01 00:00:00',
             end_date='2013-09-01 00:00:00',
         )
-        mr = MultiProjectMetricReport(self.cohort, metric, 'enwiki')
+        mr = MultiProjectMetricReport(self.cohort, metric)
         
         assert_true(str(mr).find('MultiProjectMetricReport') >= 0)

@@ -89,7 +89,7 @@ class Database(object):
         Returns:
             new sqlalchemy session open to the wikimetrics database
         """
-        if not self.wikimetrics_engine:
+        if not self.wikimetrics_sessionmaker:
             self.wikimetrics_engine = create_engine(
                 self.config['WIKIMETRICS_ENGINE_URL'],
                 echo=self.config['SQL_ECHO'],
