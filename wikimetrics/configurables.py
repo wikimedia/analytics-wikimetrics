@@ -80,15 +80,14 @@ def config_db(args):
         db.config.__dict__.update(config_override)
 
 
-def config_celery(args):
+def config_queue(args):
     from celery import Celery
     
     # create and configure celery app
-    
     global queue
     queue = Celery('wikimetrics', include=['wikimetrics'])
-    celery_config = create_dict_from_text_config_file(args.celery_config)
-    queue.config_from_object(celery_config)
+    queue_config = create_dict_from_text_config_file(args.queue_config)
+    queue.config_from_object(queue_config)
     if args.override_config:
         queue.config_from_object(args.override_config)
 

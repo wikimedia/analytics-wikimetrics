@@ -3,7 +3,8 @@ import argparse
 import sys
 import logging
 import pprint
-from .configurables import config_web, config_db, config_celery
+from os import environ as env
+from .configurables import config_web, config_db, config_queue
 logger = logging.getLogger(__name__)
 
 
@@ -20,7 +21,7 @@ def run_test():
     nose.run(module='tests')
 
 
-def run_celery():
+def run_queue():
     from configurables import queue
     queue.start(argv=['celery', 'worker', '-l', queue.conf['LOG_LEVEL']])
 
@@ -44,33 +45,45 @@ def setup_parser():
             'import',
             'web',
             'test',
-            'celery',
+            'queue',
         ],
         # NOTE: flake made me format the strings this way, nothing could be uglier
         help='''
             web    : runs flask webserver...
             test   : run nosetests...
-            celery : runs celery worker...
+            queue  : runs celery worker...
             import : configures everything and runs nothing...
         ''',
     )
+    # get defaults from environment variables
+    web_config = 'wikimetrics/config/web_config.yaml'
+    if 'WIKIMETRICS_WEB_CONFIG' in env:
+        web_config = env['WIKIMETRICS_WEB_CONFIG']
+    db_config = 'wikimetrics/config/db_config.yaml'
+    if 'WIKIMETRICS_DB_CONFIG' in env:
+        db_config = env['WIKIMETRICS_DB_CONFIG']
+    queue_config = 'wikimetrics/config/queue_config.yaml'
+    if 'WIKIMETRICS_QUEUE_CONFIG' in env:
+        queue_config = env['WIKIMETRICS_QUEUE_CONFIG']
+    
+    # add parser arguments with those defaults
     parser.add_argument(
         '--web-config', '-w',
-        default='wikimetrics/config/web_config.yaml',
+        default=web_config,
         help='Flask config file',
         dest='web_config',
     )
     parser.add_argument(
         '--db-config', '-d',
-        default='wikimetrics/config/db_config.yaml',
+        default=db_config,
         help='Database config file',
         dest='db_config',
     )
     parser.add_argument(
-        '--celery-config', '-c',
-        default='wikimetrics/config/celery_config.yaml',
+        '--queue-config', '-c',
+        default=queue_config,
         help='Celery config file',
-        dest='celery_config',
+        dest='queue_config',
     )
     return parser
 
@@ -83,10 +96,10 @@ parser = setup_parser()
 args, others = parser.parse_known_args()
 logger.info('running with arguments:\n%s', pprint.pformat(vars(args)))
 
-# runs the appropriate config function (web, celery, test)
+# runs the appropriate config function (web, queue, test)
 config_web(args)
 config_db(args)
-config_celery(args)
+config_queue(args)
 
 
 def main():
@@ -95,8 +108,8 @@ def main():
         run_web()
     elif args.mode == 'test':
         run_test()
-    elif args.mode == 'celery':
-        run_celery()
+    elif args.mode == 'queue':
+        run_queue()
     elif args.mode == 'import':
         pass
 

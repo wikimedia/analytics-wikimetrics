@@ -27,7 +27,7 @@ def setUp():
     app.config['TESTING'] = True
     
     celery_out = open(devnull, "w")
-    celery_cmd = ['wikimetrics', '--mode', 'celery']
+    celery_cmd = ['wikimetrics', '--mode', 'queue']
     global celery_proc
     celery_proc = Popen(celery_cmd, stdout=celery_out, stderr=celery_out)
     

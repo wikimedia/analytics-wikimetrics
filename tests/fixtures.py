@@ -1,5 +1,4 @@
 import unittest
-import celery
 import sys
 from itertools import product
 from datetime import datetime

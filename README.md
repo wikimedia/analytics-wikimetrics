@@ -7,7 +7,7 @@ Contents:
 
 ### Development Environment
 
-Wikimetrics consists of a website that runs on Flask and an asynchronous queue implemented with Celery.  The Celery queue stores its results in Redis and the Flask website stores metadata in MySQL.  To set up your dev environment, run the following or change it slightly to use whatever package manager you're using (brew, yum, etc.):
+Wikimetrics consists of a website that runs on Flask and an asynchronous queue implemented with Celery.  The Celery queue stores its results in Redis and the Flask website stores metadata in MySQL.  To set up your dev environment, run the following or change it slightly to use whatever package manager you're using (brew, yum, etc.).  A fairly recent version of pip is required. Version 1.4.1 is known working, 1.0.2 is known not working:
 
 ````
 $ sudo apt-get install libmysqlclient-dev python-dev redis-server
@@ -16,20 +16,26 @@ $ cd wikimetrics
 $ sudo pip install -e .
 ````
 
-A fairly recent version of pip is required. Version 1.4.1 is known working, 1.0.2 is known not working.
+Now you need to set up your mysql databases.  You just need empty databases because sqlalchemy will create the tables it needs:
+
+````
+$ sudo scripts/00_create_wikimetrics_db
+$ sudo scripts/01_create_enwiki_db
+$ sudo scripts/02_create_dewiki_db
+````
 
 Wikimetrics has over 90% unit test coverage.  We use Nose to write unit and integration tests to achieve this, and you should too.
 
 ````
 $ sudo pip install nose
-$ nosetests
+$ scripts/test
 ````
 
-OK, so the only thing is to run the tool.  In two separate command lines, start the dev web server and the celery queue to process report requests.
+OK, so now you can run the tool.  In two separate command lines, start the dev web server and the celery queue to process report requests.
 
 ````
 $ wikimetrics --mode web
-$ wikimetrics --mode celery
+$ wikimetrics --mode queue
 ````
 
 go to [localhost:5000](http://localhost:5000)
