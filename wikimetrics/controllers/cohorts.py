@@ -169,14 +169,13 @@ def cohort_upload():
                     url_for('cohorts_index'),
                     vc.cohort_id
                 ))
-        
         except Exception, e:
             app.logger.exception(str(e))
             flash('Server error while processing your upload', 'error')
     
     return render_template(
         'csv_upload.html',
-        projects=json.dumps(db.project_host_map.keys()),
+        projects=json.dumps(sorted(db.project_host_map.keys())),
         form=form,
     )
 
