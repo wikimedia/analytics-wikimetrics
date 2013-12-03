@@ -18,7 +18,14 @@ GOOGLE_USERINFO_URI                 : 'https://www.googleapis.com/oauth2/v1/user
 GOOGLE_REDIRECT_URI                 : 'http://localhost:5000/auth/google'
 GOOGLE_JAVASCRIPT_ORIGIN            : 'http://localhost:5000'
 
-TWITTER_AUTH_URI                    : 'https://api.twitter.com/oauth/request_token'
+META_MW_BASE_URL                    : 'https://meta.wikimedia.org/'
+META_MW_BASE_INDEX                  : 'w/index.php'
+META_MW_TOKEN_URI                   : 'w/index.php?title=Special:OAuth/token'
+META_MW_AUTH_URI                    : 'wiki/Special:OAuth/authorize'
+META_MW_USERINFO_URI                : 'w/api.php?action=query&meta=userinfo&format=json'
+META_MW_REDIRECT_URI                : 'http://localhost:5000/auth/meta_mw'
+META_MW_CONSUMER_KEY                : 'bad4e459823278bdffb5ecf0a206112d'
+META_MW_CLIENT_SECRET               : 'e312699be56f1d157657727a87ce3776e172501a'
 
 SERVER_HOST                         : '0.0.0.0'
 SERVER_PORT                         : 5000

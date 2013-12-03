@@ -11,7 +11,7 @@ from flask import (
 )
 from sqlalchemy.orm.exc import NoResultFound, MultipleResultsFound
 from flask.ext.login import login_user, logout_user, current_user
-from wikimetrics.configurables import app, db, login_manager, google
+from wikimetrics.configurables import app, db, login_manager, google, meta_mw
 from wikimetrics.models import User, UserRole
 from wikimetrics.utils import json_error
 
@@ -77,6 +77,7 @@ def logout():
     """
     Logs out the user.
     """
+    session['access_token'] = None
     db_session = db.get_session()
     if type(current_user) is User:
         current_user.logout(db_session)
@@ -85,12 +86,97 @@ def logout():
     return redirect(url_for('home_index'))
 
 
+@app.route('/login/meta_mw')
+@is_public
+def login_meta_mw():
+    """
+    Make a request to meta.wikimedia.org for Authentication.
+    """
+    session['access_token'] = None
+    redirector = meta_mw.authorize()
+    
+    # MW's authorize requires an oauth_consumer_key
+    redirector.headers['Location'] += '&oauth_consumer_key=' + meta_mw.consumer_key
+    return redirector
+
+
+@app.route('/auth/meta_mw')
+@meta_mw.authorized_handler
+@is_public
+def auth_meta_mw(resp):
+    """
+    Callback for meta.wikimedia.org to send us authentication results.
+    This is responsible for fetching existing users or creating new ones.
+    If a new user is created, they get the default role of GUEST and
+    an email or username to match their details from the OAuth provider.
+    """
+    if resp is None:
+        flash('You need to grant the app permissions in order to login.', 'error')
+        return redirect(url_for('login'))
+    
+    session['access_token'] = (
+        resp['oauth_token'],
+        resp['oauth_token_secret']
+    )
+    
+    try:
+        # Another hack: we need to use the Authorized: header.
+        data = meta_mw.post(
+            app.config['META_MW_BASE_URL'] + app.config['META_MW_USERINFO_URI'],
+            content_type='text/plain'
+        ).data
+        username = data['query']['userinfo']['name']
+        userid = data['query']['userinfo']['id']
+        
+        db_session = db.get_session()
+        user = None
+        try:
+            user = db_session.query(User).filter_by(meta_mw_id=userid).one()
+        
+        except NoResultFound:
+            user = User(
+                username=username,
+                meta_mw_id=userid,
+                role=UserRole.GUEST,
+            )
+            db_session.add(user)
+            db_session.commit()
+        
+        except MultipleResultsFound:
+            db_session.close()
+            return 'Multiple users found with your id!!! Contact Administrator'
+        
+        user.login(db_session)
+        try:
+            if login_user(user):
+                user.detach_from(db_session)
+                redirect_to = session.get('next') or url_for('home_index')
+                redirect_to = urllib2.unquote(redirect_to)
+                return redirect(redirect_to)
+        finally:
+            db_session.close()
+    
+    except KeyError:
+        if data['error']['code'] == 'mwoauth-invalid-authorization':
+            flash('Access to this application was revoked. Please re-login!')
+            return redirect(url_for('login'))
+    
+    next_url = request.args.get('next') or url_for('index')
+    return redirect(next_url)
+
+
+@meta_mw.tokengetter
+def get_meta_wiki_token(token=None):
+    return session.get('access_token')
+
+
 @app.route('/login/google')
 @is_public
 def login_google():
     """
     Make a request to Google for Authentication.
     """
+    session['access_token'] = None
     auth_callback = app.config['GOOGLE_REDIRECT_URI']
     return google.authorize(callback=auth_callback)
 
@@ -105,10 +191,10 @@ def auth_google(resp):
     If a new user is created, they get the default role of GUEST and
     an email or username to match their details from the OAuth provider.
     """
-    if not resp and request.args.get('error') == 'access_denied':
+    if resp is None and request.args.get('error') == 'access_denied':
         flash('You need to grant the app permissions in order to login.', 'error')
         return redirect(url_for('login'))
-
+    
     access_token = resp['access_token'] or request.args.get('code')
     if access_token:
         session['access_token'] = access_token, ''
@@ -139,38 +225,22 @@ def auth_google(resp):
                 return 'Multiple users found with your id!!! Contact Administrator'
             
             user.login(db_session)
-            if login_user(user):
-                user.detach_from(db_session)
+            try:
+                if login_user(user):
+                    user.detach_from(db_session)
+                    redirect_to = session.get('next') or url_for('home_index')
+                    redirect_to = urllib2.unquote(redirect_to)
+                    return redirect(redirect_to)
+            finally:
                 db_session.close()
-                redirect_to = session.get('next') or url_for('home_index')
-                redirect_to = urllib2.unquote(redirect_to)
-                return redirect(redirect_to)
     
     flash('Was not allowed to authenticate you with Google.', 'error')
     return redirect(url_for('login'))
 
 
 @google.tokengetter
-def get_access_token():
+def get_google_token():
     return session.get('access_token')
-
-
-@app.route('/login/twitter')
-@is_public
-def login_twitter():
-    """
-    Make a request to Twitter for Authentication.
-    """
-    return 'Not Implemented Yet'
-
-
-@app.route('/auth/twitter')
-@is_public
-def auth_twitter():
-    """
-    Callback for Twitter to send us authentication results.
-    """
-    return 'Not Implemented Yet'
 
 
 if app.config['DEBUG']:

@@ -28,6 +28,7 @@ class User(db.WikimetricsBase):
     email = Column(String(254))
     role = Column(String(50), default=UserRole.GUEST)
     google_id = Column(String(254))
+    meta_mw_id = Column(String(254))
     
     # Flask-Login properties
     authenticated = Column(Boolean, default=False)

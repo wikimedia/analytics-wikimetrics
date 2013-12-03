@@ -13,20 +13,30 @@ div.site-messages-container li.alert strong { text-transform: capitalize; margin
 
 
 /* login stuff */
+div.auth-options {
+}
 a.openid-logo {
     display: inline-block;
     background-color: #fff;
-    background-image: url(//cdn.sstatic.net/Img/openid/openid-logos.png?v=8);
+    margin: 5px 20px 5px 10px;
+}
+a.openid-logo.meta_mw {
+    background-image: url(//upload.wikimedia.org/wikipedia/meta/b/bc/Wiki.png);
+    width: 135px;
+    height: 135px;
 }
 a.openid-logo.google {
+    background-image: url(//cdn.sstatic.net/Img/openid/openid-logos.png?v=8);
     width: 103px;
     height: 63px;
 }
+/*
 a.openid-logo.twitter {
     background-image: url(//dev.twitter.com/sites/default/files/images_documentation/sign-in-with-twitter-gray.png);
     width: 158px;
     height: 28px;
 }
+*/
 
 
 /* creating a new report */

@@ -27,9 +27,9 @@ def create_object_from_text_config_file(path):
 
 
 def config_web(args):
-    from flask import Flask
+    from flask import Flask, request
     from flask.ext.login import LoginManager
-    from flask.ext.oauth import OAuth
+    from flask.ext.oauth import OAuth, OAuthRemoteApp, OAuthException, parse_response
     
     global app
     app = Flask('wikimetrics')
@@ -67,6 +67,51 @@ def config_web(args):
         consumer_key=app.config['GOOGLE_CLIENT_ID'],
         consumer_secret=app.config['GOOGLE_CLIENT_SECRET'],
     )
+    
+    # TODO: patch upstream
+    # NOTE: a million thanks to Merlijn_van_Deen, author of
+    # https://wikitech.wikimedia.org/wiki/Setting_up_Flask_cgi_app_as_a_tool/OAuth
+    class MediaWikiOAuthRemoteApp(OAuthRemoteApp):
+        def handle_oauth1_response(self):
+            """
+            Handles an oauth1 authorization response.  The return value of
+            this method is forwarded as the first argument to the handling
+            view function.
+            """
+            client = self.make_client()
+            resp, content = client.request(
+                '%s&oauth_verifier=%s' % (
+                    self.expand_url(self.access_token_url),
+                    request.args['oauth_verifier'],
+                ),
+                self.access_token_method
+            )
+            data = parse_response(resp, content)
+            if not self.status_okay(resp):
+                raise OAuthException(
+                    'Invalid response from ' + self.name,
+                    type='invalid_response',
+                    data=data
+                )
+            return data
+    
+    global meta_mw
+    meta_mw_base_url = app.config['META_MW_BASE_URL']
+    meta_mw = MediaWikiOAuthRemoteApp(
+        oauth,
+        'meta_mw',
+        base_url=meta_mw_base_url,
+        request_token_url=meta_mw_base_url + app.config['META_MW_BASE_INDEX'],
+        request_token_params={
+            'title': 'Special:MWOAuth/initiate',
+            'oauth_callback': 'oob'
+        },
+        access_token_url=meta_mw_base_url + app.config['META_MW_TOKEN_URI'],
+        authorize_url=meta_mw_base_url + app.config['META_MW_AUTH_URI'],
+        consumer_key=app.config['META_MW_CONSUMER_KEY'],
+        consumer_secret=app.config['META_MW_CLIENT_SECRET'],
+    )
+    oauth.remote_apps['meta_mw'] = meta_mw
 
 
 def config_db(args):

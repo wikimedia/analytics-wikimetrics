@@ -50,18 +50,21 @@ class TestAuthenticationControllerLoggedOut(WebTestAnonymous):
         )
     
     @raises(OAuthException)
-    # NOTE: does not cover lines 108 - 150 as expected
     def test_auth_google(self):
         self.app.get('/auth/google?code=hello')
-    # NOTE: can't figure out how to cover 155
     
-    def test_login_twitter(self):
-        response = self.app.get('/login/twitter')
-        assert_equal(response.data, 'Not Implemented Yet')
+    def test_login_meta_mw(self):
+        response = self.app.get('/login/meta_mw')
+        assert_true(
+            response.data.find('Special:OAuth/authorize') >= 0,
+            'should redirect to meta.wikimedia.org'
+        )
+        assert_equal(response.status_code, 302)
     
-    def test_auth_twitter(self):
-        response = self.app.get('/auth/twitter')
-        assert_equal(response.data, 'Not Implemented Yet')
+    def test_auth_meta_mw(self):
+        response = self.app.get('/auth/meta_mw')
+        assert_true(response.data.find('/login') >= 0, 'should redirect to login')
+        assert_equal(response.status_code, 302)
 
 
 class TestAuthenticationControllerLoggedIn(WebTest):
