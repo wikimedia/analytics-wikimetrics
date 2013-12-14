@@ -59,9 +59,11 @@ class Report(object):
                  status=celery.states.PENDING,
                  name=None,
                  queue_result_key=None,
-                 children=[],
+                 children=None,
                  parameters='{}'):
         
+        if children is None:
+            children = []
         self.user_id = user_id
         if not self.user_id:
             try:
@@ -156,7 +158,7 @@ class ReportNode(Report):
         """
         pass
     
-    def report_result(self, results, child_results=[]):
+    def report_result(self, results, child_results=None):
         """
         Creates a unique identifier for this ReportNode, and returns a one element
         dictionary with that identifier as the key and its results as the value.
@@ -169,6 +171,9 @@ class ReportNode(Report):
                               preserved.  ReportLeaf results and any ReportNode results
                               that are copied should not be preserved.
         """
+        if child_results is None:
+            child_results = []
+        
         self.result_key = str(uuid4())
         db_session = db.get_session()
         pj = db_session.query(PersistentReport).get(self.persistent_id)

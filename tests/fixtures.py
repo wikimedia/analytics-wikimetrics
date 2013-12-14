@@ -74,12 +74,12 @@ class DatabaseTest(unittest.TestCase):
         editor_count=0,
         user_registrations=20130101000000,
         revisions_per_editor=0,
-        revision_timestamps=[],
-        revision_lengths=[],
+        revision_timestamps=None,
+        revision_lengths=None,
         page_count=0,
-        page_timestamps=[],
-        page_namespaces=[],
-        page_creator_index=[],
+        page_timestamps=None,
+        page_namespaces=None,
+        page_creator_index=None,
         owner_user_id=None,
     ):
         """
@@ -125,6 +125,17 @@ class DatabaseTest(unittest.TestCase):
               self.editors      : the mediawiki editors from the cohort
               self.revisions    : the revisions added, in a two dimensional array
         """
+        if revision_timestamps is None:
+            revision_timestamps = []
+        if revision_lengths is None:
+            revision_lengths = []
+        if page_timestamps is None:
+            page_timestamps = []
+        if page_namespaces is None:
+            page_namespaces = []
+        if page_creator_index is None:
+            page_creator_index = []
+        
         if type(revision_timestamps) is int:
             revision_timestamps = [
                 [revision_timestamps] * revisions_per_editor
