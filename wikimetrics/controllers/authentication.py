@@ -55,8 +55,10 @@ def load_user(user_id):
     Callback required by Flask-Login.  Gets the User object from the database.
     """
     db_session = db.get_session()
-    user = User.get(db_session, user_id)
-    db_session.close()
+    try:
+        user = User.get(db_session, user_id)
+    finally:
+        db_session.close()
     return user
 
 
@@ -79,9 +81,11 @@ def logout():
     """
     session['access_token'] = None
     db_session = db.get_session()
-    if type(current_user) is User:
-        current_user.logout(db_session)
-    db_session.close()
+    try:
+        if type(current_user) is User:
+            current_user.logout(db_session)
+    finally:
+        db_session.close()
     logout_user()
     return redirect(url_for('home_index'))
 
@@ -224,8 +228,8 @@ def auth_google(resp):
                 db_session.close()
                 return 'Multiple users found with your id!!! Contact Administrator'
             
-            user.login(db_session)
             try:
+                user.login(db_session)
                 if login_user(user):
                     user.detach_from(db_session)
                     redirect_to = session.get('next') or url_for('home_index')
@@ -250,8 +254,10 @@ if app.config['DEBUG']:
     def login_for_testing_only():
         if app.config['DEBUG']:
             db_session = db.get_session()
-            user = db_session.query(User).filter_by(email='test@test.com').one()
-            user.login(db_session)
-            login_user(user)
-            db_session.close()
+            try:
+                user = db_session.query(User).filter_by(email='test@test.com').one()
+                user.login(db_session)
+                login_user(user)
+            finally:
+                db_session.close()
             return ''

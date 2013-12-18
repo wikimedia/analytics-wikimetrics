@@ -44,9 +44,11 @@ class RunReport(ReportNode):
             
             # get cohort
             cohort_dict = cohort_metric_dict['cohort']
-            db_session = db.get_session()
-            cohort = Cohort.get_safely(db_session, self.user_id, by_id=cohort_dict['id'])
-            db_session.close()
+            session = db.get_session()
+            try:
+                cohort = Cohort.get_safely(session, self.user_id, by_id=cohort_dict['id'])
+            finally:
+                session.close()
             
             # construct metric
             metric_dict = cohort_metric_dict['metric']

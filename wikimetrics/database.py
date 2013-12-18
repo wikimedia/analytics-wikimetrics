@@ -171,7 +171,9 @@ class Database(object):
                 try:
                     json.dump(project_host_map, open(cache_name, 'w'))
                 except:
-                    pass  # no rights to write the file, it's OK
+                    print('No rights to write project host map cache {0}'.format(
+                        os.path.abspath(cache_name)
+                    ))
         elif os.access(cache_name, os.R_OK):
             project_host_map = json.load(open(cache_name))
         else:
@@ -198,4 +200,5 @@ def ping_connection(dbapi_connection, connection_record, connection_proxy):
         # raise DisconnectionError - pool will try
         # connecting again up to three times before raising.
         raise exc.DisconnectionError()
-    cursor.close()
+    finally:
+        cursor.close()

@@ -42,19 +42,21 @@ def reports_request():
 @app.route('/reports/list/')
 def reports_list():
     db_session = db.get_session()
-    reports = db_session.query(PersistentReport)\
-        .filter(PersistentReport.user_id == current_user.id)\
-        .filter(PersistentReport.created > thirty_days_ago())\
-        .filter(PersistentReport.show_in_ui)\
-        .all()
-    # TODO: update status for all reports at all times (not just show_in_ui ones)
-    # update status for each report
-    for report in reports:
-        report.update_status()
-    
-    # TODO fix json_response to deal with PersistentReport objects
-    reports_json = json_response(reports=[report._asdict() for report in reports])
-    db_session.close()
+    try:
+        reports = db_session.query(PersistentReport)\
+            .filter(PersistentReport.user_id == current_user.id)\
+            .filter(PersistentReport.created > thirty_days_ago())\
+            .filter(PersistentReport.show_in_ui)\
+            .all()
+        # TODO: update status for all reports at all times (not just show_in_ui ones)
+        # update status for each report
+        for report in reports:
+            report.update_status()
+        
+        # TODO fix json_response to deal with PersistentReport objects
+        reports_json = json_response(reports=[report._asdict() for report in reports])
+    finally:
+        db_session.close()
     return reports_json
 
 
@@ -74,12 +76,14 @@ def get_celery_task(result_key):
     
     try:
         db_session = db.get_session()
-        pj = db_session.query(PersistentReport)\
-            .filter(PersistentReport.result_key == result_key)\
-            .one()
-        
-        celery_task = Report.task.AsyncResult(pj.queue_result_key)
-        db_session.close()
+        try:
+            pj = db_session.query(PersistentReport)\
+                .filter(PersistentReport.result_key == result_key)\
+                .one()
+            
+            celery_task = Report.task.AsyncResult(pj.queue_result_key)
+        finally:
+            db_session.close()
         return (celery_task, pj)
     except NoResultFound:
         return (None, None)

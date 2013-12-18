@@ -57,14 +57,15 @@ if app.config['DEBUG']:
     @app.route('/demo/metric/random/<int:cohort_id>')
     def run_task_in_celery(cohort_id):
         db_session = db.get_session()
-        user_ids = db_session.query(WikiUser.mediawiki_userid)\
-            .join(CohortWikiUser)\
-            .filter(CohortWikiUser.cohort_id == cohort_id)\
-            .all()
-        if len(user_ids) == 0:
-            user_ids = db_session.query(WikiUser.mediawiki_userid).all()
-        
-        db_session.close()
+        try:
+            user_ids = db_session.query(WikiUser.mediawiki_userid)\
+                .join(CohortWikiUser)\
+                .filter(CohortWikiUser.cohort_id == cohort_id)\
+                .all()
+            if len(user_ids) == 0:
+                user_ids = db_session.query(WikiUser.mediawiki_userid).all()
+        finally:
+            db_session.close()
         
         report = MetricReport(RandomMetric(), user_ids, 'enwiki')
         #from nose.tools import set_trace; set_trace()
@@ -138,8 +139,6 @@ if app.config['DEBUG']:
         )
         
         # TODO: these users don't actually exist in the mediawiki databases, add them
-        #db_enwiki_session = db.get_mw_session('enwiki')
-        #db_dewiki_session = db.get_mw_session('dewiki')
         wu1 = WikiUser(mediawiki_username='Dan', mediawiki_userid=1, project='enwiki')
         wu2 = WikiUser(mediawiki_username='Evan', mediawiki_userid=2, project='enwiki')
         wu3 = WikiUser(mediawiki_username='Andrew', mediawiki_userid=3, project='enwiki')
@@ -281,21 +280,23 @@ if app.config['DEBUG']:
     @app.route('/demo/create/fake-<string:project>-users/<int:n>')
     def add_fake_enwiki_users(project, n):
         session = db.get_mw_session(project)
-        max_id = session.query(func.max(MediawikiUser.user_id)).one()[0] or 0
-        start = max_id + 1
-        session.bind.engine.execute(
-            MediawikiUser.__table__.insert(),
-            [
-                {
-                    'user_name'         : 'user-{0}'.format(r),
-                    'user_id'           : r,
-                    'user_registration' : '20130101000000'
-                }
-                for r in range(start, start + n)
-            ]
-        )
-        session.commit()
-        session.close()
+        try:
+            max_id = session.query(func.max(MediawikiUser.user_id)).one()[0] or 0
+            start = max_id + 1
+            session.bind.engine.execute(
+                MediawikiUser.__table__.insert(),
+                [
+                    {
+                        'user_name'         : 'user-{0}'.format(r),
+                        'user_id'           : r,
+                        'user_registration' : '20130101000000'
+                    }
+                    for r in range(start, start + n)
+                ]
+            )
+            session.commit()
+        finally:
+            session.close()
         return '{0} user records created in {1}'.format(n, project)
 
 

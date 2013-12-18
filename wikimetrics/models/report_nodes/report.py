@@ -176,11 +176,13 @@ class ReportNode(Report):
         
         self.result_key = str(uuid4())
         db_session = db.get_session()
-        pj = db_session.query(PersistentReport).get(self.persistent_id)
-        pj.result_key = self.result_key
-        db_session.add(pj)
-        db_session.commit()
-        db_session.close()
+        try:
+            pj = db_session.query(PersistentReport).get(self.persistent_id)
+            pj.result_key = self.result_key
+            db_session.add(pj)
+            db_session.commit()
+        finally:
+            db_session.close()
         
         merged = {self.result_key: results}
         for child_result in child_results:
