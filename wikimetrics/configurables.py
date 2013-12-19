@@ -27,9 +27,13 @@ def create_object_from_text_config_file(path):
 
 
 def config_web(args):
-    from flask import Flask, request
+    from flask import Flask, request, json
     from flask.ext.login import LoginManager
-    from flask.ext.oauth import OAuth, OAuthRemoteApp, OAuthException, parse_response
+    from flask.ext.oauth import (
+        OAuth, OAuthRemoteApp, OAuthException, get_etree
+    )
+    from werkzeug import url_decode, parse_options_header
+    import flask.ext.oauth as nasty_patch_to_oauth
     
     global app
     app = Flask('wikimetrics')
@@ -68,6 +72,32 @@ def config_web(args):
         consumer_secret=app.config['GOOGLE_CLIENT_SECRET'],
     )
     
+    def better_parse_response(resp, content, strict=False):
+        ct, options = parse_options_header(resp['content-type'])
+        if ct in ('application/json', 'text/javascript'):
+            try:
+                return json.loads(content)
+            # handle json decode errors from parse_response
+            # this is useful in the identify call because the response is
+            # 'application/json' but the content is encoded
+            except:
+                return content
+        elif ct in ('application/xml', 'text/xml'):
+            # technically, text/xml is ascii based but because many
+            # implementations get that wrong and utf-8 is a superset
+            # of utf-8 anyways, so there is not much harm in assuming
+            # utf-8 here
+            charset = options.get('charset', 'utf-8')
+            return get_etree().fromstring(content.decode(charset))
+        elif ct != 'application/x-www-form-urlencoded':
+            if strict:
+                return content
+        charset = options.get('charset', 'utf-8')
+        return url_decode(content, charset=charset).to_dict()
+    
+    # TODO: Even worse, definitely patch upstream or consider switching to rauth
+    nasty_patch_to_oauth.parse_response = better_parse_response
+    
     # TODO: patch upstream
     # NOTE: a million thanks to Merlijn_van_Deen, author of
     # https://wikitech.wikimedia.org/wiki/Setting_up_Flask_cgi_app_as_a_tool/OAuth
@@ -80,13 +110,13 @@ def config_web(args):
             """
             client = self.make_client()
             resp, content = client.request(
-                '%s&oauth_verifier=%s' % (
+                '{0}&oauth_verifier={1}'.format(
                     self.expand_url(self.access_token_url),
                     request.args['oauth_verifier'],
                 ),
                 self.access_token_method
             )
-            data = parse_response(resp, content)
+            data = nasty_patch_to_oauth.parse_response(resp, content)
             if not self.status_okay(resp):
                 raise OAuthException(
                     'Invalid response from ' + self.name,

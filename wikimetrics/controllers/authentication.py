@@ -1,6 +1,8 @@
 import json
 import requests
 import urllib2
+import jwt
+import time
 from flask import (
     render_template,
     redirect,
@@ -11,6 +13,7 @@ from flask import (
 )
 from sqlalchemy.orm.exc import NoResultFound, MultipleResultsFound
 from flask.ext.login import login_user, logout_user, current_user
+
 from wikimetrics.configurables import app, db, login_manager, google, meta_mw
 from wikimetrics.models import User, UserRole
 from wikimetrics.utils import json_error
@@ -104,6 +107,45 @@ def login_meta_mw():
     return redirector
 
 
+def process_mw_jwt(identify_token_encoded):
+    try:
+        identify_token = jwt.decode(
+            identify_token_encoded,
+            app.config['META_MW_CLIENT_SECRET']
+        )
+        
+        # Verify the issuer is who we expect (server sends $wgCanonicalServer)
+        iss = urllib2.urlparse.urlparse(identify_token['iss']).netloc
+        mw_domain = urllib2.urlparse.urlparse(app.config['META_MW_BASE_URL']).netloc
+        if iss != mw_domain:
+            raise Exception('JSON Web Token Validation Problem, iss')
+        
+        # Verify we are the intended audience
+        if identify_token['aud'] != app.config['META_MW_CONSUMER_KEY']:
+            raise Exception('JSON Web Token Validation Problem, aud')
+        
+        # Verify we are within the time limits of the token.
+        # Issued at (iat) should be in the past
+        now = int(time.time())
+        if int(identify_token['iat']) > now:
+            raise Exception('JSON Web Token Validation Problem, iat')
+        
+        # Expiration (exp) should be in the future
+        if int(identify_token['exp']) < now:
+            raise Exception('JSON Web Token Validation Problem, exp')
+        
+        # Verify we haven't seen this nonce before,
+        # which would indicate a replay attack
+        # TODO: implement nonce but this is not high priority
+        #if identify_token['nonce'] != <<original request nonce>>
+            #raise Exception('JSON Web Token Validation Problem, nonce')
+        
+        return identify_token
+    except Exception, e:
+        flash(e.message)
+        raise e
+
+
 @app.route('/auth/meta_mw')
 @meta_mw.authorized_handler
 @is_public
@@ -124,13 +166,13 @@ def auth_meta_mw(resp):
     )
     
     try:
-        # Another hack: we need to use the Authorized: header.
-        data = meta_mw.post(
-            app.config['META_MW_BASE_URL'] + app.config['META_MW_USERINFO_URI'],
-            content_type='text/plain'
+        identify_token_encoded = meta_mw.post(
+            app.config['META_MW_BASE_URL'] + app.config['META_MW_IDENTIFY_URI'],
         ).data
-        username = data['query']['userinfo']['name']
-        userid = data['query']['userinfo']['id']
+        identify_token = process_mw_jwt(identify_token_encoded)
+        
+        username = identify_token['username']
+        userid = identify_token['sub']
         
         db_session = db.get_session()
         user = None
@@ -160,10 +202,9 @@ def auth_meta_mw(resp):
         finally:
             db_session.close()
     
-    except KeyError:
-        if data['error']['code'] == 'mwoauth-invalid-authorization':
-            flash('Access to this application was revoked. Please re-login!')
-            return redirect(url_for('login'))
+    except:
+        flash('Access to this application was revoked. Please re-login!')
+        return redirect(url_for('login'))
     
     next_url = request.args.get('next') or url_for('index')
     return redirect(next_url)
