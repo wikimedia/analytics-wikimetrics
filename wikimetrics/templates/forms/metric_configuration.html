@@ -19,15 +19,19 @@
                 {% else %}
                     {{ f(placeholder=f.description, **{'data-bind':'value: '+f.name}) }}
                 {% endif %}
+                {% if f.type == 'CommaSeparatedIntegerListField' %}(comma separated){% endif %}
                 {{ validation.messages(f) }}
             </div>
             {% if f.name == 'namespaces' %}
                 <div class="controls">
-                    <p>refers to the division of pages by namespace in wiki projects, example:</p>
+                    <p>Refers to the division of pages by namespace in wiki projects.  More information:</p>
                     <ul>
-                        <li><a target="_blank" href="https://de.wikipedia.org/wiki/Wikipedia:Namespace">German Wikipedia Namespaces</a></li>
-                        <li><a target="_blank" href="https://commons.wikimedia.org/wiki/Help:Namespaces">Wikimedia Commons Namespaces</a></li>
-                        <li><a target="_blank" href="https://en.wikipedia.org/wiki/Wikipedia:Namespace">English Wikipedia Namespaces</a></li>
+                        <li><a target="_blank" href="http://www.mediawiki.org/wiki/Manual:Namespace">What is a namespace?</a></li>
+                        <li><a target="_blank" href="http://www.mediawiki.org/wiki/Manual:Namespace_constants">Universal namespace codes</a></li>
+                        <li>Examples:
+                            <a target="_blank" href="https://de.wikipedia.org/wiki/Wikipedia:Namespace">dewiki</a>,
+                            <a target="_blank" href="https://commons.wikimedia.org/wiki/Help:Namespaces">commons</a>,
+                            <a target="_blank" href="https://en.wikipedia.org/wiki/Wikipedia:Namespace">enwiki</a></li>
                     </ul>
                 </div>
             {% endif %}
