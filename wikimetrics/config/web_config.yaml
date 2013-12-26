@@ -18,7 +18,7 @@ GOOGLE_USERINFO_URI                 : 'https://www.googleapis.com/oauth2/v1/user
 GOOGLE_REDIRECT_URI                 : 'http://localhost:5000/auth/google'
 GOOGLE_JAVASCRIPT_ORIGIN            : 'http://localhost:5000'
 
-META_MW_BASE_URL                    : 'http://meta.wikimedia.org/'
+META_MW_BASE_URL                    : 'https://meta.wikimedia.org/'
 META_MW_BASE_INDEX                  : 'w/index.php'
 META_MW_TOKEN_URI                   : 'w/index.php?title=Special:OAuth/token'
 META_MW_AUTH_URI                    : 'wiki/Special:OAuth/authorize'
