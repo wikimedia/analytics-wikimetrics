@@ -6,7 +6,7 @@ from flask import render_template, request, url_for, Response
 from flask.ext.login import current_user
 
 from wikimetrics.configurables import app, db
-from wikimetrics.models import Report, RunReport, PersistentReport
+from wikimetrics.models import Report, RunReport, PersistentReport, WikiUser
 from wikimetrics.metrics import TimeseriesChoices
 from wikimetrics.models.report_nodes import Aggregation
 from wikimetrics.utils import (
@@ -126,6 +126,19 @@ def report_result_csv(result_key):
         return json_response(status=celery_task.status)
 
 
+def get_username_via_id(user_id):
+    """
+    Parameters
+        user_id : id to match for user_name
+    """
+    db_session = db.get_session()
+    ret = db_session.query(WikiUser.mediawiki_userid, WikiUser.mediawiki_username)\
+        .filter(WikiUser.mediawiki_userid.in_([user_id]))\
+        .all()
+    db_session.close()
+    return ret[0][1]
+
+
 def get_timeseries_csv(task_result, pj, parameters):
     """
     Parameters
@@ -150,9 +163,9 @@ def get_timeseries_csv(task_result, pj, parameters):
             columns = task_result[Aggregation.STD].values()[0].keys()
         
         # if task_result is not empty find header in first row
-        fieldnames = ['user_id', 'submetric'] + sorted(columns)
+        fieldnames = ['user_id', 'user_name', 'submetric'] + sorted(columns)
     else:
-        fieldnames = ['user_id', 'submetric']
+        fieldnames = ['user_id', 'user_name', 'submetric']
     writer = DictWriter(csv_io, fieldnames)
     
     # collect rows to output in CSV
@@ -165,6 +178,7 @@ def get_timeseries_csv(task_result, pj, parameters):
             for subrow in row.keys():
                 task_row = row[subrow].copy()
                 task_row['user_id'] = user_id
+                task_row['user_name'] = get_username_via_id(user_id)
                 task_row['submetric'] = subrow
                 task_rows.append(task_row)
     
@@ -234,9 +248,9 @@ def get_simple_csv(task_result, pj, parameters):
             columns = task_result[Aggregation.STD].keys()
         
         # if task_result is not empty find header in first row
-        fieldnames = ['user_id'] + columns
+        fieldnames = ['user_id', 'user_name'] + columns
     else:
-        fieldnames = ['user_id']
+        fieldnames = ['user_id', 'user_name']
     writer = DictWriter(csv_io, fieldnames)
     
     # collect rows to output in CSV
@@ -248,6 +262,7 @@ def get_simple_csv(task_result, pj, parameters):
         for user_id, row in task_result[Aggregation.IND][0].iteritems():
             task_row = row.copy()
             task_row['user_id'] = user_id
+            task_row['user_name'] = get_username_via_id(user_id)
             task_rows.append(task_row)
     
     # Aggregate Results
