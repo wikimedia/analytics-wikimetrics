@@ -28,5 +28,5 @@ META_MW_REDIRECT_URI                : 'http://localhost:5000/auth/meta_mw'
 META_MW_CONSUMER_KEY                : 'bad4e459823278bdffb5ecf0a206112d'
 META_MW_CLIENT_SECRET               : 'e312699be56f1d157657727a87ce3776e172501a'
 
-SERVER_HOST                         : '0.0.0.0'
+SERVER_HOST                         : 'localhost'
 SERVER_PORT                         : 5000
