@@ -1,3 +1,5 @@
 create database wikimetrics;
-create user wikimetrics IDENTIFIED BY 'wikimetrics' ;
+create user wikimetrics IDENTIFIED BY 'wikimetrics';
 grant ALL on wikimetrics.* TO wikimetrics@'localhost';
+SET PASSWORD FOR 'wikimetrics'@'localhost' = PASSWORD('wikimetrics');
+SET PASSWORD FOR 'wikimetrics'@'%' = PASSWORD('wikimetrics');
