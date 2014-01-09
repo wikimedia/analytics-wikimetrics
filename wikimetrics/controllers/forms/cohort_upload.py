@@ -56,7 +56,7 @@ def parse_records(unparsed, default_project):
     """
     records = []
     for r in unparsed:
-        if not r is None:
+        if not r is None and len(r) > 0:
             # NOTE: the reason for the crazy -1 and comma joins
             # is that some users can have commas in their name
             # NOTE: This makes it impossible to add fields to the csv in the future,
