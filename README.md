@@ -19,9 +19,9 @@ $ sudo pip install -e .
 Now you need to set up your mysql databases.  You just need empty databases because sqlalchemy will create the tables it needs:
 
 ````
-$ sudo mysql < scripts/00_create_wikimetrics_db
-$ sudo mysql < scripts/01_create_enwiki_db
-$ sudo mysql < scripts/02_create_dewiki_db
+$ sudo mysql -p < scripts/00_create_wikimetrics_db
+$ sudo mysql -p < scripts/01_create_enwiki_db
+$ sudo mysql -p < scripts/02_create_dewiki_db
 ````
 
 Wikimetrics has over 90% unit test coverage.  We use Nose to write unit and integration tests to achieve this, and you should too.
