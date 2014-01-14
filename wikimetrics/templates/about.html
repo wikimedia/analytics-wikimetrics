@@ -2,20 +2,22 @@
 {% block body %}
 <div class="hero-unit">
     <h2>About</h2>
-    <p>Wiki Metrics is a web application.  There are three concepts you, the user, should be aware of:</p>
+    <p>Wikimetrics is a web application.  There are three concepts you, the user, should be aware of:</p>
     <ul>
         <li>
             <strong>Cohorts</strong>
-            <p>A cohort is a list of users.  All users can belong to the same wiki project or each can specify a different project.  Cohorts can be defined in CSV files and uploaded <a href="{{url_for('cohort_upload')}}">here</a>.  Examples of useful cohorts might be Wikipedia editors that participated in an outreach event, Wikimedia Commons users that are also active on other Wikis, and so on.</p>
+            <p>A cohort is a list of users.  All users can belong to the same wiki project or each can specify a different project.  Cohorts can be defined in CSV files and uploaded <a href="{{url_for('cohort_upload')}}">here</a>.  Examples of useful cohorts might be: Wikipedia editors that participated in an outreach event, Wikimedia Commons users that are also active on other Wikis, and so on.</p>
         </li>
         <li>
             <strong>Metrics</strong>
-            <p>A metric is a measure of some type of on-wiki activity.  Metrics are easy to implement if you develop python or if you can show that a new type of measurement might be useful.  In the latter case, either the analytics team or community members are likely to help you implement a new metric.  To contribute code, please have a look at <a href="https://gerrit.wikimedia.org/r/#/admin/projects/analytics/wikimetrics">our repository</a>.</p>
+            <p>A metric is a measure of some type of on-wiki activity.  Metrics are easy to implement if you develop in Python or if you can show that a new type of measurement might be useful.  In the latter case, either the analytics team or community members are likely to help you implement a new metric.  To contribute code, please have a look at <a href="https://gerrit.wikimedia.org/r/#/admin/projects/analytics/wikimetrics">our repository</a>.</p>
         </li>
         <li>
             <strong>Reports</strong>
-            <p>A report is a way for you to ask for the results of a metric applied to a cohort.  The reports are run asynchronously on a Celery queue and the results show up when they're ready, on the <a href="{{url_for('reports_index')}}">reports page</a></p>
+            <p>A report is a way for you to ask for the results of a metric applied to a cohort.  The reports are run asynchronously on a Celery queue and the results show up when they're ready, on the <a href="{{url_for('reports_index')}}">reports page</a>.</p>
         </li>
     </ul>
+    <p>You can access Wikimetrics by logging in and authenticating using your Wikipedia/Wikimedia account or a Google account. Wikimetrics welcomes all. :)</p>
+    <p>Please also see <a href="support.html">Support</a> for more help, or <a href="contact.html">contact us</a>.</p>
 </div>
 {% endblock %}
