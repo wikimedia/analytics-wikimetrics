@@ -19,13 +19,13 @@ class CohortUser(db.WikimetricsBase):
     tables which stores cohort permissions.  Uses
     sqlalchemy.declarative to handle db mapping
     """
-    
+
     __tablename__ = 'cohort_user'
-    
+
     id        = Column(Integer, primary_key=True)
-    user_id   = Column(Integer(50), ForeignKey('user.id'))
-    cohort_id = Column(Integer(50), ForeignKey('cohort.id'))
+    user_id   = Column(Integer, ForeignKey('user.id'))
+    cohort_id = Column(Integer, ForeignKey('cohort.id'))
     role      = Column(String(45))
-    
+
     def __repr__(self):
         return '<CohortUser("{0}")>'.format(self.id)
