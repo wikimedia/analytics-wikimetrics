@@ -14,12 +14,12 @@ class WikiUser(db.WikimetricsBase):
     This class is mapped to the wiki_user table using
     sqlalchemy.declarative
     """
-    
+
     __tablename__ = 'wiki_user'
-    
+
     id                  = Column(Integer, primary_key=True)
     mediawiki_username  = Column(String(255))
-    mediawiki_userid    = Column(Integer(50))
+    mediawiki_userid    = Column(Integer)
     project             = Column(String(45))
     # valid = None means it's not been validated yet
     # valid = True means it's valid
@@ -28,6 +28,6 @@ class WikiUser(db.WikimetricsBase):
     reason_invalid      = Column(String(200))
     # The cohort id that this wikiuser is being validated for
     validating_cohort   = Column(Integer)
-    
+
     def __repr__(self):
         return '<WikiUser("{0}")>'.format(self.id)
