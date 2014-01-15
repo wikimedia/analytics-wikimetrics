@@ -16,7 +16,7 @@ $ cd wikimetrics
 $ sudo pip install -e .
 ````
 
-Now you need to set up your mysql databases.  You just need empty databases because sqlalchemy will create the tables it needs:
+Now you need to set up your MySQL databases.  You just need empty databases because SQLAlchemy will create the tables it needs:
 
 ````
 $ sudo mysql -p < scripts/00_create_wikimetrics_db
