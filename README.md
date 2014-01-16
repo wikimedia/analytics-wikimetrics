@@ -31,6 +31,17 @@ $ sudo pip install nose
 $ scripts/test
 ````
 
+Also, the standard httplib2 library does not have the appropriate certificates to do SSL handshakes with MediaWiki.  So in production and locally we just remove the httplib2 from our systems and install our preferred library instead:
+
+````
+$ git clone --depth=10 https://github.com/wikimedia/pywikibot-externals-httplib2
+$ cd pywikibot-externals-httplib2/
+$ sudo python setup.py install
+$ pip freeze | grep httplib
+````
+
+You should see that last command produce something like `httplib2==0.8-pywikibot1`.
+
 OK, so now you can run the tool.  In two separate command lines, start the dev web server and the celery queue to process report requests.
 
 ````
