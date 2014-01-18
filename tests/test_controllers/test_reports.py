@@ -199,7 +199,7 @@ class ReportsControllerTest(WebTest):
         
         # Check the csv result
         response = self.app.get('/reports/result/{0}.csv'.format(result_key))
-        assert_true(response.data.find('Average,2.0') >= 0)
+        assert_true(response.data.find('Average,,2.0') >= 0)
 
         # Testing to see if the parameters are also in the CSV
         # (related to Mingle 1089)
@@ -245,8 +245,7 @@ class ReportsControllerTest(WebTest):
         
         # Check the csv result
         response = self.app.get('/reports/result/{0}.csv'.format(result_key))
-        print(response.data)
-        assert_true(response.data.find('Sum,8.0') >= 0)
+        assert_true(response.data.find('Sum,,8.0') >= 0)
     
     def test_report_result_std_dev_only_csv(self):
         # Make the request
@@ -324,18 +323,20 @@ class ReportsControllerTest(WebTest):
         # Check the csv result
         response = self.app.get('/reports/result/{0}.csv'.format(result_key))
         assert_true(response.data.find(
-            'user_id,submetric,'
+            'user_id,user_name,submetric,'
             '2013-01-01 00:00:00,2013-02-01 00:00:00,'
             '2013-03-01 00:00:00,2013-04-01 00:00:00'
         ) >= 0)
         assert_true(response.data.find(
-            '{0},edits,1,2,1,0'.format(self.editors[0].user_id)
+            '{0},{1},edits,1,2,1,0'.format(
+                self.editors[0].user_id, self.editors[0].user_name)
         ) >= 0)
         assert_true(response.data.find(
-            '{0},edits,1,2,1,0'.format(self.editors[1].user_id)
+            '{0},{1},edits,1,2,1,0'.format(
+                self.editors[1].user_id, self.editors[1].user_name)
         ) >= 0)
         assert_true(response.data.find(
-            'Average,edits,0.5000,1.0000,0.5000,0.0000'
+            'Average,,edits,0.5000,1.0000,0.5000,0.0000'
         ) >= 0)
 
         # Testing to see if the parameters are also in the CSV
