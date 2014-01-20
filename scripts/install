@@ -1,12 +1,17 @@
 # installs dependencies
 
-(pip freeze | grep -P httplib2==[0-9.]+) && pip uninstall httplib2 && echo "*** uninstalled httplib2"
+set -e
+
+# Need newer pip than comes with debian/ubuntu
+sudo pip install --upgrade pip
+
+(pip freeze | grep -P httplib2==[0-9.]+) && sudo pip uninstall -y httplib2 && echo "*** uninstalled httplib2"
 
 # is it wikimetrics_dir=${$1:-$(pwd)}?
 wikimetrics_dir=${1:-$(pwd)}
 
 good_httplib=$(pip freeze | grep 'httplib2.*pywikibot')
-if [[ -z "${good_httplib}" ]]
+if [ -z "${good_httplib}" ]
     then
         tmpdir=$(mktemp -d /tmp/wikimetrics_httplib2.XXXXXXXXX)
         cd $tmpdir
