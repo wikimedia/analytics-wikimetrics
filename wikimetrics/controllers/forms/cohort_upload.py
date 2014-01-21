@@ -83,7 +83,7 @@ def parse_username(username):
     user names into ones that have a chance of being found in the database
     """
     username = str(username)
-    username = username.decode('utf8')
+    username = username.decode('utf8', errors='ignore')
     stripped = username.strip()
     stripped = stripped.encode('utf8')
     # Capitalize the username according to the Mediawiki standard
