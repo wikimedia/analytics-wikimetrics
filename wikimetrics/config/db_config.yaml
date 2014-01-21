@@ -5,3 +5,4 @@ SQL_ECHO                        : False
 WIKIMETRICS_ENGINE_URL          : 'mysql://wikimetrics:wikimetrics@localhost/wikimetrics'
 MEDIAWIKI_ENGINE_URL_TEMPLATE   : 'mysql://wikimetrics:wikimetrics@localhost/{0}'
 DEBUG                           : True
+REVISION_TABLENAME              : 'revision_userindex'
