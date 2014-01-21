@@ -202,8 +202,9 @@ def auth_meta_mw(resp):
         finally:
             db_session.close()
     
-    except:
+    except Exception, e:
         flash('Access to this application was revoked. Please re-login!')
+        app.logger.exception(str(e))
         return redirect(url_for('login'))
     
     next_url = request.args.get('next') or url_for('index')
