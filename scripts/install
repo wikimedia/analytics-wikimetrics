@@ -1,3 +1,5 @@
+#!/bin/bash
+
 # installs dependencies
 
 # Need newer pip than comes with debian/ubuntu
