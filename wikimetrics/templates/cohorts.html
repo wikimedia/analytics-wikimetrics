@@ -7,7 +7,7 @@
     <a class="btn btn-primary btn-large" href="{{url_for('cohort_upload')}}">Upload Cohort</a>
     &nbsp;
     &nbsp;
-    <input type="text" class="search-query" placeholder="type and press enter to filter" data-bind="value: filter"/>
+    <input type="text" class="search-query" placeholder="type to filter" data-bind="value: filter, valueUpdate:'afterkeydown'"/>
 </div>
 <hr/>
 <div class="tabbable tabs-left">

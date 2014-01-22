@@ -7,7 +7,7 @@
         <div class="navbar-search pull-right">
             <a href="{{url_for('cohort_upload')}}">upload a new cohort</a>
             &nbsp;&nbsp;
-            <input type="text" class="search-query" placeholder="type and press enter to filter" data-bind="value: filter"/>
+            <input type="text" class="search-query" placeholder="type to filter" data-bind="value: filter, valueUpdate:'afterkeydown'"/>
         </div>
     </div>
     <div class="cohorts">
