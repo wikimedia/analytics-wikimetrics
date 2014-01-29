@@ -29,3 +29,7 @@ fi
 cd $wikimetrics_dir
 sudo $pip install -e .
 echo "*** installed dependencies"
+
+echo "WARNING: If your pip becomes broken as a result of this script, try the following:"
+echo "http://stackoverflow.com/questions/7446187/no-module-named-pkg-resources"
+echo "http://stackoverflow.com/questions/6200056/pip-broke-how-to-fix-distributionnotfound-error"
