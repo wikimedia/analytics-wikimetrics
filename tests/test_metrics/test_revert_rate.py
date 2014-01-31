@@ -4,6 +4,7 @@ from tests.fixtures import QueueDatabaseTest, DatabaseTest
 from wikimetrics.metrics import RevertRate, TimeseriesChoices
 from wikimetrics.models import Cohort, MetricReport
 
+
 class RevertRateTest(DatabaseTest):
 
     def setUp(self):
@@ -20,6 +21,7 @@ class RevertRateTest(DatabaseTest):
                 [2, 4, 5],  # User B reverts user A's edit #3 back to edit #2.
             ],
         )
+
     @nottest
     def test_single_revert(self):
         metric = RevertRate(
