@@ -80,6 +80,21 @@ class Database(object):
         self.mediawiki_sessionmakers = {}
         self.project_host_map = self.get_project_host_map(usecache=True)
     
+    def get_engine(self):
+        """
+        Create a sqlalchemy engine for the wikimetrics database.
+        
+        Returns:
+            new or cached sqlalchemy engine connected to the wikimetrics database.
+        """
+        if self.wikimetrics_engine is None:
+            self.wikimetrics_engine = create_engine(
+                self.config['WIKIMETRICS_ENGINE_URL'],
+                echo=self.config['SQL_ECHO'],
+            )
+        
+        return self.wikimetrics_engine
+    
     def get_session(self):
         """
         On the first run, instantiates the Wikimetrics session maker
@@ -89,18 +104,11 @@ class Database(object):
         Returns:
             new sqlalchemy session open to the wikimetrics database
         """
-        if not self.wikimetrics_sessionmaker:
-            self.wikimetrics_engine = create_engine(
-                self.config['WIKIMETRICS_ENGINE_URL'],
-                echo=self.config['SQL_ECHO'],
-            )
+        if self.wikimetrics_sessionmaker is None:
+            self.get_engine()
             # This import is necessary here so that
             # WikimetricsBase knows about all its children.
             import wikimetrics.models
-            self.WikimetricsBase.metadata.create_all(
-                self.wikimetrics_engine,
-                checkfirst=True
-            )
             self.wikimetrics_sessionmaker = sessionmaker(self.wikimetrics_engine)
         
         return self.wikimetrics_sessionmaker()

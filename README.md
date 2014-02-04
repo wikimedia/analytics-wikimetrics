@@ -16,13 +16,26 @@ $ cd wikimetrics
 $ sudo pip install -e .
 ````
 
-Now you need to set up your MySQL databases.  You just need empty databases because SQLAlchemy will create the tables it needs:
+Now you need to set up your MySQL databases.  We will first create empty databases and then populate them using alembic.
 
 ````
 $ sudo mysql -p < scripts/00_create_wikimetrics_db
 $ sudo mysql -p < scripts/01_create_enwiki_db
 $ sudo mysql -p < scripts/02_create_dewiki_db
 ````
+
+And finally, just upgrade the schema to the latest version:
+
+````
+$ alembic upgrade head
+````
+
+If the `alembic upgrade head` command gives you an error that tables already exist, that means you already had a wikimetrics database set up.  It's ok, we got you covered.  Just run the following script and re-run `alembic upgrade head`:
+
+````
+$ mysql -uwikimetrics -pwikimetrics < scripts/99_alembic_setup
+````
+
 
 Wikimetrics has over 90% unit test coverage.  We use Nose to write unit and integration tests to achieve this, and you should too.
 

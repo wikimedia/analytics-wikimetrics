@@ -14,3 +14,4 @@ celery-with-redis>=3.0
 PyYAML==3.10
 PyJWT==0.1.6
 python-dateutil==2.2
+alembic==0.6.3
