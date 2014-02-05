@@ -1,7 +1,8 @@
 from datetime import datetime
 from nose.tools import assert_true, assert_equal
-from tests.fixtures import QueueDatabaseTest, DatabaseTest
+from tests.fixtures import QueueDatabaseTest, DatabaseTest, mediawiki_project
 
+from wikimetrics.configurables import db
 from wikimetrics.metrics import NamespaceEdits, TimeseriesChoices
 from wikimetrics.models import Cohort, MetricReport
 
@@ -65,7 +66,7 @@ class NamespaceEditsFullTest(QueueDatabaseTest):
             start_date='2012-12-31 22:59:59',
             end_date='2013-01-01 12:00:00',
         )
-        report = MetricReport(metric, list(self.cohort), 'enwiki')
+        report = MetricReport(metric, list(self.cohort), mediawiki_project)
         results = report.task.delay(report).get()
         
         assert_true(results is not None)
@@ -77,7 +78,7 @@ class NamespaceEditsFullTest(QueueDatabaseTest):
             start_date='2013-05-01 00:00:00',
             end_date='2013-08-01 00:00:00',
         )
-        report = MetricReport(metric, list(self.cohort), 'enwiki')
+        report = MetricReport(metric, list(self.cohort), mediawiki_project)
         results = report.task.delay(report).get()
         
         assert_true(results is not None)
@@ -89,7 +90,7 @@ class NamespaceEditsFullTest(QueueDatabaseTest):
             start_date='2013-05-01 00:00:00',
             end_date='2013-08-01 00:00:00',
         )
-        report = MetricReport(metric, list(self.cohort), 'enwiki')
+        report = MetricReport(metric, list(self.cohort), mediawiki_project)
         results = report.task.delay(report).get()
         
         assert_true(results is not None)
@@ -101,7 +102,7 @@ class NamespaceEditsFullTest(QueueDatabaseTest):
             start_date='2012-12-31 22:59:59',
             end_date='2013-01-01 12:00:00',
         )
-        report = MetricReport(metric, list(self.cohort), 'enwiki')
+        report = MetricReport(metric, list(self.cohort), mediawiki_project)
         results = report.task.delay(report).get()
         
         assert_true(results is not None)
@@ -113,7 +114,7 @@ class NamespaceEditsFullTest(QueueDatabaseTest):
             start_date='2012-12-31 22:59:59',
             end_date='2013-01-01 12:00:00',
         )
-        report = MetricReport(metric, list(self.cohort), 'enwiki')
+        report = MetricReport(metric, list(self.cohort), mediawiki_project)
         results = report.task.delay(report).get()
         
         assert_true(results is not None)

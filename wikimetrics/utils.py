@@ -11,6 +11,8 @@ MEDIAWIKI_TIMESTAMP = '%Y%m%d%H%M%S'
 PRETTY_TIMESTAMP = '%Y-%m-%d %H:%M:%S'
 # This is used to mean that a result was censored in some way
 CENSORED = 'censored'
+# Unicode NULL
+UNICODE_NULL = u'\x00'
 
 
 def parse_date(date_string):

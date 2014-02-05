@@ -8,3 +8,14 @@ use wikimetrics;
  SELECT '492fe78451c6' as version_num
    FROM (SELECT count(*) count FROM alembic_version) as c
   WHERE c.count = 0;
+
+use wikimetrics_testing;
+
+ CREATE TABLE IF NOT EXISTS `alembic_version` (
+    `version_num` varchar(32) NOT NULL
+ ) ENGINE=InnoDB DEFAULT CHARSET=latin1;
+
+ INSERT INTO alembic_version (version_num)
+ SELECT '492fe78451c6' as version_num
+   FROM (SELECT count(*) count FROM alembic_version) as c
+  WHERE c.count = 0;

@@ -8,7 +8,7 @@ class AsyncTaskTest(QueueTest):
     
     def test_submit_task(self):
         metric = RandomMetric()
-        report = MetricReport(metric, [1, 2], 'enwiki')
+        report = MetricReport(metric, [1, 2], 'wiki')
         async_result = report.task.delay(report)
         
         # .get() blocks until task finishes executing

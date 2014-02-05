@@ -98,6 +98,8 @@ class Report(object):
     def __repr__(self):
         return '<Report("{0}")>'.format(self.persistent_id)
     
+    # TODO if this function needs to use the db session it should be passed on
+    # on method params not retrieved from a singleton
     def set_status(self, status, task_id=None):
         """
         helper function for updating database status after celery

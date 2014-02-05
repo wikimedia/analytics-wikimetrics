@@ -36,6 +36,8 @@ class ValidateCohort(object):
         """
         Parameters:
             cohort  : an existing cohort
+            config  : global config, we need to know
+                if we are on dev or testing to validate project name
         
         Instantiates with these properties:
             cohort_id               : id of an existing cohort with validated == False
@@ -202,13 +204,20 @@ class ValidateCohort(object):
 
 
 def normalize_project(project):
+    """
+    Decides whether the name of the project is a valid one
+    There are differences in db names in local setup versus vagrant setup
+    While local setup uses enwiki mediawiki vagrant uses wiki
+    We let 'wiki' be an acceptable name in development by injecting it into
+    the project_host_map returned by the database singleton, db
+    """
     project = project.strip().lower()
-    if project in db.project_host_map:
+    if project in db.get_project_host_map():
         return project
     else:
         # try adding wiki to end
         new_proj = project + 'wiki'
-        if new_proj not in db.project_host_map:
+        if new_proj not in db.get_project_host_map():
             return None
         else:
             return new_proj

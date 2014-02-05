@@ -10,7 +10,7 @@
 from sqlalchemy import func
 from wikimetrics.models import Revision, Page, Cohort, CohortUser, User, MediawikiUser
 #from wikimetrics.models.mediawiki import
-from tests.fixtures import DatabaseTest, DatabaseWithSurvivorCohortTest
+from tests.fixtures import DatabaseTest
 from tests.test_metrics.test_survivors import *
 #from wikimetrics.metrics import Survivors
 from wikimetrics.configurables import db

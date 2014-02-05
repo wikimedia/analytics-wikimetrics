@@ -2,6 +2,66 @@ import imp
 import os
 import yaml
 import subprocess
+# TODO configuration should not depend on testing tool
+# this is here to avoid some of this code being matched against nosetest regex
+from nose.tools import nottest
+
+
+def compose_connection_string(user, password, host, dbName):
+    # results in ParseResult(scheme='mysql', netloc='root:vagrant@localhost',
+    # path='/wiki', params='', query='', fragment='')
+    return 'mysql://' + user + ':' + password + '@' + host + '/' + dbName
+
+
+def parse_db_connection_string(urlConnectionString):
+    """
+    From a url like: mysql://wikimetrics:wikimetrics@localhost/wikimetrics
+    exracts user, password, host, dbName
+    """
+    from urlparse import urlparse
+    parsed = urlparse(urlConnectionString)
+    # results in
+    # ParseResult(scheme='mysql', netloc='root:vagrant@localhost',
+    # path='/wiki', params='', query='', fragment='')
+    netloc = parsed.netloc
+    user = netloc.split(':')[0]
+    password, host = netloc.split(':')[1].split('@')
+    dbName = parsed.path.split('/')[1]
+    return user, password, host, dbName
+
+
+@nottest
+def setup_testing_config(db_config):
+    """
+        Set global testing variables.
+        By convention testing dbs are development dbs with sufix '_testing'
+        we change url connection strings so tests run on testing databases
+        Note that wikimetrics user already exists, puppet has created it.
+    """
+    override_file = 'wikimetrics/config/test_config.yaml'
+    config_override = create_dict_from_text_config_file(override_file)
+    test_config = update_config_from_override(db_config, config_override)
+    
+    test_config['PROJECT_HOST_NAMES'] = get_project_host_names_local()
+    return test_config
+
+
+def get_project_host_names_local():
+    """"
+    In tests and local projectnames are hardcoded
+    """
+    return ['wiki', 'dewiki', 'enwiki']
+
+
+def update_config_from_override(default_config_dict, override_config_dict):
+    """
+    Update a given dictionary values with settings on other dictionary.
+    Used to override the configuration
+    """
+    for k in iter(default_config_dict):
+        if k in override_config_dict:
+            default_config_dict[k] = override_config_dict[k]
+    return default_config_dict
 
 
 # TODO: does not work in labs environment
@@ -37,11 +97,13 @@ def config_web(args):
     
     global app
     app = Flask('wikimetrics')
+    # TODO do we need this config to be created like an object instead of a dictionary?
     web_config = create_object_from_text_config_file(args.web_config)
+    #if args.override_config:
+        # override_config = create_object_from_text_config_file(args.override_config)
+        # TODO override one obj with other, can we use dict?
+    
     app.config.from_object(web_config)
-    if args.override_config:
-        web_config = create_object_from_text_config_file(args.override_config)
-        app.config.from_object(web_config)
     
     version, latest = get_wikimetrics_version()
     app.config['WIKIMETRICS_LATEST'] = latest
@@ -144,15 +206,40 @@ def config_web(args):
     oauth.remote_apps['meta_mw'] = meta_mw
 
 
+# TODO: look into making a single config object that has empty sections if
+# some roles are not used (or maybe dependency injection)
 def config_db(args):
+    """
+    Initializes the config object with what's passed in, further splits the config
+    to get a user,password, host and dbName
+    """
     from .database import Database
     
-    global db
-    db = Database()
-    db.config = create_dict_from_text_config_file(args.db_config)
+    db_config = create_dict_from_text_config_file(args.db_config)
     if args.override_config:
         config_override = create_dict_from_text_config_file(args.override_config)
-        db.config.__dict__.update(config_override)
+        db_config = update_config_from_override(db_config, config_override)
+    
+    global db
+    
+    user, password, host, db_name = parse_db_connection_string(
+        db_config['WIKIMETRICS_ENGINE_URL'])
+    db_config['WIKIMETRICS'] = {
+        'USER': user,
+        'PASSWORD': password,
+        'HOST': host,
+        'DBNAME': db_name,
+    }
+    
+    if db_config['DEBUG']:
+        # this means development really, rather than debug
+        # look if we are in testing
+        if args.override_config:
+            config_override = create_dict_from_text_config_file(args.override_config)
+            if config_override['TEST']:
+                db_config['PROJECT_HOST_NAMES'] = get_project_host_names_local()
+    
+    db = Database(db_config)
 
 
 def config_queue(args):
@@ -162,9 +249,10 @@ def config_queue(args):
     global queue
     queue = Celery('wikimetrics', include=['wikimetrics'])
     queue_config = create_dict_from_text_config_file(args.queue_config)
-    queue.config_from_object(queue_config)
     if args.override_config:
-        queue.config_from_object(args.override_config)
+        config_override = create_dict_from_text_config_file(args.override_config)
+        queue_config = update_config_from_override(queue_config, config_override)
+    queue.config_from_object(queue_config)
 
 
 def get_absolute_path():

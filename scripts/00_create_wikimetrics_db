@@ -1,5 +1,6 @@
-create database wikimetrics;
-create user wikimetrics IDENTIFIED BY 'wikimetrics';
-grant ALL on wikimetrics.* TO wikimetrics@'localhost';
+create database IF NOT EXISTS wikimetrics;
+create database IF NOT EXISTS wikimetrics_testing;
+-- grant will create user if it doesn't exists
+grant ALL on wikimetrics.* TO wikimetrics@'localhost' identified by 'wikimetrics';
+grant ALL on wikimetrics_testing.* TO wikimetrics@'localhost' identified by 'wikimetrics';
 SET PASSWORD FOR 'wikimetrics'@'localhost' = PASSWORD('wikimetrics');
-SET PASSWORD FOR 'wikimetrics'@'%' = PASSWORD('wikimetrics');

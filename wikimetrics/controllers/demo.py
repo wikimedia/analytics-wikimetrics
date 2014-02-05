@@ -66,8 +66,10 @@ if app.config['DEBUG']:
                 user_ids = db_session.query(WikiUser.mediawiki_userid).all()
         finally:
             db_session.close()
-        
-        report = MetricReport(RandomMetric(), user_ids, 'enwiki')
+        # note that this code runs only in development
+        # TODO, what about working with more than one project in development?
+        # need to translate from project to dbName
+        report = MetricReport(RandomMetric(), user_ids, 'wiki')
         #from nose.tools import set_trace; set_trace()
         res = report.task.delay(report).get()
         return str(res)
@@ -139,11 +141,11 @@ if app.config['DEBUG']:
         )
         
         # TODO: these users don't actually exist in the mediawiki databases, add them
-        wu1 = WikiUser(mediawiki_username='Dan', mediawiki_userid=1, project='enwiki')
-        wu2 = WikiUser(mediawiki_username='Evan', mediawiki_userid=2, project='enwiki')
-        wu3 = WikiUser(mediawiki_username='Andrew', mediawiki_userid=3, project='enwiki')
+        wu1 = WikiUser(mediawiki_username='Dan', mediawiki_userid=1, project='wiki')
+        wu2 = WikiUser(mediawiki_username='Evan', mediawiki_userid=2, project='wiki')
+        wu3 = WikiUser(mediawiki_username='Andrew', mediawiki_userid=3, project='wiki')
         wu4 = WikiUser(
-            mediawiki_username='Diederik', mediawiki_userid=4, project='enwiki'
+            mediawiki_username='Diederik', mediawiki_userid=4, project='wiki'
         )
         
         wu5 = WikiUser(mediawiki_username='Andrea', mediawiki_userid=5, project='dewiki')
@@ -153,41 +155,41 @@ if app.config['DEBUG']:
             mediawiki_username='Gabriele', mediawiki_userid=8, project='dewiki'
         )
         
-        wu9 = WikiUser(mediawiki_username='n/a', mediawiki_userid=9, project='enwiki')
-        wu10 = WikiUser(mediawiki_username='n/a', mediawiki_userid=10, project='enwiki')
-        wu11 = WikiUser(mediawiki_username='n/a', mediawiki_userid=11, project='enwiki')
+        wu9 = WikiUser(mediawiki_username='n/a', mediawiki_userid=9, project='wiki')
+        wu10 = WikiUser(mediawiki_username='n/a', mediawiki_userid=10, project='wiki')
+        wu11 = WikiUser(mediawiki_username='n/a', mediawiki_userid=11, project='wiki')
         
-        wu12 = WikiUser(mediawiki_username='n/a', mediawiki_userid=12, project='enwiki')
-        wu13 = WikiUser(mediawiki_username='n/a', mediawiki_userid=13, project='enwiki')
-        wu14 = WikiUser(mediawiki_username='n/a', mediawiki_userid=14, project='enwiki')
+        wu12 = WikiUser(mediawiki_username='n/a', mediawiki_userid=12, project='wiki')
+        wu13 = WikiUser(mediawiki_username='n/a', mediawiki_userid=13, project='wiki')
+        wu14 = WikiUser(mediawiki_username='n/a', mediawiki_userid=14, project='wiki')
         
-        wu15 = WikiUser(mediawiki_username='n/a', mediawiki_userid=15, project='enwiki')
-        wu16 = WikiUser(mediawiki_username='n/a', mediawiki_userid=16, project='enwiki')
-        wu17 = WikiUser(mediawiki_username='n/a', mediawiki_userid=17, project='enwiki')
+        wu15 = WikiUser(mediawiki_username='n/a', mediawiki_userid=15, project='wiki')
+        wu16 = WikiUser(mediawiki_username='n/a', mediawiki_userid=16, project='wiki')
+        wu17 = WikiUser(mediawiki_username='n/a', mediawiki_userid=17, project='wiki')
         
-        wu18 = WikiUser(mediawiki_username='n/a', mediawiki_userid=18, project='enwiki')
-        wu19 = WikiUser(mediawiki_username='n/a', mediawiki_userid=19, project='enwiki')
-        wu20 = WikiUser(mediawiki_username='n/a', mediawiki_userid=20, project='enwiki')
+        wu18 = WikiUser(mediawiki_username='n/a', mediawiki_userid=18, project='wiki')
+        wu19 = WikiUser(mediawiki_username='n/a', mediawiki_userid=19, project='wiki')
+        wu20 = WikiUser(mediawiki_username='n/a', mediawiki_userid=20, project='wiki')
         
-        wu21 = WikiUser(mediawiki_username='n/a', mediawiki_userid=21, project='enwiki')
-        wu22 = WikiUser(mediawiki_username='n/a', mediawiki_userid=22, project='enwiki')
-        wu23 = WikiUser(mediawiki_username='n/a', mediawiki_userid=23, project='enwiki')
+        wu21 = WikiUser(mediawiki_username='n/a', mediawiki_userid=21, project='wiki')
+        wu22 = WikiUser(mediawiki_username='n/a', mediawiki_userid=22, project='wiki')
+        wu23 = WikiUser(mediawiki_username='n/a', mediawiki_userid=23, project='wiki')
         
-        wu24 = WikiUser(mediawiki_username='n/a', mediawiki_userid=24, project='enwiki')
-        wu25 = WikiUser(mediawiki_username='n/a', mediawiki_userid=25, project='enwiki')
-        wu26 = WikiUser(mediawiki_username='n/a', mediawiki_userid=26, project='enwiki')
+        wu24 = WikiUser(mediawiki_username='n/a', mediawiki_userid=24, project='wiki')
+        wu25 = WikiUser(mediawiki_username='n/a', mediawiki_userid=25, project='wiki')
+        wu26 = WikiUser(mediawiki_username='n/a', mediawiki_userid=26, project='wiki')
         
-        wu27 = WikiUser(mediawiki_username='n/a', mediawiki_userid=27, project='enwiki')
-        wu28 = WikiUser(mediawiki_username='n/a', mediawiki_userid=28, project='enwiki')
-        wu29 = WikiUser(mediawiki_username='n/a', mediawiki_userid=29, project='enwiki')
+        wu27 = WikiUser(mediawiki_username='n/a', mediawiki_userid=27, project='wiki')
+        wu28 = WikiUser(mediawiki_username='n/a', mediawiki_userid=28, project='wiki')
+        wu29 = WikiUser(mediawiki_username='n/a', mediawiki_userid=29, project='wiki')
         
-        wu30 = WikiUser(mediawiki_username='n/a', mediawiki_userid=30, project='enwiki')
-        wu31 = WikiUser(mediawiki_username='n/a', mediawiki_userid=31, project='enwiki')
-        wu32 = WikiUser(mediawiki_username='n/a', mediawiki_userid=32, project='enwiki')
+        wu30 = WikiUser(mediawiki_username='n/a', mediawiki_userid=30, project='wiki')
+        wu31 = WikiUser(mediawiki_username='n/a', mediawiki_userid=31, project='wiki')
+        wu32 = WikiUser(mediawiki_username='n/a', mediawiki_userid=32, project='wiki')
         
-        wu33 = WikiUser(mediawiki_username='n/a', mediawiki_userid=33, project='enwiki')
-        wu34 = WikiUser(mediawiki_username='n/a', mediawiki_userid=34, project='enwiki')
-        wu35 = WikiUser(mediawiki_username='n/a', mediawiki_userid=35, project='enwiki')
+        wu33 = WikiUser(mediawiki_username='n/a', mediawiki_userid=33, project='wiki')
+        wu34 = WikiUser(mediawiki_username='n/a', mediawiki_userid=34, project='wiki')
+        wu35 = WikiUser(mediawiki_username='n/a', mediawiki_userid=35, project='wiki')
         
         db_sess.add_all([
             wu1, wu2, wu3, wu4, wu5, wu6, wu7, wu8, wu9, wu10, wu11, wu12,
@@ -250,35 +252,8 @@ if app.config['DEBUG']:
             current_user.email
         )
     
-    @app.route('/demo/create/survivors/')
-    def demo_add_survivors():
-        session = db.get_session()
-        user = session.query(User).filter_by(email=current_user.email).one()
-        
-        delete_my_cohorts(session)
-        
-        from tests.fixtures import DatabaseWithSurvivorCohortTest
-        st = DatabaseWithSurvivorCohortTest()
-        st.acquireDBHandles()
-        st.clearMediawiki()
-        st.createUsers()
-        st.createCohort()
-        st.updateSurvivorRegistrationData()
-        st.createPageForSurvivors()
-        st.createRevisionsForSurvivors()
-        
-        current_user_owns_demo = CohortUser(
-            user_id=user.id,
-            cohort_id=st.cohort.id,
-            role=CohortUserRole.OWNER,
-        )
-        session.add(current_user_owns_demo)
-        session.commit()
-        
-        return "Modified"
-    
     @app.route('/demo/create/fake-<string:project>-users/<int:n>')
-    def add_fake_enwiki_users(project, n):
+    def add_fake_wiki_users(project, n):
         session = db.get_mw_session(project)
         try:
             max_id = session.query(func.max(MediawikiUser.user_id)).one()[0] or 0

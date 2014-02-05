@@ -1,5 +1,5 @@
 from nose.tools import assert_equal, assert_true
-from tests.fixtures import WebTest
+from tests.fixtures import WebTest, mediawiki_project
 from wikimetrics.models import Cohort, CohortUser
 
 

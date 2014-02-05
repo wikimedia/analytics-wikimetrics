@@ -1,6 +1,7 @@
 import unittest
 from nose.tools import assert_equal, raises, assert_true, assert_false
-from tests.fixtures import WebTest, QueueDatabaseTest
+from wikimetrics.configurables import app
+from tests.fixtures import WebTest, QueueDatabaseTest, mediawiki_project
 from wikimetrics.controllers.forms import CohortUpload
 from wikimetrics.models import (
     MediawikiUser, Cohort, WikiUser, ValidateCohort, User,
@@ -15,8 +16,8 @@ class ValidateCohortTest(WebTest):
         assert_equal(normal, 'enwiki')
     
     def test_normalize_project_uppercase(self):
-        normal = normalize_project('ENWIKI')
-        assert_equal(normal, 'enwiki')
+        normal = normalize_project(mediawiki_project.upper())
+        assert_equal(normal, mediawiki_project)
     
     def test_normalize_project_nonexistent(self):
         normal = normalize_project('blah')
@@ -77,15 +78,16 @@ class ValidateCohortQueueTest(QueueDatabaseTest):
         self.owner_user_id = owner_user.id
     
     def test_small_cohort(self):
+
         cohort_upload = CohortUpload()
         cohort_upload.name.data = 'small_cohort'
-        cohort_upload.project.data = 'enwiki'
+        cohort_upload.project.data = mediawiki_project
         cohort_upload.records = [
             # two existing users
-            {'username': 'Editor test-specific-0', 'project': 'enwiki'},
-            {'username': 'Editor test-specific-1', 'project': 'enwiki'},
+            {'username': 'Editor test-specific-0', 'project': mediawiki_project},
+            {'username': 'Editor test-specific-1', 'project': mediawiki_project},
             # one invalid username
-            {'username': 'Nonexisting', 'project': 'enwiki'},
+            {'username': 'Nonexisting', 'project': mediawiki_project},
             # one user with invalid project
             {'username': 'Nonexisting2', 'project': 'Nonexisting'},
         ]
@@ -106,7 +108,7 @@ class ValidateCohortQueueTest(QueueDatabaseTest):
     def test_from_upload_exception(self):
         cohort_upload = CohortUpload()
         cohort_upload.name.data = 'small_cohort'
-        cohort_upload.project.data = 'enwiki'
+        cohort_upload.project.data = 'wiki'
         cohort_upload.records = [{'fake': 'dict'}]
         
         v = ValidateCohort.from_upload(cohort_upload, self.owner_user_id)

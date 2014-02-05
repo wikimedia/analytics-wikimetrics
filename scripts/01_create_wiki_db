@@ -1,0 +1,5 @@
+create database IF NOT EXISTS wiki;
+create database IF NOT EXISTS wiki_testing;
+grant ALL on wiki.* TO wikimetrics@'localhost';
+grant ALL on wiki_testing.* TO wikimetrics@'localhost';
+grant ALL on wiki_testing.* TO wikimetrics@'%';

@@ -1,4 +1,4 @@
-from nose.tools import assert_true, assert_equal
+from nose.tools import assert_true, assert_equal, assert_not_equal
 import celery
 from wikimetrics.models import (
     PersistentReport,
@@ -62,7 +62,7 @@ class TestMappings(DatabaseTest):
     # Mapping tests for mediawiki tables
     #***********
     def test_mediawiki_logging(self):
-        l = Logging(log_user_text='Reedy')
+        l = Logging(log_user_text='Reedy', log_user=self.editors[0].user_id)
         self.mwSession.add(l)
         self.mwSession.commit()
         row = self.mwSession.query(Logging).get(l.log_id)

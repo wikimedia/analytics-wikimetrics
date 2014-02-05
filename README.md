@@ -20,7 +20,7 @@ Now you need to set up your MySQL databases.  We will first create empty databas
 
 ````
 $ sudo mysql -p < scripts/00_create_wikimetrics_db
-$ sudo mysql -p < scripts/01_create_enwiki_db
+$ sudo mysql -p < scripts/01_create_wiki_db
 $ sudo mysql -p < scripts/02_create_dewiki_db
 ````
 

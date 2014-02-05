@@ -31,5 +31,4 @@ class UserTest(DatabaseTest):
         user = self.session.query(User).get(self.owner_user_id)
         user.authenticated = False
         self.session.commit()
-        
         assert_equal(user.is_anonymous(), True)

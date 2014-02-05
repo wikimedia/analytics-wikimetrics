@@ -1,4 +1,5 @@
 # for example:
 # scripts/test "tests/test_controllers/test_cohorts.py:CohortsControllerTest"
 # rm .coverage *.db
+# nosetest -s : do not capture all stdout
 find . -name *.pyc | xargs rm ; nosetests --cover-erase $1

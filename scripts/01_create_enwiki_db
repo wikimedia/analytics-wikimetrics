@@ -1,2 +1,0 @@
-create database enwiki;
-grant ALL on enwiki.* TO wikimetrics@'localhost';

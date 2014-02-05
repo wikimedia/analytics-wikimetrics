@@ -2,7 +2,7 @@ import json
 import time
 from StringIO import StringIO
 from nose.tools import assert_equal, assert_true, assert_false, raises, nottest
-
+from wikimetrics.configurables import app
 from tests.fixtures import WebTest
 from wikimetrics.models import (
     Cohort, CohortUser, CohortUserRole, ValidateCohort,
@@ -64,7 +64,6 @@ class CohortsControllerTest(WebTest):
     
     def test_detail_by_name_after_async_validate(self):
         self.helper_reset_validation()
-        
         validate_cohort = ValidateCohort(self.cohort)
         async_result = validate_cohort.task.delay(validate_cohort)
         self.cohort.validation_queue_key = async_result.task_id
@@ -110,7 +109,7 @@ class CohortsControllerTest(WebTest):
         assert_equal(json.loads(response.data), False)
     
     def test_validate_cohort_project_allowed(self):
-        response = self.app.get('/cohorts/validate/project?project=enwiki')
+        response = self.app.get('/cohorts/validate/project?project=wiki')
         
         assert_equal(response.status_code, 200)
         assert_equal(json.loads(response.data), True)
@@ -174,7 +173,7 @@ class CohortsControllerUploadTest(WebTest):
     def test_upload_taken_cohort_name(self):
         response = self.app.post('/cohorts/upload', data=dict(
             name=self.cohort.name,
-            project='enwiki',
+            project='wiki',
             csv='just has to be set to something for this test',
             validate_as_user_ids='True',
         ))
@@ -185,7 +184,7 @@ class CohortsControllerUploadTest(WebTest):
     def test_upload_works(self):
         response = self.app.post('/cohorts/upload', data=dict(
             name='new_cohort_name',
-            project='enwiki',
+            project='wiki',
             csv=(StringIO('actual validation tested elsewhere'), 'cohort.csv'),
             validate_as_user_ids='True',
         ))
@@ -195,7 +194,7 @@ class CohortsControllerUploadTest(WebTest):
     def test_upload_raises_exception(self):
         response = self.app.post('/cohorts/upload', data=dict(
             name='new_cohort_name',
-            project='enwiki',
+            project='wiki',
             csv='not a file',
             validate_as_user_ids='True',
         ))

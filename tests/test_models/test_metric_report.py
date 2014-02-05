@@ -25,7 +25,7 @@ class MetricReportTest(DatabaseTest):
                 self.editors[1].user_id,
                 self.editors[2].user_id,
             ],
-            'enwiki'
+            'wiki'
         )
         
         result = mr.run()
@@ -45,7 +45,7 @@ class MetricReportTest(DatabaseTest):
                 self.editors[1].user_id,
                 self.editors[2].user_id,
             ],
-            'enwiki'
+            'wiki'
         )
         
         assert_true(str(mr).find('MetricReport') >= 0)

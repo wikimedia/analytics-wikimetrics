@@ -1,6 +1,6 @@
 from sqlalchemy import TypeDecorator, Unicode, Interval
 from datetime import datetime
-from wikimetrics.utils import parse_date, format_date
+from wikimetrics.utils import parse_date, format_date, UNICODE_NULL
 
 __all__ = ['MediawikiTimestamp']
 
@@ -29,7 +29,9 @@ class MediawikiTimestamp(TypeDecorator):
     def process_result_value(self, value, dialect=None):
         """
         Convert a MediaWiki timestamp to a datetime object.
+        To unbundle we have to detect unicodestrings that are set as mysql defaults
+        they are not represented by singleton None
         """
-        if not value:
+        if not value or value == UNICODE_NULL * 14:
             return None
         return parse_date(value)

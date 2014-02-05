@@ -17,7 +17,7 @@ class MetricReport(ReportLeaf):
         self.metric = metric
         self.user_ids = list(user_ids)
         self.project = project
-    
+
     def run(self):
         session = db.get_mw_session(self.project)
         try:

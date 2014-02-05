@@ -175,7 +175,7 @@ def cohort_upload():
     
     return render_template(
         'csv_upload.html',
-        projects=json.dumps(sorted(db.project_host_map.keys())),
+        projects=json.dumps(sorted(db.get_project_host_map().keys())),
         form=form,
     )
 
@@ -201,7 +201,7 @@ def validate_cohort_name_allowed():
 @app.route('/cohorts/validate/project')
 def validate_cohort_project_allowed():
     project = request.args.get('project')
-    valid = project in db.project_host_map
+    valid = project in db.get_project_host_map()
     return json.dumps(valid)
 
 
@@ -212,6 +212,7 @@ def validate_cohort(cohort_id):
     try:
         cohort = Cohort.get_safely(session, current_user.id, by_id=cohort_id)
         name = cohort.name
+        # TODO we need some kind of global config that is not db specific
         vc = ValidateCohort(cohort)
         vc.task.delay(vc)
         return json_response(message='Validating cohort "{0}"'.format(name))

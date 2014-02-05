@@ -24,7 +24,7 @@ class DummyQueueTest(QueueDatabaseTest):
     
     def test_1(self):
         metric = RandomMetric()
-        report = MetricReport(metric, list(self.cohort), 'enwiki')
+        report = MetricReport(metric, list(self.cohort), 'wiki')
         results = report.task.delay(report).get()
         
         assert_true(results[results.keys()[0]] > 1000)
