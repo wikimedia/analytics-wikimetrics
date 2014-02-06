@@ -6,7 +6,7 @@ from wikimetrics.models.cohort import Cohort
 from wikimetrics.models.user import User
 from wikimetrics.models.cohort_user import CohortUser
 from wikimetrics.metrics import metric_classes
-from wikimetrics.utils import deduplicate
+from wikimetrics.utils import deduplicate, stringify
 from report import ReportNode
 from aggregate_report import AggregateReport
 from validate_report import ValidateReport
@@ -24,18 +24,44 @@ class RunReport(ReportNode):
     
     show_in_ui = False
     
-    def __init__(self, desired_responses, user_id=0, *args, **kwargs):
+    def __init__(self,
+                 desired_responses,
+                 user_id=0,
+                 recurrent=False,
+                 recurrent_parent_id=None):
         """
+        Parameters:
+            desired_responses   : list of dictionaries of the form:
+                cohort: the cohort to run a metric on
+                metric: the metric to run
+                aggregation: the aggregation options to use
+            user_id             : the user wishing to run this report
+            recurrent           : whether this report should recur daily
+            recurrent_parent_id : the parent PersistentReport.id for a recurrent run
+        """
+        super(RunReport, self).__init__(
+            user_id=user_id,
+            parameters=stringify({'responses': desired_responses}),
+            recurrent=recurrent,
+            recurrent_parent_id=recurrent_parent_id,
+        )
+        self.parse_request(desired_responses, recurrent_parent_id is None)
+    
+    def parse_request(self, desired_responses, validate_csrf):
+        """
+        Takes an array of configured metric+cohort pairs from the user that are to be run
+        as a report.  Validates and transforms these pairs into ReportNode children.
+        
         Parameters:
             desired_responses : list of dictionaries of the form:
                 cohort: the cohort to run a metric on
                 metric: the metric to run
                 aggregation: the aggregation options to use
+            validate_csrf     : whether to validate the csrf (set to false when recurring)
+        
+        Returns:
+            Nothing, but it prepares self.children for execution on celery
         """
-        super(RunReport, self).__init__(user_id=user_id, *args, **kwargs)
-        self.parse_request(desired_responses)
-    
-    def parse_request(self, desired_responses):
         children = []
         metric_names = []
         cohort_names = []
@@ -59,7 +85,7 @@ class RunReport(ReportNode):
             metric_names.append(metric.label)
             cohort_names.append(cohort.name)
             
-            validate_report = ValidateReport(metric, cohort)
+            validate_report = ValidateReport(metric, cohort, validate_csrf)
             if validate_report.valid():
                 # construct and start RunReport
                 output_child = AggregateReport(

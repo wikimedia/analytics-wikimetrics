@@ -73,6 +73,10 @@ $(document).ready(function(){
             ko.utils.arrayForEach(data, function(response){
                 delete response.metric.configure;
                 delete response.cohort.wikiusers;
+                delete response.tabId;
+                delete response.tabIdSelector;
+                delete response.metric.tabId;
+                delete response.metric.tabIdSelector;
             });
             data = JSON.stringify(data);
             

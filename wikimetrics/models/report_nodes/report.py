@@ -61,7 +61,9 @@ class Report(object):
                  queue_result_key=None,
                  children=None,
                  public=False,
-                 parameters='{}'):
+                 parameters='{}',
+                 recurrent=False,
+                 recurrent_parent_id=None):
         
         if children is None:
             children = []

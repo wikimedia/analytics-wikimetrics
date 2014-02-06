@@ -14,13 +14,16 @@ class ValidateReport(ReportLeaf):
     
     show_in_ui = False
     
-    def __init__(self, metric, cohort):
+    def __init__(self, metric, cohort, validate_csrf):
         """
         Parameters
-            metric  : an instance of a wikimetrics.metrics.metric.Metric
-            cohort  : an instance of a wikimetrics.models.cohort.Cohort
+            metric          : an instance of a wikimetrics.metrics.metric.Metric
+            cohort          : an instance of a wikimetrics.models.cohort.Cohort
+            validate_csrf   : whether the metric should validate its CSRF
         """
         super(ValidateReport, self).__init__(parameters=stringify(metric.data))
+        if validate_csrf is False:
+            metric.disable_csrf()
         self.metric_valid = metric.validate()
         self.cohort_valid = cohort.validated
         self.metric_label = metric.label
