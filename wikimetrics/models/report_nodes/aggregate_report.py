@@ -33,73 +33,66 @@ class AggregateReport(ReportNode):
     Whether or not to return these is controlled by parameters passed to the constructor.
     """
     
-    show_in_ui = True
+    show_in_ui = False
     
-    def __init__(
-        self,
-        cohort,
-        metric,
-        individual=False,
-        aggregate=True,
-        aggregate_sum=True,
-        aggregate_average=False,
-        aggregate_std_deviation=False,
-        *args,
-        **kwargs
-    ):
+    def __init__(self, metric, cohort, options, *args, **kwargs):
+        """
+        Parameters:
+            metric  : an instance of a Metric class
+            cohort  : a cohort fetched from the database
+            options : a dictionary including the following booleans:
+                individualResults
+                aggregateResults
+                aggregateSum
+                aggregateAverage
+                aggregateStandardDeviation
+        """
         super(AggregateReport, self).__init__(
-            parameters=stringify(metric.data),
             *args,
             **kwargs
         )
         
-        self.individual = individual
-        self.aggregate = aggregate
-        self.aggregate_sum = aggregate_sum
-        self.aggregate_average = aggregate_average
-        self.aggregate_std_deviation = aggregate_std_deviation
+        self.individual = options.get('individualResults', False)
+        self.aggregate = options.get('aggregateResults', True)
+        self.aggregate_sum = options.get('aggregateSum', True)
+        self.aggregate_average = options.get('aggregateAverage', False)
+        self.aggregate_std_deviation = options.get('aggregateStandardDeviation', False)
         
-        self.children = [MultiProjectMetricReport(
-            cohort,
-            metric,
-            name=self.name,
-        )]
+        self.children = [MultiProjectMetricReport(cohort, metric, *args, **kwargs)]
     
-    def finish(self, result_dicts):
+    def finish(self, child_results):
         aggregated_results = dict()
-        task_logger.info(str(result_dicts))
-        result_values = [res.values() for res in result_dicts]
-        child_results = [result for sublist in result_values for result in sublist]
+        task_logger.info(str(child_results))
+        results_by_user = child_results[0]
         
         if self.aggregate:
             if self.aggregate_sum:
                 aggregated_results[Aggregation.SUM] = self.calculate(
-                    child_results,
+                    results_by_user,
                     Aggregation.SUM
                 )
             if self.aggregate_average:
                 aggregated_results[Aggregation.AVG] = self.calculate(
-                    child_results,
+                    results_by_user,
                     Aggregation.AVG
                 )
             if self.aggregate_std_deviation:
                 if Aggregation.AVG not in aggregated_results:
-                    average = self.calculate(child_results, Aggregation.AVG)
+                    average = self.calculate(results_by_user, Aggregation.AVG)
                 else:
                     average = aggregated_results[Aggregation.AVG]
                 aggregated_results[Aggregation.STD] = self.calculate(
-                    child_results,
+                    results_by_user,
                     Aggregation.STD,
                     average=average
                 )
         
         if self.individual:
-            aggregated_results[Aggregation.IND] = child_results
+            aggregated_results[Aggregation.IND] = results_by_user
         
-        result = self.report_result(aggregated_results, child_results=result_dicts)
-        return result
+        return aggregated_results
     
-    def calculate(self, list_of_results, type_of_aggregate, average=None):
+    def calculate(self, results_by_user, type_of_aggregate, average=None):
         # TODO: terrible redo this
         """
         Calculates one type of aggregate by just iterating over the individual results
@@ -116,82 +109,81 @@ class AggregateReport(ReportNode):
         """
         aggregation = dict()
         helper = dict()
-        for results_by_user in list_of_results:
-            for user_id in results_by_user.keys():
-                for key in results_by_user[user_id]:
-                    # the CENSORED key indicates that this user has censored
-                    # results for this metric.  It is not aggregate-able
-                    if key == CENSORED:
-                        continue
+        for user_id in results_by_user.keys():
+            for key in results_by_user[user_id]:
+                # the CENSORED key indicates that this user has censored
+                # results for this metric.  It is not aggregate-able
+                if key == CENSORED:
+                    continue
+                
+                value = results_by_user[user_id][key]
+                value_is_not_censored = CENSORED not in results_by_user[user_id]\
+                    or results_by_user[user_id][CENSORED] != 1
+                
+                # handle timeseries aggregation
+                if isinstance(value, dict):
+                    if key not in aggregation:
+                        aggregation[key] = OrderedDict()
+                        helper[key] = dict()
                     
-                    value = results_by_user[user_id][key]
-                    value_is_not_censored = CENSORED not in results_by_user[user_id]\
-                        or results_by_user[user_id][CENSORED] != 1
-                    
-                    # handle timeseries aggregation
-                    if isinstance(value, dict):
-                        if key not in aggregation:
-                            aggregation[key] = OrderedDict()
-                            helper[key] = dict()
+                    for subkey in value:
+                        if subkey not in aggregation[key]:
+                            aggregation[key][subkey] = 0
+                            helper[key][subkey] = dict()
+                            helper[key][subkey]['sum'] = Decimal(0.0)
+                            helper[key][subkey]['square_diffs'] = Decimal(0.0)
+                            helper[key][subkey]['count'] = 0
                         
-                        for subkey in value:
-                            if subkey not in aggregation[key]:
-                                aggregation[key][subkey] = 0
-                                helper[key][subkey] = dict()
-                                helper[key][subkey]['sum'] = Decimal(0.0)
-                                helper[key][subkey]['square_diffs'] = Decimal(0.0)
-                                helper[key][subkey]['count'] = 0
-                            
-                            if value_is_not_censored and not value[subkey] is None:
-                                helper[key][subkey]['sum'] += Decimal(value[subkey])
-                                helper[key][subkey]['count'] += 1
-                                if type_of_aggregate == Aggregation.STD:
-                                    diff = Decimal(value[subkey]) - average[key][subkey]
-                                    helper[key][subkey]['square_diffs'] += Decimal(
-                                        pow(diff, 2)
-                                    )
-                            
-                            if type_of_aggregate == Aggregation.SUM:
-                                aggregation[key][subkey] = r(helper[key][subkey]['sum'])
-                            elif type_of_aggregate == Aggregation.AVG:
-                                aggregation[key][subkey] = r(safe_average(
-                                    helper[key][subkey]['sum'],
-                                    helper[key][subkey]['count']
-                                ))
-                            elif type_of_aggregate == Aggregation.STD:
-                                aggregation[key][subkey] = r(sqrt(safe_average(
-                                    helper[key][subkey]['square_diffs'],
-                                    helper[key][subkey]['count']
-                                )))
-                    
-                    # handle normal aggregation
-                    else:
-                        if key not in aggregation:
-                            aggregation[key] = 0
-                            helper[key] = dict()
-                            helper[key]['sum'] = Decimal(0.0)
-                            helper[key]['square_diffs'] = Decimal(0.0)
-                            helper[key]['count'] = 0
-                        
-                        if value_is_not_censored and value is not None:
-                            helper[key]['sum'] += Decimal(value)
-                            helper[key]['count'] += 1
+                        if value_is_not_censored and not value[subkey] is None:
+                            helper[key][subkey]['sum'] += Decimal(value[subkey])
+                            helper[key][subkey]['count'] += 1
                             if type_of_aggregate == Aggregation.STD:
-                                diff = Decimal(value) - average[key]
-                                helper[key]['square_diffs'] += Decimal(pow(diff, 2))
+                                diff = Decimal(value[subkey]) - average[key][subkey]
+                                helper[key][subkey]['square_diffs'] += Decimal(
+                                    pow(diff, 2)
+                                )
                         
                         if type_of_aggregate == Aggregation.SUM:
-                            aggregation[key] = r(helper[key]['sum'])
+                            aggregation[key][subkey] = r(helper[key][subkey]['sum'])
                         elif type_of_aggregate == Aggregation.AVG:
-                            aggregation[key] = r(safe_average(
-                                helper[key]['sum'],
-                                helper[key]['count']
+                            aggregation[key][subkey] = r(safe_average(
+                                helper[key][subkey]['sum'],
+                                helper[key][subkey]['count']
                             ))
                         elif type_of_aggregate == Aggregation.STD:
-                            aggregation[key] = r(sqrt(safe_average(
-                                helper[key]['square_diffs'],
-                                helper[key]['count']
+                            aggregation[key][subkey] = r(sqrt(safe_average(
+                                helper[key][subkey]['square_diffs'],
+                                helper[key][subkey]['count']
                             )))
+                
+                # handle normal aggregation
+                else:
+                    if key not in aggregation:
+                        aggregation[key] = 0
+                        helper[key] = dict()
+                        helper[key]['sum'] = Decimal(0.0)
+                        helper[key]['square_diffs'] = Decimal(0.0)
+                        helper[key]['count'] = 0
+                    
+                    if value_is_not_censored and value is not None:
+                        helper[key]['sum'] += Decimal(value)
+                        helper[key]['count'] += 1
+                        if type_of_aggregate == Aggregation.STD:
+                            diff = Decimal(value) - average[key]
+                            helper[key]['square_diffs'] += Decimal(pow(diff, 2))
+                    
+                    if type_of_aggregate == Aggregation.SUM:
+                        aggregation[key] = r(helper[key]['sum'])
+                    elif type_of_aggregate == Aggregation.AVG:
+                        aggregation[key] = r(safe_average(
+                            helper[key]['sum'],
+                            helper[key]['count']
+                        ))
+                    elif type_of_aggregate == Aggregation.STD:
+                        aggregation[key] = r(sqrt(safe_average(
+                            helper[key]['square_diffs'],
+                            helper[key]['count']
+                        )))
         
         return aggregation
     

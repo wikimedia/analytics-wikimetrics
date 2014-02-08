@@ -1,8 +1,7 @@
 import itertools
 from operator import itemgetter
 from sqlalchemy import Column, Integer, Boolean, DateTime, String, func
-
-from wikimetrics.utils import Unauthorized
+from wikimetrics.exceptions import Unauthorized
 from wikimetrics.configurables import db
 from wikiuser import WikiUser
 from cohort_wikiuser import CohortWikiUser
@@ -55,6 +54,25 @@ class Cohort(db.WikimetricsBase):
         finally:
             db_session.close()
         return (r.mediawiki_userid for r in wikiusers)
+    
+    def __len__(self):
+        """
+        NOTE: this can be different than the length of the result of __iter__,
+        because database changes might occur in between calls.  So any code that
+        depends on that not being the case *may* fail in unexpected and wild ways.
+        
+        Returns:
+            the number of users in this cohort
+        """
+        db_session = db.get_session()
+        try:
+            return db_session.query(func.count(CohortWikiUser.id)) \
+                .join(WikiUser) \
+                .filter(CohortWikiUser.cohort_id == self.id) \
+                .filter(WikiUser.valid) \
+                .one()[0]
+        finally:
+            db_session.close()
     
     def group_by_project(self):
         """

@@ -1,3 +1,4 @@
+/*global $:false */
 var site = {
     handleWith: function(callback){
         return function(response){
@@ -43,7 +44,7 @@ var site = {
         if (!site.messageTemplate){
             site.messageTemplate = $('.messageTemplate').html();
         }
-        html = site.messageTemplate
+        var html = site.messageTemplate
             .replace('##message##', message)
             .replace(/##category##/g, category)
             .replace('##punctuation##', category !== 'info' ? '!' : '');
@@ -67,6 +68,31 @@ var site = {
         return $('li.text-error').length > 0;
     },
     
+    /**
+    * Make use of this function to throttle your ajax pulls
+    * when tab is not visible to the user
+    * See an example on reportList.
+    **/
+    isVisible: function() {
+        if (document.visibilityState){
+            if(document.visibilityState === 'visible') {
+                return true;
+            } else {
+                return false;
+            }
+        }
+    },
+    
+    refreshEvery: 5,
+    getRefreshRate: function() {
+        /* if not visible refresh rate is lower */
+        var rate = site.refreshEvery; /* enter seconds, this will be converted to ms*/
+        if (!site.isVisible()){
+            rate = rate * 10;
+        }
+        return rate*1000;
+    },
+    
     // ***********************************************************
     // Data population - usually done with something like Sammy JS
     // ***********************************************************
@@ -78,7 +104,7 @@ var site = {
             .fail(site.failure);
     },
     
-    populateMetrics: function(viewModel){
+    populateMetrics: function(viewModel){ 
         $.get('/metrics/list/')
             .done(site.handleWith(function(data){
                 viewModel.metrics(data.metrics);
@@ -89,22 +115,22 @@ var site = {
     populateReports: function(viewModel){
         $.get('/reports/list/')
             .done(site.handleWith(function(data){
-                reports = viewModel.reports();
-                reportsDict = {};
-                reports.forEach(function(report){
-                    reportsDict[report.id] = report;
-                });
-                data.reports.forEach(function(report){
-                    report.public = ko.observable(report.public);
-                });
-                data.reports.forEach(function(report){
-                    if (reportsDict[report.id] !== undefined && report.status === reportsDict[report.id].status){
-                        return true;
-                    }
-                    // if there's a difference, just replace the whole thing
+                //TODO this is a circular dependecy, reports depends on 
+                // list and list uses reports. this function
+                // should reside on reportList
+                
+                var reportsStr = JSON.stringify(data.reports);
+                var change = !viewModel.previousReportData || viewModel.previousReportData != reportsStr;
+                if (change){
+                    // clone the data so we don't change viewModel.previousReportData
+                    data.reports.forEach(function(report){
+                        report.public = ko.observable(report.public);
+                        report.success = report.status === 'SUCCESS';
+                        report.publicResult = '/static/public/' + report.id + '.json';
+                    });
                     viewModel.reports(data.reports);
-                    return false;
-                });
+                }
+                viewModel.previousReportData = reportsStr;
             }))
             .fail(site.failure);
     },

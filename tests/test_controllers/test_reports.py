@@ -6,11 +6,24 @@ import os.path
 from nose.tools import assert_true, assert_equal, assert_false
 from tests.fixtures import WebTest
 from wikimetrics.models import PersistentReport
+from wikimetrics.api import PublicReportFileManager
 from wikimetrics.controllers.reports import (
     get_celery_task,
-    get_celery_task_result,
-    get_saved_report_path
+    get_celery_task_result
 )
+from mock import Mock, MagicMock
+from contextlib import contextmanager
+from flask import appcontext_pushed
+from flask import g
+from wikimetrics.configurables import app
+
+
+@contextmanager
+def file_manager_set(app, file_manager):
+    def handler(sender, **kwargs):
+        g.file_manager = file_manager
+    with appcontext_pushed.connected_to(handler, app):
+        yield
 
 
 def filterStatus(collection, status):
@@ -59,6 +72,7 @@ class ReportsControllerTest(WebTest):
             'name': 'Edits - test',
             'cohort': {
                 'id': self.cohort.id,
+                'name': self.cohort.name,
             },
             'metric': {
                 'name': 'NamespaceEdits',
@@ -74,7 +88,7 @@ class ReportsControllerTest(WebTest):
         }]
         json_to_post = json.dumps(desired_responses)
         
-        response = self.app.post('/reports/create/', data=dict(
+        response = self.client.post('/reports/create/', data=dict(
             responses=json_to_post
         ))
         assert_equal(response.status_code, 200)
@@ -84,7 +98,7 @@ class ReportsControllerTest(WebTest):
         # Wait a second for the task to get processed
         time.sleep(1)
         
-        response = self.app.get('/reports/list/')
+        response = self.client.get('/reports/list/')
         parsed = json.loads(response.data)
         result_key = parsed['reports'][-1]['result_key']
         task, report = get_celery_task(result_key)
@@ -95,35 +109,26 @@ class ReportsControllerTest(WebTest):
         assert_true(result is not None)
         
         # Check the status via get
-        response = self.app.get('/reports/status/{0}'.format(result_key))
+        response = self.client.get('/reports/status/{0}'.format(result_key))
         assert_true(response.data.find('SUCCESS') >= 0)
         
         # Check the csv result
-        response = self.app.get('/reports/result/{0}.csv'.format(result_key))
+        response = self.client.get('/reports/result/{0}.csv'.format(result_key))
         assert_true(response.data.find('Average') >= 0)
         
         # Check the json result
-        response = self.app.get('/reports/result/{0}.json'.format(result_key))
+        response = self.client.get('/reports/result/{0}.json'.format(result_key))
         assert_true(response.data.find('Average') >= 0)
-        
-        # Purposefully change the report status to make sure update_status works
-        report.status = celery.states.STARTED
-        self.session.add(report)
-        self.session.commit()
-        report_new = self.session.query(PersistentReport).get(report.id)
-        self.session.expunge(report_new)
-        report_new.update_status()
-        assert_equal(report_new.status, celery.states.SUCCESS)
     
     def test_index(self):
-        response = self.app.get('/reports/', follow_redirects=True)
+        response = self.client.get('/reports/', follow_redirects=True)
         assert_true(
             response._status_code == 200,
             '/reports should get the list of reports for the current user'
         )
     
     def test_list_started(self):
-        response = self.app.get('/reports/list', follow_redirects=True)
+        response = self.client.get('/reports/list', follow_redirects=True)
         parsed = json.loads(response.data)
         assert_equal(
             len(filterStatus(parsed['reports'], celery.states.STARTED)),
@@ -133,7 +138,7 @@ class ReportsControllerTest(WebTest):
         )
     
     def test_list_pending(self):
-        response = self.app.get('/reports/list', follow_redirects=True)
+        response = self.client.get('/reports/list', follow_redirects=True)
         parsed = json.loads(response.data)
         assert_equal(
             len(filterStatus(parsed['reports'], celery.states.PENDING)),
@@ -143,7 +148,7 @@ class ReportsControllerTest(WebTest):
         )
     
     def test_list_success(self):
-        response = self.app.get('/reports/list/')
+        response = self.client.get('/reports/list/')
         parsed = json.loads(response.data)
         assert_equal(
             len(filterStatus(parsed['reports'], celery.states.SUCCESS)),
@@ -153,16 +158,16 @@ class ReportsControllerTest(WebTest):
         )
     
     def test_report_request_get(self):
-        response = self.app.get('/reports/create/')
+        response = self.client.get('/reports/create/')
         assert_equal(response.status_code, 200)
         assert_true(response.data.find('Create Analysis Report') >= 0)
     
     def test_report_result_csv_error(self):
-        response = self.app.get('/reports/result/blah.csv')
+        response = self.client.get('/reports/result/blah.csv')
         assert_true(response.data.find('isError') >= 0)
     
     def test_report_result_json_error(self):
-        response = self.app.get('/reports/result/blah.json')
+        response = self.client.get('/reports/result/blah.json')
         assert_true(response.data.find('isError') >= 0)
     
     def test_report_result_average_only_csv(self):
@@ -171,6 +176,7 @@ class ReportsControllerTest(WebTest):
             'name': 'Edits - test',
             'cohort': {
                 'id': self.cohort.id,
+                'name': self.cohort.name,
             },
             'metric': {
                 'name': 'NamespaceEdits',
@@ -186,7 +192,7 @@ class ReportsControllerTest(WebTest):
         }]
         json_to_post = json.dumps(desired_responses)
         
-        response = self.app.post('/reports/create/', data=dict(
+        response = self.client.post('/reports/create/', data=dict(
             responses=json_to_post
         ))
         
@@ -194,22 +200,23 @@ class ReportsControllerTest(WebTest):
         time.sleep(1)
         
         # Check that the task has been created
-        response = self.app.get('/reports/list/')
+        response = self.client.get('/reports/list/')
         parsed = json.loads(response.data)
         result_key = parsed['reports'][-1]['result_key']
         task, report = get_celery_task(result_key)
         
         # Check the csv result
-        response = self.app.get('/reports/result/{0}.csv'.format(result_key))
+        response = self.client.get('/reports/result/{0}.csv'.format(result_key))
         assert_true(response.data.find('Average,,2.0') >= 0)
-
+        
         # Testing to see if the parameters are also in the CSV
         # (related to Mingle 1089)
         assert_true(response.data.find('parameters') >= 0)
         assert_true(response.data.find('start_date') >= 0)
         assert_true(response.data.find('end_date') >= 0)
         assert_true(response.data.find('namespaces') >= 0)
-        assert_true(response.data.find('metric/cohort') >= 0)
+        cohort_size = 'Cohort Size,{0}'.format(len(self.cohort))
+        assert_true(response.data.find(cohort_size) >= 0)
     
     def test_report_result_sum_only_csv(self):
         # Make the request
@@ -217,6 +224,7 @@ class ReportsControllerTest(WebTest):
             'name': 'Edits - test',
             'cohort': {
                 'id': self.cohort.id,
+                'name' : self.cohort.name,
             },
             'metric': {
                 'name': 'NamespaceEdits',
@@ -232,7 +240,7 @@ class ReportsControllerTest(WebTest):
         }]
         json_to_post = json.dumps(desired_responses)
         
-        response = self.app.post('/reports/create/', data=dict(
+        response = self.client.post('/reports/create/', data=dict(
             responses=json_to_post
         ))
         
@@ -240,13 +248,13 @@ class ReportsControllerTest(WebTest):
         time.sleep(1)
         
         # Check that the task has been created
-        response = self.app.get('/reports/list/')
+        response = self.client.get('/reports/list/')
         parsed = json.loads(response.data)
         result_key = parsed['reports'][-1]['result_key']
         task, report = get_celery_task(result_key)
         
         # Check the csv result
-        response = self.app.get('/reports/result/{0}.csv'.format(result_key))
+        response = self.client.get('/reports/result/{0}.csv'.format(result_key))
         assert_true(response.data.find('Sum,,8.0') >= 0)
     
     def test_report_result_std_dev_only_csv(self):
@@ -255,6 +263,7 @@ class ReportsControllerTest(WebTest):
             'name': 'Edits - test',
             'cohort': {
                 'id': self.cohort.id,
+                'name': self.cohort.name,
             },
             'metric': {
                 'name': 'NamespaceEdits',
@@ -270,7 +279,7 @@ class ReportsControllerTest(WebTest):
         }]
         json_to_post = json.dumps(desired_responses)
         
-        response = self.app.post('/reports/create/', data=dict(
+        response = self.client.post('/reports/create/', data=dict(
             responses=json_to_post
         ))
         
@@ -278,74 +287,76 @@ class ReportsControllerTest(WebTest):
         time.sleep(1)
         
         # Check that the task has been created
-        response = self.app.get('/reports/list/')
+        response = self.client.get('/reports/list/')
         parsed = json.loads(response.data)
         result_key = parsed['reports'][-1]['result_key']
         task, report = get_celery_task(result_key)
         
         # Check the csv result
-        response = self.app.get('/reports/result/{0}.csv'.format(result_key))
+        response = self.client.get('/reports/result/{0}.csv'.format(result_key))
         assert_true(response.data.find('Standard Deviation') >= 0)
-
+    
     def test_save_public_report(self):
-        # Make the request
-        desired_responses = [{
-            'name': 'Edits - test',
-            'cohort': {
-                'id': self.cohort.id,
-            },
-            'metric': {
-                'name': 'NamespaceEdits',
-                'timeseries': 'month',
-                'namespaces': [0, 1, 2],
-                'start_date': '2013-01-01 00:00:00',
-                'end_date': '2013-05-01 00:00:00',
-                'individualResults': True,
-                'aggregateResults': True,
-                'aggregateSum': False,
-                'aggregateAverage': True,
-                'aggregateStandardDeviation': False,
-            },
-        }]
-        json_to_post = json.dumps(desired_responses)
+        fake_path = "fake_path"
+        file_manager = PublicReportFileManager(self.logger, '/some/fake/absolute/path')
+        file_manager.write_data = Mock()
+        file_manager.remove_file = Mock()
+        file_manager.get_public_report_path = MagicMock(return_value=fake_path)
 
-        response = self.app.post('/reports/create/', data=dict(
-            responses=json_to_post
-        ))
+        with file_manager_set(app, file_manager):
+        
+            desired_responses = [{
+                'name': 'Edits - test',
+                'cohort': {
+                    'id': self.cohort.id,
+                    'name': self.cohort.name,
+                },
+                'metric': {
+                    'name': 'NamespaceEdits',
+                    'timeseries': 'month',
+                    'namespaces': [0, 1, 2],
+                    'start_date': '2013-01-01 00:00:00',
+                    'end_date': '2013-05-01 00:00:00',
+                    'individualResults': True,
+                    'aggregateResults': True,
+                    'aggregateSum': False,
+                    'aggregateAverage': True,
+                    'aggregateStandardDeviation': False,
+                },
+            }]
+            json_to_post = json.dumps(desired_responses)
 
-        # Wait a second for the task to get processed
-        time.sleep(1)
+            response = self.client.post('/reports/create/', data=dict(
+                responses=json_to_post
+            ))
 
-        # Check that the task has been created
-        response = self.app.get('/reports/list/')
-        parsed = json.loads(response.data)
-        result_key = parsed['reports'][-1]['result_key']
-        task, report = get_celery_task(result_key)
+            # Wait a second for the task to get processed
+            time.sleep(1)
 
-        # Check if the file already exists on the local file system, and
-        # remove it if necessary
-        path = get_saved_report_path(report.id)
-        if os.path.isfile(path):
-            os.remove(path)
-
-        # Make the report publically accessible (save it to static/public)
-        response = self.app.post('/reports/save/{}'.format(report.id))
-        assert_true(response.status_code == 200)
-
-        # Check that the file exists on the local file system
-        assert_true(os.path.isfile(path))
-
-        # Now make the report private (remove it from static/public)
-        response = self.app.post('/reports/remove/{}'.format(report.id))
-        assert_true(response.status_code == 200)
-        assert_false(os.path.isfile(path))
+            # Check that the task has been created
+            response = self.client.get('/reports/list/')
+            parsed = json.loads(response.data)
+            result_key = parsed['reports'][-1]['result_key']
+            task, report = get_celery_task(result_key)
+            
+            # Make the report publically accessible (save it to static/public)
+            response = self.client.post('/reports/set-public/{}'.format(report.id))
+            assert_true(response.status_code == 200)
+            assert_true(file_manager.write_data.call_count, 1)
+         
+            # Now make the report private (remove it from static/public)
+            response = self.client.post('/reports/unset-public/{}'.format(report.id))
+            assert_true(response.status_code == 200)
+            file_manager.remove_file.assert_called_with(fake_path)
+            assert_true(file_manager.remove_file.call_count, 1)
 
     def test_report_result_timeseries_csv(self):
-        # Make the request
+        
         desired_responses = [{
             'name': 'Edits - test',
             'cohort': {
                 'id': self.cohort.id,
+                'name': self.cohort.name,
             },
             'metric': {
                 'name': 'NamespaceEdits',
@@ -361,22 +372,40 @@ class ReportsControllerTest(WebTest):
             },
         }]
         json_to_post = json.dumps(desired_responses)
-        
-        response = self.app.post('/reports/create/', data=dict(
+    
+        response = self.client.post('/reports/create/', data=dict(
             responses=json_to_post
         ))
         
         # Wait a second for the task to get processed
         time.sleep(1)
-        
+    
         # Check that the task has been created
-        response = self.app.get('/reports/list/')
+        response = self.client.get('/reports/list/')
         parsed = json.loads(response.data)
         result_key = parsed['reports'][-1]['result_key']
         task, report = get_celery_task(result_key)
-        
+    
         # Check the csv result
-        response = self.app.get('/reports/result/{0}.csv'.format(result_key))
+        response = self.client.get('/reports/result/{0}.csv'.format(result_key))
+    
+        '''
+        TODO
+        csv format now looks like:
+        Cohort,test-specific-cohort,,,,,
+        Cohort Size,4,,,,,
+        Created On,2014-03-14 17:26:55,,,,,
+        Metric,NamespaceEdits,,,,,
+        Metric_aggregateAverage,True,,,,,
+        Metric_aggregateResults,True,,,,,
+        Metric_aggregateStandardDeviation,False,,,,,
+        Metric_aggregateSum,False,,,,,
+        Metric_end_date,2013-05-01 00:00:00,,,,,
+        Metric_individualResults,True,,,,,
+        Metric_namespaces,"[0, 1, 2]",,,,,
+        Metric_start_date,2013-01-01 00:00:00,,,,,
+        Metric_timeseries,month,,,,,
+        '''
         assert_true(response.data.find(
             'user_id,user_name,submetric,'
             '2013-01-01 00:00:00,2013-02-01 00:00:00,'
@@ -393,13 +422,14 @@ class ReportsControllerTest(WebTest):
         assert_true(response.data.find(
             'Average,,edits,0.5000,1.0000,0.5000,0.0000'
         ) >= 0)
-
+    
         # Testing to see if the parameters are also in the CSV
         assert_true(response.data.find('parameters') >= 0)
         assert_true(response.data.find('start_date') >= 0)
         assert_true(response.data.find('end_date') >= 0)
         assert_true(response.data.find('namespaces') >= 0)
-        assert_true(response.data.find('metric/cohort') >= 0)
+        cohort_size = 'Cohort Size,{0}'.format(len(self.cohort))
+        assert_true(response.data.find(cohort_size) >= 0)
 
 
 class BasicTests(unittest.TestCase):
@@ -425,7 +455,7 @@ class BasicTests(unittest.TestCase):
 class MockTask(object):
     def __init__(self, invalid):
         self.invalid = invalid
-        
+    
     def get(self):
         if self.invalid:
             return 'invalid task result'

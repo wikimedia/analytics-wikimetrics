@@ -7,6 +7,11 @@ from wikimetrics.utils import (
 )
 from nose.tools import nottest
 
+# needed for mock logger
+from mock import Mock
+from logging import RootLogger, getLogger
+
+
 __all__ = [
     'DatabaseTest',
     'QueueTest',
@@ -67,10 +72,10 @@ class DatabaseTest(unittest.TestCase):
              MUST decorate them as @nottest otherwise they will execute
              as part of test runs
     """
-
+    
     def runTest(self):
         pass
-
+    
     @nottest
     def create_test_cohort(
         self,
@@ -93,7 +98,7 @@ class DatabaseTest(unittest.TestCase):
         Creates a page, editors with specified registration dates, and a number of
         revisions with specified timestamps for each of those editors.
         NOTE: the engine.execute syntax is used for huge performance gains over ORM
-
+        
         Parameters
             name                    : a unique name to append to everything
             editor_count            : count of editors we want in this cohort
@@ -125,7 +130,7 @@ class DatabaseTest(unittest.TestCase):
             owner_user_id           : record in the User table that owns this cohort
             page_touched            : required for Page creation, usually default is ok
             user_email_token_expires: required for User creation, usually default is ok
-
+        
         Returns
             Nothing but creates the following, to be accessed in a test:
               self.cohort       : owned by web_test_user, contains self.editors
@@ -143,22 +148,22 @@ class DatabaseTest(unittest.TestCase):
             page_namespaces = []
         if page_creator_index is None:
             page_creator_index = []
-
+        
         if type(revision_timestamps) is int:
             revision_timestamps = [
                 [revision_timestamps] * revisions_per_editor
             ] * editor_count
-
+        
         if type(revision_lengths) is int:
             revision_lengths = [
                 [revision_lengths] * revisions_per_editor
             ] * editor_count
-
+        
         if type(user_registrations) is int:
             user_registrations = [user_registrations] * editor_count
-
+        
         self.project = mediawiki_project
-
+        
         self.cohort = Cohort(
             name='{0}-cohort'.format(name),
             enabled=True,
@@ -167,12 +172,12 @@ class DatabaseTest(unittest.TestCase):
         )
         self.session.add(self.cohort)
         self.session.commit()
-
+        
         self.page = Page(page_namespace=0, page_title='{0}-page'.format(name),
                          page_touched=page_touched)
         self.mwSession.add(self.page)
         self.mwSession.commit()
-
+        
         self.mwSession.bind.engine.execute(
             MediawikiUser.__table__.insert(), [
                 {
@@ -214,7 +219,7 @@ class DatabaseTest(unittest.TestCase):
             ]
         )
         self.session.commit()
-
+        
         self.mwSession.bind.engine.execute(
             Revision.__table__.insert(), [
                 {
@@ -233,7 +238,7 @@ class DatabaseTest(unittest.TestCase):
             .filter(Revision.rev_page == self.page.page_id)\
             .order_by(Revision.rev_id)\
             .all()
-
+        
         # add rev_parent_id chain in chronological order
         real_revisions = filter(lambda r: r.rev_timestamp, self.revisions)
         ordered_revisions = sorted(real_revisions, key=lambda r: r.rev_timestamp)
@@ -242,23 +247,23 @@ class DatabaseTest(unittest.TestCase):
                 revision.rev_parent_id = 0
             else:
                 revision.rev_parent_id = ordered_revisions[i - 1].rev_id
-
+        
         self.mwSession.commit()
-
+        
         # establish ownership for this cohort
         if not owner_user_id:
             owner_user = User(username='test cohort owner', email='test@test.com')
             self.session.add(owner_user)
             self.session.commit()
             self.owner_user_id = owner_user.id
-
+        
         self.session.add(CohortUser(
             user_id=self.owner_user_id,
             cohort_id=self.cohort.id,
             role=CohortUserRole.OWNER,
         ))
         self.session.commit()
-
+        
         if page_count > 0:
             # create any additional pages
             if type(page_timestamps) is int:
@@ -267,7 +272,7 @@ class DatabaseTest(unittest.TestCase):
                 page_namespaces = [page_namespaces] * page_count
             if type(page_creator_index) is int:
                 page_creator_index = [page_creator_index] * page_count
-
+            
             self.mwSession.bind.engine.execute(
                 Page.__table__.insert(), [
                     {
@@ -283,7 +288,7 @@ class DatabaseTest(unittest.TestCase):
                 .filter(Page.page_title.like('{0}-additional-page-%'.format(name)))\
                 .order_by(Page.page_id)\
                 .all()
-
+            
             self.mwSession.bind.engine.execute(
                 Revision.__table__.insert(), [
                     {
@@ -298,7 +303,7 @@ class DatabaseTest(unittest.TestCase):
                 ]
             )
             self.mwSession.commit()
-
+    
     @nottest
     def helper_reset_validation(self):
         wikiusers = self.session.query(WikiUser) \
@@ -311,7 +316,7 @@ class DatabaseTest(unittest.TestCase):
         self.cohort.validated = False
         self.cohort.validate_as_user_ids = True
         self.session.commit()
-
+    
     @nottest
     def helper_remove_authorization(self):
         cu = self.session.query(CohortUser) \
@@ -319,7 +324,7 @@ class DatabaseTest(unittest.TestCase):
             .one()
         cu.role = 'UNAUTHORIZED'
         self.session.commit()
-
+    
     @nottest
     def common_cohort_1(self):
         self.create_test_cohort(
@@ -333,7 +338,7 @@ class DatabaseTest(unittest.TestCase):
             ],
             revision_lengths=10
         )
-
+    
     @nottest
     def common_cohort_2(self):
         self.create_test_cohort(
@@ -350,7 +355,7 @@ class DatabaseTest(unittest.TestCase):
                 [None, None, None],
             ],
         )
-
+    
     @nottest
     def common_cohort_3(self):
         self.create_test_cohort(
@@ -373,7 +378,7 @@ class DatabaseTest(unittest.TestCase):
                 [1300, 600, 500, 650],
             ],
         )
-
+    
     @nottest
     def common_cohort_4(self):
         self.create_test_cohort(
@@ -388,7 +393,7 @@ class DatabaseTest(unittest.TestCase):
             page_namespaces=[301, 302, 303, 301],
             page_creator_index=[0, 0, 0, 1],
         )
-
+    
     @nottest
     def common_cohort_5(self):
         self.create_test_cohort(
@@ -402,7 +407,7 @@ class DatabaseTest(unittest.TestCase):
             ],
             revision_lengths=10,
         )
-
+    
     def setUp(self):
         #****************************************************************
         # set up and clean database (Warning: this DESTROYS ALL DATA)
@@ -413,7 +418,7 @@ class DatabaseTest(unittest.TestCase):
         # mediawiki_project is a global defined on this file
         self.mwSession = db.get_mw_session(mediawiki_project)
         DatabaseTest.tearDown(self)
-
+    
     def tearDown(self):
         # delete records
         self.mwSession.query(Logging).delete()
@@ -422,7 +427,7 @@ class DatabaseTest(unittest.TestCase):
         self.mwSession.query(Page).delete()
         self.mwSession.commit()
         self.mwSession.close()
-
+        
         self.session.query(CohortWikiUser).delete()
         self.session.query(CohortUser).delete()
         self.session.query(WikiUser).delete()
@@ -434,20 +439,20 @@ class DatabaseTest(unittest.TestCase):
 
 
 class QueueTest(unittest.TestCase):
-
+    
     def setUp(self):
         pass
-
+    
     def tearDown(self):
         pass
 
 
 class QueueDatabaseTest(QueueTest, DatabaseTest):
-
+    
     def setUp(self):
         QueueTest.setUp(self)
         DatabaseTest.setUp(self)
-
+    
     def tearDown(self):
         QueueTest.tearDown(self)
         DatabaseTest.tearDown(self)
@@ -460,7 +465,7 @@ class WebTestAnonymous(DatabaseTest):
     """
     Creates a test flask client but does not authenticate.
     """
-
+    
     def setUp(self):
         """
         Creates a test flask environment.
@@ -468,8 +473,17 @@ class WebTestAnonymous(DatabaseTest):
         """
         DatabaseTest.setUp(self)
         self.common_cohort_5()
-        self.app = app.test_client()
-
+        self.client = app.test_client()
+        
+        # TODO change all tests, tests than inherit from
+        # WebTest expect self.app = app.test_client()
+        # this is confusing, app and test_client are two different things
+        # app should refer to the global object
+        # have changed only test_reports.py to use client
+        self.app = self.client
+        
+        self.logger = Mock(spec=RootLogger)
+    
     def tearDown(self):
         DatabaseTest.tearDown(self)
 
@@ -482,7 +496,7 @@ class WebTest(WebTestAnonymous):
     NOTE: to simulate ajax requests, do this
         self.app.get('/', headers=[('X-Requested-With', 'XMLHttpRequest')])
     """
-
+    
     def setUp(self):
         """
         Creates a test flask environment.
@@ -490,7 +504,7 @@ class WebTest(WebTestAnonymous):
         """
         WebTestAnonymous.setUp(self)
         self.app.get('/login-for-testing-only')
-
+    
     def tearDown(self):
         WebTestAnonymous.tearDown(self)
         self.app.get('/logout')

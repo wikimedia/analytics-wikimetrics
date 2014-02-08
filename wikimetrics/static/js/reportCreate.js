@@ -73,14 +73,17 @@ $(document).ready(function(){
             ko.utils.arrayForEach(data, function(response){
                 delete response.metric.configure;
                 delete response.cohort.wikiusers;
+                delete response.cohort.selected;
                 delete response.tabId;
                 delete response.tabIdSelector;
                 delete response.metric.tabId;
                 delete response.metric.tabIdSelector;
+                delete response.metric.selected;
+                delete response.metric.description;
             });
             data = JSON.stringify(data);
             
-            $.ajax({ type: 'post', url: form.attr('action'), data: {responses: data} })
+            $.ajax({ type: 'post', url: form.attr('action'), data: {responses: data, recurrent: vm.request().recurrent()} })
                 .done(site.handleWith(function(response){
                     // should redirect to the reports page, so show an error otherwise
                     site.showWarning('Unexpected: ' + JSON.stringify(response));
@@ -137,6 +140,8 @@ $(document).ready(function(){
     
     // computed pieces of the viewModel
     viewModel.request = ko.observable({
+        recurrent: ko.observable(false),
+        
         cohorts: ko.computed(function(){
             return this.cohorts().filter(function(cohort){
                 return cohort.selected();

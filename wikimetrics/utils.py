@@ -154,14 +154,9 @@ def ensure_dir(root, path):
     does not already exist, and automatically creates any specified parent
     directories in path which don't exist.
     """
-    full_path = root
-    for seg in path.split(os.sep):
-        full_path += os.sep + seg
-        if os.path.exists(full_path):
-            if not os.path.isdir(full_path):
-                raise ValueError("'{}' is not a directory".format(full_path))
-        else:
-            os.makedirs(full_path)
+    path = os.sep.join((root, path))
+    if not os.path.exists(path):
+        os.makedirs(path)
 
 
 def diff_datewise(left, right, left_parse=None, right_parse=None):
@@ -215,8 +210,15 @@ def timestamps_to_now(start, increment):
         start += increment
 
 
-class Unauthorized(Exception):
+def strip_time(to_strip):
     """
-    Different exception type to separate "unauthorized" errors from the rest
+    Strips the hours, minutes, and seconds from a datetime instance
     """
-    pass
+    return to_datetime(to_strip.date())
+
+
+def to_datetime(d):
+    """
+    Converts a date to a datetime
+    """
+    return datetime.combine(d, datetime.min.time())

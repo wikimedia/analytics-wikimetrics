@@ -22,13 +22,13 @@ class MultiProjectMetricReport(ReportNode):
             *args,
             **kwargs
         )
-        self.cohort = cohort
-        self.metric = metric
         
         self.children = []
         for project, user_ids in cohort.group_by_project():
             # note that user_ids is actually just an iterator
-            self.children.append(MetricReport(metric, user_ids, project))
+            self.children.append(
+                MetricReport(metric, user_ids, project, *args, **kwargs)
+            )
     
     def finish(self, metric_results):
         merged_individual_results = {}
@@ -36,8 +36,7 @@ class MultiProjectMetricReport(ReportNode):
         for res in metric_results:
             merged_individual_results.update(res)
         
-        result = self.report_result(merged_individual_results)
-        return result
+        return merged_individual_results
     
     def __repr__(self):
         return '<MultiProjectMetricReport("{0}")>'.format(self.persistent_id)

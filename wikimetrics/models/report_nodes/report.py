@@ -1,6 +1,7 @@
 import celery
 from uuid import uuid4
 from celery import current_task
+from datetime import datetime
 # AsyncResult shows up as un-needed but actually is (for celery.states to work)
 from celery.result import AsyncResult
 from celery.exceptions import SoftTimeLimitExceeded
@@ -9,6 +10,7 @@ from celery.utils.log import get_task_logger
 # from celery.contrib.methods import task_method
 from flask.ext.login import current_user
 from wikimetrics.configurables import db, queue
+from wikimetrics.utils import stringify
 from ..persistent_report import PersistentReport
 
 
@@ -61,9 +63,10 @@ class Report(object):
                  queue_result_key=None,
                  children=None,
                  public=False,
-                 parameters='{}',
+                 parameters={},
                  recurrent=False,
-                 recurrent_parent_id=None):
+                 recurrent_parent_id=None,
+                 created=None):
         
         if children is None:
             children = []
@@ -88,13 +91,17 @@ class Report(object):
         pj = PersistentReport(user_id=self.user_id,
                               status=self.status,
                               show_in_ui=self.show_in_ui,
-                              parameters=parameters,
-                              public=self.public)
+                              parameters=stringify(parameters),
+                              public=self.public,
+                              recurrent=recurrent,
+                              recurrent_parent_id=recurrent_parent_id,
+                              created=created or datetime.now())
         session = db.get_session()
         try:
             session.add(pj)
             session.commit()
             self.persistent_id = pj.id
+            self.created = pj.created
             pj.name = self.name or str(self)
             session.commit()
         finally:
@@ -160,13 +167,16 @@ class ReportNode(Report):
     def finish(self, results):
         """
         Each ReportNode sublcass should implement this method to deal with
-        the results of its child reports.  As a standard, report_results should
+        the results of its child reports.  As a standard, report_result should
         be called at the end of ReportNode.finish implementations.
         """
         pass
     
     def report_result(self, results, child_results=None):
         """
+        NOTE: child_results is currently not used.  This function will still work
+        as originally implemented, but child_results should go under evaluation.
+        
         Creates a unique identifier for this ReportNode, and returns a one element
         dictionary with that identifier as the key and its results as the value.
         This allows ReportNode results to be merged as the tree of ReportNodes is

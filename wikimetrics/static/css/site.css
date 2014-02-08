@@ -55,3 +55,34 @@ table.sample-results tbody.totals td {
 
 /* uploading a cohort */
 form.upload-cohort div.navbar-inner { margin: 0 0 20px 0; }
+
+/** icons from sprite **/
+
+.icon{
+        background:  url(/static/img/sprite-icons.png); no-repeat;
+}
+
+.unlocked{
+        background-position: -22px 0;
+        width: 18px;
+        height: 19px;
+}
+
+.recurrent{
+        background-position: 0 -24px ;
+        width: 20px;
+        height: 17px;
+}
+
+.locked{
+        background-position: -2px 0;
+        width: 18px;
+        height: 19px;
+}
+
+.check{
+        background-position: -25px -23px ;
+        width: 18px;
+        height: 16px;
+}
+

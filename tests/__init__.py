@@ -4,6 +4,7 @@ from signal import SIGINT
 from time import sleep
 
 celery_proc = None
+celery_sched_proc = None
 
 
 def celery_is_alive():
@@ -31,8 +32,13 @@ def setUp():
     #celery_out = open("/tmp/logCelery.txt", "w")
     celery_cmd = ['wikimetrics', '--mode', 'queue',
                   '--override-config', 'wikimetrics/config/test_config.yaml']
+    celery_sched_cmd = ['wikimetrics', '--mode', 'scheduler', '--override-config',
+                        'wikimetrics/config/test_config.yaml']
     global celery_proc
     celery_proc = Popen(celery_cmd, stdout=celery_out, stderr=celery_out)
+    
+    global celery_sched_proc
+    celery_sched_proc = Popen(celery_sched_cmd, stdout=celery_out, stderr=celery_out)
     
     # wait until celery broker / worker is up
     tries = 0
@@ -43,8 +49,13 @@ def setUp():
 
 def tearDown():
     global celery_proc
+    global celery_sched_proc
+    
     if celery_proc is not None:
         celery_proc.send_signal(SIGINT)
+    
+    if celery_sched_proc is not None:
+        celery_sched_proc.send_signal(SIGINT)
 
 
 def setUpTestingDB():

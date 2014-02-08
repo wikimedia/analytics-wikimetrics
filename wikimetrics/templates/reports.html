@@ -1,67 +1,90 @@
 {% extends "layout.html" %}
 {% block body %}
+<h3>Current Report Inbox</h3>
+<p>This table refreshes automatically every <span data-bind="text: site.refreshEvery"></span> seconds.  Reports <b>that are not recurrent </b> will expire after 30 days, please save the output if you would like to keep it longer.</p>
+<p class="pull-right">
+    <a href="{{url_for('reports_request')}}" class="btn btn-xs btn-primary">
+        Create New Report
+    </a>
+</p>
 
-<h2>Current Report queue</h2>
-<a href="{{url_for('reports_request')}}" class="btn btn-primary btn-large">
-    Create New Report
-</a>
+<!--<div class="btn-toolbar">-->
+    <!--<div class="btn-group">-->
+        <!--<button type="button" class="btn btn-xs" data-bind="click: deleteClickedReports" title="delete the selected reports">Delete Report</button>-->
+    <!--</div>-->
+<!--</div>-->
+
 <table class="table table-striped">
-    <caption>This table refreshes automatically every <span data-bind="text: refreshEvery"></span> seconds.  Reports will expire after 30 days, please save the output if you would like to keep it longer.</caption>
-    <thead>
-        <tr>
-            <th>Created</th>
-            <th>Status</th>
-            <th>Name</th>
-            <th>Result</th>
-            <th>Public</th>
-        </tr>
-    </thead>
     <tbody data-bind="foreach: reports_sorted">
         <tr>
-            <td>
-                <span data-bind="text: moment(created).calendar()"></span>
+            <!--<td data-bind="if: success">-->
+                <!--<input type="checkbox" data-bind="checked: selected" class="js-report-delete"/>-->
+            <!--</td>-->
+            <td data-bind="if: success">
+                <div>
+                    <button type="submit" data-bind="click: $root.updatePublic, css:{
+                        'btn-warning': public,
+                        'btn-success': !public()}"
+                        class="btn">
+                        <div class="icon" data-bind="css: {
+                            'unlocked': public,
+                            'locked': !public()},
+                            attr:{ 'title': 'This report is ' + (public() ? '':'not ') + 'public.  Click to toggle.' }"
+                            data-toggle="tooltip"></div>
+                    </button>
+                </div>
             </td>
-            <td data-bind="text: status"></td>
+            
+            <td data-bind="if: recurrent">
+                <div class="icon recurrent" data-toggle="tooltip" title="This report executes on a schedule."></div>
+            </td>
             <td>
                 <div data-bind="if: public">
-                    <a target="_blank" data-bind="attr: {href: '/static/public/' + id + '.json'}">
-                        <span data-bind="text: name, attr:{ title: parameters }">
-                        </span>
+                    <a target="_blank" data-bind="attr:{ href: publicResult }">
+                        <span data-bind="text: name, attr:{ title: parameters }"></span>
                     </a>
                 </div>
                 <div data-bind="ifnot: public">
-                    <span data-bind="text: name, attr:{ title: parameters }">
-                    </span>
+                    <span data-bind="text: name, attr:{ title: parameters }"> </span>
                 </div>
             </td>
-            <td data-bind="if: status === 'SUCCESS'">
+            <td>
+                <span data-bind="text: moment(created).calendar()"></span>
+            </td>
+            <td>
+                <span data-bind="text: status, css: {
+                    'text-success': success,
+                    'text-info': !success
+                }"></span>
+            </td>
+            <td data-bind="if: success">
                 <div class="btn-group">
-                    <button class="btn btn-primary dropdown-toggle" data-toggle="dropdown">
+                    <button class="btn  dropdown-toggle btn-small" data-toggle="dropdown">
                         Get Data
                         &nbsp;&nbsp;
                         <span class="caret"></span>
                     </button>
                     <ul class="dropdown-menu">
-                        <li><a target="_blank" data-bind="attr: {href: '/reports/result/' + result_key + '.json'}">as JSON</a></li>
-                        <li><a target="_blank" data-bind="attr: {href: '/reports/result/' + result_key + '.csv'}">as CSV</a></li>
-                        <li data-bind="if: public">
-                            <a target="_blank" data-bind="attr: {href: '/static/public/' + id + '.json'}">
-                                Public URL
-                            </a>
-                        </li>
+                        <li><a target="_blank" data-bind="attr:{ href: '/reports/result/' + result_key + '.json' }">as JSON</a></li>
+                        <li><a target="_blank" data-bind="attr:{ href: '/reports/result/' + result_key + '.csv' }">as CSV</a></li>
+                        <!-- ko if: public -->
+                        <li><a target="_blank" data-bind="attr:{ href: publicResult }">as Public Link</a></li>
+                        <!-- /ko -->
                     </ul>
                 </div>
-            </td>
-            <td data-bind="if: status === 'SUCCESS'">
-                <input
-                    type="checkbox"
-                    data-bind="click: $parent.public_clicked, checked: public"
-                />
+            </div>
             </td>
         </tr>
     </tbody>
 </table>
-
+<div data-bind="if: reports_sorted().length >4">
+    <!-- with more than 4 reports the "create report button" also appears below -->
+<p class="pull-right">
+    <a href="{{url_for('reports_request')}}" class="btn btn-xs btn-primary">
+        Create New Report
+    </a>
+</p>
+</div>
 {% endblock %}
 
 {% block scripts %}

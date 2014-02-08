@@ -1,14 +1,11 @@
 import json
-import os
-import os.path
-
 from csv import DictWriter
 from StringIO import StringIO
 from sqlalchemy.orm.exc import NoResultFound
-from flask import render_template, request, url_for, Response, abort
+from flask import render_template, request, redirect, url_for, Response, abort, g
 from flask.ext.login import current_user
-
-from wikimetrics.configurables import app, db, get_absolute_path
+from sqlalchemy.exc import SQLAlchemyError
+from wikimetrics.configurables import app, db
 from wikimetrics.models import Report, RunReport, PersistentReport, WikiUser
 from wikimetrics.metrics import TimeseriesChoices
 from wikimetrics.models.report_nodes import Aggregation
@@ -16,72 +13,55 @@ from wikimetrics.utils import (
     json_response, json_error, json_redirect, thirty_days_ago, ensure_dir,
     stringify
 )
+from wikimetrics.exceptions import UnauthorizedReportAccessError
+from wikimetrics.api import PublicReportFileManager
 
 
-def get_saved_report_path(report_id):
-    report_dir = os.sep.join(("static", "public"))
-    ensure_dir(get_absolute_path(), report_dir)
-    path = os.sep.join((get_absolute_path(), report_dir, "{}.json".format(report_id)))
-    return path
+@app.before_request
+def setup_filemanager():
+    if request.endpoint is not None:
+        if 'report' in request.endpoint:
+            file_manager = getattr(g, 'file_manager', None)
+            if file_manager is None:
+                g.file_manager = PublicReportFileManager(
+                    app.logger,
+                    app.absolute_path_to_app_root)
 
 
-@app.route('/reports/save/<int:report_id>', methods=['POST'])
-def save_public_report(report_id):
-    """
-    Saves the specified report as a static file to disk, and sets the
-    public flag to True.
-    """
-    path = get_saved_report_path(report_id)
-
-    # Retrieve the report from the database, and save
-    # it to disk so it can be served statically by another
-    # webserver.
-    db_session = db.get_session()
-    try:
-        report = db_session.query(PersistentReport)\
-            .filter(PersistentReport.id == report_id)\
-            .one()
-
-        if report:
-            with open(path, 'w') as saved_report:
-                print >> saved_report, stringify(report._asdict())
-                report.public = True
-                db_session.add(report)
-                db_session.commit()
-                return ''
-        else:
-            abort(400)
-    finally:
-        db_session.close()
-
-    abort(500)
-
-
-@app.route('/reports/remove/<int:report_id>', methods=['POST'])
-def remove_public_report(report_id):
+@app.route('/reports/unset-public/<int:report_id>', methods=['POST'])
+def unset_public_report(report_id):
     """
     Deletes the specified report from disk, and sets the public flag to False.
     """
-    path = get_saved_report_path(report_id)
+    # call would throw an exception if  report cannot be made private
+    PersistentReport.make_report_private(report_id, current_user.id, g.file_manager)
+    return json_response(message='Update successful')
 
-    # Retrieve the report from the database, and remove it
-    # from disk.
+
+@app.route('/reports/set-public/<int:report_id>', methods=['POST'])
+def set_public_report(report_id):
+    """
+    Client facing method with pretty url to set/uset one report as public
+    """
+
+    # in order to move code to the PersistenReport class need to fetch report
+    # data here
     db_session = db.get_session()
     try:
-        report = db_session.query(PersistentReport)\
+        result_key = db_session.query(PersistentReport.result_key)\
             .filter(PersistentReport.id == report_id)\
-            .one()
-
-        if os.path.isfile(path):
-            os.remove(path)
-            report.public = False
-            db_session.add(report)
-            db_session.commit()
-            return ''
+            .one()[0]
     finally:
         db_session.close()
 
-    abort(500)
+    data = report_result_json(result_key).data
+
+    # call would throw an exception if report cannot be made public
+    PersistentReport.make_report_public(
+        report_id, current_user.id, g.file_manager, data
+    )
+
+    return json_response(message='Update successful')
 
 
 @app.route('/reports/')
@@ -98,14 +78,20 @@ def reports_request():
     """
     Renders a page that facilitates kicking off a new report
     """
-    
+
     if request.method == 'GET':
         return render_template('report.html')
     else:
         desired_responses = json.loads(request.form['responses'])
-        jr = RunReport(desired_responses, user_id=current_user.id)
-        jr.task.delay(jr)
-        
+        recurrent = json.loads(request.form.get('recurrent', 'false'))
+        public = json.loads(request.form.get('public', 'false'))
+
+        for parameters in desired_responses:
+            parameters['recurrent'] = recurrent
+            parameters['public'] = public
+            jr = RunReport(parameters, user_id=current_user.id)
+            jr.task.delay(jr)
+
         return json_redirect(url_for('reports_index'))
 
 
@@ -122,7 +108,7 @@ def reports_list():
         # update status for each report
         for report in reports:
             report.update_status()
-        
+
         # TODO fix json_response to deal with PersistentReport objects
         reports_json = json_response(reports=[report._asdict() for report in reports])
     finally:
@@ -133,24 +119,24 @@ def reports_list():
 def get_celery_task(result_key):
     """
     From a unique identifier, gets the celery task and database records associated.
-    
+
     Parameters
         result_key  : The unique identifier found in the report database table
                         This parameter is required and should not be None
-    
+
     Returns
         A tuple of the form (celery_task_object, database_report_object)
     """
     if not result_key:
         return (None, None)
-    
+
     try:
         db_session = db.get_session()
         try:
             pj = db_session.query(PersistentReport)\
                 .filter(PersistentReport.result_key == result_key)\
                 .one()
-            
+
             celery_task = Report.task.AsyncResult(pj.queue_result_key)
         finally:
             db_session.close()
@@ -167,6 +153,27 @@ def get_celery_task_result(celery_task, db_report):
         return {'failure': 'result not available'}
 
 
+def prettify_parameters(report):
+    """
+    TODO add tests for this method
+    its name implies that it's generic but is looking for specific input/output
+    """
+    raw = json.loads(report.parameters)
+    pretty = {}
+    pretty['Cohort Size'] = raw['cohort']['size']
+    pretty['Cohort'] = raw['cohort']['name']
+    pretty['Metric'] = raw['metric']['name']
+    pretty['Created On'] = report.created
+
+    for k in ['csrf_token', 'name', 'label']:
+        raw['metric'].pop(k, None)
+
+    for k, v in raw['metric'].iteritems():
+        pretty['Metric_' + k] = v
+
+    return pretty
+
+
 @app.route('/reports/status/<result_key>')
 def report_status(result_key):
     celery_task, pj = get_celery_task(result_key)
@@ -178,16 +185,16 @@ def report_result_csv(result_key):
     celery_task, pj = get_celery_task(result_key)
     if not celery_task:
         return json_error('no task exists with id: {0}'.format(result_key))
-    
+
     if celery_task.ready() and celery_task.successful():
         task_result = get_celery_task_result(celery_task, pj)
-        p = json.loads(pj.parameters)
-        
-        if 'timeseries' in p and p['timeseries'] != TimeseriesChoices.NONE:
+        p = prettify_parameters(pj)
+
+        if 'Metric_timeseries' in p and p['Metric_timeseries'] != TimeseriesChoices.NONE:
             csv_io = get_timeseries_csv(task_result, pj, p)
         else:
             csv_io = get_simple_csv(task_result, pj, p)
-        
+
         res = Response(csv_io.getvalue(), mimetype='text/csv')
         res.headers['Content-Disposition'] =\
             'attachment; filename={0}.csv'.format(pj.name)
@@ -215,43 +222,43 @@ def get_timeseries_csv(task_result, pj, parameters):
         task_result : the result dictionary from Celery
         pj          : a pointer to the permanent job
         parameters  : a dictionary of pj.parameters
-    
+
     Returns
         A StringIO instance representing timeseries CSV
     """
     csv_io = StringIO()
     if task_result:
         columns = []
-        
+
         if Aggregation.IND in task_result:
-            columns = task_result[Aggregation.IND][0].values()[0].values()[0].keys()
+            columns = task_result[Aggregation.IND].values()[0].values()[0].keys()
         elif Aggregation.SUM in task_result:
             columns = task_result[Aggregation.SUM].values()[0].keys()
         elif Aggregation.AVG in task_result:
             columns = task_result[Aggregation.AVG].values()[0].keys()
         elif Aggregation.STD in task_result:
             columns = task_result[Aggregation.STD].values()[0].keys()
-        
+
         # if task_result is not empty find header in first row
         fieldnames = ['user_id', 'user_name', 'submetric'] + sorted(columns)
     else:
         fieldnames = ['user_id', 'user_name', 'submetric']
     writer = DictWriter(csv_io, fieldnames)
-    
+
     # collect rows to output in CSV
     task_rows = []
-    
+
     # Individual Results
     if Aggregation.IND in task_result:
         # fold user_id into dict so we can use DictWriter to escape things
-        for user_id, row in task_result[Aggregation.IND][0].iteritems():
+        for user_id, row in task_result[Aggregation.IND].iteritems():
             for subrow in row.keys():
                 task_row = row[subrow].copy()
                 task_row['user_id'] = user_id
                 task_row['user_name'] = get_username_via_id(user_id)
                 task_row['submetric'] = subrow
                 task_rows.append(task_row)
-    
+
     # Aggregate Results
     if Aggregation.SUM in task_result:
         row = task_result[Aggregation.SUM]
@@ -260,7 +267,7 @@ def get_timeseries_csv(task_result, pj, parameters):
             task_row['user_id'] = Aggregation.SUM
             task_row['submetric'] = subrow
             task_rows.append(task_row)
-    
+
     if Aggregation.AVG in task_result:
         row = task_result[Aggregation.AVG]
         for subrow in row.keys():
@@ -268,7 +275,7 @@ def get_timeseries_csv(task_result, pj, parameters):
             task_row['user_id'] = Aggregation.AVG
             task_row['submetric'] = subrow
             task_rows.append(task_row)
-    
+
     if Aggregation.STD in task_result:
         row = task_result[Aggregation.STD]
         for subrow in row.keys():
@@ -276,18 +283,16 @@ def get_timeseries_csv(task_result, pj, parameters):
             task_row['user_id'] = Aggregation.STD
             task_row['submetric'] = subrow
             task_rows.append(task_row)
-    
+
     # generate some empty rows to separate the result
     # from the parameters
     task_rows.append({})
     task_rows.append({})
     task_rows.append({'user_id': 'parameters'})
-    
-    for key, value in parameters.items():
+
+    for key, value in sorted(parameters.items()):
         task_rows.append({'user_id': key , fieldnames[1]: value})
-    
-    task_rows.append({'user_id': 'metric/cohort name', fieldnames[1]: pj.name})
-    
+
     writer.writeheader()
     writer.writerows(task_rows)
     return csv_io
@@ -299,69 +304,67 @@ def get_simple_csv(task_result, pj, parameters):
         task_result : the result dictionary from Celery
         pj          : a pointer to the permanent job
         parameters  : a dictionary of pj.parameters
-    
+
     Returns
         A StringIO instance representing simple CSV
     """
-    
+
     csv_io = StringIO()
     if task_result:
         columns = []
-        
+
         if Aggregation.IND in task_result:
-            columns = task_result[Aggregation.IND][0].values()[0].keys()
+            columns = task_result[Aggregation.IND].values()[0].keys()
         elif Aggregation.SUM in task_result:
             columns = task_result[Aggregation.SUM].keys()
         elif Aggregation.AVG in task_result:
             columns = task_result[Aggregation.AVG].keys()
         elif Aggregation.STD in task_result:
             columns = task_result[Aggregation.STD].keys()
-        
+
         # if task_result is not empty find header in first row
         fieldnames = ['user_id', 'user_name'] + columns
     else:
         fieldnames = ['user_id', 'user_name']
     writer = DictWriter(csv_io, fieldnames)
-    
+
     # collect rows to output in CSV
     task_rows = []
-    
+
     # Individual Results
     if Aggregation.IND in task_result:
         # fold user_id into dict so we can use DictWriter to escape things
-        for user_id, row in task_result[Aggregation.IND][0].iteritems():
+        for user_id, row in task_result[Aggregation.IND].iteritems():
             task_row = row.copy()
             task_row['user_id'] = user_id
             task_row['user_name'] = get_username_via_id(user_id)
             task_rows.append(task_row)
-    
+
     # Aggregate Results
     if Aggregation.SUM in task_result:
         task_row = task_result[Aggregation.SUM].copy()
         task_row['user_id'] = Aggregation.SUM
         task_rows.append(task_row)
-    
+
     if Aggregation.AVG in task_result:
         task_row = task_result[Aggregation.AVG].copy()
         task_row['user_id'] = Aggregation.AVG
         task_rows.append(task_row)
-    
+
     if Aggregation.STD in task_result:
         task_row = task_result[Aggregation.STD].copy()
         task_row['user_id'] = Aggregation.STD
         task_rows.append(task_row)
-    
+
     # generate some empty rows to separate the result
     # from the parameters
     task_rows.append({})
     task_rows.append({})
     task_rows.append({'user_id': 'parameters'})
-    
-    for key, value in parameters.items():
+
+    for key, value in sorted(parameters.items()):
         task_rows.append({'user_id': key , fieldnames[1]: value})
-    
-    task_rows.append({'user_id': 'metric/cohort name', fieldnames[1]: pj.name})
-    
+
     writer.writeheader()
     writer.writerows(task_rows)
     return csv_io
@@ -372,13 +375,13 @@ def report_result_json(result_key):
     celery_task, pj = get_celery_task(result_key)
     if not celery_task:
         return json_error('no task exists with id: {0}'.format(result_key))
-    
+
     if celery_task.ready() and celery_task.successful():
         task_result = get_celery_task_result(celery_task, pj)
-        
+
         return json_response(
             result=task_result,
-            parameters=json.loads(pj.parameters),
+            parameters=prettify_parameters(pj),
         )
     else:
         return json_response(status=celery_task.status)
@@ -401,3 +404,5 @@ def report_result_json(result_key):
     # with development version
     #revoke(celery_task.id, terminate=True)
     #return json_response(status=celery_task.status)
+
+########   Internal functions not available via HTTP ################################

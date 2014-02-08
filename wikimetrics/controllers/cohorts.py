@@ -2,11 +2,14 @@ import json
 from flask import url_for, flash, render_template, redirect, request
 from flask.ext.login import current_user
 from sqlalchemy import func
+
+
 from sqlalchemy.orm.exc import NoResultFound, MultipleResultsFound
 from sqlalchemy.sql.expression import or_
 from ..utils import (
-    json_response, json_error, json_redirect, deduplicate_by_key, Unauthorized
+    json_response, json_error, json_redirect, deduplicate_by_key
 )
+from wikimetrics.exceptions import Unauthorized
 from ..configurables import app, db
 from ..controllers.forms import CohortUpload
 from ..models import (

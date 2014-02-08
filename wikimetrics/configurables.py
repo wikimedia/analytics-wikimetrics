@@ -87,6 +87,8 @@ def config_web(args):
 
     global app
     app = Flask('wikimetrics')
+    # note absolute_path does not change on the life of the application
+    app.absolute_path_to_app_root = get_absolute_path()
     # TODO do we need this config to be created like an object instead of a dictionary?
     web_config = create_object_from_text_config_file(args.web_config)
     # if args.override_config:
@@ -98,11 +100,13 @@ def config_web(args):
     version, latest = get_wikimetrics_version()
     app.config['WIKIMETRICS_LATEST'] = latest
     app.config['WIKIMETRICS_VERSION'] = version
-
+    
     global login_manager
     login_manager = LoginManager()
     login_manager.init_app(app)
 
+    # TODO, this does not need to be a
+    # global, could be stored in flask application context
     global google
     oauth = OAuth()
     google = oauth.remote_app(
@@ -248,11 +252,14 @@ def config_queue(args):
         if schedule_type == 'daily':
             schedules[key]['schedule'] = crontab(minute=0, hour=0)
         else:
-            schedules[key]['schedule'] = timedelta(seconds=10)
+            schedules[key]['schedule'] = timedelta(seconds=1)
 
 
 def get_absolute_path():
-    return os.path.dirname(os.path.abspath(__file__)) + '/'
+    """
+    Returns the path to the wikimetrics checkout root
+    """
+    return os.path.dirname(os.path.abspath(__file__)) + os.path.sep
 
 
 def get_wikimetrics_version():

@@ -12,8 +12,8 @@ class MetricReport(ReportLeaf):
     is constructed within MetricReport.run()
     """
     
-    def __init__(self, metric, user_ids, project):
-        super(MetricReport, self).__init__()
+    def __init__(self, metric, user_ids, project, *args, **kwargs):
+        super(MetricReport, self).__init__(*args, **kwargs)
         self.metric = metric
         self.user_ids = list(user_ids)
         self.project = project

@@ -14,14 +14,14 @@ class ValidateReport(ReportLeaf):
     
     show_in_ui = False
     
-    def __init__(self, metric, cohort, validate_csrf):
+    def __init__(self, metric, cohort, validate_csrf, *args, **kwargs):
         """
         Parameters
             metric          : an instance of a wikimetrics.metrics.metric.Metric
             cohort          : an instance of a wikimetrics.models.cohort.Cohort
             validate_csrf   : whether the metric should validate its CSRF
         """
-        super(ValidateReport, self).__init__(parameters=stringify(metric.data))
+        super(ValidateReport, self).__init__(*args, **kwargs)
         if validate_csrf is False:
             metric.disable_csrf()
         self.metric_valid = metric.validate()
@@ -48,7 +48,6 @@ class ValidateReport(ReportLeaf):
                 self.cohort_name,
             )
             pj.status = celery.states.FAILURE
-            pj.show_in_ui = True
             session.commit()
         finally:
             session.close()
