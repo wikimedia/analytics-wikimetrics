@@ -60,6 +60,7 @@ class Report(object):
                  name=None,
                  queue_result_key=None,
                  children=None,
+                 public=False,
                  parameters='{}'):
         
         if children is None:
@@ -78,13 +79,15 @@ class Report(object):
         self.name = name
         self.queue_result_key = queue_result_key
         self.children = children
+        self.public = public
         
         # store report to database
         # note that queue_result_key is always empty at this stage
         pj = PersistentReport(user_id=self.user_id,
                               status=self.status,
                               show_in_ui=self.show_in_ui,
-                              parameters=parameters)
+                              parameters=parameters,
+                              public=self.public)
         session = db.get_session()
         try:
             session.add(pj)

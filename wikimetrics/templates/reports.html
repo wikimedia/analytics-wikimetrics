@@ -13,6 +13,7 @@
             <th>Status</th>
             <th>Name</th>
             <th>Result</th>
+            <th>Public</th>
         </tr>
     </thead>
     <tbody data-bind="foreach: reports_sorted">
@@ -21,7 +22,18 @@
                 <span data-bind="text: moment(created).calendar()"></span>
             </td>
             <td data-bind="text: status"></td>
-            <td data-bind="text: name, attr:{ title: parameters }"></td>
+            <td>
+                <div data-bind="if: public">
+                    <a target="_blank" data-bind="attr: {href: '/static/public/' + id + '.json'}">
+                        <span data-bind="text: name, attr:{ title: parameters }">
+                        </span>
+                    </a>
+                </div>
+                <div data-bind="ifnot: public">
+                    <span data-bind="text: name, attr:{ title: parameters }">
+                    </span>
+                </div>
+            </td>
             <td data-bind="if: status === 'SUCCESS'">
                 <div class="btn-group">
                     <button class="btn btn-primary dropdown-toggle" data-toggle="dropdown">
@@ -32,8 +44,19 @@
                     <ul class="dropdown-menu">
                         <li><a target="_blank" data-bind="attr: {href: '/reports/result/' + result_key + '.json'}">as JSON</a></li>
                         <li><a target="_blank" data-bind="attr: {href: '/reports/result/' + result_key + '.csv'}">as CSV</a></li>
+                        <li data-bind="if: public">
+                            <a target="_blank" data-bind="attr: {href: '/static/public/' + id + '.json'}">
+                                Public URL
+                            </a>
+                        </li>
                     </ul>
                 </div>
+            </td>
+            <td data-bind="if: status === 'SUCCESS'">
+                <input
+                    type="checkbox"
+                    data-bind="click: $parent.public_clicked, checked: public"
+                />
             </td>
         </tr>
     </tbody>

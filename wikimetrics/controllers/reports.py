@@ -1,17 +1,87 @@
 import json
+import os
+import os.path
+
 from csv import DictWriter
 from StringIO import StringIO
 from sqlalchemy.orm.exc import NoResultFound
-from flask import render_template, request, url_for, Response
+from flask import render_template, request, url_for, Response, abort
 from flask.ext.login import current_user
 
-from wikimetrics.configurables import app, db
+from wikimetrics.configurables import app, db, get_absolute_path
 from wikimetrics.models import Report, RunReport, PersistentReport, WikiUser
 from wikimetrics.metrics import TimeseriesChoices
 from wikimetrics.models.report_nodes import Aggregation
 from wikimetrics.utils import (
-    json_response, json_error, json_redirect, thirty_days_ago
+    json_response, json_error, json_redirect, thirty_days_ago, ensure_dir,
+    stringify
 )
+
+
+def get_saved_report_path(report_id):
+    report_dir = os.sep.join(("static", "public"))
+    ensure_dir(get_absolute_path(), report_dir)
+    path = os.sep.join((get_absolute_path(), report_dir, "{}.json".format(report_id)))
+    return path
+
+
+@app.route('/reports/save/<int:report_id>', methods=['POST'])
+def save_public_report(report_id):
+    """
+    Saves the specified report as a static file to disk, and sets the
+    public flag to True.
+    """
+    path = get_saved_report_path(report_id)
+
+    # Retrieve the report from the database, and save
+    # it to disk so it can be served statically by another
+    # webserver.
+    db_session = db.get_session()
+    try:
+        report = db_session.query(PersistentReport)\
+            .filter(PersistentReport.id == report_id)\
+            .one()
+
+        if report:
+            with open(path, 'w') as saved_report:
+                print >> saved_report, stringify(report._asdict())
+                report.public = True
+                db_session.add(report)
+                db_session.commit()
+                return ''
+        else:
+            abort(400)
+    finally:
+        db_session.close()
+
+    abort(500)
+
+
+@app.route('/reports/remove/<int:report_id>', methods=['POST'])
+def remove_public_report(report_id):
+    """
+    Deletes the specified report from disk, and sets the public flag to False.
+    """
+    path = get_saved_report_path(report_id)
+
+    # Retrieve the report from the database, and remove it
+    # from disk.
+    db_session = db.get_session()
+    try:
+        report = db_session.query(PersistentReport)\
+            .filter(PersistentReport.id == report_id)\
+            .one()
+
+        if os.path.isfile(path):
+            os.remove(path)
+            report.public = False
+            db_session.add(report)
+            db_session.commit()
+            return ''
+    finally:
+        db_session.close()
+
+    abort(500)
 
 
 @app.route('/reports/')

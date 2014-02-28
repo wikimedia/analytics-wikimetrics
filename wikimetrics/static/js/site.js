@@ -95,6 +95,9 @@ var site = {
                     reportsDict[report.id] = report;
                 });
                 data.reports.forEach(function(report){
+                    report.public = ko.observable(report.public);
+                });
+                data.reports.forEach(function(report){
                     if (reportsDict[report.id] !== undefined && report.status === reportsDict[report.id].status){
                         return true;
                     }

@@ -1,4 +1,7 @@
 import json
+import os
+import os.path
+
 from decimal import Decimal, ROUND_HALF_UP
 from datetime import datetime, timedelta, date
 from flask import Response
@@ -143,6 +146,22 @@ def r(num, places=4):
     """Rounds and returns a Decimal"""
     precision = '1.{0}'.format('0' * places)
     return Decimal(num or 0).quantize(Decimal(precision), rounding=ROUND_HALF_UP)
+
+
+def ensure_dir(root, path):
+    """
+    Creates a new directory composed of root + os.sep + path, if the directory
+    does not already exist, and automatically creates any specified parent
+    directories in path which don't exist.
+    """
+    full_path = root
+    for seg in path.split(os.sep):
+        full_path += os.sep + seg
+        if os.path.exists(full_path):
+            if not os.path.isdir(full_path):
+                raise ValueError("'{}' is not a directory".format(full_path))
+        else:
+            os.makedirs(full_path)
 
 
 class Unauthorized(Exception):

@@ -2,12 +2,14 @@ import json
 import celery
 import time
 import unittest
-from nose.tools import assert_true, assert_equal
+import os.path
+from nose.tools import assert_true, assert_equal, assert_false
 from tests.fixtures import WebTest
 from wikimetrics.models import PersistentReport
 from wikimetrics.controllers.reports import (
     get_celery_task,
-    get_celery_task_result
+    get_celery_task_result,
+    get_saved_report_path
 )
 
 
@@ -284,7 +286,60 @@ class ReportsControllerTest(WebTest):
         # Check the csv result
         response = self.app.get('/reports/result/{0}.csv'.format(result_key))
         assert_true(response.data.find('Standard Deviation') >= 0)
-    
+
+    def test_save_public_report(self):
+        # Make the request
+        desired_responses = [{
+            'name': 'Edits - test',
+            'cohort': {
+                'id': self.cohort.id,
+            },
+            'metric': {
+                'name': 'NamespaceEdits',
+                'timeseries': 'month',
+                'namespaces': [0, 1, 2],
+                'start_date': '2013-01-01 00:00:00',
+                'end_date': '2013-05-01 00:00:00',
+                'individualResults': True,
+                'aggregateResults': True,
+                'aggregateSum': False,
+                'aggregateAverage': True,
+                'aggregateStandardDeviation': False,
+            },
+        }]
+        json_to_post = json.dumps(desired_responses)
+
+        response = self.app.post('/reports/create/', data=dict(
+            responses=json_to_post
+        ))
+
+        # Wait a second for the task to get processed
+        time.sleep(1)
+
+        # Check that the task has been created
+        response = self.app.get('/reports/list/')
+        parsed = json.loads(response.data)
+        result_key = parsed['reports'][-1]['result_key']
+        task, report = get_celery_task(result_key)
+
+        # Check if the file already exists on the local file system, and
+        # remove it if necessary
+        path = get_saved_report_path(report.id)
+        if os.path.isfile(path):
+            os.remove(path)
+
+        # Make the report publically accessible (save it to static/public)
+        response = self.app.post('/reports/save/{}'.format(report.id))
+        assert_true(response.status_code == 200)
+
+        # Check that the file exists on the local file system
+        assert_true(os.path.isfile(path))
+
+        # Now make the report private (remove it from static/public)
+        response = self.app.post('/reports/remove/{}'.format(report.id))
+        assert_true(response.status_code == 200)
+        assert_false(os.path.isfile(path))
+
     def test_report_result_timeseries_csv(self):
         # Make the request
         desired_responses = [{

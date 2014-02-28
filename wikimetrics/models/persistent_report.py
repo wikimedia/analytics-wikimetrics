@@ -24,6 +24,7 @@ class PersistentReport(db.WikimetricsBase):
     name = Column(String(2000))
     show_in_ui = Column(Boolean)
     parameters = Column(String(4000))
+    public = Column(Boolean)
     
     def update_status(self):
         # if we don't have the result key leave as is

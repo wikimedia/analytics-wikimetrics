@@ -18,7 +18,7 @@ class Cohort(db.WikimetricsBase):
     This class represents a list of users along with the project
     on which their username exists.  Using sqlalchemy.declarative
     It maps to the cohort table  which keeps metadata about the cohort,
-    however it is also home to a variety of conveneince functions
+    however it is also home to a variety of convenience functions
     for interacting with the actual list of users in that cohort.
     
     Importantly, there is no guarantee that a cohort consist of users
