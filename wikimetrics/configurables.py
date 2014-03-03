@@ -2,9 +2,6 @@ import imp
 import os
 import yaml
 import subprocess
-# TODO configuration should not depend on testing tool
-# this is here to avoid some of this code being matched against nosetest regex
-from nose.tools import nottest
 
 
 def compose_connection_string(user, password, host, dbName):
@@ -30,14 +27,7 @@ def parse_db_connection_string(urlConnectionString):
     return user, password, host, dbName
 
 
-@nottest
 def setup_testing_config(db_config):
-    """
-        Set global testing variables.
-        By convention testing dbs are development dbs with sufix '_testing'
-        we change url connection strings so tests run on testing databases
-        Note that wikimetrics user already exists, puppet has created it.
-    """
     override_file = 'wikimetrics/config/test_config.yaml'
     config_override = create_dict_from_text_config_file(override_file)
     test_config = update_config_from_override(db_config, config_override)

@@ -2,7 +2,6 @@ from subprocess import Popen
 from os import devnull
 from signal import SIGINT
 from time import sleep
-from wikimetrics.configurables import app, db, setup_testing_config
 
 celery_proc = None
 
@@ -55,7 +54,9 @@ def setUpTestingDB():
         we change url connection strings so tests run on testing databases
         Note that wikimetrics user already exists, puppet has created it.
     """
-    
+    # NOTE: need to import these inline, otherwise they might match the
+    # nosetests regular expression and run as tests
+    from wikimetrics.configurables import app, db, setup_testing_config
     # Set TESTING to true so we can know to not check CSRF
     # TODO we need a global config object
     app.config['TESTING'] = True

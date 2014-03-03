@@ -2,4 +2,6 @@
 # scripts/test "tests/test_controllers/test_cohorts.py:CohortsControllerTest"
 # rm .coverage *.db
 # nosetest -s : do not capture all stdout
-find . -name *.pyc | xargs rm ; nosetests --cover-erase $1
+TO_TEST=${1:-$(echo "tests")}
+echo "Running tests in: ./"$TO_TEST
+find . -name *.pyc | xargs rm ; nosetests --cover-erase ./$TO_TEST
