@@ -1,0 +1,7 @@
+CHANGE=$1
+SUFFIX=$(echo $CHANGE | tail -c 3)
+PATCH=$2
+
+git fetch https://gerrit.wikimedia.org/r/analytics/wikimetrics refs/changes/$SUFFIX/$CHANGE/$PATCH && git checkout FETCH_HEAD
+service wikimetrics-queue restart
+service apache2 restart
