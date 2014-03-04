@@ -7,62 +7,45 @@ Contents:
 
 ### Development Environment
 
-Wikimetrics consists of a website that runs on Flask and an asynchronous queue implemented with Celery.  The Celery queue stores its results in Redis and the Flask website stores metadata in MySQL.  To set up your dev environment, run the following or change it slightly to use whatever package manager you're using (brew, yum, etc.).  A fairly recent version of pip is required. Version 1.4.1 is known working, 1.0.2 is known not working:
+Wikimetrics consists of a website that runs on Flask and an asynchronous queue implemented with Celery.  The Celery queue stores its results in Redis and the Flask website stores metadata in MySQL.  To set up your dev environment the old fashioned way, see old versions of this README.  To set it up the easy way with mediawiki-vagrant, follow the directions below:
+
+* Install [Mediawiki Vagrant](https://www.mediawiki.org/wiki/MediaWiki-Vagrant)
+* From your Mediawiki Vagrant directory, do this:
 
 ````
-$ sudo apt-get install libmysqlclient-dev python-dev redis-server
-$ git clone https://gerrit.wikimedia.org/r/p/analytics/wikimetrics.git
-$ cd wikimetrics
-$ sudo pip install -e .
+$ vagrant enable-role wikimetrics
+$ git submodule update --init
+$ vim Vagrantfile
 ````
 
-Now you need to set up your MySQL databases.  We will first create empty databases and then populate them using alembic.
+* Add this under the other config.vm.network section(s):
 
 ````
-$ sudo mysql -p < scripts/00_create_wikimetrics_db
-$ sudo mysql -p < scripts/01_create_wiki_db
-$ sudo mysql -p < scripts/02_create_dewiki_db
+config.vm.network :forwarded_port,
+    guest: 5000, host: 5000, id: 'wikimetrics'
 ````
 
-And finally, just upgrade the schema to the latest version:
+* Reload vagrant: `$ vagrant reload`
+* Browse to [localhost:5000](http://localhost:5000)
+
+And you now have a fully working Wikimetrics environment.  The code it's running from is sym-linked locally in your Mediawiki Vagrant repository under `wikimetrics/` so you can do any development there and interact with it just like you would with any other WMF gerrit repository.  Contact us on freenode, channel #wikimedia-analytics if you have any questions.
+
+#### Ongoing Development
+
+Once you're up and running, there are a few things you need to know if you do ongoing development.  When you `git pull` new code, you'll need to potentially update the database and potentially update any dependencies.  To update the database, we use [Alembic](https://pypi.python.org/pypi/alembic/0.6.3).  So to upgrade to the latest version as defined by Alembic, first ssh into your vagrant box and go to the wikimetrics directory:
 
 ````
-$ alembic upgrade head
+$ vagrant ssh
+$ cd /vagrant/wikimetrics
 ````
 
-If the `alembic upgrade head` command gives you an error that tables already exist, that means you already had a wikimetrics database set up.  It's ok, we got you covered.  Just run the following script and re-run `alembic upgrade head`:
+Then tell Alembic to bring you up to speed: `$ alembic upgrade head`.
 
-````
-$ mysql -uwikimetrics -pwikimetrics < scripts/99_alembic_setup
-````
+Similarly, if you're making a change and need to generate an Alembic version, then after you update the models in ````wikimetrics.models````, issue: `$ alembic revision --autogenerate`
+
+To install new dependencies, ssh into your vagrant box as above, and issue: `$ scripts/install`
 
 
-Wikimetrics has over 90% unit test coverage.  We use Nose to write unit and integration tests to achieve this, and you should too.
-
-````
-$ sudo pip install nose
-$ scripts/test
-````
-
-Also, the standard httplib2 library does not have the appropriate certificates to do SSL handshakes with MediaWiki.  So in production and locally we just remove the httplib2 from our systems and install our preferred library instead:
-
-````
-$ git clone --depth=10 https://github.com/wikimedia/pywikibot-externals-httplib2
-$ cd pywikibot-externals-httplib2/
-$ sudo python setup.py install
-$ pip freeze | grep httplib
-````
-
-You should see that last command produce something like `httplib2==0.8-pywikibot1`.
-
-OK, so now you can run the tool.  In two separate command lines, start the dev web server and the celery queue to process report requests.
-
-````
-$ wikimetrics --mode web
-$ wikimetrics --mode queue
-````
-
-go to [localhost:5000](http://localhost:5000)
 
 ### Architecture
 
@@ -218,4 +201,3 @@ class StyleGuide(object):
     def obvious_method(self):
         # no doc string comment on this function because it's obvious
 ````
-
