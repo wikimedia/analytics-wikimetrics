@@ -206,6 +206,7 @@ def config_db(args):
     from .database import Database
     
     db_config = create_dict_from_text_config_file(args.db_config)
+    config_override = {}
     if args.override_config:
         config_override = create_dict_from_text_config_file(args.override_config)
         db_config = update_config_from_override(db_config, config_override)
@@ -221,13 +222,8 @@ def config_db(args):
         'DBNAME': db_name,
     }
     
-    if db_config['DEBUG']:
-        # this means development really, rather than debug
-        # look if we are in testing
-        if args.override_config:
-            config_override = create_dict_from_text_config_file(args.override_config)
-            if config_override['TEST']:
-                db_config['PROJECT_HOST_NAMES'] = get_project_host_names_local()
+    if db_config.get('DEBUG'):
+        db_config['PROJECT_HOST_NAMES'] = get_project_host_names_local()
     
     db = Database(db_config)
 
