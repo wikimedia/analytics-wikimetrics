@@ -43,12 +43,25 @@
         </div>
     </div>
     <div class="control-group">
-        <label for="csv" class="control-label">CSV File</label>
+        <label for="csv" class="control-label" title="See below for format information"><strong>Upload File</strong></label>
         <div class="controls">
             <input type="file" name="csv" id="csv"/>
             {{ validation.messages(form.csv) }}
         </div>
     </div>
+    <div class="control-group">
+        <label class="control-label">OR</label>
+    </div>
+    <div class="control-group">
+        <label for="paste_username" class="control-label" title="See below for format information"><strong>Paste Usernames</strong></label>
+        <div class="controls">
+            <textarea name="paste_username" id="paste_username"
+                      rows="4"
+                      cols="50">{{form.paste_username.data or ''}}</textarea>
+            {{ validation.messages(form.paste_username) }}
+        </div>
+    </div>
+
     <div class="control-group">
         <label class="control-label">{{form.validate_as_user_ids.label}}</label>
         <div class="controls">

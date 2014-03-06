@@ -1,6 +1,7 @@
 import csv
 from wtforms import StringField, FileField, TextAreaField, RadioField
 from wtforms.validators import Required
+from wikimetrics.metrics.form_fields import RequiredIfNot
 
 from secure_form import WikimetricsSecureForm
 
@@ -12,7 +13,8 @@ class CohortUpload(WikimetricsSecureForm):
     name                    = StringField([Required()])
     description             = TextAreaField()
     project                 = StringField('Default Project', [Required()])
-    csv                     = FileField('CSV File', [Required()])
+    csv                     = FileField('Upload File', [RequiredIfNot('paste_usernames')])
+    paste_username          = TextAreaField('Paste Usernames', [RequiredIfNot('csv')])
     validate_as_user_ids    = RadioField('Validate As', [Required()], choices=[
         ('True', 'User Ids (Numbers found in the user_id column of the user table)'),
         ('False', 'User Names (Names found in the user_name column of the user table)')
@@ -37,8 +39,15 @@ class CohortUpload(WikimetricsSecureForm):
         Returns
             nothing, but sets self.records to the parsed lines of the csv
         """
-        csv_file = normalize_newlines(self.csv.data.stream)
-        unparsed = csv.reader(csv_file)
+
+        if self.csv.data:
+            csv_file = normalize_newlines(self.csv.data.stream)
+            unparsed = csv.reader(csv_file)
+
+        else:
+            #TODO: Check valid input
+            unparsed = parse_textarea_usernames(self.paste_username.data)
+
         self.records = parse_records(unparsed, self.project.data)
 
 
@@ -102,3 +111,13 @@ def normalize_newlines(lines):
                 yield tok
         else:
             yield line
+
+
+def parse_textarea_usernames(paste_username):
+    """
+    Takes csv format text and parses it into a list of lists of usernames
+    and their wiki. i.e. "dan,en v" becomes [['dan','en'],['v']]. Whitespace is
+    the delimiter of each list. Prepares text to go through parse_records().
+    """
+    for username in paste_username.split():
+        yield username.strip().split(',')

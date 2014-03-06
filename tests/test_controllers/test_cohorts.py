@@ -190,6 +190,16 @@ class CohortsControllerUploadTest(WebTest):
         ))
         assert_equal(response.status_code, 302)
         assert_true(response.data.find('href="/cohorts/#') >= 0)
+
+    def test_paste_username_works(self):
+        response = self.app.post('/cohorts/upload', data=dict(
+            name='new_cohort_name',
+            project='wiki',
+            paste_username='actual validation tested elsewhere',
+            validate_as_user_ids='True',
+        ))
+        assert_equal(response.status_code, 302)
+        assert_true(response.data.find('href="/cohorts/#') >= 0)
     
     def test_upload_raises_exception(self):
         response = self.app.post('/cohorts/upload', data=dict(
@@ -216,3 +226,15 @@ class CohortsControllerUploadTest(WebTest):
         response = self.app.get('/cohorts/detail/invalid-users/0')
         assert_equal(response.status_code, 200)
         assert_true(response.data.find('Error fetching invalid users for') >= 0)
+
+    def test_both_upload_and_paste_usernames(self):
+        response = self.app.post('/cohorts/upload', data=dict(
+            name='new_cohort_name',
+            project='wiki',
+            csv=(StringIO('actual validation tested elsewhere'), 'cohort.csv'),
+            paste_username=('actual validation tested elsewhere'),
+            validate_as_user_ids='True',
+        ))
+        assert_equal(response.status_code, 200)
+        assert_true(response.data.find('<h3>Create a Cohort by Uploading a CSV') >= 0)
+        assert_true(response.data.find('Please fix validation problems') >= 0)

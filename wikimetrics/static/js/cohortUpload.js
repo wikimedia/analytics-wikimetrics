@@ -25,9 +25,6 @@ $(document).ready(function(){
             project: {
                 required: true,
                 remote: '/cohorts/validate/project',
-            },
-            csv: {
-                required: true
             }
         }
     });

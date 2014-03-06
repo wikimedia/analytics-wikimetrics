@@ -1,5 +1,6 @@
 from datetime import datetime, date, time
 from wtforms import Field, BooleanField, DateField, DateTimeField
+from wtforms.validators import Required, ValidationError
 from wtforms.widgets import TextInput
 
 
@@ -87,3 +88,22 @@ class BetterDateTimeField(DateTimeField):
     def report_invalid(self):
         self.data = None
         raise ValueError(self.gettext('Not a valid datetime value'))
+
+
+class RequiredIfNot(Required):
+    """
+    A validator which makes a field mutually exclusive with another
+    """
+
+    def __init__(self, other_field_name, *args, **kwargs):
+        self.other_field_name = other_field_name
+        super(RequiredIfNot, self).__init__(*args, **kwargs)
+
+    def __call__(self, form, field):
+        other_field = form._fields.get(self.other_field_name)
+        other_field_set = other_field and bool(other_field.data)
+        field_set = field and bool(field.data)
+        if other_field_set == field_set:
+            raise ValidationError('Please use either {0} or {1}'.format(
+                other_field.label.text, field.label.text
+            ))

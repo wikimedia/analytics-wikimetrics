@@ -1,12 +1,14 @@
 # -*- coding:utf-8 -*-
 import unittest
-from nose.tools import assert_equal, raises, assert_true, assert_false
+from nose.tools import assert_equal, raises, assert_true, assert_false, assert_raises
+from exceptions import StopIteration
 
 from tests.fixtures import WebTest
 from wikimetrics.controllers.forms.cohort_upload import (
     parse_records,
     parse_username,
     normalize_newlines,
+    parse_textarea_usernames,
 )
 
 
@@ -35,7 +37,19 @@ class CohortsControllerTest(unittest.TestCase):
         assert_equal(lines[2], 'blahblahblahnor')
         assert_equal(lines[3], 'blahblah1')
         assert_equal(lines[4], 'blahblah2')
-    
+
+    def test_parse_textarea_usernames(self):
+        unparsed = """
+                   dan,en\r
+                   v\n
+                   ,\r\n
+                   """
+        parsed = parse_textarea_usernames(unparsed)
+        assert_equal(parsed.next(), ['dan', 'en'])
+        assert_equal(parsed.next(), ['v'])
+        assert_equal(parsed.next(), ['', ''])
+        assert_raises(StopIteration, parsed.next)
+
     def test_parse_records_with_project(self):
         parsed = parse_records(
             [
