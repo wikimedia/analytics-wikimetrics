@@ -3,5 +3,5 @@
 <h2>Contact</h2>
 {% if error %}<p class=error><strong>Error:</strong> {{ error }}{% endif %}
 <p>Wikimetrics is maintained by <a href="http://mediawiki.org/wiki/Analytics">the Wikimedia Foundation's Analytics team</a>. You can contact them using the public Wikimedia analytics mailing list: <a href="https://lists.wikimedia.org/mailman/listinfo/analytics">https://lists.wikimedia.org/mailman/listinfo/analytics</a>.</p>
-<p>Please also see <a href="support.html">Support</a>.</p>
+<p>Please also see <a href="{{url_for('support_index')}}">Support</a>.</p>
 {% endblock %}

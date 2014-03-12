@@ -30,6 +30,15 @@ def support_index():
     return render_template('support.html')
 
 
+@app.route('/contact')
+@is_public
+def contact_index():
+    """
+    Renders the contact page
+    """
+    return render_template('contact.html')
+
+
 @app.route('/favicon.ico')
 @is_public
 def favicon():
