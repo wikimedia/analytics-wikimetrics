@@ -28,11 +28,11 @@ target_metadata = db.WikimetricsBase.metadata
 def get_engine(config):
     """
     Create a sqlalchemy engine for a database.
-    
+
     Returns:
         sqlalchemy engine connected to the database.
     """
-    
+
     return create_engine(
         config['WIKIMETRICS_ENGINE_URL'],
         echo=config['SQL_ECHO'])
@@ -40,43 +40,44 @@ def get_engine(config):
 
 def run_migrations_offline():
     """Run migrations in 'offline' mode.
-    
+
     This configures the context with just a URL
     and not an Engine, though an Engine is acceptable
     here as well.  By skipping the Engine creation
     we don't even need a DBAPI to be available.
-    
+
     Calls to context.execute() here emit the given string to the
     script output.
-    
+
     """
     url = db.get_engine().url
     context.configure(url=url)
-    
+
     with context.begin_transaction():
         context.run_migrations()
 
 
 def run_migrations_online():
     """Run migrations in 'online' mode.
-    
+
     In this scenario we need to create an Engine
     and associate a connection with the context.
-    
+
     """
-    config = db.config
+    import copy
+    config = copy.copy(db.config)
     engine = get_engine(config)
     test_config = setup_testing_config(config)
     test_engine = get_engine(test_config)
     test_metadata = db.WikimetricsBase.metadata
-    
+
     for name, eng, meta_data in [(test_config['WIKIMETRICS_ENGINE_URL'],
                                   test_engine, test_metadata),
                                  (config['WIKIMETRICS_ENGINE_URL'],
                                   engine, target_metadata)]:
         connection = eng.connect()
         context.configure(connection=connection, target_metadata=meta_data)
-        
+
         print "Running migration for " + name
         try:
             with context.begin_transaction():
