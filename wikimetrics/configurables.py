@@ -230,7 +230,9 @@ def config_db(args):
 
 def config_queue(args):
     from celery import Celery
-
+    from celery.schedules import crontab
+    from datetime import timedelta
+    
     # create and configure celery app
     global queue
     queue = Celery('wikimetrics', include=['wikimetrics'])
@@ -239,6 +241,14 @@ def config_queue(args):
         config_override = create_dict_from_text_config_file(args.override_config)
         queue_config = update_config_from_override(queue_config, config_override)
     queue.config_from_object(queue_config)
+    
+    schedules = queue.conf['CELERYBEAT_SCHEDULE']
+    for key in schedules:
+        schedule_type = schedules[key]['schedule']
+        if schedule_type == 'daily':
+            schedules[key]['schedule'] = crontab(minute=0, hour=0)
+        else:
+            schedules[key]['schedule'] = timedelta(seconds=10)
 
 
 def get_absolute_path():

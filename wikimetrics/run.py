@@ -23,7 +23,17 @@ def run_test():
 
 def run_queue():
     from configurables import queue
+    from wikimetrics.schedules import daily
     queue.start(argv=['celery', 'worker', '-l', queue.conf['LOG_LEVEL']])
+
+
+def run_scheduler():
+    from configurables import queue
+    queue.start(argv=[
+        'celery', 'beat',
+        '-s', queue.conf['CELERY_BEAT_DATAFILE'],
+        '--pidfile', queue.conf['CELERY_BEAT_PIDFILE'],
+    ])
 
 
 def setup_parser():
@@ -46,13 +56,15 @@ def setup_parser():
             'web',
             'test',
             'queue',
+            'scheduler',
         ],
         # NOTE: flake made me format the strings this way, nothing could be uglier
         help='''
-            web    : runs flask webserver...
-            test   : run nosetests...
-            queue  : runs celery worker...
-            import : configures everything and runs nothing...
+            web       : runs flask webserver...
+            test      : run nosetests...
+            queue     : runs celery worker...
+            scheduler : runs celery beat scheduler...
+            import    : configures everything and runs nothing...
         ''',
     )
     # get defaults from environment variables
@@ -110,6 +122,8 @@ def main():
         run_test()
     elif args.mode == 'queue':
         run_queue()
+    elif args.mode == 'scheduler':
+        run_scheduler()
     elif args.mode == 'import':
         pass
 

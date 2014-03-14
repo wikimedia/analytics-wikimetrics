@@ -1,7 +1,7 @@
 import os
 from unittest import TestCase
 from nose.tools import assert_equals, assert_true
-from wikimetrics.configurables import db, parse_db_connection_string
+from wikimetrics.configurables import db, parse_db_connection_string, queue
 from wikimetrics.database import get_host_projects, get_host_projects_map
 
 
@@ -29,9 +29,7 @@ class DatabaseSetupTest(TestCase):
         assert_equals(password, 'wikimetrics')
         assert_equals(host, 'localhost')
         assert_equals(dbName, 'wikimetrics')
-
-
-
+    
     #def test_get_fresh_project_host_map(self):
         #project_host_map_cache_file = 'project_host_map.json'
         ## make sure any cached file is deleted
@@ -44,3 +42,12 @@ class DatabaseSetupTest(TestCase):
         #os.remove(project_host_map_cache_file)
         #db.get_project_host_map(usecache=False)
         #assert_true(os.path.exists(project_host_map_cache_file))
+
+
+class SchedulerSetupTest(TestCase):
+    def test_scheduler_configured(self):
+        sched = queue.conf['CELERYBEAT_SCHEDULE']
+        assert_equals(
+            sched['update-daily-recurring-reports']['task'],
+            'wikimetrics.schedules.daily.recurring_reports'
+        )

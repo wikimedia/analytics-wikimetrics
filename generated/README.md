@@ -1,0 +1,1 @@
+This folder should be empty in source control, except for this file.  This is where generated files such as the celery beat pidfile or the celery beat task database are stored.  Please use it to store any other such generated files so we don't end up with a confusing .gitignore or cluttered clones.
