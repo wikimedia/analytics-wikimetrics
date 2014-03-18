@@ -18,3 +18,10 @@ class PublicReportIOError(Exception):
     
     """
     pass
+
+
+class DatabaseError(Exception):
+    """
+    Thrown when database calls don't return an expected result.
+    """
+    pass

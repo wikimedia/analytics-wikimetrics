@@ -17,6 +17,7 @@ from ..models import (
     User, WikiUser, CohortWikiUser, MediawikiUser,
     ValidateCohort
 )
+from ..exceptions import DatabaseError
 
 
 @app.route('/cohorts/')
@@ -127,6 +128,7 @@ def populate_cohort_validation_status(cohort_dict):
         cohort_dict['total_count'] = len(cohort_dict['wikiusers'])
         cohort_dict['valid_count'] = cohort_dict['total_count']
         cohort_dict['invalid_count'] = 0
+        cohort_dict['delete_message'] = None
         return cohort_dict
     
     validation_task = ValidateCohort.task.AsyncResult(task_key)
@@ -147,6 +149,14 @@ def populate_cohort_validation_status(cohort_dict):
         cohort_dict['total_count'] = session.query(func.count(WikiUser)) \
             .filter(WikiUser.validating_cohort == cohort_dict['id']) \
             .one()[0]
+        users = num_users(session, cohort_dict['id'])
+        non_owners = users - 1
+        role = get_role(session, cohort_dict['id'])
+        if users != 1 and role == CohortUserRole.OWNER:
+            cohort_dict['delete_message'] = 'delete this cohort? ' + \
+                'There are {0} other user(s) shared on this cohort.'.format(non_owners)
+        else:
+            cohort_dict['delete_message'] = 'delete this cohort?'
     finally:
         session.close()
     return cohort_dict
@@ -227,23 +237,122 @@ def validate_cohort(cohort_id):
         session.close()
 
 
+def num_users(session, cohort_id):
+    user_count = session.query(CohortUser) \
+        .filter(CohortUser.cohort_id == cohort_id) \
+        .count()
+    return user_count
+
+
+def get_role(session, cohort_id):
+    """
+    Returns the role of the current user.
+    """
+    try:
+        cohort_user = session.query(CohortUser.role) \
+            .filter(CohortUser.cohort_id == cohort_id) \
+            .filter(CohortUser.user_id == current_user.id) \
+            .one()[0]
+        return cohort_user
+    except:
+        session.rollback()
+        raise DatabaseError('No role found in cohort user.')
+
+
+def delete_viewer_cohort(session, cohort_id):
+    """
+    Used when deleting a user's connection to a cohort. Currently used when user
+    is a VIEWER of a cohort and want to remove that cohort from their list.
+
+    Raises exception when viewer is duplicated, nonexistent, or can not be deleted.
+    """
+    cu = session.query(CohortUser) \
+        .filter(CohortUser.cohort_id == cohort_id) \
+        .filter(CohortUser.user_id == current_user.id) \
+        .filter(CohortUser.role == CohortUserRole.VIEWER) \
+        .delete()
+    
+    if cu != 1:
+        session.rollback()
+        raise DatabaseError('Viewer attempt delete cohort failed.')
+
+
+def delete_owner_cohort(session, cohort_id):
+    """
+    Deletes the cohort and all associate records with that cohort if user is the
+    owner.
+
+    Raises an error if it cannot delete the cohort.
+    """
+    # Check that there's only one owner and delete it
+    cu = session.query(CohortUser) \
+        .filter(CohortUser.cohort_id == cohort_id) \
+        .filter(CohortUser.role == CohortUserRole.OWNER) \
+        .delete()
+
+    if cu != 1:
+        session.rollback()
+        raise DatabaseError('No owner or multiple owners in cohort.')
+    else:
+        try:
+            # Delete all other non-owners from cohort_user
+            session.query(CohortUser) \
+                .filter(CohortUser.cohort_id == cohort_id) \
+                .delete()
+            cwu = session.query(CohortWikiUser) \
+                .filter(CohortWikiUser.cohort_id == cohort_id) \
+                .delete()
+            if cwu < 1:
+                raise DatabaseError('Cannot delete CohortWikiUser.')
+
+            wu = session.query(WikiUser) \
+                .filter(WikiUser.validating_cohort == cohort_id) \
+                .delete()
+            if wu < 1:
+                raise DatabaseError('Cannot delete WikiUser.')
+
+            c = session.query(Cohort) \
+                .filter(Cohort.id == cohort_id) \
+                .delete()
+            if c < 1:
+                raise DatabaseError('Cannot delete Cohort.')
+        except DatabaseError as e:
+            print "here3"
+            session.rollback()
+            raise DatabaseError('Owner attempt to delete a cohort failed. ' + e.message)
+
+
 @app.route('/cohorts/delete/<int:cohort_id>', methods=['POST'])
 def delete_cohort(cohort_id):
     """
-    Deletes a cohort and all its wikiusers if it belongs to only current_user
+    Deletes a cohort and all its associated links if it belongs to only current_user
     Removes the relationship between current_user and this cohort if it belongs
-    to more than just current_user
+    to a user other than current_user
     """
     session = db.get_session()
     try:
-        result = session.query(CohortUser) \
-            .filter(CohortUser.cohort_id == cohort_id) \
-            .filter(CohortUser.user_id == current_user.id) \
-            .delete()
-        session.commit()
-        if result > 0:
+        owner_and_viewers = num_users(session, cohort_id)
+        role = get_role(session, cohort_id)
+
+        # Owner wants to delete, no other viewers or
+        # Owner wants to delete, have other viewers, delete from other viewer's lists too
+        if owner_and_viewers >= 1 and role == CohortUserRole.OWNER:
+            delete_owner_cohort(session, cohort_id)
+            session.commit()
             return json_redirect(url_for('cohorts_index'))
+
+        # Viewer wants to delete cohort from their list, doesn't delete cohort from db;l,
+        elif owner_and_viewers > 1 and role == CohortUserRole.VIEWER:
+            delete_viewer_cohort(session, cohort_id)
+            session.commit()
+            return json_redirect(url_for('cohorts_index'))
+
+        # None of the other cases fit.
         else:
-            return json_error('This Cohort can not be deleted')
+            session.rollback()
+            return json_error('This Cohort can not be deleted.')
+    except DatabaseError as e:
+        session.rollback()
+        return json_error(e.message)
     finally:
         session.close()

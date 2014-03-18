@@ -21,9 +21,13 @@
             <div class="hero-unit">
                 <h5 data-bind="text: name"></h5>
                 <p data-bind="text: description"></p>
-                <div data-bind="if: validated() && valid_count() > 0">
+                <div class="btn-group pull-left" data-bind="if: validated() && valid_count() > 0">
                     <a data-bind="attr:{href:'{{url_for('reports_request')}}#'+id}"
                        class="btn btn-primary">Create Report</a>
+                </div>
+                <div class="btn-group">
+                    <a data-bind="click: $root.deleteCohort, attr: { title: delete_message }"
+                       class="btn btn-danger">Remove Cohort</a>
                 </div>
                 <div data-bind="if: validated_count() === total_count() && !validated()">
                     <hr/>
@@ -44,9 +48,6 @@
                 <div data-bind="if: valid_count() < total_count()">
                     <hr/>
                     <p>
-                        <a data-bind="click: $root.deleteCohort"
-                           class="btn btn-danger"
-                           title="remove this cohort from your list">Remove Cohort</a>
                         <a data-bind="click: $root.validateWikiusers"
                            class="btn btn-primary"
                            title="cancel and restart validation for this cohort">Validate Again</a>

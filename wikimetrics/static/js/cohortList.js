@@ -12,6 +12,7 @@ $(document).ready(function(){
             cohort.total_count(data.total_count);
             cohort.validation_status(data.validation_status);
             cohort.wikiusers(data.wikiusers);
+            cohort.delete_message(data.delete_message);
         },
         
         view: function(cohort, event, callback){
@@ -35,7 +36,7 @@ $(document).ready(function(){
         },
         
         deleteCohort: function(cohort, event){
-            if (site.confirmDanger(event)){
+            if (site.confirmDanger(event, true)){
                 $.post('/cohorts/delete/' + cohort.id)
                     .done(site.handleWith(function(){
                         site.showWarning('Something is wrong, you should be redirected');
@@ -43,7 +44,7 @@ $(document).ready(function(){
                     .fail(site.failure);
             }
         },
-        
+
         validateWikiusers: function(cohort, event){
             if (site.confirmDanger(event)){
                 $.post('/cohorts/validate/' + cohort.id)
@@ -90,6 +91,7 @@ $(document).ready(function(){
             item.valid_count = ko.observable(0);
             item.total_count = ko.observable(0);
             item.validation_status = ko.observable();
+            item.delete_message = ko.observable();
         });
     }
 });

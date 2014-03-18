@@ -1,12 +1,12 @@
 import json
 import time
 from StringIO import StringIO
-from nose.tools import assert_equal, assert_true, assert_false, raises, nottest
+from nose.tools import assert_equal, assert_not_equal, assert_true, assert_false
 from wikimetrics.configurables import app
 from tests.fixtures import WebTest
 from wikimetrics.models import (
     Cohort, CohortUser, CohortUserRole, ValidateCohort,
-    CohortWikiUser, WikiUser,
+    CohortWikiUser, WikiUser, User
 )
 
 
@@ -135,26 +135,127 @@ class CohortsControllerTest(WebTest):
         assert_true(
             response.data.find('Validating cohort') >= 0
         )
-    
-    def test_delete_cohort(self):
+
+    def test_delete_cohort_owner_no_viewer(self):
         response = self.app.post('/cohorts/delete/{0}'.format(self.cohort.id))
-        
+
         assert_equal(response.status_code, 200)
         assert_true(response.data.find('isRedirect') >= 0)
         assert_true(response.data.find('/cohorts/') >= 0)
+        cohort_id = self.cohort.id
         self.session.commit()
+
+        # Check that all relevant rows are deleted
+        cwu = self.session.query(CohortWikiUser) \
+            .filter(CohortWikiUser.cohort_id == cohort_id) \
+            .first()
+        assert_equal(cwu, None)
         cu = self.session.query(CohortUser) \
-            .filter(CohortUser.cohort_id == self.cohort.id) \
+            .filter(CohortUser.cohort_id == cohort_id) \
+            .filter(CohortUser.user_id == self.owner_user_id) \
             .first()
         assert_equal(cu, None)
-    
+        wu = self.session.query(WikiUser) \
+            .filter(WikiUser.validating_cohort == cohort_id) \
+            .first()
+        assert_equal(wu, None)
+        c = self.session.query(Cohort).get(cohort_id)
+        assert_equal(c, None)
+
+    def test_delete_cohort_owner_has_viewer(self):
+        viewer_user = User()
+        self.session.add(viewer_user)
+        self.session.commit()
+
+        viewer_cohort_user = CohortUser(
+            user_id=viewer_user.id,
+            cohort_id=self.cohort.id,
+            role=CohortUserRole.VIEWER
+        )
+        self.session.add(viewer_cohort_user)
+        self.session.commit()
+        response = self.app.post('/cohorts/delete/{0}'.format(self.cohort.id))
+
+        assert_equal(response.status_code, 200)
+        assert_true(response.data.find('isRedirect') >= 0)
+        assert_true(response.data.find('/cohorts/') >= 0)
+        cohort_id = self.cohort.id
+        self.session.commit()
+
+        # Check that all relevant rows are deleted
+        cwu = self.session.query(CohortWikiUser) \
+            .filter(CohortWikiUser.cohort_id == cohort_id) \
+            .first()
+        assert_equal(cwu, None)
+        cu = self.session.query(CohortUser) \
+            .filter(CohortUser.cohort_id == cohort_id) \
+            .first()
+        assert_equal(cu, None)
+        wu = self.session.query(WikiUser) \
+            .filter(WikiUser.validating_cohort == cohort_id) \
+            .first()
+        assert_equal(wu, None)
+        c = self.session.query(Cohort).get(cohort_id)
+        assert_equal(c, None)
+
+    def test_delete_cohort_as_viewer(self):
+        # Changing the owner_user_id to a VIEWER
+        self.session.query(CohortUser) \
+            .filter(CohortUser.user_id == self.owner_user_id) \
+            .filter(CohortUser.cohort_id == self.cohort.id) \
+            .update({'role': CohortUserRole.VIEWER})
+        self.session.commit()
+
+        # Adding a different CohortUser as owner
+        new_cohort_user = CohortUser(
+            cohort_id=self.cohort.id,
+            role=CohortUserRole.OWNER
+        )
+        self.session.add(new_cohort_user)
+        self.session.commit()
+
+        response = self.app.post('/cohorts/delete/{0}'.format(self.cohort.id))
+
+        assert_equal(response.status_code, 200)
+        assert_true(response.data.find('isRedirect') >= 0)
+        assert_true(response.data.find('/cohorts/') >= 0)
+        cohort_id = self.cohort.id
+        self.session.commit()
+
+        # Check that all relevant rows are deleted
+        cwu = self.session.query(CohortWikiUser) \
+            .filter(CohortWikiUser.cohort_id == cohort_id) \
+            .first()
+        assert_not_equal(cwu, None)
+        cu = self.session.query(CohortUser) \
+            .filter(CohortUser.cohort_id == cohort_id) \
+            .filter(CohortWikiUser.id == self.owner_user_id) \
+            .first()
+        assert_equal(cu, None)
+        wu = self.session.query(WikiUser) \
+            .filter(WikiUser.validating_cohort == cohort_id) \
+            .first()
+        assert_not_equal(wu, None)
+        c = self.session.query(Cohort).get(cohort_id)
+        assert_not_equal(c, None)
+
     def test_delete_unauthorized_cohort(self):
         self.session.query(CohortUser).delete()
         self.session.commit()
         response = self.app.post('/cohorts/delete/{0}'.format(self.cohort.id))
-        
+
         assert_true(response.data.find('isError') >= 0)
-        assert_true(response.data.find('This Cohort can not be deleted') >= 0)
+        assert_true(response.data.find('No role found in cohort user.') >= 0)
+
+    def test_delete_cohort_database_error(self):
+        self.session.query(CohortWikiUser).delete()
+        self.session.commit()
+        response = self.app.post('/cohorts/delete/{0}'.format(self.cohort.id))
+
+        expected_message = 'Owner attempt to delete a cohort failed. ' \
+                           'Cannot delete CohortWikiUser.'
+        assert_true(response.data.find('isError') >= 0)
+        assert_true(response.data.find(expected_message) >= 0)
 
 
 class CohortsControllerUploadTest(WebTest):

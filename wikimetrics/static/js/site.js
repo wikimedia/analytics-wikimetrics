@@ -21,9 +21,9 @@ var site = {
         return true;
     },
     
-    confirmDanger: function(event){
+    confirmDanger: function(event, noQuestion){
         var title = $(event.target).attr('title');
-        return confirm('Are you sure you want to ' + title + '?');
+        return confirm('Are you sure you want to ' + title + (noQuestion ? '' : '?') );
     },
     
     showError: function (message, permanent){
