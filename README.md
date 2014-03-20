@@ -25,7 +25,7 @@ config.vm.network :forwarded_port,
     guest: 5000, host: 5000, id: 'wikimetrics'
 ````
 
-* Reload vagrant: `$ vagrant reload`
+* Reload vagrant: `$ vagrant reload --provision`
 * Browse to [localhost:5000](http://localhost:5000)
 
 And you now have a fully working Wikimetrics environment.  The code it's running from is sym-linked locally in your Mediawiki Vagrant repository under `wikimetrics/` so you can do any development there and interact with it just like you would with any other WMF gerrit repository.  Contact us on freenode, channel #wikimedia-analytics if you have any questions.
