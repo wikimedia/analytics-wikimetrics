@@ -3,6 +3,10 @@
 # wikimetrics without too much configuration.  But different
 # SECRET_KEY and GOOGLE_CLIENT_SECRET are in use in production,
 # generated to work with the production URL.
+#
+# Reserved for Puppet to change:
+# PUBLIC_PATH
+#
 SECRET_KEY  : 'sw3lo(*A98ijwl3i3n&&JEK MSL IESKU* WSkl#iIREJSslsijsle ssie'
 DEBUG       : True
 

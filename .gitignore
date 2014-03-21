@@ -14,5 +14,8 @@
 
 /.tox
 
+
 # never commit this as it holds any server-specific settings like secret keys and passwords, etc.
 config_secret.py
+wikimetrics/static/public
+
