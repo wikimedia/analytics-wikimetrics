@@ -164,6 +164,57 @@ def ensure_dir(root, path):
             os.makedirs(full_path)
 
 
+def diff_datewise(left, right, left_parse=None, right_parse=None):
+    """
+    Parameters
+        left        : a list of datetime strings or objects
+        right       : a list of datetime strings or objects
+        left_parse  : if left contains datetimes, None; else a strptime format
+        right_parse : if right contains datetimes, None; else a strptime format
+
+    Returns
+        A tuple of two sets:
+        [0] : the datetime objects in left but not right
+        [1] : the datetime objects in right but not left
+    """
+    
+    if left_parse:
+        left_set = set([
+            datetime.strptime(l.strip(), left_parse)
+            for l in left if len(l.strip())
+        ])
+    else:
+        left_set = set(left)
+    
+    if right_parse:
+        right_set = set([
+            datetime.strptime(r.strip(), right_parse)
+            for r in right if len(r.strip())
+        ])
+    else:
+        right_set = set(right)
+    
+    return (left_set - right_set, right_set - left_set)
+
+
+def timestamps_to_now(start, increment):
+    """
+    Generates timestamps from @start to datetime.now(), by @increment
+    
+    Parameters
+        start       : the first generated timestamp
+        increment   : the timedelta between the generated timestamps
+    
+    Returns
+        A generator that goes from @start to datetime.now() - x,
+        where x <= @increment
+    """
+    now = datetime.now()
+    while start < now:
+        yield start
+        start += increment
+
+
 class Unauthorized(Exception):
     """
     Different exception type to separate "unauthorized" errors from the rest
