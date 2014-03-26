@@ -127,9 +127,9 @@ class Cohort(db.WikimetricsBase):
             .filter(User.id == user_id)\
             .filter(Cohort.enabled)
         
-        if not by_id is None:
+        if by_id is not None:
             query = query.filter(Cohort.id == by_id)
-        if not by_name is None:
+        if by_name is not None:
             query = query.filter(Cohort.name == by_name)
         
         cohort, role = query.one()

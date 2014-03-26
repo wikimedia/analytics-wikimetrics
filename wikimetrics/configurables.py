@@ -31,7 +31,7 @@ def setup_testing_config(db_config):
     override_file = 'wikimetrics/config/test_config.yaml'
     config_override = create_dict_from_text_config_file(override_file)
     test_config = update_config_from_override(db_config, config_override)
-    
+
     test_config['PROJECT_HOST_NAMES'] = get_project_host_names_local()
     return test_config
 
@@ -84,25 +84,25 @@ def config_web(args):
     )
     from werkzeug import url_decode, parse_options_header
     import flask.ext.oauth as nasty_patch_to_oauth
-    
+
     global app
     app = Flask('wikimetrics')
     # TODO do we need this config to be created like an object instead of a dictionary?
     web_config = create_object_from_text_config_file(args.web_config)
-    #if args.override_config:
-        # override_config = create_object_from_text_config_file(args.override_config)
-        # TODO override one obj with other, can we use dict?
-    
+    # if args.override_config:
+    # override_config = create_object_from_text_config_file(args.override_config)
+    # TODO override one obj with other, can we use dict?
+
     app.config.from_object(web_config)
-    
+
     version, latest = get_wikimetrics_version()
     app.config['WIKIMETRICS_LATEST'] = latest
     app.config['WIKIMETRICS_VERSION'] = version
-    
+
     global login_manager
     login_manager = LoginManager()
     login_manager.init_app(app)
-    
+
     global google
     oauth = OAuth()
     google = oauth.remote_app(
@@ -123,7 +123,7 @@ def config_web(args):
         consumer_key=app.config['GOOGLE_CLIENT_ID'],
         consumer_secret=app.config['GOOGLE_CLIENT_SECRET'],
     )
-    
+
     def better_parse_response(resp, content, strict=False):
         ct, options = parse_options_header(resp['content-type'])
         if ct in ('application/json', 'text/javascript'):
@@ -146,10 +146,10 @@ def config_web(args):
                 return content
         charset = options.get('charset', 'utf-8')
         return url_decode(content, charset=charset).to_dict()
-    
+
     # TODO: Even worse, definitely patch upstream or consider switching to rauth
     nasty_patch_to_oauth.parse_response = better_parse_response
-    
+
     # TODO: patch upstream
     # NOTE: a million thanks to Merlijn_van_Deen, author of
     # https://wikitech.wikimedia.org/wiki/Setting_up_Flask_cgi_app_as_a_tool/OAuth
@@ -176,7 +176,7 @@ def config_web(args):
                     data=data
                 )
             return data
-    
+
     global meta_mw
     meta_mw_base_url = app.config['META_MW_BASE_URL']
     meta_mw = MediaWikiOAuthRemoteApp(
@@ -204,15 +204,15 @@ def config_db(args):
     to get a user,password, host and dbName
     """
     from .database import Database
-    
+
     db_config = create_dict_from_text_config_file(args.db_config)
     config_override = {}
     if args.override_config:
         config_override = create_dict_from_text_config_file(args.override_config)
         db_config = update_config_from_override(db_config, config_override)
-    
+
     global db
-    
+
     user, password, host, db_name = parse_db_connection_string(
         db_config['WIKIMETRICS_ENGINE_URL'])
     db_config['WIKIMETRICS'] = {
@@ -221,16 +221,16 @@ def config_db(args):
         'HOST': host,
         'DBNAME': db_name,
     }
-    
+
     if db_config.get('DEBUG'):
         db_config['PROJECT_HOST_NAMES'] = get_project_host_names_local()
-    
+
     db = Database(db_config)
 
 
 def config_queue(args):
     from celery import Celery
-    
+
     # create and configure celery app
     global queue
     queue = Celery('wikimetrics', include=['wikimetrics'])

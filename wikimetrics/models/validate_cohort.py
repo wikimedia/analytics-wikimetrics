@@ -155,7 +155,7 @@ class ValidateCohort(object):
                     continue
                 
                 wu.project = normalized_project
-                if not wu.project in wikiusers_by_project:
+                if wu.project not in wikiusers_by_project:
                     wikiusers_by_project[wu.project] = []
                 wikiusers_by_project[wu.project].append(wu)
                 

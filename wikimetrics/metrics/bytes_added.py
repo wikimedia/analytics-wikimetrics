@@ -107,8 +107,7 @@ class BytesAdded(TimeseriesMetric):
             .join(Page)\
             .outerjoin(
                 PreviousRevision,
-                Revision.rev_parent_id == PreviousRevision.c.rev_id
-            )\
+                Revision.rev_parent_id == PreviousRevision.c.rev_id)\
             .filter(Page.page_namespace.in_(self.namespaces.data))\
             .filter(Revision.rev_user.in_(user_ids))\
             .filter(Revision.rev_timestamp > start_date)\

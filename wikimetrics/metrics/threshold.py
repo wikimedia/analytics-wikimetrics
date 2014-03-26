@@ -150,9 +150,7 @@ class Threshold(Metric):
                 o_r,
                 and_(
                     MediawikiUser.user_id == o_r.c.rev_user,
-                    o_r.c.number == number_of_edits
-                )
-            ) \
+                    o_r.c.number == number_of_edits)) \
             .filter(MediawikiUser.user_id.in_(user_ids))
         
         return {

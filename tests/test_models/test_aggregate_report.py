@@ -299,31 +299,33 @@ class AggregateReportTimeseriesTest(QueueDatabaseTest):
             {'date3': r(1.15), 'date4': r(1.7)}
         )
 
-# NOTE: a sample output of AggregateReport:
-#{
-    #'f5ca5afe-6b2d-4052-bd51-6cbeaeba5eb9': {
-        #'Standard Deviation': {
-            #'edits': 'Not Implemented'
-        #},
-        #'Individual Results': [
-            #{
-                #1: {'edits': 2},
-                #2: {'edits': 3},
-                #3: {'edits': 0},
-                #None: {'edits': 0}
-            #}
-        #],
-        #'Sum': {
-            #'edits': Decimal('5')
-        #},
-        #'Average': {
-            #'edits': Decimal('1.25')
-        #}
-    #},
-    #'f5930c16-03ba-4069-a05e-e57f9f8e2f5c': {
-        #1: {'edits': 2},
-        #2: {'edits': 3},
-        #3: {'edits': 0},
-        #None: {'edits': 0}
-    #}
-#}
+""""
+NOTE: a sample output of AggregateReport:
+{
+    'f5ca5afe-6b2d-4052-bd51-6cbeaeba5eb9': {
+        'Standard Deviation': {
+            'edits': 'Not Implemented'
+        },
+        'Individual Results': [
+            {
+                1: {'edits': 2},
+                2: {'edits': 3},
+                3: {'edits': 0},
+                None: {'edits': 0}
+            }
+        ],
+        'Sum': {
+            'edits': Decimal('5')
+        },
+        'Average': {
+            'edits': Decimal('1.25')
+        }
+    },
+    'f5930c16-03ba-4069-a05e-e57f9f8e2f5c': {
+        1: {'edits': 2},
+        2: {'edits': 3},
+        3: {'edits': 0},
+        None: {'edits': 0}
+    }
+}
+"""

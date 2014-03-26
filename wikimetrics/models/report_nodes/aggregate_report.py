@@ -83,7 +83,7 @@ class AggregateReport(ReportNode):
                     Aggregation.AVG
                 )
             if self.aggregate_std_deviation:
-                if not Aggregation.AVG in aggregated_results:
+                if Aggregation.AVG not in aggregated_results:
                     average = self.calculate(child_results, Aggregation.AVG)
                 else:
                     average = aggregated_results[Aggregation.AVG]
@@ -125,17 +125,17 @@ class AggregateReport(ReportNode):
                         continue
                     
                     value = results_by_user[user_id][key]
-                    value_is_not_censored = not CENSORED in results_by_user[user_id]\
+                    value_is_not_censored = CENSORED not in results_by_user[user_id]\
                         or results_by_user[user_id][CENSORED] != 1
                     
                     # handle timeseries aggregation
                     if isinstance(value, dict):
-                        if not key in aggregation:
+                        if key not in aggregation:
                             aggregation[key] = OrderedDict()
                             helper[key] = dict()
                         
                         for subkey in value:
-                            if not subkey in aggregation[key]:
+                            if subkey not in aggregation[key]:
                                 aggregation[key][subkey] = 0
                                 helper[key][subkey] = dict()
                                 helper[key][subkey]['sum'] = Decimal(0.0)
@@ -166,14 +166,14 @@ class AggregateReport(ReportNode):
                     
                     # handle normal aggregation
                     else:
-                        if not key in aggregation:
+                        if key not in aggregation:
                             aggregation[key] = 0
                             helper[key] = dict()
                             helper[key]['sum'] = Decimal(0.0)
                             helper[key]['square_diffs'] = Decimal(0.0)
                             helper[key]['count'] = 0
                         
-                        if value_is_not_censored and not value is None:
+                        if value_is_not_censored and value is not None:
                             helper[key]['sum'] += Decimal(value)
                             helper[key]['count'] += 1
                             if type_of_aggregate == Aggregation.STD:

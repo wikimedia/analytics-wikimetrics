@@ -147,7 +147,7 @@ class TimeseriesMetric(Metric):
         # get results by user and by date
         for row in query_results:
             user_id = row[0]
-            if not user_id in results:
+            if user_id not in results:
                 results[user_id] = OrderedDict()
             
             date_slice = None
@@ -156,7 +156,7 @@ class TimeseriesMetric(Metric):
             
             for label, index, default in submetrics:
                 if date_slice:
-                    if not label in results[user_id]:
+                    if label not in results[user_id]:
                         results[user_id][label] = dict()
                     results[user_id][label][date_slice] = row[index]
                 else:
@@ -196,7 +196,7 @@ class TimeseriesMetric(Metric):
         
         for user_id, user_submetrics in results_by_user.iteritems():
             for label, i, default in submetrics:
-                if not label or not user_submetrics or not label in user_submetrics:
+                if not label or not user_submetrics or label not in user_submetrics:
                     continue
                 defaults = timeseries_slices.copy()
                 defaults.update(user_submetrics[label])

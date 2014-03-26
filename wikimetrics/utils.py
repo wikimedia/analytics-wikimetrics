@@ -112,7 +112,7 @@ def deduplicate_by_key(list_of_objects, key_function):
     uniques = dict()
     for o in list_of_objects:
         key = key_function(o)
-        if not key in uniques:
+        if key not in uniques:
             uniques[key] = o
     
     return uniques.values()

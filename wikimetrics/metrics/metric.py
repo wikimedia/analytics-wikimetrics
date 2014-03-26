@@ -14,8 +14,10 @@ class Metric(WikimetricsSecureForm):
     
     show_in_ui  = False
     id          = None  # unique identifier for client-side use
-    label       = None  # this will be displayed as the title of the metric-specific
-                        # tab in the request form
+    
+    # this will be displayed as the title of the metric-specific
+    # tab in the request form
+    label       = None
     description = None  # basic description of what the metric does
     
     def __call__(self, user_ids, session):

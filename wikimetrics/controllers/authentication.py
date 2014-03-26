@@ -43,7 +43,7 @@ def default_to_private():
         return json_error('Please Login to access {0}'.format(request.path))
     
     if (
-            request.endpoint
+        request.endpoint
         and not request.path.startswith('/static/')
         and not request.path == 'favicon.ico'
         and not getattr(app.view_functions[request.endpoint], 'is_public', False)
