@@ -25,10 +25,11 @@ class RevertRate(Metric):
                from revision r1
                         inner join
                     revision r2     on r2.rev_sha1 = r1.rev_sha1
+                                    and r1.rev_sha1 <> r.rev_sha1
               where r1.rev_page = r.rev_page
                 and r2.rev_page = r.rev_page
-                and r1.rev_timestamp between [start] and r.rev_timestamp
-                and r2.rev_timestamp between r.rev_timestamp and [end]
+                and r1.rev_timestamp between [start - 2 weeks] and r.rev_timestamp
+                and r2.rev_timestamp between r.rev_timestamp and [end + 2 weeks]
             )
       group by rev_user
     """
