@@ -162,12 +162,12 @@ class CohortsControllerUploadTest(WebTest):
     def test_get_upload_form(self):
         response = self.app.get('/cohorts/upload')
         assert_equal(response.status_code, 200)
-        assert_true(response.data.find('<h3>Create a Cohort by Uploading a CSV') >= 0)
+        assert_true(response.data.find('<h3>Create a Cohort') >= 0)
     
     def test_upload_invalid_form(self):
         response = self.app.post('/cohorts/upload')
         assert_equal(response.status_code, 200)
-        assert_true(response.data.find('<h3>Create a Cohort by Uploading a CSV') >= 0)
+        assert_true(response.data.find('<h3>Create a Cohort') >= 0)
         assert_true(response.data.find('Please fix validation problems') >= 0)
     
     def test_upload_taken_cohort_name(self):
@@ -178,7 +178,7 @@ class CohortsControllerUploadTest(WebTest):
             validate_as_user_ids='True',
         ))
         assert_equal(response.status_code, 200)
-        assert_true(response.data.find('<h3>Create a Cohort by Uploading a CSV') >= 0)
+        assert_true(response.data.find('<h3>Create a Cohort') >= 0)
         assert_true(response.data.find('That Cohort name is already taken') >= 0)
     
     def test_upload_works(self):
@@ -236,5 +236,5 @@ class CohortsControllerUploadTest(WebTest):
             validate_as_user_ids='True',
         ))
         assert_equal(response.status_code, 200)
-        assert_true(response.data.find('<h3>Create a Cohort by Uploading a CSV') >= 0)
+        assert_true(response.data.find('<h3>Create a Cohort') >= 0)
         assert_true(response.data.find('Please fix validation problems') >= 0)
