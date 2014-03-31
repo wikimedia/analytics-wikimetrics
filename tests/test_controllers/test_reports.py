@@ -338,7 +338,9 @@ class ReportsControllerTest(WebTest):
             parsed = json.loads(response.data)
             result_key = parsed['reports'][-1]['result_key']
             task, report = get_celery_task(result_key)
-            
+            assert_true(task is not None)
+            assert_true(report is not None)
+
             # Make the report publically accessible (save it to static/public)
             response = self.client.post('/reports/set-public/{}'.format(report.id))
             assert_true(response.status_code == 200)

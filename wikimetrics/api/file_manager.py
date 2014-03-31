@@ -1,8 +1,15 @@
 import os
 import os.path
+import json
+import shutil
 from wikimetrics.exceptions import PublicReportIOError
 # TODO ultils imports flask response -> fix
-from wikimetrics.utils import ensure_dir
+
+# Illegal filename characters
+RESERVED_FILENAME_CHARACTERS = {' ', os.sep, ':', '<', '>', '"', '/', '\\', '|', '?', '*'}
+
+# Filename used for coalesced report files
+COALESCED_REPORT_FILE = 'full_report.json'
 
 
 class PublicReportFileManager():
@@ -22,6 +29,7 @@ class PublicReportFileManager():
     mock this class easily
     
     """
+
     def __init__(self, logger, root_dir):
         """
         Parameters
@@ -32,20 +40,30 @@ class PublicReportFileManager():
         self.logger = logger
         self.root_dir = root_dir
     
-    def get_public_report_path(self, report_id):
+    def get_public_report_path(self, report_id, recurrent=False, create=False):
         """
-        Careful:
-            If directory doesn't exist it will try to create it!
-            This is only meaningful in local setup, in any other setup puppet
-            should have create this directory
         Parameters
            report_id : unique identifier for the report, a string
-        
+           recurrent : a boolean specifying whether the report is recurrent
+           create : a boolean specifying if this method should create the returned
+                    directory path on the file system.  This parameter is only
+                    meaningful if recurrent == True
+
+        Returns
+           The path to a public report file if recurrent is False, otherwise
+           the path to a recurrent public report directory
         """
-        report_dir = os.sep.join(('static', 'public'))
-        ensure_dir(self.root_dir, report_dir)
-        return os.sep.join((self.root_dir, report_dir, '{}.json'.format(report_id)))
-    
+        path_parts = [self.root_dir, 'static', 'public']
+
+        if recurrent:
+            path_parts.append(self.sanitize_path(str(report_id)))
+            if create:
+                self.ensure_dir(os.sep.join(path_parts))
+        else:
+            path_parts.append('{}.json'.format(self.sanitize_path(str(report_id))))
+
+        return os.sep.join(path_parts)
+
     def write_data(self, file_path, data):
         """
         Writes data to a given path
@@ -85,5 +103,96 @@ class PublicReportFileManager():
         
         except IOError:
             msg = 'Could not remove public report at: {0}'.format(file_path)
+            self.logger.exception(msg)
+            raise PublicReportIOError(msg)
+
+    def sanitize_path(self, name_string):
+        return ''.join(c if c not in RESERVED_FILENAME_CHARACTERS
+                       and ord(c) > 31 else '_' for c in name_string)
+
+    def create_file_name(self, name_string, date_object=None):
+        """
+        Create a string from a report name and optional datetime object suitable
+        for use as a filename
+        """
+        result = self.sanitize_path(name_string)
+        if date_object:
+            result += '-' + self.sanitize_path(str(date_object))
+        return result
+
+    def ensure_dir(self, root, path=""):
+        """
+        Creates a new directory composed of root + os.sep + path, if the directory
+        does not already exist, and automatically creates any specified parent
+        directories in path which don't exist.
+        """
+        path = os.sep.join((root, path))
+        if not os.path.exists(path):
+            os.makedirs(path)
+
+    def remove_recurrent_report(self, report_id):
+        """
+        Removes a series of recurrent, public reports from persistent storage
+
+        Parameters:
+            report_id : unique identifier for the report, a string
+        """
+        try:
+            path = self.get_public_report_path(report_id, recurrent=True)
+
+            if not os.path.isdir(path):
+                msg = '"{0}" is not a scheduled report'.format(path)
+                self.logger.exception(msg)
+                raise PublicReportIOError(msg)
+
+            shutil.rmtree(path)
+        except IOError:
+            msg = 'Could not remove concatenate public report {0} at "{1}"'.format(
+                report_id, path)
+            self.logger.exception(msg)
+            raise PublicReportIOError(msg)
+
+    def coalesce_recurrent_reports(self, report_id):
+        """
+        Coalesces a series of recurrent, public reports into a single JSON
+        object.  The coalesced object is a single dictionary mapping report
+        END DATES to individual report objects.
+
+        Parameters
+            report_id : unique identifier for the report, a string
+
+        Returns
+            A JSON object containing the coalesced reports
+        """
+        try:
+            coalesced_reports = {}
+            path = self.get_public_report_path(report_id, recurrent=True)
+
+            if not os.path.isdir(path):
+                msg = '"{0}" is not a scheduled report'.format(path)
+                self.logger.exception(msg)
+                raise PublicReportIOError(msg)
+
+            for f in os.listdir(path):
+                full_path = os.sep.join((path, f))
+                if os.path.isfile(full_path) and f != COALESCED_REPORT_FILE:
+                    with open(full_path, 'r') as saved_report:
+                        try:
+                            data = json.load(saved_report)
+                            if 'parameters' not in coalesced_reports:
+                                coalesced_reports['parameters'] = data['parameters']
+
+                            key = data['parameters']['Metric_end_date']
+                            coalesced_reports[key] = data['result']
+                        except KeyError, e:
+                            msg = 'Key "{}" not in JSON file "{}"'.format(e, full_path)
+                            self.logger.exception(msg)
+                        except ValueError:
+                            msg = 'Error parsing JSON file "{}"'.format(full_path)
+                            self.logger.exception(msg)
+
+            return coalesced_reports
+        except IOError:
+            msg = 'Could not concatenate public report {0}'.format(report_id)
             self.logger.exception(msg)
             raise PublicReportIOError(msg)

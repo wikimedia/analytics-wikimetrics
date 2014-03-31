@@ -1,0 +1,65 @@
+{
+    "result": {
+        "Individual Results": {
+            "5624": {
+                "edits": {
+                    "2013-01-01 00:00:00": 0, 
+                    "2013-02-01 00:00:00": 0, 
+                    "2013-03-01 00:00:00": 0, 
+                    "2013-04-01 00:00:00": 0
+                }
+            }, 
+            "5621": {
+                "edits": {
+                    "2013-01-01 00:00:00": 1, 
+                    "2013-02-01 00:00:00": 2, 
+                    "2013-03-01 00:00:00": 1, 
+                    "2013-04-01 00:00:00": 0
+                }
+            }, 
+            "5622": {
+                "edits": {
+                    "2013-01-01 00:00:00": 1, 
+                    "2013-02-01 00:00:00": 2, 
+                    "2013-03-01 00:00:00": 1, 
+                    "2013-04-01 00:00:00": 0
+                }
+            }, 
+            "5623": {
+                "edits": {
+                    "2013-01-01 00:00:00": 0, 
+                    "2013-02-01 00:00:00": 0, 
+                    "2013-03-01 00:00:00": 0, 
+                    "2013-04-01 00:00:00": 0
+                }
+            }
+        }, 
+        "Average": {
+            "edits": {
+                "2013-01-01 00:00:00": 0.5, 
+                "2013-02-01 00:00:00": 1.0, 
+                "2013-03-01 00:00:00": 0.5, 
+                "2013-04-01 00:00:00": 0.0
+            }
+        }
+    }, 
+    "parameters": {
+        "Cohort": "test-specific-cohort", 
+        "Metric_aggregateSum": false, 
+        "Metric_timeseries": "month", 
+        "Metric_aggregateResults": true, 
+        "Created On": "2014-03-31 10:25:37", 
+        "Metric": "NamespaceEdits", 
+        "Metric_individualResults": true, 
+        "Metric_start_date": "2013-01-01 00:00:00", 
+        "Metric_namespaces": [
+            0, 
+            1, 
+            2
+        ], 
+        "Metric_aggregateStandardDeviation": false, 
+        "Cohort Size": 4, 
+        "Metric_end_date": "2013-05-03 00:00:00", 
+        "Metric_aggregateAverage": true
+    }
+}

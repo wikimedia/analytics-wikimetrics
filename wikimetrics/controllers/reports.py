@@ -10,8 +10,7 @@ from wikimetrics.models import Report, RunReport, PersistentReport, WikiUser
 from wikimetrics.metrics import TimeseriesChoices
 from wikimetrics.models.report_nodes import Aggregation
 from wikimetrics.utils import (
-    json_response, json_error, json_redirect, thirty_days_ago, ensure_dir,
-    stringify
+    json_response, json_error, json_redirect, thirty_days_ago, stringify
 )
 from wikimetrics.exceptions import UnauthorizedReportAccessError
 from wikimetrics.api import PublicReportFileManager

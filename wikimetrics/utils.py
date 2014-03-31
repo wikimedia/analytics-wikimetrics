@@ -34,8 +34,12 @@ def format_pretty_date(date_object):
     return date_object.strftime(PRETTY_TIMESTAMP)
 
 
+def json_string(obj):
+    return json.dumps(obj, cls=BetterEncoder, indent=4)
+
+
 def stringify(*args, **kwargs):
-    return json.dumps(dict(*args, **kwargs), cls=BetterEncoder, indent=4)
+    return json_string(dict(*args, **kwargs))
 
 
 def json_response(*args, **kwargs):
@@ -146,17 +150,6 @@ def r(num, places=4):
     """Rounds and returns a Decimal"""
     precision = '1.{0}'.format('0' * places)
     return Decimal(num or 0).quantize(Decimal(precision), rounding=ROUND_HALF_UP)
-
-
-def ensure_dir(root, path):
-    """
-    Creates a new directory composed of root + os.sep + path, if the directory
-    does not already exist, and automatically creates any specified parent
-    directories in path which don't exist.
-    """
-    path = os.sep.join((root, path))
-    if not os.path.exists(path):
-        os.makedirs(path)
 
 
 def diff_datewise(left, right, left_parse=None, right_parse=None):
