@@ -63,12 +63,17 @@ def run_migrations_online():
     In this scenario we need to create an Engine
     and associate a connection with the context.
 
+    Runs for both wikimetrics and wikimetrics_testing
+    database.
+
     """
     import copy
-    config = copy.copy(db.config)
+    config = db.config
     engine = get_engine(config)
-    test_config = setup_testing_config(config)
+
+    test_config = setup_testing_config(copy.deepcopy(config))
     test_engine = get_engine(test_config)
+
     test_metadata = db.WikimetricsBase.metadata
 
     for name, eng, meta_data in [(test_config['WIKIMETRICS_ENGINE_URL'],
