@@ -49,7 +49,7 @@ To install new dependencies, ssh into your vagrant box as above, and issue: `$ s
 
 ### Architecture
 
-The project is fairly small, about 1500 lines of [Python](http://www.python.org/) as of this writing, and a little [KnockoutJS](http://knockoutjs.com/) on the front-end.  You can read the code but this section aims to make it easy to understand.  If you'd just like to write a new metric, follow the [quick tutorial](#write-a-new-metric) below.
+The project is [Python](http://www.python.org/) on the back-end, and a little [KnockoutJS](http://knockoutjs.com/) on the front-end.  You can read the code but this section aims to make it easy to understand.  If you'd just like to write a new metric, follow the [quick tutorial](#write-a-new-metric) below.
 
 ### Write a new Metric
 
