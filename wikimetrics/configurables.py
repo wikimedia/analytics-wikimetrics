@@ -251,8 +251,10 @@ def config_queue(args):
         schedule_type = schedules[key]['schedule']
         if schedule_type == 'daily':
             schedules[key]['schedule'] = crontab(minute=0, hour=0)
+        elif schedule_type == 'test':
+            schedules[key]['schedule'] = crontab(seconds=1)
         else:
-            schedules[key]['schedule'] = timedelta(seconds=1)
+            schedules[key]['schedule'] = timedelta(seconds=30)
 
 
 def get_absolute_path():

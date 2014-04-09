@@ -17,6 +17,8 @@ CENSORED = 'censored'
 # Unicode NULL
 UNICODE_NULL = u'\x00'
 
+PUBLIC_REPORT_FILE = '%Y-%m-%d'
+
 
 def parse_date(date_string):
     return datetime.strptime(date_string, MEDIAWIKI_TIMESTAMP)
@@ -24,6 +26,10 @@ def parse_date(date_string):
 
 def format_date(date_object):
     return date_object.strftime(MEDIAWIKI_TIMESTAMP)
+
+
+def format_date_for_public_report_file(date_object):
+    return date_object.strftime(PUBLIC_REPORT_FILE)
 
 
 def parse_pretty_date(date_string):

@@ -162,13 +162,29 @@ class ReportNode(Report):
                 raise
         
         self.set_status(celery.states.SUCCESS)
+        self.post_process(results)
         return results
     
-    def finish(self, results):
+    def finish(self, child_results):
         """
-        Each ReportNode sublcass should implement this method to deal with
+        Each ReportNode subclass should implement this method to deal with
         the results of its child reports.  As a standard, report_result should
         be called at the end of ReportNode.finish implementations.
+        
+        Parameters:
+            child_results: array of strings
+        """
+        pass
+    
+    def post_process(self, results):
+        """
+        Each ReportNode subclass can implement this method to deal with
+        the results of its child reports. This is called after finish only in the case
+        of the task succeeding.
+        This method is not meant to return any value.
+        
+        Parameters:
+            results: string
         """
         pass
     

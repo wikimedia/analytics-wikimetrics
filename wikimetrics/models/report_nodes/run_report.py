@@ -16,6 +16,8 @@ from report import ReportNode
 from aggregate_report import AggregateReport
 from validate_report import ValidateReport
 from metric_report import MetricReport
+from wikimetrics.api.batch import write_report_task
+from wikimetrics.utils import BetterEncoder
 
 
 __all__ = ['RunReport']
@@ -67,15 +69,20 @@ class RunReport(ReportNode):
         if recurrent_parent_id is not None:
             self.show_in_ui = False
         
+        public = parameters.get('public', False)
+        
         super(RunReport, self).__init__(
             name=parameters['name'],
             user_id=user_id,
             parameters=parameters,
-            public=parameters.get('public', False),
+            public=public,
             recurrent=parameters.get('recurrent', False),
             recurrent_parent_id=recurrent_parent_id,
             created=created,
         )
+        
+        self.recurrent_parent_id = recurrent_parent_id
+        self.public = public
         
         validate_report = ValidateReport(
             metric, cohort, recurrent_parent_id is None, user_id=user_id
@@ -88,8 +95,40 @@ class RunReport(ReportNode):
             self.children = [validate_report]
     
     def finish(self, aggregated_results):
+        
         result = self.report_result(aggregated_results[0])
         return result
+    
+    def post_process(self, results):
+        """
+         If the report is public and this task went well,
+         it will create a file on disk asynchronously
+         
+         Results are of this form:
+         
+         Parameters:
+            results : data to write to disk, in this form:
+                {'5cab8d55-da19-436f-b675-1d2a3fca3481':
+                    {'Sum': {'pages_created': Decimal('0.0000')}}
+                }
+        """
+        if self.public is False:
+            return
+        
+        try:
+            session = db.get_session()
+            db_report = session.query(PersistentReport).get(self.persistent_id)
+        finally:
+            session.close()
+        
+        data = db_report.get_json_result(results)
+        
+        # code below schedules an async task on celery to write the file
+        write_report_task.delay(
+            self.recurrent_parent_id or self.persistent_id,
+            self.created,
+            data,
+        )
     
     def __repr__(self):
         return '<RunReport("{0}")>'.format(self.persistent_id)
@@ -128,6 +167,7 @@ class RunReport(ReportNode):
                 
                 # without this, reports would recur infinitely
                 parameters['recurrent'] = False
+                parameters['public'] = report.public
                 
                 new_run = cls(
                     parameters,
