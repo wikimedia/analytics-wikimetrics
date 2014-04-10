@@ -2,6 +2,7 @@ import time
 from datetime import timedelta, datetime
 from sqlalchemy import func
 from nose.tools import assert_equals, assert_true, raises
+from nose.plugins.attrib import attr
 from celery.exceptions import SoftTimeLimitExceeded
 
 from tests.fixtures import QueueDatabaseTest, DatabaseTest
@@ -85,6 +86,7 @@ class RunReportClassMethodsTest(DatabaseTest):
         self.session.add_all(self.report_runs)
         self.session.commit()
     
+    @attr('nonDeterministic')  # depends on timing and scheduler state
     def test_days_missed_0(self):
         missed_days = RunReport.days_missed(self.reports[0], self.session)
         assert_equals(missed_days, set([
@@ -93,6 +95,7 @@ class RunReportClassMethodsTest(DatabaseTest):
             self.today - timedelta(days=11),
         ]))
     
+    @attr('nonDeterministic')  # depends on timing and scheduler state
     def test_days_missed_1(self):
         missed_days = RunReport.days_missed(self.reports[1], self.session)
         assert_equals(missed_days, set([
@@ -103,6 +106,7 @@ class RunReportClassMethodsTest(DatabaseTest):
             # the 31 and 33 days-ago runs were missed
         ]))
     
+    @attr('nonDeterministic')  # depends on timing and scheduler state
     def test_days_missed_2(self):
         missed_days = RunReport.days_missed(self.reports[2], self.session)
         assert_equals(missed_days, set([
@@ -110,6 +114,7 @@ class RunReportClassMethodsTest(DatabaseTest):
             self.today - timedelta(days=2),
         ]))
     
+    @attr('nonDeterministic')  # depends on timing and scheduler state
     def test_create_reports_for_missed_days_0(self):
         new_runs = list(RunReport.create_reports_for_missed_days(
             self.reports[0], self.session
@@ -120,6 +125,7 @@ class RunReportClassMethodsTest(DatabaseTest):
             self.today - timedelta(days=11),
         ]))
     
+    @attr('nonDeterministic')  # depends on timing and scheduler state
     def test_create_reports_for_missed_days_1(self):
         new_runs = list(RunReport.create_reports_for_missed_days(
             self.reports[1], self.session
@@ -132,6 +138,7 @@ class RunReportClassMethodsTest(DatabaseTest):
         # NOTE: search stops at 30 days, so it doesn't matter that
         # the 31 and 33 days-ago runs were missed
     
+    @attr('nonDeterministic')  # depends on timing and scheduler state
     def test_create_reports_for_missed_days_2(self):
         new_runs = list(RunReport.create_reports_for_missed_days(
             self.reports[2], self.session
@@ -464,6 +471,7 @@ class RunReportScheduledTest(QueueDatabaseTest):
         QueueDatabaseTest.setUp(self)
         self.common_cohort_1()
     
+    @attr('nonDeterministic')  # depends on timing and scheduler state
     def test_scheduler(self):
         parameters = {
             'name': 'Edits - test',
@@ -498,6 +506,7 @@ class RunReportScheduledTest(QueueDatabaseTest):
         # make sure we have one and no more than one recurrent run
         assert_equals(len(recurrent_runs), 1)
     
+    @attr('nonDeterministic')  # depends on timing and scheduler state
     def test_user_id_assigned_properly(self):
         parameters = {
             'name': 'Bytes - test',
