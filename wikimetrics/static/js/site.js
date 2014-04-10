@@ -26,19 +26,19 @@ var site = {
         return confirm('Are you sure you want to ' + title + '?');
     },
     
-    showError: function (message){
-        site.showMessage(message, 'error');
+    showError: function (message, permanent){
+        site.showMessage(message, 'error', permanent);
     },
-    showInfo: function (message){
-        site.showMessage(message, 'info');
+    showInfo: function (message, permanent){
+        site.showMessage(message, 'info', permanent);
     },
-    showWarning: function (message){
-        site.showMessage(message, 'warning');
+    showWarning: function (message, permanent){
+        site.showMessage(message, 'warning', permanent);
     },
-    showSuccess: function (message){
-        site.showMessage(message, 'success');
+    showSuccess: function (message, permanent){
+        site.showMessage(message, 'success', permanent);
     },
-    showMessage: function (message, category){
+    showMessage: function (message, category, permanent){
         site.clearMessages();
         
         if (!site.messageTemplate){
@@ -47,12 +47,13 @@ var site = {
         var html = site.messageTemplate
             .replace('##message##', message)
             .replace(/##category##/g, category)
+            .replace(/##permanent##/, !!permanent ? ' permanent':'')
             .replace('##punctuation##', category !== 'info' ? '!' : '');
         $('.site-messages').append(html);
         $('body').scrollTop(0);
     },
     clearMessages: function (){
-        $('.site-messages').children().remove();
+        $('.site-messages').children().not('.permanent').remove();
     },
     
     redirect: function (url){
