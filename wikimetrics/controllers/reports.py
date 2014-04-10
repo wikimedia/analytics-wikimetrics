@@ -83,11 +83,11 @@ def reports_request():
     else:
         desired_responses = json.loads(request.form['responses'])
         recurrent = json.loads(request.form.get('recurrent', 'false'))
-        public = json.loads(request.form.get('public', 'false'))
 
         for parameters in desired_responses:
             parameters['recurrent'] = recurrent
-            parameters['public'] = public
+            # NOTE: this is not a mistake.  Currently recurrent => public on creation
+            parameters['public'] = recurrent
             jr = RunReport(parameters, user_id=current_user.id)
             jr.task.delay(jr)
 
