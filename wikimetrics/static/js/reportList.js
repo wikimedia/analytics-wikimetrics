@@ -4,7 +4,7 @@ $(document).ready(function(){
         
         updatePublic: function(report, event) {
             if (report.recurrent) {
-                site.showError('A recurrent report can not be made private.');
+                site.showError('A recurrent report can not be made private.', true);
                 return false;
             }
             //TODO no csrf token, we need a request engine to wrap our ajax
@@ -16,7 +16,7 @@ $(document).ready(function(){
                         report.public(true);
                     }))
                     .fail(function() {
-                        site.showError('Failed to save report - the report is not public');
+                        site.showError('Failed to save report - the report is not public', true);
                     });
             }
             else {
@@ -25,7 +25,7 @@ $(document).ready(function(){
                         report.public(false);
                     }))
                     .fail(function() {
-                        site.showError('Failed to remove the report - the report is still public');
+                        site.showError('Failed to remove the report - the report is still public', true);
                     });
             }
             return true;
