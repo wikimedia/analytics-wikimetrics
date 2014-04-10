@@ -126,7 +126,9 @@ var site = {
                     data.reports.forEach(function(report){
                         report.public = ko.observable(report.public);
                         report.success = report.status === 'SUCCESS';
-                        report.publicResult = '/static/public/' + report.id + '.json';
+                        report.publicResult = report.recurrent ?
+                            '/static/public/' + report.id + '/full_report.json' :
+                            '/static/public/' + report.id + '.json';
                     });
                     viewModel.reports(data.reports);
                 }
