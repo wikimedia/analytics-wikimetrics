@@ -21,7 +21,7 @@
                 <!--<input type="checkbox" data-bind="checked: selected" class="js-report-delete"/>-->
             <!--</td>-->
             <td data-bind="if: success">
-                <div>
+                <div data-bind="ifnot: recurrent">
                     <button type="submit" data-bind="click: $root.updatePublic, css:{
                         'btn-warning': public,
                         'btn-success': !public()}"
@@ -33,10 +33,13 @@
                             data-toggle="tooltip"></div>
                     </button>
                 </div>
+                <div data-bind="if: recurrent">
+                    <div class="icon unlocked align-with-btn" title="This report is public and recurrent.  It can not be made private." data-toggle="tooltip"></div>
+                </div>
             </td>
             
             <td data-bind="if: recurrent">
-                <div class="icon recurrent" data-toggle="tooltip" title="This report executes on a schedule."></div>
+                <div class="icon recurrent align-with-btn" data-toggle="tooltip" title="This report executes on a schedule."></div>
             </td>
             <td>
                 <div data-bind="if: public">
@@ -65,8 +68,10 @@
                         <span class="caret"></span>
                     </button>
                     <ul class="dropdown-menu">
+                        <!-- ko ifnot: recurrent -->
                         <li><a target="_blank" data-bind="attr:{ href: '/reports/result/' + result_key + '.json' }">as JSON</a></li>
                         <li><a target="_blank" data-bind="attr:{ href: '/reports/result/' + result_key + '.csv' }">as CSV</a></li>
+                        <!-- /ko -->
                         <!-- ko if: public -->
                         <li><a target="_blank" data-bind="attr:{ href: publicResult }">as Public Link</a></li>
                         <!-- /ko -->
@@ -85,6 +90,9 @@
     </a>
 </p>
 </div>
+<p class="muted credit">
+    Entypo icons by <a href="http://www.danielbruce.se">Daniel Bruce</a>
+</p>
 {% endblock %}
 
 {% block scripts %}

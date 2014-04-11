@@ -3,10 +3,6 @@ $(document).ready(function(){
         reports: ko.observableArray([]),
         
         updatePublic: function(report, event) {
-            if (report.recurrent) {
-                site.showError('A recurrent report can not be made private.', true);
-                return false;
-            }
             //TODO no csrf token, we need a request engine to wrap our ajax
             // requests
             if (!report.public()) {
