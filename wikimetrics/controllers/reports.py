@@ -144,35 +144,6 @@ def get_celery_task(result_key):
         return (None, None)
 
 
-def get_celery_task_result(celery_task, db_report):
-    result = celery_task.get()
-    if result and isinstance(result, dict) and db_report.result_key in result:
-        return result[db_report.result_key]
-    else:
-        return {'failure': 'result not available'}
-
-
-def prettify_parameters(report):
-    """
-    TODO add tests for this method
-    its name implies that it's generic but is looking for specific input/output
-    """
-    raw = json.loads(report.parameters)
-    pretty = {}
-    pretty['Cohort Size'] = raw['cohort']['size']
-    pretty['Cohort'] = raw['cohort']['name']
-    pretty['Metric'] = raw['metric']['name']
-    pretty['Created On'] = report.created
-
-    for k in ['csrf_token', 'name', 'label']:
-        raw['metric'].pop(k, None)
-
-    for k, v in raw['metric'].iteritems():
-        pretty['Metric_' + k] = v
-
-    return pretty
-
-
 @app.route('/reports/status/<result_key>')
 def report_status(result_key):
     celery_task, pj = get_celery_task(result_key)
@@ -186,8 +157,9 @@ def report_result_csv(result_key):
         return json_error('no task exists with id: {0}'.format(result_key))
 
     if celery_task.ready() and celery_task.successful():
-        task_result = get_celery_task_result(celery_task, pj)
-        p = prettify_parameters(pj)
+        result = celery_task.get()
+        task_result = pj.get_result_safely(result)
+        p = pj.pretty_parameters()
 
         if 'Metric_timeseries' in p and p['Metric_timeseries'] != TimeseriesChoices.NONE:
             csv_io = get_timeseries_csv(task_result, pj, p)
@@ -376,12 +348,10 @@ def report_result_json(result_key):
         return json_error('no task exists with id: {0}'.format(result_key))
 
     if celery_task.ready() and celery_task.successful():
-        task_result = get_celery_task_result(celery_task, pj)
+        result = celery_task.get()
+        json_result = pj.get_json_result(result)
 
-        return json_response(
-            result=task_result,
-            parameters=prettify_parameters(pj),
-        )
+        return json_response(json_result)
     else:
         return json_response(status=celery_task.status)
 

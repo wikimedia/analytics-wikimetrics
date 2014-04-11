@@ -1,4 +1,5 @@
 import celery
+import json
 from sqlalchemy import Column, Integer, String, DateTime, Boolean, func, ForeignKey
 from sqlalchemy.orm import Session
 from sqlalchemy.schema import UniqueConstraint
@@ -179,6 +180,39 @@ class PersistentReport(db.WikimetricsBase):
 
         finally:
             db_session.close()
+
+    def get_result_safely(self, result):
+        if result and isinstance(result, dict) and self.result_key in result:
+            return result[self.result_key]
+        else:
+            return {'failure': 'result not available'}
+
+    def get_json_result(self, result):
+        result = self.get_result_safely(result)
+        return {
+            'result': result,
+            'parameters': self.pretty_parameters()
+        }
+
+    def pretty_parameters(self):
+        """
+        TODO add tests for this method
+        its name implies that it's generic but is looking for specific input/output
+        """
+        raw = json.loads(self.parameters)
+        pretty = {}
+        pretty['Cohort Size'] = raw['cohort']['size']
+        pretty['Cohort'] = raw['cohort']['name']
+        pretty['Metric'] = raw['metric']['name']
+        pretty['Created On'] = self.created
+
+        for k in ('csrf_token', 'name', 'label'):
+            raw['metric'].pop(k, None)
+
+        for k, v in raw['metric'].items():
+            pretty['Metric_' + k] = v
+
+        return pretty
 
     def __repr__(self):
         return '<PersistentReport("{0}")>'.format(self.id)

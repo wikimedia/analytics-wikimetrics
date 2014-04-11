@@ -9,7 +9,6 @@ from wikimetrics.models import PersistentReport
 from wikimetrics.api import PublicReportFileManager
 from wikimetrics.controllers.reports import (
     get_celery_task,
-    get_celery_task_result
 )
 from mock import Mock, MagicMock
 from contextlib import contextmanager
@@ -105,7 +104,7 @@ class ReportsControllerTest(WebTest):
         assert_true(task is not None)
         
         # Get the result directly
-        result = get_celery_task_result(task, report)
+        result = task.get()
         assert_true(result is not None)
         
         # Check the status via get
@@ -442,29 +441,11 @@ class BasicTests(unittest.TestCase):
         assert_equal(r2, None)
     
     def test_get_celery_task_result_when_invalid(self):
-        mock_task = MockTask(True)
-        mock_report = MockReport()
-        failure = get_celery_task_result(mock_task, mock_report)
-        assert_true(failure['failure'], 'result not available')
+        mock_report = PersistentReport()
+        failure = mock_report.get_result_safely('')
+        assert_equal(failure['failure'], 'result not available')
     
     def test_get_celery_task_result_when_empty(self):
-        mock_task = MockTask(False)
-        mock_report = MockReport()
-        failure = get_celery_task_result(mock_task, mock_report)
-        assert_true(failure['failure'], 'result not available')
-
-
-class MockTask(object):
-    def __init__(self, invalid):
-        self.invalid = invalid
-    
-    def get(self):
-        if self.invalid:
-            return 'invalid task result'
-        else:
-            return {}
-
-
-class MockReport(object):
-    def __init__(self):
-        self.result_key = 'blah'
+        mock_report = PersistentReport()
+        failure = mock_report.get_result_safely('')
+        assert_equal(failure['failure'], 'result not available')
