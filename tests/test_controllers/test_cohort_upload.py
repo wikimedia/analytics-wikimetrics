@@ -14,6 +14,14 @@ from wikimetrics.controllers.forms.cohort_upload import (
 
 class CohortsControllerTest(unittest.TestCase):
     
+    def test_parse_username_unicode_handling(self):
+        unparsed_strings = ['sès', 'مو', 'èm']
+        expected_strings = ['S\xc3\xa8s', '\xd9\x85\xd9\x88', '\xc3\x88m']
+
+        for unparsed, expected in zip(unparsed_strings, expected_strings):
+            username = parse_username(unparsed)
+            assert_equal(username, expected)
+
     def test_validate_username(self):
         # this username has a few problems that the normalize call should handle
         # 1. normal ascii space in front

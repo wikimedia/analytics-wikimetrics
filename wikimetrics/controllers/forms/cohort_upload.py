@@ -91,17 +91,14 @@ def parse_username(username):
     parses uncapitalized, whitespace-padded, and weird-charactered mediawiki
     user names into ones that have a chance of being found in the database
     """
+    assert(type(username) != unicode)
     username = str(username)
     username = username.decode('utf8', errors='ignore')
-    stripped = username.strip()
-    stripped = stripped.encode('utf8')
-    # Capitalize the username according to the Mediawiki standard
-    # NOTE: unfortunately .title() or .capitalize() don't work
-    # because 'miliMetric'.capitalize() == 'Milimetric'
-    parsed = stripped[0].upper()
-    if len(stripped) > 1:
-        parsed += stripped[1:]
-    return parsed
+    parsed = username.strip()
+    if len(parsed) != 0:
+        parsed = parsed[0].upper() + parsed[1:]
+    
+    return parsed.encode('utf8')
 
 
 def normalize_newlines(lines):

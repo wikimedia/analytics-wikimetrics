@@ -6,7 +6,6 @@ from wikimetrics.configurables import app, db, queue
 from sqlalchemy.orm.exc import NoResultFound, MultipleResultsFound
 from sqlalchemy.sql.expression import label, between, and_, or_
 from wikimetrics.utils import deduplicate_by_key
-from wikimetrics.controllers.forms.cohort_upload import parse_username
 from wikimetrics.models import (
     MediawikiUser, Cohort, CohortUser, CohortUserRole, WikiUser, CohortWikiUser
 )
@@ -248,7 +247,7 @@ def validate_users(wikiusers, project, validate_as_user_ids):
             if validate_as_user_ids:
                 key = str(match.user_id)
             else:
-                key = parse_username(match.user_name)
+                key = match.user_name
             users_dict[key].mediawiki_username = match.user_name
             users_dict[key].mediawiki_userid = match.user_id
             users_dict[key].valid = True
@@ -259,11 +258,13 @@ def validate_users(wikiusers, project, validate_as_user_ids):
         # mark the rest invalid
         for key in users_dict.keys():
             if validate_as_user_ids:
-                users_dict[key].reason_invalid = 'invalid user_id: {0}'.format(key)
+                users_dict[key].reason_invalid = u'invalid user_id: {0}'.format(key)
             else:
-                users_dict[key].reason_invalid = 'invalid user_name: {0}'.format(key)
+                users_dict[key].reason_invalid = u'invalid user_name: {0}'.format(key)
             users_dict[key].valid = False
     except Exception, e:
+        task_logger.error(e)
+
         # clear out the dictionary in case of an exception, and raise the exception
         for key in users_dict.keys():
             users_dict.pop(key)

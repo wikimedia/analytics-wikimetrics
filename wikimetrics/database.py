@@ -96,6 +96,7 @@ class Database(object):
             self.wikimetrics_engine = create_engine(
                 self.config['WIKIMETRICS_ENGINE_URL'],
                 echo=self.config['SQL_ECHO'],
+                connect_args={"charset" : "utf8"},
             )
 
         return self.wikimetrics_engine
