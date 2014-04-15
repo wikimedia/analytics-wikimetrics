@@ -125,11 +125,8 @@ class RunReport(ReportNode):
         data = db_report.get_json_result(results)
         
         # code below schedules an async task on celery to write the file
-        write_report_task.delay(
-            self.recurrent_parent_id or self.persistent_id,
-            self.created,
-            data,
-        )
+        if self.recurrent_parent_id is not None:
+            write_report_task.delay(self.recurrent_parent_id, self.created, data)
     
     def __repr__(self):
         return '<RunReport("{0}")>'.format(self.persistent_id)
