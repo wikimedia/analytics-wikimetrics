@@ -1,6 +1,7 @@
 from cohort import *
 from validated_cohort import *
 from fixed_cohort import *
+from centralauth_cohort import *
 from wiki_cohort import *
 
 # ignore flake8 because of F403 violation

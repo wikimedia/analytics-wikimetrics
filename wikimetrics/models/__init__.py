@@ -1,3 +1,4 @@
+from centralauth import *
 from cohorts import *
 from mediawiki import *
 from report_nodes import *

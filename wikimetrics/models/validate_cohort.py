@@ -69,6 +69,9 @@ class ValidateCohort(object):
             validated=False,
             validate_as_user_ids=cohort_upload.validate_as_user_ids.data == 'True',
         )
+        centralauth = getattr(cohort_upload, 'centralauth', None)
+        if centralauth is not None and centralauth.data is True:
+            cohort.class_name = 'CentralAuthCohort'
         session = session or db.get_session()
         try:
             session.add(cohort)

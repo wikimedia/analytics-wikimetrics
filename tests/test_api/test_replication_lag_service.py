@@ -73,10 +73,10 @@ class ReplicationLagServiceTest(DatabaseTest):
 
     def test_any_lagged_two_wikis_both_without_lag(self):
         # Setup of wiki
-        self._add_edit(hour_offset=1, mw_session=self.mwSession)
+        self._add_edit(hour_offset=1, name='foo', mw_session=self.mwSession)
 
         # Setup of wiki2
-        self._add_edit(hour_offset=2, mw_session=self.mwSession2)
+        self._add_edit(hour_offset=2, name='bar', mw_session=self.mwSession2)
 
         service = ReplicationLagService(mw_projects=[
             mediawiki_project,
@@ -87,10 +87,10 @@ class ReplicationLagServiceTest(DatabaseTest):
 
     def test_any_lagged_two_wikis_both_with_lag(self):
         # Setup of wiki
-        self._add_edit(hour_offset=4, mw_session=self.mwSession)
+        self._add_edit(hour_offset=4, name='foo', mw_session=self.mwSession)
 
         # Setup of wiki2
-        self._add_edit(hour_offset=4, mw_session=self.mwSession2)
+        self._add_edit(hour_offset=4, name='bar', mw_session=self.mwSession2)
 
         service = ReplicationLagService(mw_projects=[
             mediawiki_project,
@@ -101,10 +101,10 @@ class ReplicationLagServiceTest(DatabaseTest):
 
     def test_any_lagged_two_wikis_first_with_lag(self):
         # Setup of wiki
-        self._add_edit(hour_offset=4, mw_session=self.mwSession)
+        self._add_edit(hour_offset=4, name='foo', mw_session=self.mwSession)
 
         # Setup of wiki2
-        self._add_edit(hour_offset=1, mw_session=self.mwSession2)
+        self._add_edit(hour_offset=1, name='bar', mw_session=self.mwSession2)
 
         service = ReplicationLagService(mw_projects=[
             mediawiki_project,
@@ -115,10 +115,10 @@ class ReplicationLagServiceTest(DatabaseTest):
 
     def test_any_lagged_two_wikis_second_with_lag(self):
         # Setup of wiki
-        self._add_edit(hour_offset=1, mw_session=self.mwSession)
+        self._add_edit(hour_offset=1, name='foo', mw_session=self.mwSession)
 
         # Setup of wiki2
-        self._add_edit(hour_offset=4, mw_session=self.mwSession2)
+        self._add_edit(hour_offset=4, name='bar', mw_session=self.mwSession2)
 
         service = ReplicationLagService(mw_projects=[
             mediawiki_project,

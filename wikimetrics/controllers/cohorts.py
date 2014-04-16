@@ -16,7 +16,7 @@ from wikimetrics.models import (
     MediawikiUser, ValidateCohort, TagStore, CohortTagStore
 )
 from wikimetrics.enums import CohortUserRole
-from wikimetrics.api import CohortService, TagService
+from wikimetrics.api import CohortService, TagService, CentralAuthService
 
 
 # TODO: because this is injected by the tests into the REAL controller, it is
@@ -29,10 +29,13 @@ def setup_cohort_service():
         if request.path.startswith('/cohorts'):
             cohort_service = getattr(g, 'cohort_service', None)
             tag_service = getattr(g, 'tag_service', None)
+            centralauth_service = getattr(g, 'centralauth_service', None)
             if cohort_service is None:
                 g.cohort_service = CohortService()
             if tag_service is None:
                 g.tag_service = TagService()
+            if centralauth_service is None:
+                g.centralauth_service = CentralAuthService()
 
 
 @app.route('/cohorts/')
