@@ -47,15 +47,12 @@ class CohortsControllerTest(unittest.TestCase):
         assert_equal(lines[4], 'blahblah2')
 
     def test_parse_textarea_usernames(self):
-        unparsed = """
-                   dan,en\r
-                   v\n
-                   ,\r\n
-                   """
+        unparsed = 'dan,en\rv\n,\r\nsomething with spaces'
         parsed = parse_textarea_usernames(unparsed)
         assert_equal(parsed.next(), ['dan', 'en'])
         assert_equal(parsed.next(), ['v'])
         assert_equal(parsed.next(), ['', ''])
+        assert_equal(parsed.next(), ['something with spaces'])
         assert_raises(StopIteration, parsed.next)
 
     def test_parse_records_with_project(self):
