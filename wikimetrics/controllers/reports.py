@@ -6,7 +6,7 @@ from flask import render_template, request, redirect, url_for, Response, abort, 
 from flask.ext.login import current_user
 from sqlalchemy.exc import SQLAlchemyError
 from wikimetrics.configurables import app, db
-from wikimetrics.models import Report, RunReport, PersistentReport, WikiUser
+from wikimetrics.models import Report, RunReport, PersistentReport, WikiUser, WikiUserKey
 from wikimetrics.metrics import TimeseriesChoices
 from wikimetrics.models.report_nodes import Aggregation
 from wikimetrics.utils import (
@@ -174,17 +174,17 @@ def report_result_csv(result_key):
         return json_response(status=celery_task.status)
 
 
-def get_username_via_id(user_id):
+def get_user_name(session, wiki_user_key):
     """
     Parameters
-        user_id : id to match for user_name
+        session         : a session to the wikimetrics database to search with
+        wiki_user_key   : an instance of WikiUserKey to search for a WikiUser with
     """
-    db_session = db.get_session()
-    ret = db_session.query(WikiUser.mediawiki_userid, WikiUser.mediawiki_username)\
-        .filter(WikiUser.mediawiki_userid.in_([user_id]))\
-        .all()
-    db_session.close()
-    return ret[0][1]
+    return session.query(WikiUser.mediawiki_username)\
+        .filter(WikiUser.mediawiki_userid == wiki_user_key.user_id)\
+        .filter(WikiUser.project == wiki_user_key.user_project)\
+        .filter(WikiUser.validating_cohort == wiki_user_key.cohort_id)\
+        .one()[0]
 
 
 def get_timeseries_csv(task_result, pj, parameters):
@@ -219,16 +219,23 @@ def get_timeseries_csv(task_result, pj, parameters):
     # collect rows to output in CSV
     task_rows = []
 
-    # Individual Results
-    if Aggregation.IND in task_result:
-        # fold user_id into dict so we can use DictWriter to escape things
-        for user_id, row in task_result[Aggregation.IND].iteritems():
-            for subrow in row.keys():
-                task_row = row[subrow].copy()
-                task_row['user_id'] = user_id
-                task_row['user_name'] = get_username_via_id(user_id)
-                task_row['submetric'] = subrow
-                task_rows.append(task_row)
+    try:
+        session = db.get_session()
+        # Individual Results
+        if Aggregation.IND in task_result:
+            # fold user_id into dict so we can use DictWriter to escape things
+            for wiki_user_key_str, row in task_result[Aggregation.IND].iteritems():
+                wiki_user_key = WikiUserKey.fromstr(wiki_user_key_str)
+                user_id = wiki_user_key.user_id
+                user_name = get_user_name(session, wiki_user_key)
+                for subrow in row.keys():
+                    task_row = row[subrow].copy()
+                    task_row['user_id'] = user_id
+                    task_row['user_name'] = user_name
+                    task_row['submetric'] = subrow
+                    task_rows.append(task_row)
+    finally:
+        session.close()
 
     # Aggregate Results
     if Aggregation.SUM in task_result:
@@ -302,14 +309,21 @@ def get_simple_csv(task_result, pj, parameters):
     # collect rows to output in CSV
     task_rows = []
 
-    # Individual Results
-    if Aggregation.IND in task_result:
-        # fold user_id into dict so we can use DictWriter to escape things
-        for user_id, row in task_result[Aggregation.IND].iteritems():
-            task_row = row.copy()
-            task_row['user_id'] = user_id
-            task_row['user_name'] = get_username_via_id(user_id)
-            task_rows.append(task_row)
+    try:
+        session = db.get_session()
+        # Individual Results
+        if Aggregation.IND in task_result:
+            # fold user_id into dict so we can use DictWriter to escape things
+            for wiki_user_key_str, row in task_result[Aggregation.IND].iteritems():
+                wiki_user_key = WikiUserKey.fromstr(wiki_user_key_str)
+                user_id = wiki_user_key.user_id
+                user_name = get_user_name(session, wiki_user_key)
+                task_row = row.copy()
+                task_row['user_id'] = user_id
+                task_row['user_name'] = user_name
+                task_rows.append(task_row)
+    finally:
+        session.close()
 
     # Aggregate Results
     if Aggregation.SUM in task_result:

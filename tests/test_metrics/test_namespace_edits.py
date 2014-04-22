@@ -66,11 +66,14 @@ class NamespaceEditsFullTest(QueueDatabaseTest):
             start_date='2012-12-31 22:59:59',
             end_date='2013-01-01 12:00:00',
         )
-        report = MetricReport(metric, list(self.cohort), mediawiki_project)
+        report = MetricReport(
+            metric, self.cohort.id,
+            list(self.cohort), mediawiki_project
+        )
         results = report.task.delay(report).get()
         
         assert_true(results is not None)
-        assert_equal(results[self.editors[0].user_id]['edits'], 3)
+        assert_equal(results[self.editor(0)]['edits'], 3)
     
     def test_namespace_edits_namespace_filter(self):
         metric = NamespaceEdits(
@@ -78,11 +81,14 @@ class NamespaceEditsFullTest(QueueDatabaseTest):
             start_date='2013-05-01 00:00:00',
             end_date='2013-08-01 00:00:00',
         )
-        report = MetricReport(metric, list(self.cohort), mediawiki_project)
+        report = MetricReport(
+            metric, self.cohort.id,
+            list(self.cohort), mediawiki_project
+        )
         results = report.task.delay(report).get()
         
         assert_true(results is not None)
-        assert_equal(results[self.editors[0].user_id]['edits'], 0)
+        assert_equal(results[self.editor(0)]['edits'], 0)
     
     def test_namespace_edits_namespace_filter_no_namespace(self):
         metric = NamespaceEdits(
@@ -90,11 +96,14 @@ class NamespaceEditsFullTest(QueueDatabaseTest):
             start_date='2013-05-01 00:00:00',
             end_date='2013-08-01 00:00:00',
         )
-        report = MetricReport(metric, list(self.cohort), mediawiki_project)
+        report = MetricReport(
+            metric, self.cohort.id,
+            list(self.cohort), mediawiki_project
+        )
         results = report.task.delay(report).get()
         
         assert_true(results is not None)
-        assert_equal(results[self.editors[0].user_id]['edits'], 0)
+        assert_equal(results[self.editor(0)]['edits'], 0)
     
     def test_namespace_edits_with_multiple_namespaces(self):
         metric = NamespaceEdits(
@@ -102,11 +111,14 @@ class NamespaceEditsFullTest(QueueDatabaseTest):
             start_date='2012-12-31 22:59:59',
             end_date='2013-01-01 12:00:00',
         )
-        report = MetricReport(metric, list(self.cohort), mediawiki_project)
+        report = MetricReport(
+            metric, self.cohort.id,
+            list(self.cohort), mediawiki_project
+        )
         results = report.task.delay(report).get()
         
         assert_true(results is not None)
-        assert_equal(results[self.editors[0].user_id]['edits'], 3)
+        assert_equal(results[self.editor(0)]['edits'], 3)
     
     def test_namespace_edits_with_multiple_namespaces_when_passing_string_list(self):
         metric = NamespaceEdits(
@@ -114,11 +126,14 @@ class NamespaceEditsFullTest(QueueDatabaseTest):
             start_date='2012-12-31 22:59:59',
             end_date='2013-01-01 12:00:00',
         )
-        report = MetricReport(metric, list(self.cohort), mediawiki_project)
+        report = MetricReport(
+            metric, self.cohort.id,
+            list(self.cohort), mediawiki_project
+        )
         results = report.task.delay(report).get()
         
         assert_true(results is not None)
-        assert_equal(results[self.editors[0].user_id]['edits'], 3)
+        assert_equal(results[self.editor(0)]['edits'], 3)
 
 
 class NamespaceEditsTimestampTest(DatabaseTest):

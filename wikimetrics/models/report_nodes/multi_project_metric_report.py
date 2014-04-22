@@ -27,12 +27,11 @@ class MultiProjectMetricReport(ReportNode):
         for project, user_ids in cohort.group_by_project():
             # note that user_ids is actually just an iterator
             self.children.append(
-                MetricReport(metric, user_ids, project, *args, **kwargs)
+                MetricReport(metric, cohort.id, user_ids, project, *args, **kwargs)
             )
     
     def finish(self, metric_results):
         merged_individual_results = {}
-        # TODO: handle collisions where the same ID is used accross projects
         for res in metric_results:
             merged_individual_results.update(res)
         

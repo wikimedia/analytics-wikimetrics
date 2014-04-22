@@ -8,13 +8,13 @@ class AsyncTaskTest(QueueTest):
     
     def test_submit_task(self):
         metric = RandomMetric()
-        report = MetricReport(metric, [1, 2], 'wiki')
+        report = MetricReport(metric, 0, [1, 2], 'wiki')
         async_result = report.task.delay(report)
         
         # .get() blocks until task finishes executing
         sync_result = async_result.get()
         assert_not_equals(
-            sync_result[1],
+            sync_result['1|wiki|0'],
             None,
             'task did not run on celery queue'
         )

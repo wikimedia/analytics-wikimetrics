@@ -39,7 +39,7 @@ class AggregateReportTest(QueueDatabaseTest):
         result = ar.task.delay(ar).get()
         
         assert_equals(
-            result[Aggregation.IND][self.editors[0].user_id]
+            result[Aggregation.IND][self.editor(0)]
             ['edits'],
             2
         )
@@ -214,7 +214,7 @@ class AggregateReportTimeseriesTest(QueueDatabaseTest):
         self.session.commit()
         
         assert_equals(
-            results[Aggregation.IND][self.editors[0].user_id]['edits'],
+            results[Aggregation.IND][self.editor(0)]['edits'],
             {
                 '2012-12-31 00:00:00' : 1,
                 '2013-01-01 00:00:00' : 2,

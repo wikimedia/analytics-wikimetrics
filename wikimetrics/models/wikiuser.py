@@ -1,10 +1,6 @@
 from sqlalchemy import Column, Integer, String, Boolean
 from wikimetrics.configurables import db
 
-__all__ = [
-    'WikiUser',
-]
-
 
 class WikiUser(db.WikimetricsBase):
     """
@@ -31,3 +27,29 @@ class WikiUser(db.WikimetricsBase):
 
     def __repr__(self):
         return '<WikiUser("{0}")>'.format(self.id)
+
+
+class WikiUserKey(object):
+    """
+    Create this class from the three things that uniquely identify a user in the
+    wiki_user table: cohort_id, mediawiki project, mediawiki user id.  An instance
+    of this class will have a string representation that can be parsed back into an
+    instance.  This enables writing and reading dictionaries of results by users to
+    permanent storage.
+    """
+    SEPARATOR = '|'
+    
+    def __init__(self, user_id, user_project, cohort_id):
+        self.user_id = str(user_id)
+        self.user_project = str(user_project)
+        self.cohort_id = str(cohort_id)
+    
+    @classmethod
+    def fromstr(cls, wiki_user_key_str):
+        user_id, user_project, cohort_id = wiki_user_key_str.split(WikiUserKey.SEPARATOR)
+        return cls(user_id, user_project, cohort_id)
+    
+    def __repr__(self):
+        return WikiUserKey.SEPARATOR.join(
+            (self.user_id, self.user_project, self.cohort_id)
+        )

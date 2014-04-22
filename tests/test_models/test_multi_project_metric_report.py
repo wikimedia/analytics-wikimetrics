@@ -22,7 +22,7 @@ class MultiProjectMetricReportTest(QueueDatabaseTest):
         
         result = mr.task.delay(mr).get()
         
-        assert_equals(result[self.editors[0].user_id]['edits'], 2)
+        assert_equals(result[self.editor(0)]['edits'], 2)
 
 
 class MultiProjectMetricReportWithoutQueueTest(DatabaseTest):

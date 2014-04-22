@@ -26,8 +26,8 @@ class ReportTest(QueueDatabaseTest):
             #end_date = '2013-09-01',
         #)
         #children = [
-            #MetricReport(edits_metric, [self.test_mediawiki_user_id], 'wiki'),
-            #MetricReport(bytes_metric, [self.test_mediawiki_user_id], 'wiki'),
+            #MetricReport(edits_metric, 0, [self.test_mediawiki_user_id], 'wiki'),
+            #MetricReport(bytes_metric, 0, [self.test_mediawiki_user_id], 'wiki'),
         #]
         #report_node = ReportNode(children=children)
         #results = report_node.run()

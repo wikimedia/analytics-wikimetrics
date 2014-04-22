@@ -191,7 +191,7 @@ class RunReportTest(QueueDatabaseTest):
         results = results[result_key]
         # TODO: figure out why one of the resulting wiki_user_ids is None here
         assert_equals(
-            results[Aggregation.IND][self.editors[0].user_id]['edits'],
+            results[Aggregation.IND][self.editor(0)]['edits'],
             2,
         )
     
@@ -259,7 +259,7 @@ class RunReportTest(QueueDatabaseTest):
             .result_key
         results = results[result_key]
         assert_equals(
-            results[Aggregation.IND][self.editors[0].user_id]['edits'],
+            results[Aggregation.IND][self.editor(0)]['edits'],
             2,
         )
         
@@ -296,8 +296,7 @@ class RunReportTest(QueueDatabaseTest):
             .result_key
         results = results[result_key]
         
-        user_id = self.editors[0].user_id
-        key = results[Aggregation.IND][user_id]['edits'].items()[0][0]
+        key = results[Aggregation.IND][self.editor(0)]['edits'].items()[0][0]
         assert_equals(key, '2013-01-01 00:20:00')
         
         assert_equals(
@@ -407,7 +406,7 @@ class RunReportBytesTest(QueueDatabaseTest):
             .result_key
         results = results[result_key]
         assert_equals(
-            results[Aggregation.IND][self.editors[0].user_id]['net_sum'],
+            results[Aggregation.IND][self.editor(0)]['net_sum'],
             -90,
         )
         

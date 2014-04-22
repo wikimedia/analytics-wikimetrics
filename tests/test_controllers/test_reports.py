@@ -3,19 +3,20 @@ import celery
 import time
 import unittest
 import os.path
+from mock import Mock, MagicMock
+from contextlib import contextmanager
+from flask import appcontext_pushed, g
 from nose.tools import assert_true, assert_equal, assert_false
-from tests.fixtures import WebTest
-from wikimetrics.models import PersistentReport
+
+from tests.fixtures import WebTest, second_mediawiki_project
+from wikimetrics.models import (
+    PersistentReport, WikiUser, Cohort, CohortWikiUser, MediawikiUser
+)
 from wikimetrics.api import PublicReportFileManager
 from wikimetrics.controllers.reports import (
     get_celery_task,
 )
-from mock import Mock, MagicMock
-from contextlib import contextmanager
-from flask import appcontext_pushed
-from flask import g
-from wikimetrics.configurables import app
-from wikimetrics.configurables import get_absolute_path
+from wikimetrics.configurables import app, get_absolute_path, db
 
 
 @contextmanager
@@ -431,6 +432,152 @@ class ReportsControllerTest(WebTest):
         assert_true(response.data.find('namespaces') >= 0)
         cohort_size = 'Cohort Size,{0}'.format(len(self.cohort))
         assert_true(response.data.find(cohort_size) >= 0)
+
+
+class MultiProjectTests(WebTest):
+    
+    def setUp(self):
+        WebTest.setUp(self)
+        
+        # Prepare the second wiki database by adding a user with the same id as editor 0
+        self.mwSession2.add(MediawikiUser(
+            user_id=self.editors[0].user_id,
+            user_name='',
+        ))
+        self.mwSession2.commit()
+        
+        desired_responses = [{
+            'name': 'Edits - test',
+            'cohort': {
+                'id': self.cohort.id,
+                'name': self.cohort.name,
+            },
+            'metric': {
+                'name': 'NamespaceEdits',
+                'timeseries': 'month',
+                'namespaces': [0, 1, 2],
+                'start_date': '2013-01-01 00:00:00',
+                'end_date': '2013-05-01 00:00:00',
+                'individualResults': True,
+                'aggregateResults': True,
+                'aggregateSum': False,
+                'aggregateAverage': True,
+                'aggregateStandardDeviation': False,
+            },
+        }]
+        self.json_to_post = json.dumps(desired_responses)
+    
+    def test_user_in_two_projects(self):
+        same_name_different_project = WikiUser(
+            mediawiki_userid=self.editors[0].user_id,
+            mediawiki_username='Editor 0 in second wiki',
+            project=second_mediawiki_project,
+            valid=True,
+            validating_cohort=self.cohort.id,
+        )
+        self.session.add(same_name_different_project)
+        self.session.commit()
+        self.session.add(CohortWikiUser(
+            cohort_id=self.cohort.id,
+            wiki_user_id=same_name_different_project.id,
+        ))
+        self.session.commit()
+        
+        response = self.client.post('/reports/create/', data=dict(
+            responses=self.json_to_post
+        ))
+        
+        # Wait a second for the task to get processed
+        time.sleep(1)
+        
+        # Check that the task has been created
+        response = self.client.get('/reports/list/')
+        parsed = json.loads(response.data)
+        result_key = parsed['reports'][-1]['result_key']
+        task, report = get_celery_task(result_key)
+        # Check the csv result
+        response = self.client.get('/reports/result/{0}.csv'.format(result_key))
+        assert_true(response.data.find(
+            '{0},{1},edits,0,0,0,0'.format(
+                self.editors[0].user_id, 'Editor 0 in second wiki')
+        ) >= 0)
+    
+    def test_two_users_same_id_same_cohort(self):
+        same_id_same_cohort = WikiUser(
+            mediawiki_userid=self.editors[0].user_id,
+            mediawiki_username='Editor X with same id',
+            project=second_mediawiki_project,
+            valid=True,
+            validating_cohort=self.cohort.id,
+        )
+        self.session.add(same_id_same_cohort)
+        self.session.commit()
+        self.session.add(CohortWikiUser(
+            cohort_id=self.cohort.id,
+            wiki_user_id=same_id_same_cohort.id,
+        ))
+        self.session.commit()
+        
+        response = self.client.post('/reports/create/', data=dict(
+            responses=self.json_to_post
+        ))
+        
+        # Wait a second for the task to get processed
+        time.sleep(1)
+        
+        # Check that the task has been created
+        response = self.client.get('/reports/list/')
+        parsed = json.loads(response.data)
+        result_key = parsed['reports'][-1]['result_key']
+        task, report = get_celery_task(result_key)
+        # Check the csv result
+        response = self.client.get('/reports/result/{0}.csv'.format(result_key))
+        assert_true(response.data.find(
+            '{0},{1},edits,0,0,0,0'.format(
+                self.editors[0].user_id, 'Editor X with same id')
+        ) >= 0)
+    
+    def test_two_users_same_id_different_cohort(self):
+        second_cohort = Cohort(
+            name='second-cohort',
+            enabled=True,
+            public=False,
+            validated=True,
+        )
+        self.session.add(second_cohort)
+        same_id_different_cohort = WikiUser(
+            mediawiki_userid=self.editors[0].user_id,
+            mediawiki_username='Editor X should not show up',
+            project=second_mediawiki_project,
+            valid=True,
+            validating_cohort=second_cohort.id,
+        )
+        self.session.add(same_id_different_cohort)
+        self.session.commit()
+        self.session.add(CohortWikiUser(
+            cohort_id=second_cohort.id,
+            wiki_user_id=same_id_different_cohort.id,
+        ))
+        self.session.commit()
+        
+        response = self.client.post('/reports/create/', data=dict(
+            responses=self.json_to_post
+        ))
+        
+        # Wait a second for the task to get processed
+        time.sleep(1)
+        
+        # Check that the task has been created
+        response = self.client.get('/reports/list/')
+        parsed = json.loads(response.data)
+        result_key = parsed['reports'][-1]['result_key']
+        task, report = get_celery_task(result_key)
+        # Check the csv result
+        response = self.client.get('/reports/result/{0}.csv'.format(result_key))
+        assert_true(response.data.find(
+            '{0},{1},edits,0,0,0,0'.format(
+                self.editors[0].user_id, 'Editor X should not show up')
+        ) < 0)
 
 
 class BasicTests(unittest.TestCase):

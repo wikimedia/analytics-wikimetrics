@@ -2,27 +2,31 @@ import unittest
 import sys
 from itertools import product
 from datetime import datetime
-from wikimetrics.utils import (
-    parse_date, format_date, parse_pretty_date, format_pretty_date, UNICODE_NULL
-)
 from nose.tools import nottest
-
-# needed for mock logger
 from mock import Mock
 from logging import RootLogger, getLogger
 
+from wikimetrics.utils import (
+    parse_date, format_date, parse_pretty_date, format_pretty_date, UNICODE_NULL
+)
+from wikimetrics.configurables import db
+from wikimetrics.models import (
+    User,
+    WikiUser,
+    WikiUserKey,
+    Cohort,
+    CohortWikiUser,
+    CohortUserRole,
+    CohortUser,
+    PersistentReport,
+    Revision,
+    Page,
+    MediawikiUser,
+    Logging,
+)
 
-__all__ = [
-    'DatabaseTest',
-    'QueueTest',
-    'QueueDatabaseTest',
-    'WebTest',
-    'i',
-    'd',
-    'tz_note',
-    'mediawiki_project'
-]
-
+mediawiki_project = 'wiki'
+second_mediawiki_project = 'wiki2'
 tz_note = 'NOTE: if this test is failing by + or - one hour, '\
           'it is *most* likely that Daylight Savings Time is '\
           'in between registration and the revisions you are '\
@@ -43,26 +47,6 @@ def d(integer):
     helper function to parse dates from integers in the mediawiki timestamp format
     """
     return parse_date(str(integer))
-
-
-from wikimetrics.configurables import db
-from wikimetrics.models import (
-    User,
-    WikiUser,
-    Cohort,
-    CohortWikiUser,
-    CohortUserRole,
-    CohortUser,
-    PersistentReport,
-    Revision,
-    Page,
-    MediawikiUser,
-    Logging,
-)
-
-# this should not be used as the db name
-# as in testing project and db name are different
-mediawiki_project = 'wiki'
 
 
 class DatabaseTest(unittest.TestCase):
@@ -302,6 +286,15 @@ class DatabaseTest(unittest.TestCase):
             self.mwSession.commit()
     
     @nottest
+    def editor(self, index):
+        """Gets the proper key to look up a member of a create_test_cohort result"""
+        return str(WikiUserKey(
+            self.editors[index].user_id,
+            mediawiki_project,
+            self.cohort.id,
+        ))
+    
+    @nottest
     def helper_reset_validation(self):
         wikiusers = self.session.query(WikiUser) \
             .join(CohortWikiUser) \
@@ -412,8 +405,11 @@ class DatabaseTest(unittest.TestCase):
         self.session = db.get_session()
         engine = db.get_mw_engine(mediawiki_project)
         db.MediawikiBase.metadata.create_all(engine, checkfirst=True)
+        engine2 = db.get_mw_engine(second_mediawiki_project)
+        db.MediawikiBase.metadata.create_all(engine2, checkfirst=True)
         # mediawiki_project is a global defined on this file
         self.mwSession = db.get_mw_session(mediawiki_project)
+        self.mwSession2 = db.get_mw_session(second_mediawiki_project)
         DatabaseTest.tearDown(self)
     
     def tearDown(self):
@@ -424,6 +420,13 @@ class DatabaseTest(unittest.TestCase):
         self.mwSession.query(Page).delete()
         self.mwSession.commit()
         self.mwSession.close()
+        
+        self.mwSession2.query(Logging).delete()
+        self.mwSession2.query(Revision).delete()
+        self.mwSession2.query(MediawikiUser).delete()
+        self.mwSession2.query(Page).delete()
+        self.mwSession2.commit()
+        self.mwSession2.close()
         
         self.session.query(CohortWikiUser).delete()
         self.session.query(CohortUser).delete()
