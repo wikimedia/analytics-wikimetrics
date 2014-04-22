@@ -101,6 +101,12 @@ def config_web(args):
     app.config['WIKIMETRICS_LATEST'] = latest
     app.config['WIKIMETRICS_VERSION'] = version
     
+    # configure logging
+    if not app.config['DEBUG']:
+        import logging
+        import sys
+        app.logger.addHandler(logging.StreamHandler(stream=sys.stderr))
+    
     global login_manager
     login_manager = LoginManager()
     login_manager.init_app(app)
