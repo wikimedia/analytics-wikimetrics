@@ -91,7 +91,6 @@ def parse_username(username):
     parses uncapitalized, whitespace-padded, and weird-charactered mediawiki
     user names into ones that have a chance of being found in the database
     """
-    assert(type(username) != unicode)
     username = str(username)
     username = username.decode('utf8', errors='ignore')
     parsed = username.strip()
@@ -116,5 +115,5 @@ def parse_textarea_usernames(paste_username):
     and their wiki. i.e. "dan,en v" becomes [['dan','en'],['v']]. Whitespace is
     the delimiter of each list. Prepares text to go through parse_records().
     """
-    for username in paste_username.split():
+    for username in paste_username.splitlines():
         yield username.strip().split(',')
