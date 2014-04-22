@@ -54,26 +54,6 @@ if app.config['DEBUG']:
         db_sess.commit()
         return user
     
-    @app.route('/demo/metric/random/<int:cohort_id>')
-    def run_task_in_celery(cohort_id):
-        db_session = db.get_session()
-        try:
-            user_ids = db_session.query(WikiUser.mediawiki_userid)\
-                .join(CohortWikiUser)\
-                .filter(CohortWikiUser.cohort_id == cohort_id)\
-                .all()
-            if len(user_ids) == 0:
-                user_ids = db_session.query(WikiUser.mediawiki_userid).all()
-        finally:
-            db_session.close()
-        # note that this code runs only in development
-        # TODO, what about working with more than one project in development?
-        # need to translate from project to dbName
-        report = MetricReport(RandomMetric(), user_ids, 'wiki')
-        #from nose.tools import set_trace; set_trace()
-        res = report.task.delay(report).get()
-        return str(res)
-    
     @app.route('/demo/delete/cohorts/')
     def demo_delete_cohorts():
         db_sess = db.get_session()
