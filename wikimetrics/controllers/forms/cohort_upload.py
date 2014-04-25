@@ -2,7 +2,7 @@ import csv
 from wtforms import StringField, FileField, TextAreaField, RadioField
 from wtforms.validators import Required
 from wikimetrics.metrics.form_fields import RequiredIfNot
-
+from wikimetrics.utils import parse_username
 from secure_form import WikimetricsSecureForm
 
 
@@ -19,7 +19,7 @@ class CohortUpload(WikimetricsSecureForm):
         ('True', 'User Ids (Numbers found in the user_id column of the user table)'),
         ('False', 'User Names (Names found in the user_name column of the user table)')
     ])
-    
+
     @classmethod
     def from_request(cls, request):
         """
@@ -28,14 +28,14 @@ class CohortUpload(WikimetricsSecureForm):
         values = request.form.copy()
         values.update(request.files)
         return cls(values)
-    
+
     def parse_records(self):
         """
         You must call this to parse self.records out of the csv file
-        
+
         Parameters
             request : the request with the file to parse
-        
+
         Returns
             nothing, but sets self.records to the parsed lines of the csv
         """
@@ -54,11 +54,11 @@ class CohortUpload(WikimetricsSecureForm):
 def parse_records(unparsed, default_project):
     """
     Parses records read from a csv file
-    
+
     Parameters
         unparsed        : records in array form, as read from a csv
         default_project : the default project to attribute to records without one
-    
+
     Returns
         the parsed records in this form:
             {'username':'parsed username', 'project':'as specified or default'}
@@ -77,27 +77,13 @@ def parse_records(unparsed, default_project):
             else:
                 username = r[0]
                 project = default_project
-            
+
             if username is not None and len(username):
                 records.append({
                     'username'  : parse_username(username),
                     'project'   : project,
                 })
     return records
-
-
-def parse_username(username):
-    """
-    parses uncapitalized, whitespace-padded, and weird-charactered mediawiki
-    user names into ones that have a chance of being found in the database
-    """
-    username = str(username)
-    username = username.decode('utf8', errors='ignore')
-    parsed = username.strip()
-    if len(parsed) != 0:
-        parsed = parsed[0].upper() + parsed[1:]
-    
-    return parsed.encode('utf8')
 
 
 def normalize_newlines(lines):

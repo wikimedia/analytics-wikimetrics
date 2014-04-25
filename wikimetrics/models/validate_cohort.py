@@ -2,6 +2,7 @@ import celery
 from celery import current_task
 from celery.utils.log import get_task_logger
 from flask.ext.login import current_user
+import traceback
 from wikimetrics.configurables import app, db, queue
 from sqlalchemy.orm.exc import NoResultFound, MultipleResultsFound
 from sqlalchemy.sql.expression import label, between, and_, or_
@@ -30,14 +31,14 @@ class ValidateCohort(object):
     * Updating the cohort to validated == True once all users have been validated
     """
     task = async_validate
-    
+
     def __init__(self, cohort):
         """
         Parameters:
             cohort  : an existing cohort
             config  : global config, we need to know
                 if we are on dev or testing to validate project name
-        
+
         Instantiates with these properties:
             cohort_id               : id of an existing cohort with validated == False
             validate_as_user_ids    : if True, records will be checked against user_id
@@ -45,16 +46,16 @@ class ValidateCohort(object):
         """
         self.cohort_id = cohort.id
         self.validate_as_user_ids = cohort.validate_as_user_ids
-    
+
     @classmethod
-    def from_upload(cls, cohort_upload, owner_user_id):
+    def from_upload(cls, cohort_upload, owner_user_id, session=None):
         """
         Create a new cohort and validate a list of uploaded users for it
-        
+
         Parameters:
             cohort_upload   : the cohort upload form, parsed by WTForms
             owner_user_id   : the Wikimetrics user id that is uploading
-        
+
         Returns:
             An instance of ValidateCohort
         """
@@ -67,11 +68,11 @@ class ValidateCohort(object):
             validated=False,
             validate_as_user_ids=cohort_upload.validate_as_user_ids.data == 'True',
         )
-        session = db.get_session()
+        session = session or db.get_session()
         try:
             session.add(cohort)
             session.commit()
-            
+
             cohort_user = CohortUser(
                 user_id=owner_user_id,
                 cohort_id=cohort.id,
@@ -79,7 +80,7 @@ class ValidateCohort(object):
             )
             session.add(cohort_user)
             session.commit()
-            
+
             session.execute(
                 WikiUser.__table__.insert(), [
                     {
@@ -98,7 +99,7 @@ class ValidateCohort(object):
             return None
         finally:
             session.close()
-    
+
     def run(self):
         session = db.get_session()
         try:
@@ -108,7 +109,7 @@ class ValidateCohort(object):
             self.validate_records(session, cohort)
         finally:
             session.close()
-    
+
     def validate_records(self, session, cohort):
         """
         Fetches the wiki_user(s) already added for self.cohort_id and validates
@@ -116,9 +117,9 @@ class ValidateCohort(object):
         or user_name.  Once done, sets the valid state and deletes any duplicates.
         Then, it finishes filling in the data model by inserting corresponding
         records into the cohort_wiki_users table.
-        
+
         This is meant to execute asynchronously on celery
-        
+
         Parameters
             session : an active wikimetrics db session to use
             cohort  : the cohort to validate; must belong to session
@@ -134,16 +135,16 @@ class ValidateCohort(object):
             CohortWikiUser.cohort_id == cohort.id
         ))
         session.commit()
-        
+
         wikiusers = session.query(WikiUser) \
             .filter(WikiUser.validating_cohort == cohort.id) \
             .all()
-        
+
         deduplicated = deduplicate_by_key(
             wikiusers,
             lambda r: (r.mediawiki_username, r.project)
         )
-        
+
         wikiusers_by_project = {}
         for wu in deduplicated:
             try:
@@ -152,12 +153,12 @@ class ValidateCohort(object):
                     wu.reason_invalid = 'invalid project: {0}'.format(wu.project)
                     wu.valid = False
                     continue
-                
+
                 wu.project = normalized_project
                 if wu.project not in wikiusers_by_project:
                     wikiusers_by_project[wu.project] = []
                 wikiusers_by_project[wu.project].append(wu)
-                
+
                 # validate bunches of records to update the UI but not kill performance
                 if len(wikiusers_by_project[wu.project]) > 999:
                     validate_users(
@@ -169,18 +170,18 @@ class ValidateCohort(object):
                     wikiusers_by_project[wu.project] = []
             except:
                 continue
-        
+
         # validate anything that wasn't big enough for a batch
         for project, wikiusers in wikiusers_by_project.iteritems():
             if len(wikiusers) > 0:
                 validate_users(wikiusers, project, self.validate_as_user_ids)
         session.commit()
-        
+
         unique_and_validated = deduplicate_by_key(
             deduplicated,
             lambda r: (r.mediawiki_username, r.project)
         )
-        
+
         session.execute(
             CohortWikiUser.__table__.insert(), [
                 {
@@ -189,7 +190,7 @@ class ValidateCohort(object):
                 } for wu in unique_and_validated
             ]
         )
-        
+
         # clean up any duplicate wiki_user records
         session.execute(WikiUser.__table__.delete().where(and_(
             WikiUser.validating_cohort == cohort.id,
@@ -197,7 +198,7 @@ class ValidateCohort(object):
         )))
         cohort.validated = True
         session.commit()
-    
+
     def __repr__(self):
         return '<ValidateCohort("{0}")>'.format(self.cohort_id)
 
@@ -232,7 +233,7 @@ def validate_users(wikiusers, project, validate_as_user_ids):
     """
     session = db.get_mw_session(project)
     users_dict = {wu.mediawiki_username: wu for wu in wikiusers}
-    
+
     try:
         # validate
         if validate_as_user_ids:
@@ -240,7 +241,7 @@ def validate_users(wikiusers, project, validate_as_user_ids):
             clause = MediawikiUser.user_id.in_(keys_as_ints)
         else:
             clause = MediawikiUser.user_name.in_(users_dict.keys())
-        
+
         matches = session.query(MediawikiUser).filter(clause).all()
         # update results
         for match in matches:
@@ -248,22 +249,28 @@ def validate_users(wikiusers, project, validate_as_user_ids):
                 key = str(match.user_id)
             else:
                 key = match.user_name
+
             users_dict[key].mediawiki_username = match.user_name
             users_dict[key].mediawiki_userid = match.user_id
             users_dict[key].valid = True
             users_dict[key].reason_invalid = None
             # remove valid matches
             users_dict.pop(key)
-        
+
         # mark the rest invalid
+        # key is going to be a string if bindings are correct, but careful!
+        # it might be a string with chars that cannot be represented w/ ascii
+        # the 'reason_invalid' does not need to have the user_id,
+        # it is on the record on the table
         for key in users_dict.keys():
             if validate_as_user_ids:
-                users_dict[key].reason_invalid = u'invalid user_id: {0}'.format(key)
+                users_dict[key].reason_invalid = "invalid user_id"
             else:
-                users_dict[key].reason_invalid = u'invalid user_name: {0}'.format(key)
+                users_dict[key].reason_invalid = "invalid user_name"
             users_dict[key].valid = False
     except Exception, e:
-        task_logger.error(e)
+        msg = traceback.print_exc()
+        task_logger.error(msg)
 
         # clear out the dictionary in case of an exception, and raise the exception
         for key in users_dict.keys():

@@ -221,3 +221,17 @@ def to_datetime(d):
     Converts a date to a datetime
     """
     return datetime.combine(d, datetime.min.time())
+
+
+def parse_username(username):
+    """
+    parses uncapitalized, whitespace-padded, and weird-charactered mediawiki
+    user names into ones that have a chance of being found in the database
+    """
+    username = str(username)
+    username = username.decode('utf8', errors='ignore')
+    parsed = username.strip()
+    if len(parsed) != 0:
+        parsed = parsed[0].upper() + parsed[1:]
+
+    return parsed.encode('utf8')
