@@ -73,9 +73,6 @@ class DatabaseTest(unittest.TestCase):
              as part of test runs
     """
     
-    def runTest(self):
-        pass
-    
     @nottest
     def create_test_cohort(
         self,
