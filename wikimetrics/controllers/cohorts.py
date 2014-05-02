@@ -299,27 +299,22 @@ def delete_owner_cohort(session, cohort_id):
             session.query(CohortUser) \
                 .filter(CohortUser.cohort_id == cohort_id) \
                 .delete()
-            cwu = session.query(CohortWikiUser) \
+            session.query(CohortWikiUser) \
                 .filter(CohortWikiUser.cohort_id == cohort_id) \
                 .delete()
-            if cwu < 1:
-                raise DatabaseError('Cannot delete CohortWikiUser.')
 
-            wu = session.query(WikiUser) \
+            session.query(WikiUser) \
                 .filter(WikiUser.validating_cohort == cohort_id) \
                 .delete()
-            if wu < 1:
-                raise DatabaseError('Cannot delete WikiUser.')
 
             c = session.query(Cohort) \
                 .filter(Cohort.id == cohort_id) \
                 .delete()
             if c < 1:
-                raise DatabaseError('Cannot delete Cohort.')
-        except DatabaseError as e:
-            print "here3"
+                raise DatabaseError
+        except DatabaseError:
             session.rollback()
-            raise DatabaseError('Owner attempt to delete a cohort failed. ' + e.message)
+            raise DatabaseError('Owner attempt to delete a cohort failed.')
 
 
 @app.route('/cohorts/delete/<int:cohort_id>', methods=['POST'])

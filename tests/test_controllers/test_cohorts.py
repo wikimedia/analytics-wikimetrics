@@ -247,15 +247,27 @@ class CohortsControllerTest(WebTest):
         assert_true(response.data.find('isError') >= 0)
         assert_true(response.data.find('No role found in cohort user.') >= 0)
 
-    def test_delete_cohort_database_error(self):
+    def test_delete_empty_cohort(self):
+        response = self.app.get('/cohorts/list/')
+        response = json.loads(response.data)
+        assert_equal(len(response['cohorts']), 1)
+
         self.session.query(CohortWikiUser).delete()
+        self.session.query(WikiUser).delete()
         self.session.commit()
+        cohort_id = self.cohort.id
         response = self.app.post('/cohorts/delete/{0}'.format(self.cohort.id))
 
-        expected_message = 'Owner attempt to delete a cohort failed. ' \
-                           'Cannot delete CohortWikiUser.'
-        assert_true(response.data.find('isError') >= 0)
-        assert_true(response.data.find(expected_message) >= 0)
+        assert_true(response.data.find('isRedirect') >= 0)
+        assert_true(response.data.find('/cohorts') >= 0)
+        self.session.commit()
+
+        c = self.session.query(Cohort).get(cohort_id)
+        assert_equal(c, None)
+
+        response = self.app.get('/cohorts/list/')
+        response = json.loads(response.data)
+        assert_equal(len(response['cohorts']), 0)
 
 
 class CohortsControllerUploadTest(WebTest):
