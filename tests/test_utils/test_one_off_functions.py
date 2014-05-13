@@ -13,6 +13,7 @@ from wikimetrics.utils import (
     format_pretty_date,
     diff_datewise,
     timestamps_to_now,
+    parse_tag
 )
 from wikimetrics.metrics import NamespaceEdits
 
@@ -92,6 +93,11 @@ class UtilsTest(TestCase):
     def test_parse_pretty_date(self):
         date = datetime(2012, 2, 3, 4, 5)
         assert_equal(date, parse_pretty_date(format_pretty_date(date)))
+    
+    def test_parse_tag(self):
+        tag = "  STRINGwithCaps and    SPaces   "
+        parsed_tag = parse_tag(tag)
+        assert_equal(parsed_tag, "stringwithcaps-and-spaces")
 
 
 class TestUtil(TestCase):

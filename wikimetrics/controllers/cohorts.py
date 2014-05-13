@@ -6,14 +6,14 @@ from sqlalchemy.orm.exc import NoResultFound, MultipleResultsFound
 from sqlalchemy.sql.expression import or_
 
 from wikimetrics.utils import (
-    json_response, json_error, json_redirect, deduplicate_by_key
+    json_response, json_error, json_redirect, deduplicate_by_key, parse_tag
 )
 from wikimetrics.exceptions import Unauthorized, DatabaseError
 from wikimetrics.configurables import app, db
 from wikimetrics.controllers.forms import CohortUpload
 from wikimetrics.models import (
     CohortStore, CohortUserStore, UserStore, WikiUserStore, CohortWikiUserStore,
-    CohortUserRole, MediawikiUser, ValidateCohort,
+    CohortUserRole, MediawikiUser, ValidateCohort, TagStore, CohortTagStore
 )
 from wikimetrics.api import CohortService
 
@@ -118,7 +118,8 @@ def cohort_detail(name_or_id):
     
     limit = 200 if full_detail == 'true' else 3
     cohort_with_wikiusers = populate_cohort_wikiusers(cohort, limit)
-    cohort_with_status = populate_cohort_validation_status(cohort_with_wikiusers)
+    cohort_with_tags = populate_cohort_tags(cohort_with_wikiusers, cohort.id)
+    cohort_with_status = populate_cohort_validation_status(cohort_with_tags)
     return json_response(cohort_with_status)
 
 
@@ -129,6 +130,20 @@ def populate_cohort_wikiusers(cohort, limit):
     wikiusers = g.cohort_service.get_wikiusers(cohort, limit=limit)
     cohort_dict = cohort.__dict__
     cohort_dict['wikiusers'] = [wu._asdict() for wu in wikiusers]
+    return cohort_dict
+
+
+def populate_cohort_tags(cohort_dict, cohort_id):
+    session = db.get_session()
+    try:
+        tags = session.query(TagStore) \
+            .filter(CohortTagStore.cohort_id == cohort_id) \
+            .filter(CohortTagStore.tag_id == TagStore.id) \
+            .all()
+    finally:
+        session.close()
+
+    cohort_dict['tags'] = [t._asdict() for t in tags]
     return cohort_dict
 
 
@@ -361,5 +376,76 @@ def delete_cohort(cohort_id):
     except DatabaseError as e:
         session.rollback()
         return json_error(e.message)
+    finally:
+        session.close()
+
+
+@app.route('/cohorts/<int:cohort_id>/tag/add/', defaults={'tag': None}, methods=['POST'])
+@app.route('/cohorts/<int:cohort_id>/tag/add/<string:tag>', methods=['POST'])
+def add_tag(cohort_id, tag):
+    """
+    Checks if tag exists in the tag table and then adds tag to the cohort.
+    """
+    if tag is None:
+        return json_error(message='You cannot submit an empty tag.')
+    parsed_tag = parse_tag(tag)
+    session = db.get_session()
+    try:
+        t = session.query(TagStore).filter(TagStore.name == parsed_tag).first()
+        if not t:
+            t = TagStore(
+                name=parsed_tag
+            )
+            session.add(t)
+            session.commit()
+
+        # Check if cohort is already tagged with 'tag'
+        ct = session.query(CohortTagStore) \
+            .filter(CohortTagStore.tag_id == t.id) \
+            .filter(CohortTagStore.cohort_id == cohort_id) \
+            .all()
+        if ct:
+            return json_response(exists=True)
+
+        cohort_tag = CohortTagStore(
+            tag_id=t.id,
+            cohort_id=cohort_id,
+        )
+        session.add(cohort_tag)
+        session.commit()
+    except DatabaseError as e:
+        session.rollback()
+        return json_error(e.message)
+    finally:
+        session.close()
+
+    data = {}
+    populate_cohort_tags(data, cohort_id)
+    return json_response(data)
+
+
+@app.route('/cohorts/<int:cohort_id>/tag/list')
+def cohort_tag_list(cohort_id):
+    session = db.get_session()
+
+    # tag_names returns tuples, why?
+    tag_names = session.query(TagStore.name) \
+        .filter(CohortTagStore.cohort_id == cohort_id) \
+        .filter(CohortTagStore.tag_id == TagStore.id) \
+        .all()
+    tag_names = [tag[0] for tag in tag_names]
+    return json.dumps(sorted(tag_names))
+
+
+@app.route('/cohorts/<int:cohort_id>/tag/delete/<int:tag_id>', methods=['POST'])
+def delete_tag(cohort_id, tag_id):
+    session = db.get_session()
+    try:
+        session.query(CohortTagStore) \
+            .filter(CohortTagStore.cohort_id == cohort_id) \
+            .filter(CohortTagStore.tag_id == tag_id) \
+            .delete()
+        session.commit()
+        return json_response(message='success')
     finally:
         session.close()

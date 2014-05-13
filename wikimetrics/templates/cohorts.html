@@ -1,34 +1,37 @@
 {% extends "layout.html" %}
 {% block body %}
 
-<h2>Cohorts</h2>
-
-<div>
-    <a class="btn btn-primary btn-large" href="{{url_for('cohort_upload')}}">Upload Cohort</a>
-    &nbsp;
-    &nbsp;
-    <input type="text" class="search-query" placeholder="type to filter" data-bind="value: filter, valueUpdate:'afterkeydown'"/>
+<div class="page-header">
+    <h2>Cohorts 
+        <input type="text" class="search-query" placeholder="type to filter your search" data-bind="value: filter, valueUpdate:'afterkeydown'"/>
+        <small class="pull-right">
+            <a class="btn btn-primary " href="{{url_for('cohort_upload')}}">Upload a New Cohort</a>
+        </small>
+    </h2>
 </div>
-<hr/>
 <div class="tabbable tabs-left">
-    <ul class="nav nav-tabs" data-bind="foreach: filteredCohorts">
+      <ul class="nav nav-tabs" data-bind="foreach: filteredCohorts">
         <li>
             <a data-bind="text: name, attr: {href: '#' + id}, click: $root.view" data-toggle="tab"></a>
         </li>
     </ul>
     <div class="tab-content" data-bind="foreach: cohorts">
-        <div class="tab-pane" data-bind="attr: {id: id}">
-            <div class="hero-unit">
-                <h5 data-bind="text: name"></h5>
-                <p data-bind="text: description"></p>
-                <div class="btn-group pull-left" data-bind="if: validated() && valid_count() > 0">
-                    <a data-bind="attr:{href:'{{url_for('reports_request')}}#'+id}"
-                       class="btn btn-primary">Create Report</a>
+        <div class="tab-pane small" data-bind="attr: {id: id}">
+            <div class="well">
+                <h2><span data-bind="text: name"></span>
+                    <small data-bind="text: description"></small>
+                </h2>
+                <div style="padding:10px 0 10px 0" data-bind="foreach: tags" class="tags">
+                    <span class="label"><span data-bind="text: name"></span>
+                        <a data-bind="click: $root.deleteTag.bind($data, event, $parent)"><i class="icon-remove"></i></a></span>
                 </div>
-                <div class="btn-group">
-                    <a data-bind="click: $root.deleteCohort, attr: { title: delete_message }"
-                       class="btn btn-danger">Remove Cohort</a>
+                <div>
+                        <form class="navbar-form pull-left" data-bind="submit: $root.addTag.bind($data)">
+                            <input data-bind= "value: tag_name" type="text" class="span4" required>
+                            <input type="submit" class="btn small" value="Add Tag"/>
+                        </form>
                 </div>
+                <br />
                 <div data-bind="if: validated_count() === total_count() && !validated()">
                     <hr/>
                     <p>
@@ -45,44 +48,37 @@
                         <!-- /ko -->
                     </p>
                 </div>
-                <div data-bind="if: valid_count() < total_count()">
-                    <hr/>
+                <hr />
+                <div>
+                <p class="validated-users">
+                    Validated
+                    <span data-bind="text: validated_count"></span> of
+                    <span data-bind="text: total_count"></span> cohort members.
+                    <span data-bind="text: valid_count"></span> are valid,
+                    <a data-bind="attr: {href: '/cohorts/detail/invalid-users/' + id}" target="_blank">
+                        <span data-bind="text: invalid_count"></span> are invalid.
+                    </a>
+                </p>
+                <span data-bind="if: valid_count() < total_count()">
                     <p>
                         <a data-bind="click: $root.validateWikiusers"
-                           class="btn btn-primary"
+                           class="btn"
                            title="cancel and restart validation for this cohort">Validate Again</a>
                     </p>
+                </span>
                 </div>
             </div>
-            <p>
-                Validated
-                <span data-bind="text: validated_count"></span> of
-                <span data-bind="text: total_count"></span> cohort members.
-                <span data-bind="text: valid_count"></span> are valid,
-                <a data-bind="attr: {href: '/cohorts/detail/invalid-users/' + id}" target="_blank">
-                    <span data-bind="text: invalid_count"></span> are invalid.
-                </a>
-            </p>
-            <p>
-            </p>
-            <!-- ko if: validated() -->
-            <table class="table table-striped">
-                <tbody data-bind="foreach: wikiusers">
-                    <tr>
-                        <td data-bind="text: project"></td>
-                        <td data-bind="text: mediawiki_username"></td>
-                    </tr>
-                </tbody>
-                <tfoot data-bind="if: valid_count() > 3">
-                    <tr>
-                        <td colspan="2">
-                            <a data-bind="click: $root.loadWikiusers"
-                               class="btn btn-small">load more cohort members...</a>
-                        </td>
-                    </tr>
-                </tfoot>
-            </table>
-            <!-- /ko -->
+            <div class="pull-right">
+                <div class="btn-group pull-left" data-bind="if: validated() && valid_count() > 0">
+                    <a data-bind="attr:{href:'{{url_for('reports_request')}}#'+id}"
+                       class="btn btn-primary">Create Report</a>
+                </div>
+                <div class="btn-group">
+                    <a data-bind="click: $root.deleteCohort, attr: { title: delete_message }"
+                       class="btn btn-danger">Remove Cohort</a>
+                </div>
+            </div>
+
         </div>
     </div>
 </div>

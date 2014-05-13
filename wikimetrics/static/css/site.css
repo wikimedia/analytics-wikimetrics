@@ -1,9 +1,11 @@
 body { padding-top: 60px; padding-bottom: 60px; }
 table caption { padding: 16px; }
+.highlight { background-color: #fad435; color: #000; }
 .navbar-fixed-top .nav { width: 80%; }
 .navbar-fixed-top .nav li:last-child { color: #cacaca; float: right !important; }
 .navbar-fixed-top .nav li:last-child a { color: #0088cc; display: inline-block; }
 label.error { color: #af3333; }
+span.label{font-weight:normal !important;}
 div.flash { margin: 4px 0 20px 0; }
 
 
@@ -89,3 +91,6 @@ form.upload-cohort div.navbar-inner { margin: 0 0 20px 0; }
 
 /* form field stuff */
 .disabled-field { display: none; }
+
+p.validated-users { font-size: medium }
+

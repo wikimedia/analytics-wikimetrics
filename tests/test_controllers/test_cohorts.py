@@ -10,7 +10,7 @@ from wikimetrics.configurables import app
 from tests.fixtures import WebTest
 from wikimetrics.models import (
     CohortStore, CohortUserStore, CohortWikiUserStore, WikiUserStore, UserStore,
-    CohortUserRole, ValidateCohort,
+    CohortUserRole, ValidateCohort, CohortTagStore, TagStore
 )
 
 
@@ -301,6 +301,44 @@ class CohortsControllerTest(WebTest):
         response = self.app.get('/cohorts/list/')
         response = json.loads(response.data)
         assert_equal(len(response['cohorts']), 0)
+
+    def test_add_new_tag(self):
+        unparsed_tag = "  saMPLE tag  with BAD FORMatting   "
+        response = self.app.post('/cohorts/{0}/tag/add/{1}'
+                                 .format(self.cohort.id, unparsed_tag))
+        assert_true(response.data.find('"tags":') >= 0)
+        assert_true(response.data.find('"name": "sample-tag-with-bad-formatting"') >= 0)
+        self.session.commit()
+
+        t = self.session.query(TagStore.id) \
+            .filter(TagStore.name == 'sample-tag-with-bad-formatting') \
+            .first()
+        assert_not_equal(t, None)
+        ct = self.session.query(CohortTagStore) \
+            .filter(CohortTagStore.cohort_id == self.cohort.id) \
+            .filter(CohortTagStore.tag_id == t[0]) \
+            .first()
+        assert_not_equal(ct, None)
+   
+    def test_add_empty_tag(self):
+        response = self.app.post('/cohorts/{0}/tag/add/'
+                                 .format(self.cohort.id))
+        assert_true(response.data.find('"You cannot submit an empty tag."') >= 0)
+
+    def test_add_existing_tag(self):
+        duplicate_tag = "duplicate-tag"
+        tag = TagStore(
+            name=duplicate_tag
+        )
+        self.session.add(tag)
+        response = self.app.post('/cohorts/{0}/tag/add/{1}'
+                                 .format(self.cohort.id, duplicate_tag))
+        assert_true(response.data.find('"tags":') >= 0)
+        assert_true(response.data.find('"name": "{0}"'.format(duplicate_tag)) >= 0)
+        tag_count = self.session.query(TagStore) \
+            .filter(TagStore.name == duplicate_tag) \
+            .count()
+        assert_equal(tag_count, 1)
 
 
 class CohortsControllerUploadTest(WebTest):

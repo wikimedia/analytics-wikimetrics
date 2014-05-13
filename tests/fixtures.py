@@ -18,6 +18,8 @@ from wikimetrics.models import (
     CohortWikiUserStore,
     CohortUserRole,
     CohortUserStore,
+    TagStore,
+    CohortTagStore,
     ReportStore,
     Revision,
     Page,
@@ -577,6 +579,8 @@ class DatabaseTest(unittest.TestCase):
         self.mwSession2.commit()
         self.mwSession2.close()
         
+        self.session.query(CohortTagStore).delete()
+        self.session.query(TagStore).delete()
         self.session.query(CohortWikiUserStore).delete()
         self.session.query(CohortUserStore).delete()
         self.session.query(WikiUserStore).delete()

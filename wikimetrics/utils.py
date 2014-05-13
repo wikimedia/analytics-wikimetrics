@@ -240,3 +240,8 @@ def parse_username(username):
         parsed = parsed[0].upper() + parsed[1:]
 
     return parsed.encode('utf8')
+
+
+def parse_tag(tag):
+    parsed_tag = " ".join(tag.lower().split()).replace(" ", "-")
+    return parsed_tag
