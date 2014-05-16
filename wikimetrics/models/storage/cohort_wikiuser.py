@@ -1,12 +1,8 @@
 from sqlalchemy import Column, Integer, ForeignKey
 from wikimetrics.configurables import db
 
-__all__ = [
-    'CohortWikiUser',
-]
 
-
-class CohortWikiUser(db.WikimetricsBase):
+class CohortWikiUserStore(db.WikimetricsBase):
     """
     Represents the join table between `cohort` and `wiki_user`
     tables.  Uses sqlalchemy.declarative to handle db mapping
@@ -19,4 +15,4 @@ class CohortWikiUser(db.WikimetricsBase):
     cohort_id = Column(Integer, ForeignKey('cohort.id'))
 
     def __repr__(self):
-        return '<CohortWikiUser("{0}")>'.format(self.id)
+        return '<CohortWikiUserStore("{0}")>'.format(self.id)

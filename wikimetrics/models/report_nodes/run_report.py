@@ -6,8 +6,8 @@ from sqlalchemy.orm.exc import NoResultFound
 from datetime import timedelta
 
 from wikimetrics.configurables import db
-from wikimetrics.models.cohort import Cohort
-from wikimetrics.models.persistent_report import PersistentReport
+from wikimetrics.models.storage.cohort import CohortStore
+from wikimetrics.models.storage.report import ReportStore
 from wikimetrics.metrics import metric_classes, TimeseriesChoices
 from wikimetrics.utils import (
     diff_datewise, timestamps_to_now, strip_time, to_datetime, thirty_days_ago,
@@ -45,7 +45,7 @@ class RunReport(ReportNode):
                 recurrent       : whether to rerun this daily
                 public          : whether to expose results publicly
             user_id             : the user wishing to run this report
-            recurrent_parent_id : the parent PersistentReport.id for a recurrent run
+            recurrent_parent_id : the parent ReportStore.id for a recurrent run
             created             : if set, represents the date of a recurrent run
         
         Raises:
@@ -55,7 +55,7 @@ class RunReport(ReportNode):
         cohort_dict = parameters['cohort']
         session = db.get_session()
         try:
-            cohort = Cohort.get_safely(session, user_id, by_id=cohort_dict['id'])
+            cohort = CohortStore.get_safely(session, user_id, by_id=cohort_dict['id'])
         finally:
             session.close()
         
@@ -117,7 +117,7 @@ class RunReport(ReportNode):
         
         try:
             session = db.get_session()
-            db_report = session.query(PersistentReport).get(self.persistent_id)
+            db_report = session.query(ReportStore).get(self.persistent_id)
         finally:
             session.close()
         
@@ -200,10 +200,10 @@ class RunReport(ReportNode):
         if search_from < look_at_most_this_far:
             search_from = look_at_most_this_far
         
-        completed_days = [pr[0] for pr in session.query(PersistentReport.created)
-                          .filter(PersistentReport.recurrent_parent_id == report.id)
-                          .filter(PersistentReport.created >= search_from)
-                          .filter(PersistentReport.status != celery.states.FAILURE)
+        completed_days = [pr[0] for pr in session.query(ReportStore.created)
+                          .filter(ReportStore.recurrent_parent_id == report.id)
+                          .filter(ReportStore.created >= search_from)
+                          .filter(ReportStore.status != celery.states.FAILURE)
                           .all()]
         expected_days = timestamps_to_now(search_from, timedelta(days=1))
         missed_days, unexpected_days = diff_datewise(expected_days, completed_days)

@@ -1,11 +1,6 @@
 from sqlalchemy import Column, Integer, ForeignKey, String
 from wikimetrics.configurables import db
 
-__all__ = [
-    'CohortUserRole',
-    'CohortUser'
-]
-
 
 class CohortUserRole(object):
     OWNER = 'OWNER'
@@ -13,7 +8,7 @@ class CohortUserRole(object):
     SAFE_ROLES = [OWNER, VIEWER]
 
 
-class CohortUser(db.WikimetricsBase):
+class CohortUserStore(db.WikimetricsBase):
     """
     Represents the join table between `cohort` and `user`
     tables which stores cohort permissions.  Uses
@@ -28,4 +23,4 @@ class CohortUser(db.WikimetricsBase):
     role      = Column(String(45))
 
     def __repr__(self):
-        return '<CohortUser("{0}")>'.format(self.id)
+        return '<CohortUserStore("{0}")>'.format(self.id)

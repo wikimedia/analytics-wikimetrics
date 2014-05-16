@@ -1,11 +1,6 @@
 from sqlalchemy import Column, Integer, String, Boolean
 from wikimetrics.configurables import db
 
-__all__ = [
-    'User',
-    'UserRole',
-]
-
 
 class UserRole(object):
     ADMIN = 'ADMIN'
@@ -13,7 +8,7 @@ class UserRole(object):
     GUEST = 'GUEST'
 
 
-class User(db.WikimetricsBase):
+class UserStore(db.WikimetricsBase):
     """
     This class represents website users, who can have permissions
     and cohort ownership. It is also mapped to the `user` table
@@ -36,7 +31,7 @@ class User(db.WikimetricsBase):
     
     @staticmethod
     def get(session, user_id):
-        user = session.query(User).get(user_id)
+        user = session.query(UserStore).get(user_id)
         if user:
             session.expunge(user)
         return user
@@ -86,4 +81,4 @@ class User(db.WikimetricsBase):
         return unicode(self.id)
 
     def __repr__(self):
-        return '<User("{0}")>'.format(self.id)
+        return '<UserStore("{0}")>'.format(self.id)

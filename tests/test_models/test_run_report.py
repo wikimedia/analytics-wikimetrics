@@ -7,7 +7,7 @@ from celery.exceptions import SoftTimeLimitExceeded
 
 from tests.fixtures import QueueDatabaseTest, DatabaseTest
 from wikimetrics.models import (
-    RunReport, Aggregation, PersistentReport
+    RunReport, Aggregation, ReportStore,
 )
 from wikimetrics.metrics import TimeseriesChoices, metric_classes
 from wikimetrics.utils import diff_datewise, stringify, strip_time
@@ -44,9 +44,9 @@ class RunReportClassMethodsTest(DatabaseTest):
         ps = stringify(p)
         
         self.reports = [
-            PersistentReport(recurrent=True, created=ago_25, parameters=ps, user_id=uid),
-            PersistentReport(recurrent=True, created=ago_35, parameters=ps, user_id=uid),
-            PersistentReport(recurrent=True, created=ago_05, parameters=ps, user_id=uid),
+            ReportStore(recurrent=True, created=ago_25, parameters=ps, user_id=uid),
+            ReportStore(recurrent=True, created=ago_35, parameters=ps, user_id=uid),
+            ReportStore(recurrent=True, created=ago_05, parameters=ps, user_id=uid),
         ]
         self.session.add_all(self.reports)
         self.session.commit()
@@ -59,7 +59,7 @@ class RunReportClassMethodsTest(DatabaseTest):
             p['recurrent'] = False
             ps = stringify(p)
             if d not in [1, 2, 11] and d < 26:
-                self.report_runs.append(PersistentReport(
+                self.report_runs.append(ReportStore(
                     recurrent_parent_id=self.reports[0].id,
                     created=day,
                     status='SUCCESS',
@@ -67,7 +67,7 @@ class RunReportClassMethodsTest(DatabaseTest):
                     user_id=uid,
                 ))
             if d not in [1, 2, 11, 31, 33]:
-                self.report_runs.append(PersistentReport(
+                self.report_runs.append(ReportStore(
                     recurrent_parent_id=self.reports[1].id,
                     created=day,
                     status='SUCCESS',
@@ -75,7 +75,7 @@ class RunReportClassMethodsTest(DatabaseTest):
                     user_id=uid,
                 ))
             if d not in [1, 2] and d < 6:
-                self.report_runs.append(PersistentReport(
+                self.report_runs.append(ReportStore(
                     recurrent_parent_id=self.reports[2].id,
                     created=day,
                     status='SUCCESS',
@@ -185,7 +185,7 @@ class RunReportTest(QueueDatabaseTest):
         jr = RunReport(parameters, user_id=self.owner_user_id)
         results = jr.task.delay(jr).get()
         self.session.commit()
-        result_key = self.session.query(PersistentReport) \
+        result_key = self.session.query(ReportStore) \
             .get(jr.persistent_id) \
             .result_key
         results = results[result_key]
@@ -224,7 +224,7 @@ class RunReportTest(QueueDatabaseTest):
             jr = RunReport(parameters, user_id=self.owner_user_id)
             results = jr.task.delay(jr).get()
             self.session.commit()
-            result_key = self.session.query(PersistentReport) \
+            result_key = self.session.query(ReportStore) \
                 .get(jr.persistent_id) \
                 .result_key
             assert_true(
@@ -254,7 +254,7 @@ class RunReportTest(QueueDatabaseTest):
         jr = RunReport(parameters, user_id=self.owner_user_id)
         results = jr.task.delay(jr).get()
         self.session.commit()
-        result_key = self.session.query(PersistentReport) \
+        result_key = self.session.query(ReportStore) \
             .get(jr.persistent_id) \
             .result_key
         results = results[result_key]
@@ -291,7 +291,7 @@ class RunReportTest(QueueDatabaseTest):
         jr = RunReport(parameters, user_id=self.owner_user_id)
         results = jr.task.delay(jr).get()
         self.session.commit()
-        result_key = self.session.query(PersistentReport) \
+        result_key = self.session.query(ReportStore) \
             .get(jr.persistent_id) \
             .result_key
         results = results[result_key]
@@ -329,7 +329,7 @@ class RunReportTest(QueueDatabaseTest):
         
         results = jr.task.delay(jr).get()
         self.session.commit()
-        result_key = self.session.query(PersistentReport) \
+        result_key = self.session.query(ReportStore) \
             .get(jr.persistent_id) \
             .result_key
         assert_true(
@@ -401,7 +401,7 @@ class RunReportBytesTest(QueueDatabaseTest):
         jr = RunReport(parameters, user_id=self.owner_user_id)
         results = jr.task.delay(jr).get()
         self.session.commit()
-        result_key = self.session.query(PersistentReport) \
+        result_key = self.session.query(ReportStore) \
             .get(jr.persistent_id) \
             .result_key
         results = results[result_key]
@@ -449,7 +449,7 @@ class RunReportBytesTest(QueueDatabaseTest):
             try:
                 results = delayed.get()
                 self.session.commit()
-                result_key = self.session.query(PersistentReport) \
+                result_key = self.session.query(ReportStore) \
                     .get(jr.persistent_id) \
                     .result_key
                 results = results[result_key]
@@ -498,8 +498,8 @@ class RunReportScheduledTest(QueueDatabaseTest):
         # wait for the sped-up development version of the scheduler to kick in
         time.sleep(1)
         
-        recurrent_runs = self.session.query(PersistentReport) \
-            .filter(PersistentReport.recurrent_parent_id == jr.persistent_id) \
+        recurrent_runs = self.session.query(ReportStore) \
+            .filter(ReportStore.recurrent_parent_id == jr.persistent_id) \
             .all()
         
         # make sure we have one and no more than one recurrent run
@@ -533,7 +533,7 @@ class RunReportScheduledTest(QueueDatabaseTest):
         time.sleep(1)
         
         # make sure all report nodes have a user_id
-        no_user_id = self.session.query(func.count(PersistentReport)) \
-            .filter(PersistentReport.user_id == None) \
+        no_user_id = self.session.query(func.count(ReportStore)) \
+            .filter(ReportStore.user_id == None) \
             .one()[0]
         assert_equals(no_user_id, 0)

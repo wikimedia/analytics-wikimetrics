@@ -2,7 +2,7 @@ from sqlalchemy import Column, Integer, String, Boolean
 from wikimetrics.configurables import db
 
 
-class WikiUser(db.WikimetricsBase):
+class WikiUserStore(db.WikimetricsBase):
     """
     This class represents mediawiki users which compose
     cohorts.  A user is defined as a username or user_id
@@ -26,7 +26,7 @@ class WikiUser(db.WikimetricsBase):
     validating_cohort   = Column(Integer)
 
     def __repr__(self):
-        return '<WikiUser("{0}")>'.format(self.id)
+        return '<WikiUserStore("{0}")>'.format(self.id)
 
 
 class WikiUserKey(object):

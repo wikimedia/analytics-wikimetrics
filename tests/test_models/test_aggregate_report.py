@@ -5,7 +5,7 @@ from wikimetrics.metrics import (
     metric_classes, NamespaceEdits, TimeseriesChoices,
 )
 from wikimetrics.models import (
-    Aggregation, AggregateReport, PersistentReport, Cohort,
+    Aggregation, AggregateReport, CohortStore,
 )
 from ..fixtures import QueueDatabaseTest, DatabaseTest
 

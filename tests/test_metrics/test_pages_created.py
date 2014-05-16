@@ -1,9 +1,7 @@
 from nose.tools import assert_true, assert_not_equal, assert_equal
 from tests.fixtures import DatabaseTest
 
-from wikimetrics import app
 from wikimetrics.metrics import PagesCreated
-from wikimetrics.models import Cohort, MetricReport, WikiUser, CohortWikiUser
 
 
 class PagesCreatedTest(DatabaseTest):

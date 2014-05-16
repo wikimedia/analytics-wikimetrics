@@ -5,10 +5,6 @@ from nose.tools import assert_equal
 from tests.fixtures import DatabaseTest, i, tz_note
 from wikimetrics.utils import format_date, CENSORED
 from wikimetrics.metrics import Threshold
-from wikimetrics.models import (
-    Cohort, MetricReport, WikiUser, CohortWikiUser, MediawikiUser,
-    Revision,
-)
 
 
 class ThresholdTest(DatabaseTest):

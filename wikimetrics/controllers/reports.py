@@ -6,9 +6,11 @@ from flask import render_template, request, redirect, url_for, Response, abort, 
 from flask.ext.login import current_user
 from sqlalchemy.exc import SQLAlchemyError
 from wikimetrics.configurables import app, db
-from wikimetrics.models import Report, RunReport, PersistentReport, WikiUser, WikiUserKey
+from wikimetrics.models import (
+    Report, RunReport, Aggregation,
+    ReportStore, WikiUserStore, WikiUserKey,
+)
 from wikimetrics.metrics import TimeseriesChoices
-from wikimetrics.models.report_nodes import Aggregation
 from wikimetrics.utils import (
     json_response, json_error, json_redirect, thirty_days_ago, stringify
 )
@@ -33,7 +35,7 @@ def unset_public_report(report_id):
     Deletes the specified report from disk, and sets the public flag to False.
     """
     # call would throw an exception if  report cannot be made private
-    PersistentReport.make_report_private(report_id, current_user.id, g.file_manager)
+    ReportStore.make_report_private(report_id, current_user.id, g.file_manager)
     return json_response(message='Update successful')
 
 
@@ -47,8 +49,8 @@ def set_public_report(report_id):
     # data here
     db_session = db.get_session()
     try:
-        result_key = db_session.query(PersistentReport.result_key)\
-            .filter(PersistentReport.id == report_id)\
+        result_key = db_session.query(ReportStore.result_key)\
+            .filter(ReportStore.id == report_id)\
             .one()[0]
     finally:
         db_session.close()
@@ -56,7 +58,7 @@ def set_public_report(report_id):
     data = report_result_json(result_key).data
 
     # call would throw an exception if report cannot be made public
-    PersistentReport.make_report_public(
+    ReportStore.make_report_public(
         report_id, current_user.id, g.file_manager, data
     )
 
@@ -98,17 +100,17 @@ def reports_request():
 def reports_list():
     db_session = db.get_session()
     try:
-        reports = db_session.query(PersistentReport)\
-            .filter(PersistentReport.user_id == current_user.id)\
-            .filter(PersistentReport.created > thirty_days_ago())\
-            .filter(PersistentReport.show_in_ui)\
+        reports = db_session.query(ReportStore)\
+            .filter(ReportStore.user_id == current_user.id)\
+            .filter(ReportStore.created > thirty_days_ago())\
+            .filter(ReportStore.show_in_ui)\
             .all()
         # TODO: update status for all reports at all times (not just show_in_ui ones)
         # update status for each report
         for report in reports:
             report.update_status()
 
-        # TODO fix json_response to deal with PersistentReport objects
+        # TODO fix json_response to deal with ReportStore objects
         reports_json = json_response(reports=[report._asdict() for report in reports])
     finally:
         db_session.close()
@@ -132,8 +134,8 @@ def get_celery_task(result_key):
     try:
         db_session = db.get_session()
         try:
-            pj = db_session.query(PersistentReport)\
-                .filter(PersistentReport.result_key == result_key)\
+            pj = db_session.query(ReportStore)\
+                .filter(ReportStore.result_key == result_key)\
                 .one()
 
             celery_task = Report.task.AsyncResult(pj.queue_result_key)
@@ -180,10 +182,10 @@ def get_user_name(session, wiki_user_key):
         session         : a session to the wikimetrics database to search with
         wiki_user_key   : an instance of WikiUserKey to search for a WikiUser with
     """
-    return session.query(WikiUser.mediawiki_username)\
-        .filter(WikiUser.mediawiki_userid == wiki_user_key.user_id)\
-        .filter(WikiUser.project == wiki_user_key.user_project)\
-        .filter(WikiUser.validating_cohort == wiki_user_key.cohort_id)\
+    return session.query(WikiUserStore.mediawiki_username)\
+        .filter(WikiUserStore.mediawiki_userid == wiki_user_key.user_id)\
+        .filter(WikiUserStore.project == wiki_user_key.user_project)\
+        .filter(WikiUserStore.validating_cohort == wiki_user_key.cohort_id)\
         .one()[0]
 
 
@@ -374,7 +376,7 @@ def report_result_json(result_key):
 #def report_kill(result_key):
     #return 'not implemented'
     #db_session = db.get_session()
-    #db_report = db_session.query(PersistentReport).get(result_key)
+    #db_report = db_session.query(ReportStore).get(result_key)
     #if not db_report:
         #return json_error('no task exists with id: {0}'.format(result_key))
     #celery_task = Report.task.AsyncResult(db_report.result_key)

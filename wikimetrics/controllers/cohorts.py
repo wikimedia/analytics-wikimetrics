@@ -10,12 +10,11 @@ from ..utils import (
     json_response, json_error, json_redirect, deduplicate_by_key
 )
 from wikimetrics.exceptions import Unauthorized
-from ..configurables import app, db
-from ..controllers.forms import CohortUpload
-from ..models import (
-    Cohort, CohortUser, CohortUserRole,
-    User, WikiUser, CohortWikiUser, MediawikiUser,
-    ValidateCohort
+from wikimetrics.configurables import app, db
+from wikimetrics.controllers.forms import CohortUpload
+from wikimetrics.models import (
+    CohortStore, CohortUserStore, UserStore, WikiUserStore, CohortWikiUserStore,
+    CohortUserRole, MediawikiUser, ValidateCohort,
 )
 from ..exceptions import DatabaseError
 
@@ -34,14 +33,15 @@ def cohorts_list():
     include_invalid = request.args.get('include_invalid', 'false')
     db_session = db.get_session()
     try:
-        cohorts = db_session.query(Cohort.id, Cohort.name, Cohort.description)\
-            .join(CohortUser)\
-            .join(User)\
-            .filter(User.id == current_user.id)\
-            .filter(CohortUser.role.in_(CohortUserRole.SAFE_ROLES))\
-            .filter(Cohort.enabled)\
+        cohorts = db_session\
+            .query(CohortStore.id, CohortStore.name, CohortStore.description)\
+            .join(CohortUserStore)\
+            .join(UserStore)\
+            .filter(UserStore.id == current_user.id)\
+            .filter(CohortUserStore.role.in_(CohortUserRole.SAFE_ROLES))\
+            .filter(CohortStore.enabled)\
             .filter(or_(
-                Cohort.validated,
+                CohortStore.validated,
                 (include_invalid == 'true')
             ))\
             .all()
@@ -59,10 +59,11 @@ def cohorts_list():
 def cohort_invalid_detail(cohort_id):
     session = db.get_session()
     try:
-        cohort = Cohort.get_safely(session, current_user.id, by_id=cohort_id)
-        wikiusers = session.query(WikiUser.mediawiki_username, WikiUser.reason_invalid)\
-            .filter(WikiUser.validating_cohort == cohort.id) \
-            .filter(WikiUser.valid.in_([False, None])) \
+        cohort = CohortStore.get_safely(session, current_user.id, by_id=cohort_id)
+        wikiusers = session\
+            .query(WikiUserStore.mediawiki_username, WikiUserStore.reason_invalid)\
+            .filter(WikiUserStore.validating_cohort == cohort.id) \
+            .filter(WikiUserStore.valid.in_([False, None])) \
             .all()
         return json_response(invalid_wikiusers=[wu._asdict() for wu in wikiusers])
     except:
@@ -88,9 +89,13 @@ def cohort_detail(name_or_id):
     db_session = db.get_session()
     try:
         if str(name_or_id).isdigit():
-            cohort = Cohort.get_safely(db_session, current_user.id, by_id=int(name_or_id))
+            cohort = CohortStore.get_safely(
+                db_session, current_user.id, by_id=int(name_or_id)
+            )
         else:
-            cohort = Cohort.get_safely(db_session, current_user.id, by_name=name_or_id)
+            cohort = CohortStore.get_safely(
+                db_session, current_user.id, by_name=name_or_id
+            )
     except Unauthorized:
         return 'You are not allowed to access this Cohort', 401
     except NoResultFound:
@@ -111,7 +116,7 @@ def populate_cohort_wikiusers(cohort, limit):
     session = db.get_session()
     try:
         wikiusers = cohort.filter_wikiuser_query(
-            session.query(WikiUser)
+            session.query(WikiUserStore)
         ).limit(limit).all()
     finally:
         session.close()
@@ -136,18 +141,18 @@ def populate_cohort_validation_status(cohort_dict):
     
     session = db.get_session()
     try:
-        cohort_dict['invalid_count'] = session.query(func.count(WikiUser)) \
-            .filter(WikiUser.validating_cohort == cohort_dict['id']) \
-            .filter(WikiUser.valid.in_([False])) \
+        cohort_dict['invalid_count'] = session.query(func.count(WikiUserStore)) \
+            .filter(WikiUserStore.validating_cohort == cohort_dict['id']) \
+            .filter(WikiUserStore.valid.in_([False])) \
             .one()[0]
-        cohort_dict['valid_count'] = session.query(func.count(WikiUser)) \
-            .filter(WikiUser.validating_cohort == cohort_dict['id']) \
-            .filter(WikiUser.valid) \
+        cohort_dict['valid_count'] = session.query(func.count(WikiUserStore)) \
+            .filter(WikiUserStore.validating_cohort == cohort_dict['id']) \
+            .filter(WikiUserStore.valid) \
             .one()[0]
         cohort_dict['validated_count'] = cohort_dict['valid_count'] \
             + cohort_dict['invalid_count']
-        cohort_dict['total_count'] = session.query(func.count(WikiUser)) \
-            .filter(WikiUser.validating_cohort == cohort_dict['id']) \
+        cohort_dict['total_count'] = session.query(func.count(WikiUserStore)) \
+            .filter(WikiUserStore.validating_cohort == cohort_dict['id']) \
             .one()[0]
         users = num_users(session, cohort_dict['id'])
         non_owners = users - 1
@@ -199,7 +204,7 @@ def get_cohort_by_name(name):
     """
     try:
         db_session = db.get_session()
-        return db_session.query(Cohort).filter(Cohort.name == name).first()
+        return db_session.query(CohortStore).filter(CohortStore.name == name).first()
     finally:
         db_session.close()
 
@@ -223,7 +228,7 @@ def validate_cohort(cohort_id):
     name = None
     session = db.get_session()
     try:
-        cohort = Cohort.get_safely(session, current_user.id, by_id=cohort_id)
+        cohort = CohortStore.get_safely(session, current_user.id, by_id=cohort_id)
         name = cohort.name
         # TODO we need some kind of global config that is not db specific
         vc = ValidateCohort(cohort)
@@ -238,8 +243,8 @@ def validate_cohort(cohort_id):
 
 
 def num_users(session, cohort_id):
-    user_count = session.query(CohortUser) \
-        .filter(CohortUser.cohort_id == cohort_id) \
+    user_count = session.query(CohortUserStore) \
+        .filter(CohortUserStore.cohort_id == cohort_id) \
         .count()
     return user_count
 
@@ -249,9 +254,9 @@ def get_role(session, cohort_id):
     Returns the role of the current user.
     """
     try:
-        cohort_user = session.query(CohortUser.role) \
-            .filter(CohortUser.cohort_id == cohort_id) \
-            .filter(CohortUser.user_id == current_user.id) \
+        cohort_user = session.query(CohortUserStore.role) \
+            .filter(CohortUserStore.cohort_id == cohort_id) \
+            .filter(CohortUserStore.user_id == current_user.id) \
             .one()[0]
         return cohort_user
     except:
@@ -266,10 +271,10 @@ def delete_viewer_cohort(session, cohort_id):
 
     Raises exception when viewer is duplicated, nonexistent, or can not be deleted.
     """
-    cu = session.query(CohortUser) \
-        .filter(CohortUser.cohort_id == cohort_id) \
-        .filter(CohortUser.user_id == current_user.id) \
-        .filter(CohortUser.role == CohortUserRole.VIEWER) \
+    cu = session.query(CohortUserStore) \
+        .filter(CohortUserStore.cohort_id == cohort_id) \
+        .filter(CohortUserStore.user_id == current_user.id) \
+        .filter(CohortUserStore.role == CohortUserRole.VIEWER) \
         .delete()
     
     if cu != 1:
@@ -285,9 +290,9 @@ def delete_owner_cohort(session, cohort_id):
     Raises an error if it cannot delete the cohort.
     """
     # Check that there's only one owner and delete it
-    cu = session.query(CohortUser) \
-        .filter(CohortUser.cohort_id == cohort_id) \
-        .filter(CohortUser.role == CohortUserRole.OWNER) \
+    cu = session.query(CohortUserStore) \
+        .filter(CohortUserStore.cohort_id == cohort_id) \
+        .filter(CohortUserStore.role == CohortUserRole.OWNER) \
         .delete()
 
     if cu != 1:
@@ -296,19 +301,19 @@ def delete_owner_cohort(session, cohort_id):
     else:
         try:
             # Delete all other non-owners from cohort_user
-            session.query(CohortUser) \
-                .filter(CohortUser.cohort_id == cohort_id) \
+            session.query(CohortUserStore) \
+                .filter(CohortUserStore.cohort_id == cohort_id) \
                 .delete()
-            session.query(CohortWikiUser) \
-                .filter(CohortWikiUser.cohort_id == cohort_id) \
-                .delete()
-
-            session.query(WikiUser) \
-                .filter(WikiUser.validating_cohort == cohort_id) \
+            session.query(CohortWikiUserStore) \
+                .filter(CohortWikiUserStore.cohort_id == cohort_id) \
                 .delete()
 
-            c = session.query(Cohort) \
-                .filter(Cohort.id == cohort_id) \
+            session.query(WikiUserStore) \
+                .filter(WikiUserStore.validating_cohort == cohort_id) \
+                .delete()
+
+            c = session.query(CohortStore) \
+                .filter(CohortStore.id == cohort_id) \
                 .delete()
             if c < 1:
                 raise DatabaseError

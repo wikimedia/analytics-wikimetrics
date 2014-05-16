@@ -3,26 +3,26 @@ from logging import RootLogger
 from nose.tools import assert_equals, raises
 from ..fixtures import DatabaseTest
 
-from wikimetrics.models import PersistentReport
+from wikimetrics.models import ReportStore
 from wikimetrics.exceptions import UnauthorizedReportAccessError
 from wikimetrics.api import PublicReportFileManager
 from wikimetrics.exceptions import PublicReportIOError
 
 
-class PersistentReportTest(DatabaseTest):
+class ReportStoreTest(DatabaseTest):
     def setUp(self):
         DatabaseTest.setUp(self)
         self.reports = [
-            PersistentReport(public=False, recurrent=False, user_id=1),
-            PersistentReport(public=True, recurrent=False, user_id=1),
-            PersistentReport(public=False, recurrent=True, user_id=1),
-            PersistentReport(public=True, recurrent=True, user_id=1),
+            ReportStore(public=False, recurrent=False, user_id=1),
+            ReportStore(public=True, recurrent=False, user_id=1),
+            ReportStore(public=False, recurrent=True, user_id=1),
+            ReportStore(public=True, recurrent=True, user_id=1),
         ]
         self.session.add_all(self.reports)
         self.session.commit()
     
     def test_update_reports_public_true(self):
-        r = PersistentReport.update_reports(
+        r = ReportStore.update_reports(
             [self.reports[0].id, self.reports[1].id], 1, public=True
         )
         assert_equals(r, True)
@@ -39,7 +39,7 @@ class PersistentReportTest(DatabaseTest):
         assert_equals(self.reports[3].recurrent, True)
     
     def test_update_reports_public_false(self):
-        r = PersistentReport.update_reports(
+        r = ReportStore.update_reports(
             [self.reports[0].id, self.reports[1].id], 1, public=False
         )
         assert_equals(r, True)
@@ -56,7 +56,7 @@ class PersistentReportTest(DatabaseTest):
         assert_equals(self.reports[3].recurrent, True)
     
     def test_update_reports_recurrent_true(self):
-        r = PersistentReport.update_reports(
+        r = ReportStore.update_reports(
             [self.reports[0].id, self.reports[2].id], 1, recurrent=True
         )
         assert_equals(r, True)
@@ -73,7 +73,7 @@ class PersistentReportTest(DatabaseTest):
         assert_equals(self.reports[3].recurrent, True)
     
     def test_update_reports_recurrent_false(self):
-        r = PersistentReport.update_reports(
+        r = ReportStore.update_reports(
             [self.reports[0].id, self.reports[2].id], 1, recurrent=False
         )
         assert_equals(r, True)
@@ -92,7 +92,7 @@ class PersistentReportTest(DatabaseTest):
     @raises(UnauthorizedReportAccessError)
     def test_update_another_users_reports(self):
         # updating with the wrong user_id does not work
-        r = PersistentReport.update_reports(
+        r = ReportStore.update_reports(
             [self.reports[1].id], 0, recurrent=True
         )
         assert_equals(r, False)
@@ -105,7 +105,7 @@ class PersistentReportTest(DatabaseTest):
         """
         file_manager = Mock(spec=PublicReportFileManager)
         report_path = file_manager.get_public_report_path(self.reports[0].id)
-        PersistentReport.make_report_private(
+        ReportStore.make_report_private(
             self.reports[0].id, self.reports[0].user_id, file_manager
         )
         file_manager.remove_file.assert_called_with(report_path)
@@ -124,6 +124,6 @@ class PersistentReportTest(DatabaseTest):
         file_manager.write_data = Mock(side_effect=PublicReportIOError('Boom!'))
         # do not write anything to disk
         file_manager.get_public_report_path = Mock()
-        PersistentReport.make_report_public(
+        ReportStore.make_report_public(
             self.reports[0].id, self.reports[0].user_id, file_manager, 'testing data'
         )

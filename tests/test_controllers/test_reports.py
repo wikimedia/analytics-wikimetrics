@@ -10,7 +10,7 @@ from nose.tools import assert_true, assert_equal, assert_false
 
 from tests.fixtures import WebTest, second_mediawiki_project
 from wikimetrics.models import (
-    PersistentReport, WikiUser, Cohort, CohortWikiUser, MediawikiUser
+    ReportStore, WikiUserStore, CohortStore, CohortWikiUserStore, MediawikiUser
 )
 from wikimetrics.api import PublicReportFileManager
 from wikimetrics.controllers.reports import (
@@ -35,25 +35,25 @@ class ReportsControllerTest(WebTest):
     def setUp(self):
         WebTest.setUp(self)
         # add reports just for testing
-        report_created = PersistentReport(
+        report_created = ReportStore(
             user_id=self.owner_user_id,
             status=celery.states.PENDING,
             queue_result_key=None,
             show_in_ui=True
         )
-        report_started = PersistentReport(
+        report_started = ReportStore(
             user_id=self.owner_user_id,
             status=celery.states.STARTED,
             queue_result_key=None,
             show_in_ui=True
         )
-        report_started2 = PersistentReport(
+        report_started2 = ReportStore(
             user_id=self.owner_user_id,
             status=celery.states.STARTED,
             queue_result_key=None,
             show_in_ui=True
         )
-        report_finished = PersistentReport(
+        report_finished = ReportStore(
             user_id=self.owner_user_id,
             status=celery.states.SUCCESS,
             queue_result_key=None,
@@ -468,7 +468,7 @@ class MultiProjectTests(WebTest):
         self.json_to_post = json.dumps(desired_responses)
     
     def test_user_in_two_projects(self):
-        same_name_different_project = WikiUser(
+        same_name_different_project = WikiUserStore(
             mediawiki_userid=self.editors[0].user_id,
             mediawiki_username='Editor 0 in second wiki',
             project=second_mediawiki_project,
@@ -477,7 +477,7 @@ class MultiProjectTests(WebTest):
         )
         self.session.add(same_name_different_project)
         self.session.commit()
-        self.session.add(CohortWikiUser(
+        self.session.add(CohortWikiUserStore(
             cohort_id=self.cohort.id,
             wiki_user_id=same_name_different_project.id,
         ))
@@ -503,7 +503,7 @@ class MultiProjectTests(WebTest):
         ) >= 0)
     
     def test_two_users_same_id_same_cohort(self):
-        same_id_same_cohort = WikiUser(
+        same_id_same_cohort = WikiUserStore(
             mediawiki_userid=self.editors[0].user_id,
             mediawiki_username='Editor X with same id',
             project=second_mediawiki_project,
@@ -512,7 +512,7 @@ class MultiProjectTests(WebTest):
         )
         self.session.add(same_id_same_cohort)
         self.session.commit()
-        self.session.add(CohortWikiUser(
+        self.session.add(CohortWikiUserStore(
             cohort_id=self.cohort.id,
             wiki_user_id=same_id_same_cohort.id,
         ))
@@ -538,14 +538,14 @@ class MultiProjectTests(WebTest):
         ) >= 0)
     
     def test_two_users_same_id_different_cohort(self):
-        second_cohort = Cohort(
+        second_cohort = CohortStore(
             name='second-cohort',
             enabled=True,
             public=False,
             validated=True,
         )
         self.session.add(second_cohort)
-        same_id_different_cohort = WikiUser(
+        same_id_different_cohort = WikiUserStore(
             mediawiki_userid=self.editors[0].user_id,
             mediawiki_username='Editor X should not show up',
             project=second_mediawiki_project,
@@ -554,7 +554,7 @@ class MultiProjectTests(WebTest):
         )
         self.session.add(same_id_different_cohort)
         self.session.commit()
-        self.session.add(CohortWikiUser(
+        self.session.add(CohortWikiUserStore(
             cohort_id=second_cohort.id,
             wiki_user_id=same_id_different_cohort.id,
         ))
@@ -588,11 +588,11 @@ class BasicTests(unittest.TestCase):
         assert_equal(r2, None)
 
     def test_get_celery_task_result_when_invalid(self):
-        mock_report = PersistentReport()
+        mock_report = ReportStore()
         failure = mock_report.get_result_safely('')
         assert_equal(failure['failure'], 'result not available')
     
     def test_get_celery_task_result_when_empty(self):
-        mock_report = PersistentReport()
+        mock_report = ReportStore()
         failure = mock_report.get_result_safely('')
         assert_equal(failure['failure'], 'result not available')

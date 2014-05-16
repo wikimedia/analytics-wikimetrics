@@ -3,16 +3,13 @@ from operator import itemgetter
 from sqlalchemy import Column, Integer, Boolean, DateTime, String, func
 from wikimetrics.exceptions import Unauthorized
 from wikimetrics.configurables import db
-from wikiuser import WikiUser
-from cohort_wikiuser import CohortWikiUser
-from cohort_user import CohortUser, CohortUserRole
-from user import User
+from wikiuser import WikiUserStore
+from cohort_wikiuser import CohortWikiUserStore
+from cohort_user import CohortUserStore, CohortUserRole
+from user import UserStore
 
 
-__all__ = ['Cohort']
-
-
-class Cohort(db.WikimetricsBase):
+class CohortStore(db.WikimetricsBase):
     """
     This class represents a list of users along with the project
     on which their username exists.  Using sqlalchemy.declarative
@@ -22,7 +19,7 @@ class Cohort(db.WikimetricsBase):
     
     Importantly, there is no guarantee that a cohort consist of users
     from a single project.  To get the set of all users associated with
-    a single project within a cohort use Cohort.group_by_project.
+    a single project within a cohort use CohortStore.group_by_project.
     """
     
     __tablename__ = 'cohort'
@@ -40,16 +37,16 @@ class Cohort(db.WikimetricsBase):
     validation_queue_key    = Column(String(50))
     
     def __repr__(self):
-        return '<Cohort("{0}")>'.format(self.id)
+        return '<CohortStore("{0}")>'.format(self.id)
     
     # TODO: that weird bug that makes "None" show up in metric results
-    # starts with iterating Cohorts here
+    # starts with iterating CohortStore here
     def __iter__(self):
         """ returns list of user_ids """
         db_session = db.get_session()
         try:
             wikiusers = self.filter_wikiuser_query(
-                db_session.query(WikiUser.mediawiki_userid)
+                db_session.query(WikiUserStore.mediawiki_userid)
             ).all()
         finally:
             db_session.close()
@@ -66,10 +63,10 @@ class Cohort(db.WikimetricsBase):
         """
         db_session = db.get_session()
         try:
-            return db_session.query(func.count(CohortWikiUser.id)) \
-                .join(WikiUser) \
-                .filter(CohortWikiUser.cohort_id == self.id) \
-                .filter(WikiUser.valid) \
+            return db_session.query(func.count(CohortWikiUserStore.id)) \
+                .join(WikiUserStore) \
+                .filter(CohortWikiUserStore.cohort_id == self.id) \
+                .filter(WikiUserStore.valid) \
                 .one()[0]
         finally:
             db_session.close()
@@ -91,8 +88,8 @@ class Cohort(db.WikimetricsBase):
         db_session = db.get_session()
         try:
             user_id_projects = self.filter_wikiuser_query(
-                db_session.query(WikiUser.mediawiki_userid, WikiUser.project)
-            ).order_by(WikiUser.project).all()
+                db_session.query(WikiUserStore.mediawiki_userid, WikiUserStore.project)
+            ).order_by(WikiUserStore.project).all()
         finally:
             db_session.close()
         # TODO: push this logic into sqlalchemy.  The solution
@@ -115,11 +112,11 @@ class Cohort(db.WikimetricsBase):
             appropriate tables, and restricted to this cohort
         """
         return wikiusers_query\
-            .join(CohortWikiUser)\
-            .join(Cohort)\
-            .filter(Cohort.id == self.id)\
-            .filter(Cohort.validated)\
-            .filter(WikiUser.valid)
+            .join(CohortWikiUserStore)\
+            .join(CohortStore)\
+            .filter(CohortStore.id == self.id)\
+            .filter(CohortStore.validated)\
+            .filter(WikiUserStore.valid)
     
     @staticmethod
     def get_safely(db_session, user_id, by_id=None, by_name=None):
@@ -133,22 +130,22 @@ class Cohort(db.WikimetricsBase):
             by_name     : the cohort name to get.  <by_id> or <by_name> is True
         
         Returns
-            If found, a Cohort instance with id == cohort_id or name == cohort_name
+            If found, a CohortStore instance with id == cohort_id or name == cohort_name
         
         Raises
             NoResultFound   : cohort did not exist
             Unauthorized    : user_id is not allowed to access this cohort
         """
-        query = db_session.query(Cohort, CohortUser.role)\
-            .join(CohortUser)\
-            .join(User)\
-            .filter(User.id == user_id)\
-            .filter(Cohort.enabled)
+        query = db_session.query(CohortStore, CohortUserStore.role)\
+            .join(CohortUserStore)\
+            .join(UserStore)\
+            .filter(UserStore.id == user_id)\
+            .filter(CohortStore.enabled)
         
         if by_id is not None:
-            query = query.filter(Cohort.id == by_id)
+            query = query.filter(CohortStore.id == by_id)
         if by_name is not None:
-            query = query.filter(Cohort.name == by_name)
+            query = query.filter(CohortStore.name == by_name)
         
         cohort, role = query.one()
         if role in CohortUserRole.SAFE_ROLES:

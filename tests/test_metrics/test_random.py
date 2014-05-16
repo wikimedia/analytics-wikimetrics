@@ -2,7 +2,7 @@ from nose.tools import assert_true
 from tests.fixtures import DatabaseTest, QueueDatabaseTest
 
 from wikimetrics.metrics import RandomMetric
-from wikimetrics.models import Cohort, MetricReport
+from wikimetrics.models import MetricReport
 
 
 class DummyTest(DatabaseTest):

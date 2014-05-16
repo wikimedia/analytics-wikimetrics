@@ -8,7 +8,8 @@ from sqlalchemy.orm.exc import NoResultFound, MultipleResultsFound
 from sqlalchemy.sql.expression import label, between, and_, or_
 from wikimetrics.utils import deduplicate_by_key
 from wikimetrics.models import (
-    MediawikiUser, Cohort, CohortUser, CohortUserRole, WikiUser, CohortWikiUser
+    MediawikiUser, CohortUserRole,
+    CohortStore, CohortUserStore, WikiUserStore, CohortWikiUserStore,
 )
 
 
@@ -59,7 +60,7 @@ class ValidateCohort(object):
         Returns:
             An instance of ValidateCohort
         """
-        cohort = Cohort(
+        cohort = CohortStore(
             name=cohort_upload.name.data,
             description=cohort_upload.description.data,
             default_project=cohort_upload.project.data,
@@ -73,7 +74,7 @@ class ValidateCohort(object):
             session.add(cohort)
             session.commit()
 
-            cohort_user = CohortUser(
+            cohort_user = CohortUserStore(
                 user_id=owner_user_id,
                 cohort_id=cohort.id,
                 role=CohortUserRole.OWNER
@@ -82,7 +83,7 @@ class ValidateCohort(object):
             session.commit()
 
             session.execute(
-                WikiUser.__table__.insert(), [
+                WikiUserStore.__table__.insert(), [
                     {
                         'mediawiki_username': record['username'],
                         'project'           : record['project'],
@@ -103,7 +104,7 @@ class ValidateCohort(object):
     def run(self):
         session = db.get_session()
         try:
-            cohort = session.query(Cohort).get(self.cohort_id)
+            cohort = session.query(CohortStore).get(self.cohort_id)
             cohort.validation_queue_key = current_task.request.id
             session.commit()
             self.validate_records(session, cohort)
@@ -127,17 +128,17 @@ class ValidateCohort(object):
         # reset the cohort validation status so it can't be used for reports
         cohort.validated = False
         session.execute(
-            WikiUser.__table__.update().values(valid=None).where(
-                WikiUser.validating_cohort == cohort.id
+            WikiUserStore.__table__.update().values(valid=None).where(
+                WikiUserStore.validating_cohort == cohort.id
             )
         )
-        session.execute(CohortWikiUser.__table__.delete().where(
-            CohortWikiUser.cohort_id == cohort.id
+        session.execute(CohortWikiUserStore.__table__.delete().where(
+            CohortWikiUserStore.cohort_id == cohort.id
         ))
         session.commit()
 
-        wikiusers = session.query(WikiUser) \
-            .filter(WikiUser.validating_cohort == cohort.id) \
+        wikiusers = session.query(WikiUserStore) \
+            .filter(WikiUserStore.validating_cohort == cohort.id) \
             .all()
 
         deduplicated = deduplicate_by_key(
@@ -183,7 +184,7 @@ class ValidateCohort(object):
         )
 
         session.execute(
-            CohortWikiUser.__table__.insert(), [
+            CohortWikiUserStore.__table__.insert(), [
                 {
                     'cohort_id'     : cohort.id,
                     'wiki_user_id'  : wu.id,
@@ -192,9 +193,9 @@ class ValidateCohort(object):
         )
 
         # clean up any duplicate wiki_user records
-        session.execute(WikiUser.__table__.delete().where(and_(
-            WikiUser.validating_cohort == cohort.id,
-            WikiUser.id.notin_([wu.id for wu in unique_and_validated])
+        session.execute(WikiUserStore.__table__.delete().where(and_(
+            WikiUserStore.validating_cohort == cohort.id,
+            WikiUserStore.id.notin_([wu.id for wu in unique_and_validated])
         )))
         cohort.validated = True
         session.commit()

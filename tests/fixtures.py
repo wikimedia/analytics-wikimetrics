@@ -11,14 +11,14 @@ from wikimetrics.utils import (
 )
 from wikimetrics.configurables import db
 from wikimetrics.models import (
-    User,
-    WikiUser,
+    UserStore,
+    WikiUserStore,
     WikiUserKey,
-    Cohort,
-    CohortWikiUser,
+    CohortStore,
+    CohortWikiUserStore,
     CohortUserRole,
-    CohortUser,
-    PersistentReport,
+    CohortUserStore,
+    ReportStore,
     Revision,
     Page,
     MediawikiUser,
@@ -145,7 +145,7 @@ class DatabaseTest(unittest.TestCase):
         
         self.project = mediawiki_project
         
-        self.cohort = Cohort(
+        self.cohort = CohortStore(
             name='{0}-cohort'.format(name),
             enabled=True,
             public=False,
@@ -175,7 +175,7 @@ class DatabaseTest(unittest.TestCase):
             .order_by(MediawikiUser.user_id)\
             .all()
         self.session.bind.engine.execute(
-            WikiUser.__table__.insert(), [
+            WikiUserStore.__table__.insert(), [
                 {
                     'mediawiki_username'    : editor.user_name,
                     'mediawiki_userid'      : editor.user_id,
@@ -187,11 +187,11 @@ class DatabaseTest(unittest.TestCase):
             ]
         )
         self.session.commit()
-        wiki_users = self.session.query(WikiUser)\
-            .filter(WikiUser.mediawiki_username.like('Editor {0}-%'.format(name)))\
+        wiki_users = self.session.query(WikiUserStore)\
+            .filter(WikiUserStore.mediawiki_username.like('Editor {0}-%'.format(name)))\
             .all()
         self.session.bind.engine.execute(
-            CohortWikiUser.__table__.insert(), [
+            CohortWikiUserStore.__table__.insert(), [
                 {
                     'cohort_id'     : self.cohort.id,
                     'wiki_user_id'  : wiki_user.id,
@@ -233,12 +233,12 @@ class DatabaseTest(unittest.TestCase):
         
         # establish ownership for this cohort
         if not owner_user_id:
-            owner_user = User(username='test cohort owner', email='test@test.com')
+            owner_user = UserStore(username='test cohort owner', email='test@test.com')
             self.session.add(owner_user)
             self.session.commit()
             self.owner_user_id = owner_user.id
         
-        self.session.add(CohortUser(
+        self.session.add(CohortUserStore(
             user_id=self.owner_user_id,
             cohort_id=self.cohort.id,
             role=CohortUserRole.OWNER,
@@ -296,9 +296,9 @@ class DatabaseTest(unittest.TestCase):
     
     @nottest
     def helper_reset_validation(self):
-        wikiusers = self.session.query(WikiUser) \
-            .join(CohortWikiUser) \
-            .filter(CohortWikiUser.cohort_id == self.cohort.id) \
+        wikiusers = self.session.query(WikiUserStore) \
+            .join(CohortWikiUserStore) \
+            .filter(CohortWikiUserStore.cohort_id == self.cohort.id) \
             .all()
         for wu in wikiusers:
             wu.validating_cohort = self.cohort.id
@@ -309,8 +309,8 @@ class DatabaseTest(unittest.TestCase):
     
     @nottest
     def helper_remove_authorization(self):
-        cu = self.session.query(CohortUser) \
-            .filter(CohortUser.cohort_id == self.cohort.id) \
+        cu = self.session.query(CohortUserStore) \
+            .filter(CohortUserStore.cohort_id == self.cohort.id) \
             .one()
         cu.role = 'UNAUTHORIZED'
         self.session.commit()
@@ -428,12 +428,12 @@ class DatabaseTest(unittest.TestCase):
         self.mwSession2.commit()
         self.mwSession2.close()
         
-        self.session.query(CohortWikiUser).delete()
-        self.session.query(CohortUser).delete()
-        self.session.query(WikiUser).delete()
-        self.session.query(Cohort).delete()
-        self.session.query(User).delete()
-        self.session.query(PersistentReport).delete()
+        self.session.query(CohortWikiUserStore).delete()
+        self.session.query(CohortUserStore).delete()
+        self.session.query(WikiUserStore).delete()
+        self.session.query(CohortStore).delete()
+        self.session.query(UserStore).delete()
+        self.session.query(ReportStore).delete()
         self.session.commit()
         self.session.close()
 

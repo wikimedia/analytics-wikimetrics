@@ -11,7 +11,7 @@ from celery.utils.log import get_task_logger
 from flask.ext.login import current_user
 from wikimetrics.configurables import db, queue
 from wikimetrics.utils import stringify
-from ..persistent_report import PersistentReport
+from wikimetrics.models.storage import ReportStore
 
 
 __all__ = [
@@ -88,14 +88,14 @@ class Report(object):
         
         # store report to database
         # note that queue_result_key is always empty at this stage
-        pj = PersistentReport(user_id=self.user_id,
-                              status=self.status,
-                              show_in_ui=self.show_in_ui,
-                              parameters=stringify(parameters),
-                              public=self.public,
-                              recurrent=recurrent,
-                              recurrent_parent_id=recurrent_parent_id,
-                              created=created or datetime.now())
+        pj = ReportStore(user_id=self.user_id,
+                         status=self.status,
+                         show_in_ui=self.show_in_ui,
+                         parameters=stringify(parameters),
+                         public=self.public,
+                         recurrent=recurrent,
+                         recurrent_parent_id=recurrent_parent_id,
+                         created=created or datetime.now())
         session = db.get_session()
         try:
             session.add(pj)
@@ -119,7 +119,7 @@ class Report(object):
         """
         session = db.get_session()
         try:
-            pj = session.query(PersistentReport).get(self.persistent_id)
+            pj = session.query(ReportStore).get(self.persistent_id)
             pj.status = status
             if task_id:
                 pj.queue_result_key = task_id
@@ -210,7 +210,7 @@ class ReportNode(Report):
         self.result_key = str(uuid4())
         db_session = db.get_session()
         try:
-            pj = db_session.query(PersistentReport).get(self.persistent_id)
+            pj = db_session.query(ReportStore).get(self.persistent_id)
             pj.result_key = self.result_key
             db_session.add(pj)
             db_session.commit()

@@ -1,6 +1,6 @@
 from wikimetrics.configurables import db
 from report import ReportLeaf
-from wikimetrics.models.wikiuser import WikiUserKey
+from wikimetrics.models.storage.wikiuser import WikiUserKey
 
 
 __all__ = ['MetricReport']

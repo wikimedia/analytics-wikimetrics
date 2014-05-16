@@ -15,7 +15,7 @@ from sqlalchemy.orm.exc import NoResultFound, MultipleResultsFound
 from flask.ext.login import login_user, logout_user, current_user
 
 from wikimetrics.configurables import app, db, login_manager, google, meta_mw
-from wikimetrics.models import User, UserRole
+from wikimetrics.models import UserStore, UserRole
 from wikimetrics.utils import json_error
 
 
@@ -59,7 +59,7 @@ def load_user(user_id):
     """
     db_session = db.get_session()
     try:
-        user = User.get(db_session, user_id)
+        user = UserStore.get(db_session, user_id)
     finally:
         db_session.close()
     return user
@@ -85,7 +85,7 @@ def logout():
     session['access_token'] = None
     db_session = db.get_session()
     try:
-        if type(current_user) is User:
+        if type(current_user) is UserStore:
             current_user.logout(db_session)
     finally:
         db_session.close()
@@ -177,10 +177,10 @@ def auth_meta_mw(resp):
         db_session = db.get_session()
         user = None
         try:
-            user = db_session.query(User).filter_by(meta_mw_id=userid).one()
+            user = db_session.query(UserStore).filter_by(meta_mw_id=userid).one()
         
         except NoResultFound:
-            user = User(
+            user = UserStore(
                 username=username,
                 meta_mw_id=userid,
                 role=UserRole.GUEST,
@@ -255,10 +255,10 @@ def auth_google(resp):
             db_session = db.get_session()
             user = None
             try:
-                user = db_session.query(User).filter_by(google_id=id).one()
+                user = db_session.query(UserStore).filter_by(google_id=id).one()
             
             except NoResultFound:
-                user = User(
+                user = UserStore(
                     email=email,
                     google_id=id,
                     role=UserRole.GUEST,
@@ -297,7 +297,7 @@ if app.config['DEBUG']:
         if app.config['DEBUG']:
             db_session = db.get_session()
             try:
-                user = db_session.query(User).filter_by(email='test@test.com').one()
+                user = db_session.query(UserStore).filter_by(email='test@test.com').one()
                 user.login(db_session)
                 login_user(user)
             finally:

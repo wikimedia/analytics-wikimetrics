@@ -2,7 +2,6 @@ from datetime import datetime
 from nose.tools import assert_true, assert_equal, nottest
 from tests.fixtures import QueueDatabaseTest, DatabaseTest
 from wikimetrics.metrics import RevertRate, TimeseriesChoices
-from wikimetrics.models import Cohort, MetricReport
 
 
 class RevertRateTest(DatabaseTest):

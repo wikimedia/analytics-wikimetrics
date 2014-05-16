@@ -9,10 +9,8 @@ from wikimetrics.configurables import db, app
 from wikimetrics.exceptions import UnauthorizedReportAccessError, PublicReportIOError
 from wikimetrics.api import PublicReportFileManager
 
-__all__ = ['PersistentReport']
 
-
-class PersistentReport(db.WikimetricsBase):
+class ReportStore(db.WikimetricsBase):
     """
     Stores each report node that runs in a report node tree to the database.
     Stores the necessary information to fetch the results from Celery as
@@ -62,7 +60,7 @@ class PersistentReport(db.WikimetricsBase):
         have an admin check (that kind of check should be cached)
 
         Parameters:
-            report_ids  : list of ids of PersistentReport objects to update
+            report_ids  : list of ids of ReportStore objects to update
             owner_id    : the person purporting to own these reports
             public      : update all reports' public attribute to this, default is None
             recurrent   : update all reports' recurrent attribute to this, default is None
@@ -79,11 +77,11 @@ class PersistentReport(db.WikimetricsBase):
             if recurrent is not None:
                 values['recurrent'] = recurrent
             update = db_session.execute(
-                PersistentReport.__table__.update()
+                ReportStore.__table__.update()
                 .values(**values)
                 .where(and_(
-                    PersistentReport.id.in_(report_ids),
-                    PersistentReport.user_id == owner_id
+                    ReportStore.id.in_(report_ids),
+                    ReportStore.user_id == owner_id
                 ))
             )
             db_session.commit()
@@ -101,24 +99,24 @@ class PersistentReport(db.WikimetricsBase):
     def make_report_public(report_id, owner_id, file_manager, data):
         """
         Parameters:
-            report_id   : id of PersistentReport to update
+            report_id   : id of ReportStore to update
             owner_id    : the User purporting to own this report
             file_manager: PublicReportFileManager for file management
             data        : String, report data to write out to filepath
         """
-        PersistentReport.set_public_report_state(report_id, owner_id, file_manager,
-                                                 public=True, data=data)
+        ReportStore.set_public_report_state(report_id, owner_id, file_manager,
+                                            public=True, data=data)
 
     @staticmethod
     def make_report_private(report_id, owner_id, file_manager):
         """
         Parameters:
-            report_id   : id of PersistentReport to update
+            report_id   : id of ReportStore to update
             owner_id    : the User purporting to own this report
             file_manager: PublicReportFileManager for file management
         """
-        PersistentReport.set_public_report_state(report_id, owner_id, file_manager,
-                                                 public=False)
+        ReportStore.set_public_report_state(report_id, owner_id, file_manager,
+                                            public=False)
 
     @staticmethod
     def set_public_report_state(report_id, owner_id, file_manager, public=True, data=''):
@@ -143,7 +141,7 @@ class PersistentReport(db.WikimetricsBase):
             using flask request scoped functions
 
         Parameters:
-            report_id   : id of PersistentReport to update
+            report_id   : id of ReportStore to update
             owner_id    : the User purporting to own this report
             public      : True | False if True data must be present
             data        : String, report data to write out to filepath
@@ -158,7 +156,7 @@ class PersistentReport(db.WikimetricsBase):
         A private report is has public=False
         """
         # NOTE: update_reports checks ownership and raises an exception if needed
-        PersistentReport.update_reports([report_id], owner_id, public=public)
+        ReportStore.update_reports([report_id], owner_id, public=public)
 
         # good no exception
         try:
@@ -175,7 +173,7 @@ class PersistentReport(db.WikimetricsBase):
             # if there was an IO error rollback prior changes
             # this issues a new query as now our session scope and
             # transaction scope are now the same
-            PersistentReport.update_reports([report_id], owner_id, public=not public)
+            ReportStore.update_reports([report_id], owner_id, public=not public)
             raise e
 
         finally:
@@ -215,4 +213,4 @@ class PersistentReport(db.WikimetricsBase):
         return pretty
 
     def __repr__(self):
-        return '<PersistentReport("{0}")>'.format(self.id)
+        return '<ReportStore("{0}")>'.format(self.id)

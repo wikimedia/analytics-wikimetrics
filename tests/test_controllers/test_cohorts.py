@@ -5,8 +5,8 @@ from nose.tools import assert_equal, assert_not_equal, assert_true, assert_false
 from wikimetrics.configurables import app
 from tests.fixtures import WebTest
 from wikimetrics.models import (
-    Cohort, CohortUser, CohortUserRole, ValidateCohort,
-    CohortWikiUser, WikiUser, User
+    CohortStore, CohortUserStore, CohortWikiUserStore, WikiUserStore, UserStore,
+    CohortUserRole, ValidateCohort,
 )
 
 
@@ -24,13 +24,13 @@ class CohortsControllerTest(WebTest):
     def test_list_includes_only_validated(self):
         # There is already one cohort, add one more validated and one not validated
         cohorts = [
-            Cohort(name='c1', enabled=True, validated=False),
-            Cohort(name='c2', enabled=True, validated=True)
+            CohortStore(name='c1', enabled=True, validated=False),
+            CohortStore(name='c2', enabled=True, validated=True)
         ]
         self.session.add_all(cohorts)
         self.session.commit()
         owners = [
-            CohortUser(
+            CohortUserStore(
                 cohort_id=c.id,
                 user_id=self.owner_user_id,
                 role=CohortUserRole.OWNER
@@ -146,28 +146,28 @@ class CohortsControllerTest(WebTest):
         self.session.commit()
 
         # Check that all relevant rows are deleted
-        cwu = self.session.query(CohortWikiUser) \
-            .filter(CohortWikiUser.cohort_id == cohort_id) \
+        cwu = self.session.query(CohortWikiUserStore) \
+            .filter(CohortWikiUserStore.cohort_id == cohort_id) \
             .first()
         assert_equal(cwu, None)
-        cu = self.session.query(CohortUser) \
-            .filter(CohortUser.cohort_id == cohort_id) \
-            .filter(CohortUser.user_id == self.owner_user_id) \
+        cu = self.session.query(CohortUserStore) \
+            .filter(CohortUserStore.cohort_id == cohort_id) \
+            .filter(CohortUserStore.user_id == self.owner_user_id) \
             .first()
         assert_equal(cu, None)
-        wu = self.session.query(WikiUser) \
-            .filter(WikiUser.validating_cohort == cohort_id) \
+        wu = self.session.query(WikiUserStore) \
+            .filter(WikiUserStore.validating_cohort == cohort_id) \
             .first()
         assert_equal(wu, None)
-        c = self.session.query(Cohort).get(cohort_id)
+        c = self.session.query(CohortStore).get(cohort_id)
         assert_equal(c, None)
 
     def test_delete_cohort_owner_has_viewer(self):
-        viewer_user = User()
+        viewer_user = UserStore()
         self.session.add(viewer_user)
         self.session.commit()
 
-        viewer_cohort_user = CohortUser(
+        viewer_cohort_user = CohortUserStore(
             user_id=viewer_user.id,
             cohort_id=self.cohort.id,
             role=CohortUserRole.VIEWER
@@ -183,31 +183,31 @@ class CohortsControllerTest(WebTest):
         self.session.commit()
 
         # Check that all relevant rows are deleted
-        cwu = self.session.query(CohortWikiUser) \
-            .filter(CohortWikiUser.cohort_id == cohort_id) \
+        cwu = self.session.query(CohortWikiUserStore) \
+            .filter(CohortWikiUserStore.cohort_id == cohort_id) \
             .first()
         assert_equal(cwu, None)
-        cu = self.session.query(CohortUser) \
-            .filter(CohortUser.cohort_id == cohort_id) \
+        cu = self.session.query(CohortUserStore) \
+            .filter(CohortUserStore.cohort_id == cohort_id) \
             .first()
         assert_equal(cu, None)
-        wu = self.session.query(WikiUser) \
-            .filter(WikiUser.validating_cohort == cohort_id) \
+        wu = self.session.query(WikiUserStore) \
+            .filter(WikiUserStore.validating_cohort == cohort_id) \
             .first()
         assert_equal(wu, None)
-        c = self.session.query(Cohort).get(cohort_id)
+        c = self.session.query(CohortStore).get(cohort_id)
         assert_equal(c, None)
 
     def test_delete_cohort_as_viewer(self):
         # Changing the owner_user_id to a VIEWER
-        self.session.query(CohortUser) \
-            .filter(CohortUser.user_id == self.owner_user_id) \
-            .filter(CohortUser.cohort_id == self.cohort.id) \
+        self.session.query(CohortUserStore) \
+            .filter(CohortUserStore.user_id == self.owner_user_id) \
+            .filter(CohortUserStore.cohort_id == self.cohort.id) \
             .update({'role': CohortUserRole.VIEWER})
         self.session.commit()
 
         # Adding a different CohortUser as owner
-        new_cohort_user = CohortUser(
+        new_cohort_user = CohortUserStore(
             cohort_id=self.cohort.id,
             role=CohortUserRole.OWNER
         )
@@ -223,24 +223,24 @@ class CohortsControllerTest(WebTest):
         self.session.commit()
 
         # Check that all relevant rows are deleted
-        cwu = self.session.query(CohortWikiUser) \
-            .filter(CohortWikiUser.cohort_id == cohort_id) \
+        cwu = self.session.query(CohortWikiUserStore) \
+            .filter(CohortWikiUserStore.cohort_id == cohort_id) \
             .first()
         assert_not_equal(cwu, None)
-        cu = self.session.query(CohortUser) \
-            .filter(CohortUser.cohort_id == cohort_id) \
-            .filter(CohortWikiUser.id == self.owner_user_id) \
+        cu = self.session.query(CohortUserStore) \
+            .filter(CohortUserStore.cohort_id == cohort_id) \
+            .filter(CohortWikiUserStore.id == self.owner_user_id) \
             .first()
         assert_equal(cu, None)
-        wu = self.session.query(WikiUser) \
-            .filter(WikiUser.validating_cohort == cohort_id) \
+        wu = self.session.query(WikiUserStore) \
+            .filter(WikiUserStore.validating_cohort == cohort_id) \
             .first()
         assert_not_equal(wu, None)
-        c = self.session.query(Cohort).get(cohort_id)
+        c = self.session.query(CohortStore).get(cohort_id)
         assert_not_equal(c, None)
 
     def test_delete_unauthorized_cohort(self):
-        self.session.query(CohortUser).delete()
+        self.session.query(CohortUserStore).delete()
         self.session.commit()
         response = self.app.post('/cohorts/delete/{0}'.format(self.cohort.id))
 
@@ -252,8 +252,8 @@ class CohortsControllerTest(WebTest):
         response = json.loads(response.data)
         assert_equal(len(response['cohorts']), 1)
 
-        self.session.query(CohortWikiUser).delete()
-        self.session.query(WikiUser).delete()
+        self.session.query(CohortWikiUserStore).delete()
+        self.session.query(WikiUserStore).delete()
         self.session.commit()
         cohort_id = self.cohort.id
         response = self.app.post('/cohorts/delete/{0}'.format(self.cohort.id))
@@ -262,7 +262,7 @@ class CohortsControllerTest(WebTest):
         assert_true(response.data.find('/cohorts') >= 0)
         self.session.commit()
 
-        c = self.session.query(Cohort).get(cohort_id)
+        c = self.session.query(CohortStore).get(cohort_id)
         assert_equal(c, None)
 
         response = self.app.get('/cohorts/list/')
@@ -324,7 +324,7 @@ class CohortsControllerUploadTest(WebTest):
         assert_true(response.data.find('Server error while processing your upload') >= 0)
     
     def test_invalid_wiki_user_view(self):
-        invalid = self.session.query(WikiUser).first()
+        invalid = self.session.query(WikiUserStore).first()
         invalid.valid = False
         invalid.reason_invalid = 'check for this in an assert'
         self.session.commit()

@@ -4,7 +4,7 @@ from tests.fixtures import QueueDatabaseTest, DatabaseTest, mediawiki_project
 
 from wikimetrics.configurables import db
 from wikimetrics.metrics import NamespaceEdits, TimeseriesChoices
-from wikimetrics.models import Cohort, MetricReport
+from wikimetrics.models import MetricReport
 
 
 class NamespaceEditsDatabaseTest(DatabaseTest):

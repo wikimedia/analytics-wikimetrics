@@ -8,12 +8,12 @@ task_logger = get_task_logger(__name__)
 @queue.task()
 def recurring_reports():
     from wikimetrics.configurables import db
-    from wikimetrics.models import PersistentReport, RunReport
+    from wikimetrics.models import ReportStore, RunReport
     
     try:
         session = db.get_session()
-        recurrent_reports = session.query(PersistentReport) \
-            .filter(PersistentReport.recurrent) \
+        recurrent_reports = session.query(ReportStore) \
+            .filter(ReportStore.recurrent) \
             .all()
         
         for report in recurrent_reports:

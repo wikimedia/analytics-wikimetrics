@@ -1,7 +1,7 @@
 from nose.tools import assert_equals, assert_true
 from wikimetrics.metrics import metric_classes
 from wikimetrics.models import (
-    MultiProjectMetricReport, PersistentReport, Cohort,
+    MultiProjectMetricReport,
 )
 from ..fixtures import QueueDatabaseTest, DatabaseTest
 

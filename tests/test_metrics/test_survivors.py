@@ -4,10 +4,6 @@ from nose.tools import assert_equal
 
 from tests.fixtures import DatabaseTest, i
 from wikimetrics.metrics import Survival
-from wikimetrics.models import (
-    Cohort, MetricReport, WikiUser, CohortWikiUser, MediawikiUser,
-    Revision,
-)
 
 
 class SurvivalTest(DatabaseTest):

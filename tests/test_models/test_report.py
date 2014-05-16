@@ -2,7 +2,7 @@
 from nose.tools import assert_equals, assert_true
 from wikimetrics.metrics import metric_classes
 from wikimetrics.models import (
-    Report, ReportNode, ReportLeaf, PersistentReport, MetricReport,
+    Report, ReportNode, ReportLeaf, MetricReport, ReportStore,
 )
 from wikimetrics.models import queue_task
 from ..fixtures import QueueDatabaseTest, DatabaseTest
@@ -63,7 +63,7 @@ class QueueTaskTest(QueueDatabaseTest):
         fr = FakeReport()
         fr.set_status('STARTED')
         self.session.commit()
-        pr_started = self.session.query(PersistentReport).get(fr.persistent_id)
+        pr_started = self.session.query(ReportStore).get(fr.persistent_id)
         assert_equals(pr_started.status, 'STARTED')
         assert_equals(pr_started.queue_result_key, None)
     
@@ -71,7 +71,7 @@ class QueueTaskTest(QueueDatabaseTest):
         fr = FakeReport()
         fr.set_status('WORKING', task_id=1)
         self.session.commit()
-        pr_working = self.session.query(PersistentReport).get(fr.persistent_id)
+        pr_working = self.session.query(ReportStore).get(fr.persistent_id)
         assert_equals(pr_working.status, 'WORKING')
         assert_equals(pr_working.queue_result_key, '1')
 
