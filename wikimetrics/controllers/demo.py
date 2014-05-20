@@ -16,7 +16,7 @@ if app.config['DEBUG']:
                 MediawikiUser.__table__.insert(),
                 [
                     {
-                        'user_name'         : 'user-{0}'.format(r),
+                        'user_name'         : 'User-{0}'.format(r),
                         'user_id'           : r,
                         'user_registration' : '20130101000000'
                     }
