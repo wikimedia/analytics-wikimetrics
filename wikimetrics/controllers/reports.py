@@ -21,7 +21,7 @@ from wikimetrics.api import PublicReportFileManager
 @app.before_request
 def setup_filemanager():
     if request.endpoint is not None:
-        if 'report' in request.endpoint:
+        if 'reports' in request.endpoint:
             file_manager = getattr(g, 'file_manager', None)
             if file_manager is None:
                 g.file_manager = PublicReportFileManager(
