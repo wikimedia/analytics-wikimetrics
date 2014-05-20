@@ -2,21 +2,19 @@ import json
 from flask import url_for, flash, render_template, redirect, request
 from flask.ext.login import current_user
 from sqlalchemy import func
-
-
 from sqlalchemy.orm.exc import NoResultFound, MultipleResultsFound
 from sqlalchemy.sql.expression import or_
-from ..utils import (
+
+from wikimetrics.utils import (
     json_response, json_error, json_redirect, deduplicate_by_key
 )
-from wikimetrics.exceptions import Unauthorized
+from wikimetrics.exceptions import Unauthorized, DatabaseError
 from wikimetrics.configurables import app, db
 from wikimetrics.controllers.forms import CohortUpload
 from wikimetrics.models import (
     CohortStore, CohortUserStore, UserStore, WikiUserStore, CohortWikiUserStore,
     CohortUserRole, MediawikiUser, ValidateCohort,
 )
-from ..exceptions import DatabaseError
 
 
 @app.route('/cohorts/')
