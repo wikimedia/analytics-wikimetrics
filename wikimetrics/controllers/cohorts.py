@@ -1,5 +1,5 @@
 import json
-from flask import url_for, flash, render_template, redirect, request
+from flask import url_for, flash, render_template, redirect, request, g
 from flask.ext.login import current_user
 from sqlalchemy import func
 from sqlalchemy.orm.exc import NoResultFound, MultipleResultsFound
@@ -15,6 +15,16 @@ from wikimetrics.models import (
     CohortStore, CohortUserStore, UserStore, WikiUserStore, CohortWikiUserStore,
     CohortUserRole, MediawikiUser, ValidateCohort,
 )
+from wikimetrics.api import CohortService
+
+
+@app.before_request
+def setup_filemanager():
+    if request.endpoint is not None:
+        if 'cohorts' in request.endpoint:
+            cohort_service = getattr(g, 'file_manager', None)
+            if cohort_service is None:
+                g.cohort_service = CohortService()
 
 
 @app.route('/cohorts/')
@@ -57,7 +67,7 @@ def cohorts_list():
 def cohort_invalid_detail(cohort_id):
     session = db.get_session()
     try:
-        cohort = CohortStore.get_safely(session, current_user.id, by_id=cohort_id)
+        cohort = g.cohort_service.get(session, current_user.id, by_id=cohort_id)
         wikiusers = session\
             .query(WikiUserStore.mediawiki_username, WikiUserStore.reason_invalid)\
             .filter(WikiUserStore.validating_cohort == cohort.id) \
@@ -87,11 +97,11 @@ def cohort_detail(name_or_id):
     db_session = db.get_session()
     try:
         if str(name_or_id).isdigit():
-            cohort = CohortStore.get_safely(
+            cohort = g.cohort_service.get(
                 db_session, current_user.id, by_id=int(name_or_id)
             )
         else:
-            cohort = CohortStore.get_safely(
+            cohort = g.cohort_service.get(
                 db_session, current_user.id, by_name=name_or_id
             )
     except Unauthorized:
@@ -226,7 +236,7 @@ def validate_cohort(cohort_id):
     name = None
     session = db.get_session()
     try:
-        cohort = CohortStore.get_safely(session, current_user.id, by_id=cohort_id)
+        cohort = g.cohort_service.get(session, current_user.id, by_id=cohort_id)
         name = cohort.name
         # TODO we need some kind of global config that is not db specific
         vc = ValidateCohort(cohort)

@@ -16,7 +16,7 @@ from report import ReportNode
 from aggregate_report import AggregateReport
 from validate_report import ValidateReport
 from metric_report import MetricReport
-from wikimetrics.api.batch import write_report_task
+from wikimetrics.api import write_report_task, CohortService
 from wikimetrics.utils import BetterEncoder
 
 
@@ -52,10 +52,11 @@ class RunReport(ReportNode):
             KeyError if required parameters are missing
         """
         # get cohort
+        cohort_service = CohortService()
         cohort_dict = parameters['cohort']
         session = db.get_session()
         try:
-            cohort = CohortStore.get_safely(session, user_id, by_id=cohort_dict['id'])
+            cohort = cohort_service.get(session, user_id, by_id=cohort_dict['id'])
         finally:
             session.close()
         

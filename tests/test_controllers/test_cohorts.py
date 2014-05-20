@@ -1,7 +1,11 @@
 import json
 import time
+from contextlib import contextmanager
+from flask import appcontext_pushed, g
 from StringIO import StringIO
 from nose.tools import assert_equal, assert_not_equal, assert_true, assert_false
+
+from wikimetrics.api import CohortService
 from wikimetrics.configurables import app
 from tests.fixtures import WebTest
 from wikimetrics.models import (
@@ -10,7 +14,18 @@ from wikimetrics.models import (
 )
 
 
+@contextmanager
+def cohort_service_set(app, cohort_service):
+    def handler(sender, **kwargs):
+        g.cohort_service = cohort_service
+    with appcontext_pushed.connected_to(handler, app):
+        yield
+
+
 class CohortsControllerTest(WebTest):
+    def setUp(self):
+        WebTest.setUp(self)
+        self.cohort_service = CohortService()
     
     def test_index(self):
         response = self.app.get('/cohorts/', follow_redirects=True)
@@ -47,13 +62,15 @@ class CohortsControllerTest(WebTest):
         assert_true('c2' in [c['name'] for c in parsed['cohorts']])
     
     def test_detail(self):
-        response = self.app.get('/cohorts/detail/{0}'.format(self.cohort.id))
+        with cohort_service_set(app, self.cohort_service):
+            response = self.app.get('/cohorts/detail/{0}'.format(self.cohort.id))
         parsed = json.loads(response.data)
         assert_equal(response.status_code, 200)
         assert_equal(len(parsed['wikiusers']), 3)
     
     def test_detail_by_name(self):
-        response = self.app.get('/cohorts/detail/{0}'.format(self.cohort.name))
+        with cohort_service_set(app, self.cohort_service):
+            response = self.app.get('/cohorts/detail/{0}'.format(self.cohort.name))
         parsed = json.loads(response.data)
         assert_equal(response.status_code, 200)
         assert_equal(len(parsed['wikiusers']), 3)
@@ -69,28 +86,32 @@ class CohortsControllerTest(WebTest):
         self.cohort.validation_queue_key = async_result.task_id
         async_result.get()
         
-        response = self.app.get('/cohorts/detail/{0}'.format(self.cohort.name))
+        with cohort_service_set(app, self.cohort_service):
+            response = self.app.get('/cohorts/detail/{0}'.format(self.cohort.name))
         parsed = json.loads(response.data)
         assert_equal(parsed['validation_status'], 'SUCCESS')
         assert_equal(parsed['validated_count'], 4)
         assert_equal(parsed['total_count'], 4)
     
     def test_full_detail(self):
-        response = self.app.get('/cohorts/detail/{0}?full_detail=true'.format(
-            self.cohort.id
-        ))
+        with cohort_service_set(app, self.cohort_service):
+            response = self.app.get('/cohorts/detail/{0}?full_detail=true'.format(
+                self.cohort.id
+            ))
         parsed = json.loads(response.data)
         assert_equal(response.status_code, 200)
         assert_equal(len(parsed['wikiusers']), 4)
     
     def test_detail_not_allowed(self):
         self.helper_remove_authorization()
-        response = self.app.get('/cohorts/detail/{0}'.format(self.cohort.id))
+        with cohort_service_set(app, self.cohort_service):
+            response = self.app.get('/cohorts/detail/{0}'.format(self.cohort.id))
         assert_equal(response.status_code, 401)
         assert_equal(response.data, 'You are not allowed to access this Cohort')
     
     def test_detail_not_found(self):
-        response = self.app.get('/cohorts/detail/{0}'.format(-999))
+        with cohort_service_set(app, self.cohort_service):
+            response = self.app.get('/cohorts/detail/{0}'.format(-999))
         assert_equal(response.status_code, 404)
         assert_equal(response.data, 'Could not find this Cohort')
     
@@ -115,21 +136,24 @@ class CohortsControllerTest(WebTest):
         assert_equal(json.loads(response.data), True)
     
     def test_validate_nonexistent_cohort(self):
-        response = self.app.post('/cohorts/validate/0')
+        with cohort_service_set(app, self.cohort_service):
+            response = self.app.post('/cohorts/validate/0')
         
         assert_true(response.data.find('isError') >= 0)
         assert_true(response.data.find('This cohort does not exist') >= 0)
     
     def test_validate_unauthorized_cohort(self):
         self.helper_remove_authorization()
-        response = self.app.post('/cohorts/validate/{0}'.format(self.cohort.id))
+        with cohort_service_set(app, self.cohort_service):
+            response = self.app.post('/cohorts/validate/{0}'.format(self.cohort.id))
         
         assert_true(response.data.find('isError') >= 0)
         assert_true(response.data.find('You are not allowed to access this cohort') >= 0)
     
     def test_validate_cohort_again_after_upload(self):
         self.helper_reset_validation()
-        response = self.app.post('/cohorts/validate/{0}'.format(self.cohort.id))
+        with cohort_service_set(app, self.cohort_service):
+            response = self.app.post('/cohorts/validate/{0}'.format(self.cohort.id))
         
         assert_true(response.data.find('message') >= 0)
         assert_true(
@@ -271,6 +295,9 @@ class CohortsControllerTest(WebTest):
 
 
 class CohortsControllerUploadTest(WebTest):
+    def setUp(self):
+        WebTest.setUp(self)
+        self.cohort_service = CohortService()
     
     def test_get_upload_form(self):
         response = self.app.get('/cohorts/upload')
@@ -328,9 +355,10 @@ class CohortsControllerUploadTest(WebTest):
         invalid.valid = False
         invalid.reason_invalid = 'check for this in an assert'
         self.session.commit()
-        response = self.app.get('/cohorts/detail/invalid-users/{0}'.format(
-            self.cohort.id
-        ))
+        with cohort_service_set(app, self.cohort_service):
+            response = self.app.get('/cohorts/detail/invalid-users/{0}'.format(
+                self.cohort.id
+            ))
         assert_equal(response.status_code, 200)
         assert_true(response.data.find(invalid.mediawiki_username) >= 0)
         assert_true(response.data.find(invalid.reason_invalid) >= 0)
