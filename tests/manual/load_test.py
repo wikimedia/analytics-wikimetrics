@@ -30,11 +30,11 @@ class ManualLoad(DatabaseTest):
     
     def test_edits_runs(self):
         one_day = timedelta(days=1)
-        m = NamespaceEdits(
+        metric = NamespaceEdits(
             start_date=self.revisions[0].rev_timestamp - one_day,
             end_date=self.revisions[-1].rev_timestamp + one_day,
         )
-        results = m(list(self.cohort), self.mwSession)
+        results = metric(self.editor_ids, self.mwSession)
         print('{0} results for {1} editors'.format(len(results), len(self.editors)))
         assert_true(len(results) == len(self.editors))
         assert_equal(results[self.editors[0].user_id]['edits'], self.revision_count)

@@ -93,6 +93,15 @@ class CohortsControllerTest(WebTest):
         assert_equal(parsed['validated_count'], 4)
         assert_equal(parsed['total_count'], 4)
     
+    def test_detail_allowed_if_invalid(self):
+        self.helper_reset_validation()
+        with cohort_service_set(app, self.cohort_service):
+            response = self.app.get('/cohorts/detail/{0}'.format(self.cohort.name))
+        parsed = json.loads(response.data)
+        assert_equal(parsed['validation_status'], 'UNKNOWN')
+        assert_equal(parsed['validated_count'], 0)
+        assert_equal(parsed['total_count'], 0)
+    
     def test_full_detail(self):
         with cohort_service_set(app, self.cohort_service):
             response = self.app.get('/cohorts/detail/{0}?full_detail=true'.format(

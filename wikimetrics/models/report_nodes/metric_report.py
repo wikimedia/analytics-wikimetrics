@@ -14,6 +14,13 @@ class MetricReport(ReportLeaf):
     """
     
     def __init__(self, metric, cohort_id, user_ids, project, *args, **kwargs):
+        """
+        Parameters:
+            metric  : an instance of a Metric class
+            cohort  : a logical cohort object
+            args    : should include any parameters needed by ReportNode
+            kwargs  : should include any parameters needed by ReportNode
+        """
         super(MetricReport, self).__init__(*args, **kwargs)
         self.metric = metric
         self.user_ids = list(user_ids)

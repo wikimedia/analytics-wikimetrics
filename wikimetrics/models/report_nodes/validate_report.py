@@ -25,12 +25,11 @@ class ValidateReport(ReportLeaf):
         if validate_csrf is False:
             metric.disable_csrf()
         self.metric_valid = metric.validate()
-        self.cohort_valid = cohort.validated
         self.metric_label = metric.label
         self.cohort_name = cohort.name
     
     def valid(self):
-        return self.metric_valid and self.cohort_valid
+        return self.metric_valid
     
     def run(self):
         """
@@ -53,11 +52,6 @@ class ValidateReport(ReportLeaf):
             session.close()
         
         message = ''
-        if not self.cohort_valid:
-            message += '{0} ran with invalid cohort {1}\n'.format(
-                self.metric_label,
-                self.cohort_name,
-            )
         if not self.metric_valid:
             message += '{0} was incorrectly configured\n'.format(
                 self.metric_label,

@@ -60,11 +60,11 @@ class NamespaceEdits(TimeseriesMetric):
             .query(Revision.rev_user, func.count(Revision.rev_id))\
             .join(Page)\
             .filter(Page.page_namespace.in_(self.namespaces.data))\
-            .filter(Revision.rev_user.in_(user_ids))\
             .filter(Revision.rev_timestamp > start_date)\
             .filter(Revision.rev_timestamp <= end_date)\
             .group_by(Revision.rev_user)
         
+        query = self.filter(query, user_ids)
         query = self.apply_timeseries(query)
         return self.results_by_user(
             user_ids,

@@ -9,6 +9,7 @@ from tests.fixtures import QueueDatabaseTest, DatabaseTest
 from wikimetrics.models import (
     RunReport, Aggregation, ReportStore,
 )
+from wikimetrics.exceptions import InvalidCohort
 from wikimetrics.metrics import TimeseriesChoices, metric_classes
 from wikimetrics.utils import diff_datewise, stringify, strip_time
 from wikimetrics.configurables import queue
@@ -195,7 +196,7 @@ class RunReportTest(QueueDatabaseTest):
             2,
         )
     
-    def test_does_not_run_invalid_cohort_for_any_metric(self):
+    def test_raises_invalid_cohort_for_any_metric(self):
         self.cohort.validated = False
         self.session.commit()
         
@@ -221,16 +222,11 @@ class RunReportTest(QueueDatabaseTest):
                     'aggregateStandardDeviation': False,
                 },
             }
-            jr = RunReport(parameters, user_id=self.owner_user_id)
-            results = jr.task.delay(jr).get()
-            self.session.commit()
-            result_key = self.session.query(ReportStore) \
-                .get(jr.persistent_id) \
-                .result_key
-            assert_true(
-                results[result_key]['FAILURE'].find('ran with invalid cohort') >= 0,
-                '{0} ran with invalid cohort'.format(name)
-            )
+            try:
+                RunReport(parameters, user_id=self.owner_user_id)
+            except InvalidCohort:
+                continue
+            assert_true(False)
     
     def test_aggregated_response_namespace_edits(self):
         parameters = {

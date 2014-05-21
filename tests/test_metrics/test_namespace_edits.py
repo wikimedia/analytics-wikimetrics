@@ -12,13 +12,39 @@ class NamespaceEditsDatabaseTest(DatabaseTest):
         DatabaseTest.setUp(self)
         self.common_cohort_1()
     
+    def test_filters_out_other_editors(self):
+        self.common_cohort_1(cohort=False)
+        metric = NamespaceEdits(
+            namespaces=[0],
+            start_date='2012-12-31 22:59:59',
+            end_date='2013-01-01 12:00:00',
+        )
+        results = metric(self.editor_ids, self.mwSession)
+
+        assert_equal(len(results), 4)
+
+    def test_runs_for_an_entire_wiki(self):
+        self.common_cohort_1(cohort=False)
+        metric = NamespaceEdits(
+            namespaces=[0],
+            start_date='2012-12-31 22:59:59',
+            end_date='2013-01-01 12:00:00',
+        )
+        results = metric(None, self.mwSession)
+
+        assert_equal(len(results), 8)
+        assert_equal(results[self.editors[0].user_id]['edits'], 3)
+        assert_equal(results[self.editors[1].user_id]['edits'], 1)
+        # NOTE: this is a bit precarious as it assumes the order of test data inserts
+        assert_equal(results[self.editors[0].user_id + 4]['edits'], 3)
+
     def test_finds_edits(self):
         metric = NamespaceEdits(
             namespaces=[0],
             start_date='2012-12-31 22:59:59',
             end_date='2013-01-01 12:00:00',
         )
-        results = metric(list(self.cohort), self.mwSession)
+        results = metric(self.editor_ids, self.mwSession)
         
         assert_true(results is not None)
         assert_equal(results[self.editors[0].user_id]['edits'], 3)
@@ -30,7 +56,7 @@ class NamespaceEditsDatabaseTest(DatabaseTest):
             start_date='2011-01-01 00:00:00',
             end_date='2011-02-01 00:00:00',
         )
-        results = metric(list(self.cohort), self.mwSession)
+        results = metric(self.editor_ids, self.mwSession)
         
         assert_true(results is not None)
         assert_equal(results[self.editors[0].user_id]['edits'], 0)
@@ -68,7 +94,7 @@ class NamespaceEditsFullTest(QueueDatabaseTest):
         )
         report = MetricReport(
             metric, self.cohort.id,
-            list(self.cohort), mediawiki_project
+            self.editor_ids, mediawiki_project
         )
         results = report.task.delay(report).get()
         
@@ -83,7 +109,7 @@ class NamespaceEditsFullTest(QueueDatabaseTest):
         )
         report = MetricReport(
             metric, self.cohort.id,
-            list(self.cohort), mediawiki_project
+            self.editor_ids, mediawiki_project
         )
         results = report.task.delay(report).get()
         
@@ -98,7 +124,7 @@ class NamespaceEditsFullTest(QueueDatabaseTest):
         )
         report = MetricReport(
             metric, self.cohort.id,
-            list(self.cohort), mediawiki_project
+            self.editor_ids, mediawiki_project
         )
         results = report.task.delay(report).get()
         
@@ -113,14 +139,14 @@ class NamespaceEditsFullTest(QueueDatabaseTest):
         )
         report = MetricReport(
             metric, self.cohort.id,
-            list(self.cohort), mediawiki_project
+            self.editor_ids, mediawiki_project
         )
         results = report.task.delay(report).get()
         
         assert_true(results is not None)
         assert_equal(results[self.editor(0)]['edits'], 3)
     
-    def test_namespace_edits_with_multiple_namespaces_when_passing_string_list(self):
+    def test_namespace_edits_with_multiple_namespaces_when_passing_csv_string(self):
         metric = NamespaceEdits(
             namespaces='0, 209',
             start_date='2012-12-31 22:59:59',
@@ -128,7 +154,7 @@ class NamespaceEditsFullTest(QueueDatabaseTest):
         )
         report = MetricReport(
             metric, self.cohort.id,
-            list(self.cohort), mediawiki_project
+            self.editor_ids, mediawiki_project
         )
         results = report.task.delay(report).get()
         
@@ -159,7 +185,7 @@ class NamespaceEditsTimestampTest(DatabaseTest):
             start_date='2013-01-01 00:00:00',
             end_date='2013-01-01 01:00:00',
         )
-        results = metric(list(self.cohort), self.mwSession)
+        results = metric(self.editor_ids, self.mwSession)
         assert_equal(results[self.editors[0].user_id]['edits'], 1)
         
     def test_timestamp_range_minutes(self):
@@ -168,7 +194,7 @@ class NamespaceEditsTimestampTest(DatabaseTest):
             start_date='2013-01-01 00:00:00',
             end_date='2013-01-01 01:01:00',
         )
-        results = metric(list(self.cohort), self.mwSession)
+        results = metric(self.editor_ids, self.mwSession)
         assert_equal(results[self.editors[0].user_id]['edits'], 2)
         
     def test_timestamp_range_seconds(self):
@@ -177,7 +203,7 @@ class NamespaceEditsTimestampTest(DatabaseTest):
             start_date='2013-01-01 02:01:00',
             end_date='2013-01-01 02:01:01',
         )
-        results = metric(list(self.cohort), self.mwSession)
+        results = metric(self.editor_ids, self.mwSession)
         assert_equal(results[self.editors[0].user_id]['edits'], 1)
 
 
@@ -200,7 +226,7 @@ class NamespaceEditsTimeseriesTest(DatabaseTest):
             end_date='2013-01-02 00:00:00',
             timeseries=TimeseriesChoices.NONE,
         )
-        results = metric(list(self.cohort), self.mwSession)
+        results = metric(self.editor_ids, self.mwSession)
         
         assert_equal(results[self.editors[0].user_id]['edits'], 3)
     
@@ -211,7 +237,7 @@ class NamespaceEditsTimeseriesTest(DatabaseTest):
             end_date='2013-01-02 00:00:00',
             timeseries=TimeseriesChoices.DAY,
         )
-        results = metric(list(self.cohort), self.mwSession)
+        results = metric(self.editor_ids, self.mwSession)
         
         assert_equal(
             results[self.editors[0].user_id]['edits'],
@@ -228,7 +254,7 @@ class NamespaceEditsTimeseriesTest(DatabaseTest):
             end_date='2013-01-01 02:00:00',
             timeseries=TimeseriesChoices.HOUR,
         )
-        results = metric(list(self.cohort), self.mwSession)
+        results = metric(self.editor_ids, self.mwSession)
         
         assert_equal(
             results[self.editors[0].user_id]['edits'],

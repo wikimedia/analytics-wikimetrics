@@ -8,7 +8,7 @@ class PagesCreatedTest(DatabaseTest):
     def setUp(self):
         DatabaseTest.setUp(self)
         self.common_cohort_4()
-    
+
     # Evan has 3 pages created, one in namespace 301, one in 302, and one in 303
     # (see tests/fixtures.py for details)
     # So here we just test if the number of pages created in those namespaces is
@@ -19,7 +19,7 @@ class PagesCreatedTest(DatabaseTest):
             start_date='2013-06-19 00:00:00',
             end_date='2013-08-21 00:00:00'
         )
-        results = metric(list(self.cohort), self.mwSession)
+        results = metric(self.editor_ids, self.mwSession)
         assert_equal(results[self.editors[0].user_id]["pages_created"], 3)
         assert_equal(results[self.editors[1].user_id]["pages_created"], 1)
 
@@ -31,5 +31,33 @@ class PagesCreatedTest(DatabaseTest):
             start_date='2013-06-19 00:00:00',
             end_date='2013-07-21 00:00:00'
         )
-        results = metric(list(self.cohort), self.mwSession)
+        # TODO these tests need to go through cohort service,
+        # cannot be using a storage object
+        results = metric(self.editor_ids, self.mwSession)
         assert_equal(results[self.editors[0].user_id]["pages_created"], 2)
+
+    def test_filters_out_other_editors(self):
+        self.common_cohort_4(cohort=False)
+        metric = PagesCreated(
+            namespaces=[301, 302, 303],
+            start_date='2013-06-19 00:00:00',
+            end_date='2013-08-21 00:00:00'
+        )
+        results = metric(self.editor_ids, self.mwSession)
+
+        assert_equal(len(results), 2)
+
+    def test_runs_for_an_entire_wiki(self):
+        self.common_cohort_4(cohort=False)
+        metric = PagesCreated(
+            namespaces=[301, 302, 303],
+            start_date='2013-06-19 00:00:00',
+            end_date='2013-08-21 00:00:00'
+        )
+        results = metric(None, self.mwSession)
+
+        assert_equal(len(results), 4)
+        assert_equal(results[self.editors[0].user_id]["pages_created"], 3)
+        assert_equal(results[self.editors[1].user_id]["pages_created"], 1)
+        # NOTE: this is a bit precarious as it assumes the order of test data inserts
+        assert_equal(results[self.editors[0].user_id + 2]["pages_created"], 3)

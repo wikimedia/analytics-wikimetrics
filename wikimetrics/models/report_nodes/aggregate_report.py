@@ -39,18 +39,17 @@ class AggregateReport(ReportNode):
         """
         Parameters:
             metric  : an instance of a Metric class
-            cohort  : a cohort fetched from the database
+            cohort  : a logical cohort object
             options : a dictionary including the following booleans:
                 individualResults
                 aggregateResults
                 aggregateSum
                 aggregateAverage
                 aggregateStandardDeviation
+            args    : should include any parameters needed by ReportNode
+            kwargs  : should include any parameters needed by ReportNode
         """
-        super(AggregateReport, self).__init__(
-            *args,
-            **kwargs
-        )
+        super(AggregateReport, self).__init__(*args, **kwargs)
         
         self.individual = options.get('individualResults', False)
         self.aggregate = options.get('aggregateResults', True)

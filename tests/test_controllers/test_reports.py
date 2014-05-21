@@ -6,13 +6,14 @@ import os.path
 from mock import Mock, MagicMock
 from contextlib import contextmanager
 from flask import appcontext_pushed, g
-from nose.tools import assert_true, assert_equal, assert_false
+from nose.tools import assert_true, assert_equal, assert_false, raises
 
 from tests.fixtures import WebTest, second_mediawiki_project
 from wikimetrics.models import (
     ReportStore, WikiUserStore, CohortStore, CohortWikiUserStore, MediawikiUser
 )
 from wikimetrics.api import PublicReportFileManager
+from wikimetrics.exceptions import InvalidCohort
 from wikimetrics.controllers.reports import (
     get_celery_task,
 )
@@ -432,6 +433,37 @@ class ReportsControllerTest(WebTest):
         assert_true(response.data.find('namespaces') >= 0)
         cohort_size = 'Cohort Size,{0}'.format(len(self.cohort))
         assert_true(response.data.find(cohort_size) >= 0)
+
+    @raises(InvalidCohort)
+    def test_report_does_not_run_on_invalid_cohort(self):
+
+        self.cohort.validated = False
+        self.session.commit()
+
+        desired_responses = [{
+            'name': 'Edits - test',
+            'cohort': {
+                'id': self.cohort.id,
+                'name': self.cohort.name,
+            },
+            'metric': {
+                'name': 'NamespaceEdits',
+                'timeseries': 'month',
+                'namespaces': [0, 1, 2],
+                'start_date': '2013-01-01 00:00:00',
+                'end_date': '2013-05-01 00:00:00',
+                'individualResults': True,
+                'aggregateResults': True,
+                'aggregateSum': False,
+                'aggregateAverage': True,
+                'aggregateStandardDeviation': False,
+            },
+        }]
+        json_to_post = json.dumps(desired_responses)
+
+        self.client.post('/reports/create/', data=dict(
+            responses=json_to_post
+        ))
 
 
 class MultiProjectTests(WebTest):

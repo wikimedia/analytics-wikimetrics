@@ -29,7 +29,7 @@ class RevertRateTest(DatabaseTest):
             end_date='2014-01-02 00:00:00',
             timeseries=TimeseriesChoices.DAY,
         )
-        results = metric(list(self.cohort), self.mwSession)
+        results = metric(self.editor_ids, self.mwSession)
 
         results_should_be = {
             # User A had one revert

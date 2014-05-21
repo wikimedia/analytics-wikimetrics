@@ -1,4 +1,5 @@
 from celery.utils.log import get_task_logger
+from wikimetrics.api import CohortService
 from report import ReportNode
 from metric_report import MetricReport
 
@@ -18,13 +19,18 @@ class MultiProjectMetricReport(ReportNode):
     show_in_ui = False
     
     def __init__(self, cohort, metric, *args, **kwargs):
-        super(MultiProjectMetricReport, self).__init__(
-            *args,
-            **kwargs
-        )
+        """
+        Parameters:
+            metric  : an instance of a Metric class
+            cohort  : a logical cohort object
+            args    : should include any parameters needed by ReportNode
+            kwargs  : should include any parameters needed by ReportNode
+        """
+        super(MultiProjectMetricReport, self).__init__(*args, **kwargs)
         
+        cohort_service = CohortService()
         self.children = []
-        for project, user_ids in cohort.group_by_project():
+        for project, user_ids in cohort_service.get_users_by_project(cohort):
             # note that user_ids is actually just an iterator
             self.children.append(
                 MetricReport(metric, cohort.id, user_ids, project, *args, **kwargs)

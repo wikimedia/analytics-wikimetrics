@@ -60,7 +60,7 @@ class RunReport(ReportNode):
         finally:
             session.close()
         
-        parameters['cohort']['size'] = len(cohort)
+        parameters['cohort']['size'] = cohort.size
         
         # construct metric
         metric_dict = parameters['metric']

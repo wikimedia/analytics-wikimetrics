@@ -1,3 +1,4 @@
+from cohorts import *
 from mediawiki import *
 from report_nodes import *
 from storage import *

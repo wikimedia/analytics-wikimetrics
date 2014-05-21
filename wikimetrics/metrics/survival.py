@@ -99,9 +99,10 @@ class Survival(Metric):
             .join(Revision) \
             .join(Page) \
             .group_by(MediawikiUser.user_id) \
-            .filter(MediawikiUser.user_id.in_(user_ids)) \
             .filter(Page.page_namespace.in_(self.namespaces.data))
         
+        revisions = self.filter(revisions, user_ids, column=MediawikiUser.user_id)
+
         # sunset_in_hours is zero, so we use the first case [T+t,today]
         if sunset_in_hours == 0:
             revisions = revisions.filter(
@@ -136,9 +137,9 @@ class Survival(Metric):
                 func.coalesce(revisions.c.rev_count, 0)
             )
         ) \
-            .outerjoin(revisions, MediawikiUser.user_id == revisions.c.user_id) \
-            .filter(MediawikiUser.user_id.in_(user_ids)) \
-            .subquery()
+            .outerjoin(revisions, MediawikiUser.user_id == revisions.c.user_id)
+
+        revs = self.filter(revs, user_ids, MediawikiUser.user_id).subquery()
         
         metric = session.query(
             revs.c.user_id,
@@ -170,7 +171,7 @@ class Survival(Metric):
                 Survival.id : None,
                 CENSORED    : None,
             })
-            for uid in user_ids
+            for uid in user_ids or metric_results.keys()
         }
         
         #self.debug_print(r, session, user_ids)

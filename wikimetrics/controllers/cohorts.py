@@ -18,11 +18,15 @@ from wikimetrics.models import (
 from wikimetrics.api import CohortService
 
 
+# TODO: because this is injected by the tests into the REAL controller, it is
+# currently impossible to integration test the controller to make sure it
+# adds the service properly.  This needs to be addressed but I want to stop
+# hacking at the code and do proper dependency injection.
 @app.before_request
-def setup_filemanager():
+def setup_cohort_service():
     if request.endpoint is not None:
-        if 'cohorts' in request.endpoint:
-            cohort_service = getattr(g, 'file_manager', None)
+        if request.path.startswith('/cohorts'):
+            cohort_service = getattr(g, 'cohort_service', None)
             if cohort_service is None:
                 g.cohort_service = CohortService()
 
@@ -96,14 +100,12 @@ def cohort_detail(name_or_id):
     cohort = None
     db_session = db.get_session()
     try:
+        kargs = dict()
         if str(name_or_id).isdigit():
-            cohort = g.cohort_service.get(
-                db_session, current_user.id, by_id=int(name_or_id)
-            )
+            kargs['by_id'] = int(name_or_id)
         else:
-            cohort = g.cohort_service.get(
-                db_session, current_user.id, by_name=name_or_id
-            )
+            kargs['by_name'] = name_or_id
+        cohort = g.cohort_service.get_for_display(db_session, current_user.id, **kargs)
     except Unauthorized:
         return 'You are not allowed to access this Cohort', 401
     except NoResultFound:
@@ -121,14 +123,8 @@ def populate_cohort_wikiusers(cohort, limit):
     """
     Fetches up to <limit> WikiUser records belonging to <cohort>
     """
-    session = db.get_session()
-    try:
-        wikiusers = cohort.filter_wikiuser_query(
-            session.query(WikiUserStore)
-        ).limit(limit).all()
-    finally:
-        session.close()
-    cohort_dict = cohort._asdict()
+    wikiusers = g.cohort_service.get_wikiusers(cohort, limit=limit)
+    cohort_dict = cohort.__dict__
     cohort_dict['wikiusers'] = [wu._asdict() for wu in wikiusers]
     return cohort_dict
 
@@ -236,10 +232,10 @@ def validate_cohort(cohort_id):
     name = None
     session = db.get_session()
     try:
-        cohort = g.cohort_service.get(session, current_user.id, by_id=cohort_id)
-        name = cohort.name
+        c = g.cohort_service.get_for_display(session, current_user.id, by_id=cohort_id)
+        name = c.name
         # TODO we need some kind of global config that is not db specific
-        vc = ValidateCohort(cohort)
+        vc = ValidateCohort(c)
         vc.task.delay(vc)
         return json_response(message='Validating cohort "{0}"'.format(name))
     except Unauthorized:

@@ -9,6 +9,45 @@ class BytesAddedTest(DatabaseTest):
         DatabaseTest.setUp(self)
         self.common_cohort_2()
     
+    def test_filters_out_other_editors(self):
+        self.common_cohort_2(cohort=False)
+        metric = BytesAdded(
+            namespaces=[0],
+            start_date='2013-01-01 00:00:00',
+            end_date='2013-01-03 00:00:00',
+        )
+        results = metric(self.editor_ids, self.mwSession)
+
+        assert_equal(len(results), 3)
+
+    def test_runs_for_an_entire_wiki(self):
+        self.common_cohort_2(cohort=False)
+        metric = BytesAdded(
+            namespaces=[0],
+            start_date='2013-01-01 00:00:00',
+            end_date='2013-01-03 00:00:00',
+        )
+        results = metric(None, self.mwSession)
+
+        print results
+        assert_equal(len(results), 4)
+        expected1 = {
+            'net_sum': -90,
+            'absolute_sum': 110,
+            'positive_only_sum': 10,
+            'negative_only_sum': -100,
+        }
+        expected2 = {
+            'net_sum': 126,
+            'absolute_sum': 134,
+            'positive_only_sum': 130,
+            'negative_only_sum': -4,
+        }
+        assert_equal(results[self.editors[0].user_id], expected1)
+        assert_equal(results[self.editors[1].user_id], expected2)
+        # NOTE: this is a bit precarious as it assumes the order of test data inserts
+        assert_equal(results[self.editors[0].user_id + 3], expected1)
+
     def test_adds_negatives_and_positives(self):
         
         metric = BytesAdded(
@@ -17,7 +56,7 @@ class BytesAddedTest(DatabaseTest):
             end_date='2013-01-03 00:00:00',
         )
         
-        results = metric(list(self.cohort), self.mwSession)
+        results = metric(self.editor_ids, self.mwSession)
         expected1 = {
             'net_sum': -90,
             'absolute_sum': 110,
@@ -47,7 +86,7 @@ class BytesAddedTest(DatabaseTest):
         )
         assert_true(metric.validate())
         
-        results = metric(list(self.cohort), self.mwSession)
+        results = metric(self.editor_ids, self.mwSession)
         expected1 = {
             'net_sum': 10,
             'absolute_sum': 10,
@@ -67,7 +106,7 @@ class BytesAddedTest(DatabaseTest):
         )
         assert_true(metric.validate())
         
-        results = metric(list(self.cohort), self.mwSession)
+        results = metric(self.editor_ids, self.mwSession)
         expected1 = {
             'net_sum': -90,
             'absolute_sum': 110,
@@ -91,7 +130,7 @@ class BytesAddedTest(DatabaseTest):
         )
         assert_true(metric.validate())
         
-        results = metric(list(self.cohort), self.mwSession)
+        results = metric(self.editor_ids, self.mwSession)
         expected1 = {
             'net_sum': 100,
         }
@@ -116,7 +155,7 @@ class BytesAddedTimeseriesTest(DatabaseTest):
             timeseries=TimeseriesChoices.HOUR,
         )
         
-        results = metric(list(self.cohort), self.mwSession)
+        results = metric(self.editor_ids, self.mwSession)
         expected1 = {
             'net_sum': {
                 '2013-01-01 00:00:00' : 0,
@@ -138,7 +177,7 @@ class BytesAddedTimeseriesTest(DatabaseTest):
             timeseries=TimeseriesChoices.DAY,
         )
         
-        results = metric(list(self.cohort), self.mwSession)
+        results = metric(self.editor_ids, self.mwSession)
         expected1 = {
             'net_sum': {
                 '2012-12-31 09:00:00' : 0,
@@ -171,7 +210,7 @@ class BytesAddedTimeseriesTest(DatabaseTest):
             timeseries=TimeseriesChoices.MONTH,
         )
         
-        results = metric(list(self.cohort), self.mwSession)
+        results = metric(self.editor_ids, self.mwSession)
         expected1 = {
             'net_sum': {
                 '2013-01-01 00:00:00' : 100,
@@ -194,7 +233,7 @@ class BytesAddedTimeseriesTest(DatabaseTest):
             timeseries=TimeseriesChoices.YEAR,
         )
         
-        results = metric(list(self.cohort), self.mwSession)
+        results = metric(self.editor_ids, self.mwSession)
         expected1 = {
             'net_sum': {
                 '2013-01-01 00:00:00' : -910,

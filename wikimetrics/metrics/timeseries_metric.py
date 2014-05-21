@@ -114,6 +114,13 @@ class TimeseriesMetric(Metric):
         # get a dictionary of user_ids to their metric results
         results = self.submetrics_by_user(query, submetrics, date_index)
         
+        # default user_ids to all the user ids in the results, if not present
+        if user_ids and len(user_ids):
+            if len(results.keys()) > len(user_ids):
+                raise Exception('Filtering did not work properly')
+        else:
+            user_ids = results.keys()
+
         # make a default return dictionary for users not found by the query
         submetric_defaults = dict()
         for label, index, default in submetrics:

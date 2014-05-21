@@ -58,22 +58,7 @@ class DatabaseTest(unittest.TestCase):
     """
     
     @nottest
-    def create_test_cohort(
-        self,
-        name='test-specific',
-        editor_count=0,
-        user_registrations=20130101000000,
-        revisions_per_editor=0,
-        revision_timestamps=None,
-        revision_lengths=None,
-        page_count=0,
-        page_timestamps=None,
-        page_namespaces=None,
-        page_creator_index=None,
-        owner_user_id=None,
-        page_touched=20130102000000,
-        user_email_token_expires=20200101000000
-    ):
+    def create_test_cohort(self, **kargs):
         """
         A fast and easy way to create most of the testing data that Metrics need.
         Creates a page, editors with specified registration dates, and a number of
@@ -92,7 +77,7 @@ class DatabaseTest(unittest.TestCase):
                                         a two dimensional array indexed by
                                             editor from 0 to editor_count-1
                                             revision from 0 to revisions_per_editor-1
-            revision_timestamps     : the length of each revision either as
+            revision_lengths        : the length of each revision either as
                                         an integer that applies to all revisions OR
                                         a two dimensional array indexed by
                                             editor from 0 to editor_count-1
@@ -119,6 +104,43 @@ class DatabaseTest(unittest.TestCase):
               self.editors      : the mediawiki editors from the cohort
               self.revisions    : the revisions added, in a two dimensional array
         """
+        self.create_test_data(**kargs)
+
+    @nottest
+    def helper_insert_editors(self, **kargs):
+        """
+        Almost the exact same as `create_test_cohort` EXCEPT:
+            * does not create a cohort
+            * does not set self.cohort, self.page, self.editors, or self.revisions
+            * does not take an `owner_user_id` parameter
+        """
+        if 'name' not in kargs:
+            kargs['name'] = 'test-without-cohort'
+        kargs['create_cohort'] = False
+        self.create_test_data(**kargs)
+
+    @nottest
+    def create_test_data(
+        self,
+        name='test-specific',
+        editor_count=0,
+        user_registrations=20130101000000,
+        revisions_per_editor=0,
+        revision_timestamps=None,
+        revision_lengths=None,
+        page_count=0,
+        page_timestamps=None,
+        page_namespaces=None,
+        page_creator_index=None,
+        owner_user_id=None,
+        page_touched=20130102000000,
+        user_email_token_expires=20200101000000,
+        create_cohort=True,
+    ):
+        """
+        Internal multi-purpose data creator.
+        Creates a set of users and, if `name` is specified, wraps them in a cohort.
+        """
         if revision_timestamps is None:
             revision_timestamps = []
         if revision_lengths is None:
@@ -143,20 +165,20 @@ class DatabaseTest(unittest.TestCase):
         if type(user_registrations) is int:
             user_registrations = [user_registrations] * editor_count
         
-        self.project = mediawiki_project
+        project = mediawiki_project
+        if create_cohort:
+            cohort = CohortStore(
+                name='{0}-cohort'.format(name),
+                enabled=True,
+                public=False,
+                validated=True,
+            )
+            self.session.add(cohort)
+            self.session.commit()
         
-        self.cohort = CohortStore(
-            name='{0}-cohort'.format(name),
-            enabled=True,
-            public=False,
-            validated=True,
-        )
-        self.session.add(self.cohort)
-        self.session.commit()
-        
-        self.page = Page(page_namespace=0, page_title='{0}-page'.format(name),
-                         page_touched=page_touched)
-        self.mwSession.add(self.page)
+        page = Page(page_namespace=0, page_title='{0}-page'.format(name),
+                    page_touched=page_touched)
+        self.mwSession.add(page)
         self.mwSession.commit()
         
         self.mwSession.bind.engine.execute(
@@ -170,42 +192,45 @@ class DatabaseTest(unittest.TestCase):
             ]
         )
         self.mwSession.commit()
-        self.editors = self.mwSession.query(MediawikiUser)\
+        editors = self.mwSession.query(MediawikiUser)\
             .filter(MediawikiUser.user_name.like('Editor {0}-%'.format(name)))\
             .order_by(MediawikiUser.user_id)\
             .all()
-        self.session.bind.engine.execute(
-            WikiUserStore.__table__.insert(), [
-                {
-                    'mediawiki_username'    : editor.user_name,
-                    'mediawiki_userid'      : editor.user_id,
-                    'project'               : self.project,
-                    'valid'                 : True,
-                    'validating_cohort'     : self.cohort.id,
-                }
-                for editor in self.editors
-            ]
-        )
-        self.session.commit()
-        wiki_users = self.session.query(WikiUserStore)\
-            .filter(WikiUserStore.mediawiki_username.like('Editor {0}-%'.format(name)))\
-            .all()
-        self.session.bind.engine.execute(
-            CohortWikiUserStore.__table__.insert(), [
-                {
-                    'cohort_id'     : self.cohort.id,
-                    'wiki_user_id'  : wiki_user.id,
-                }
-                for wiki_user in wiki_users
-            ]
-        )
-        self.session.commit()
+
+        if create_cohort:
+            self.session.bind.engine.execute(
+                WikiUserStore.__table__.insert(), [
+                    {
+                        'mediawiki_username'    : editor.user_name,
+                        'mediawiki_userid'      : editor.user_id,
+                        'project'               : project,
+                        'valid'                 : True,
+                        'validating_cohort'     : cohort.id,
+                    }
+                    for editor in editors
+                ]
+            )
+            self.session.commit()
+            wiki_users = self.session.query(WikiUserStore)\
+                .filter(
+                    WikiUserStore.mediawiki_username.like('Editor {0}-%'.format(name)))\
+                .all()
+            self.session.bind.engine.execute(
+                CohortWikiUserStore.__table__.insert(), [
+                    {
+                        'cohort_id'     : cohort.id,
+                        'wiki_user_id'  : wiki_user.id,
+                    }
+                    for wiki_user in wiki_users
+                ]
+            )
+            self.session.commit()
         
         self.mwSession.bind.engine.execute(
             Revision.__table__.insert(), [
                 {
-                    'rev_page'      : self.page.page_id,
-                    'rev_user'      : self.editors[e].user_id,
+                    'rev_page'      : page.page_id,
+                    'rev_user'      : editors[e].user_id,
                     'rev_comment'   : 'revision {0}, editor {1}'.format(r, e),
                     'rev_timestamp' : revision_timestamps[e][r] or UNICODE_NULL * 14,
                     'rev_len'       : revision_lengths[e][r],
@@ -215,13 +240,13 @@ class DatabaseTest(unittest.TestCase):
             ]
         )
         self.mwSession.commit()
-        self.revisions = self.mwSession.query(Revision)\
-            .filter(Revision.rev_page == self.page.page_id)\
+        revisions = self.mwSession.query(Revision)\
+            .filter(Revision.rev_page == page.page_id)\
             .order_by(Revision.rev_id)\
             .all()
         
         # add rev_parent_id chain in chronological order
-        real_revisions = filter(lambda r: r.rev_timestamp, self.revisions)
+        real_revisions = filter(lambda r: r.rev_timestamp, revisions)
         ordered_revisions = sorted(real_revisions, key=lambda r: r.rev_timestamp)
         for i, revision in enumerate(ordered_revisions):
             if i == 0:
@@ -231,19 +256,20 @@ class DatabaseTest(unittest.TestCase):
         
         self.mwSession.commit()
         
-        # establish ownership for this cohort
-        if not owner_user_id:
-            owner_user = UserStore(username='test cohort owner', email='test@test.com')
-            self.session.add(owner_user)
+        if create_cohort:
+            # establish ownership for this cohort
+            if not owner_user_id:
+                owner = UserStore(username='test cohort owner', email='test@test.com')
+                self.session.add(owner)
+                self.session.commit()
+                owner_user_id = owner.id
+
+            self.session.add(CohortUserStore(
+                user_id=owner_user_id,
+                cohort_id=cohort.id,
+                role=CohortUserRole.OWNER,
+            ))
             self.session.commit()
-            self.owner_user_id = owner_user.id
-        
-        self.session.add(CohortUserStore(
-            user_id=self.owner_user_id,
-            cohort_id=self.cohort.id,
-            role=CohortUserRole.OWNER,
-        ))
-        self.session.commit()
         
         if page_count > 0:
             # create any additional pages
@@ -274,7 +300,7 @@ class DatabaseTest(unittest.TestCase):
                 Revision.__table__.insert(), [
                     {
                         'rev_page'      : pages[p].page_id,
-                        'rev_user'      : self.editors[page_creator_index[p]].user_id,
+                        'rev_user'      : editors[page_creator_index[p]].user_id,
                         'rev_comment'   : 'page {0} created'.format(p),
                         'rev_timestamp' : page_timestamps[p],
                         'rev_len'       : 10,
@@ -284,6 +310,18 @@ class DatabaseTest(unittest.TestCase):
                 ]
             )
             self.mwSession.commit()
+
+        if create_cohort:
+            self.project = project
+
+            # TODO this is a storage object, should be changed
+            # for metrics tests into a logic object, not a storage object
+            self.cohort = cohort
+            self.page = page
+            self.editors = editors
+            self.editor_ids = [e.user_id for e in editors]
+            self.revisions = revisions
+            self.owner_user_id = owner_user_id
     
     @nottest
     def editor(self, index):
@@ -316,8 +354,13 @@ class DatabaseTest(unittest.TestCase):
         self.session.commit()
     
     @nottest
-    def common_cohort_1(self):
-        self.create_test_cohort(
+    def common_cohort_1(self, cohort=True):
+        if cohort:
+            method = self.create_test_cohort
+        else:
+            method = self.helper_insert_editors
+
+        method(
             editor_count=4,
             revisions_per_editor=4,
             revision_timestamps=[
@@ -330,8 +373,13 @@ class DatabaseTest(unittest.TestCase):
         )
     
     @nottest
-    def common_cohort_2(self):
-        self.create_test_cohort(
+    def common_cohort_2(self, cohort=True):
+        if cohort:
+            method = self.create_test_cohort
+        else:
+            method = self.helper_insert_editors
+
+        method(
             editor_count=3,
             revisions_per_editor=3,
             revision_timestamps=[
@@ -347,8 +395,13 @@ class DatabaseTest(unittest.TestCase):
         )
     
     @nottest
-    def common_cohort_3(self):
-        self.create_test_cohort(
+    def common_cohort_3(self, cohort=True):
+        if cohort:
+            method = self.create_test_cohort
+        else:
+            method = self.helper_insert_editors
+
+        method(
             editor_count=4,
             revisions_per_editor=4,
             # in order, all in 2013:
@@ -370,8 +423,13 @@ class DatabaseTest(unittest.TestCase):
         )
     
     @nottest
-    def common_cohort_4(self):
-        self.create_test_cohort(
+    def common_cohort_4(self, cohort=True):
+        if cohort:
+            method = self.create_test_cohort
+        else:
+            method = self.helper_insert_editors
+
+        method(
             editor_count=2,
             revisions_per_editor=1,
             revision_timestamps=20130416000000,
@@ -385,8 +443,13 @@ class DatabaseTest(unittest.TestCase):
         )
     
     @nottest
-    def common_cohort_5(self):
-        self.create_test_cohort(
+    def common_cohort_5(self, cohort=True):
+        if cohort:
+            method = self.create_test_cohort
+        else:
+            method = self.helper_insert_editors
+
+        method(
             editor_count=4,
             revisions_per_editor=4,
             revision_timestamps=[
@@ -398,6 +461,32 @@ class DatabaseTest(unittest.TestCase):
             revision_lengths=10,
         )
     
+    @nottest
+    def create_wiki_cohort(self, project=mediawiki_project):
+        """
+        Creates a wiki cohort (spans a whole project)
+        and an owner for the cohort
+        """
+        # cohort data
+        basic_wiki_cohort = CohortStore(name='{0}-wiki-cohort'.format(project),
+                                        enabled=True,
+                                        public=False,
+                                        default_project=project,
+                                        class_name='WikiCohort'
+                                        )
+        self.session.add(basic_wiki_cohort)
+        self.session.commit()
+        self.basic_wiki_cohort = basic_wiki_cohort
+
+        cohort_user = CohortUserStore(
+            user_id=self.owner_user_id,
+            cohort_id=basic_wiki_cohort.id,
+            role=CohortUserRole.OWNER
+        )
+        self.session.add(cohort_user)
+        self.session.commit()
+        self.basic_wiki_cohort_owner = cohort_user
+
     def setUp(self):
         #****************************************************************
         # set up and clean database (Warning: this DESTROYS ALL DATA)
@@ -413,6 +502,7 @@ class DatabaseTest(unittest.TestCase):
         DatabaseTest.tearDown(self)
     
     def tearDown(self):
+
         # delete records
         self.mwSession.query(Logging).delete()
         self.mwSession.query(Revision).delete()

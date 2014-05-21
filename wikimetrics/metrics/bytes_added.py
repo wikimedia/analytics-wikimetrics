@@ -94,7 +94,7 @@ class BytesAdded(TimeseriesMetric):
         end_date = self.end_date.data
         
         PreviousRevision = session.query(Revision.rev_len, Revision.rev_id).subquery()
-        BC = session.query(
+        query = session.query(
             Revision.rev_user,
             Revision.rev_timestamp,
             label(
@@ -109,10 +109,11 @@ class BytesAdded(TimeseriesMetric):
                 PreviousRevision,
                 Revision.rev_parent_id == PreviousRevision.c.rev_id)\
             .filter(Page.page_namespace.in_(self.namespaces.data))\
-            .filter(Revision.rev_user.in_(user_ids))\
             .filter(Revision.rev_timestamp > start_date)\
-            .filter(Revision.rev_timestamp <= end_date)\
-            .subquery()
+            .filter(Revision.rev_timestamp <= end_date)
+
+        query = self.filter(query, user_ids)
+        BC = query.subquery()
         
         bytes_added_by_user = session.query(BC.c.rev_user).group_by(BC.c.rev_user)
         

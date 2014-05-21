@@ -54,16 +54,17 @@ class PagesCreated(TimeseriesMetric):
         start_date = self.start_date.data
         end_date = self.end_date.data
         
-        pages_by_user = session\
+        query = session\
             .query(Revision.rev_user, func.count(Page.page_id))\
             .join(Page)\
             .filter(Page.page_namespace.in_(self.namespaces.data))\
             .filter(Revision.rev_parent_id == 0)\
-            .filter(Revision.rev_user.in_(user_ids))\
             .filter(Revision.rev_timestamp > start_date)\
             .filter(Revision.rev_timestamp <= end_date)\
             .group_by(Revision.rev_user)
         
+        pages_by_user = self.filter(query, user_ids)
+
         query = self.apply_timeseries(pages_by_user)
         return self.results_by_user(
             user_ids,

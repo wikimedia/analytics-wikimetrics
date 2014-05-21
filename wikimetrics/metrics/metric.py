@@ -1,4 +1,5 @@
 from wikimetrics.controllers.forms.secure_form import WikimetricsSecureForm
+from wikimetrics.models import Revision
 
 
 class Metric(WikimetricsSecureForm):
@@ -32,3 +33,21 @@ class Metric(WikimetricsSecureForm):
             dictionary from user ids to the metric results.
         """
         return {user: None for user in user_ids}
+
+    def filter(self, query, user_ids, column=Revision.rev_user):
+        """
+        Filters the query by the provided user_ids.
+        If user_ids is an empty list, does nothing.
+
+        Parameters
+            query       : A sqlalchemy query that may need to be filtered
+            user_ids    : A list of user_ids that query should be filtered by
+            column      : The sqlalchemy column to filter on.  Defaults to
+                          Revision.rev_user, and usually doesn't need to be changed
+
+        Returns
+            The same query passed in, with any user_id filters necessary
+        """
+        if user_ids and len(user_ids):
+            query = query.filter(column.in_(user_ids))
+        return query

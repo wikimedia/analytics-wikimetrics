@@ -25,3 +25,10 @@ class DatabaseError(Exception):
     Thrown when database calls don't return an expected result.
     """
     pass
+
+
+class InvalidCohort(Exception):
+    """
+    Thrown when invalid cohorts are retrieved from the database for reporting
+    """
+    pass
