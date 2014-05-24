@@ -8,7 +8,12 @@ from secure_form import WikimetricsSecureForm
 
 class CohortUpload(WikimetricsSecureForm):
     """
-    Defines the fields necessary to upload a cohort from a csv file
+    Defines the fields necessary to upload a cohort from a csv file or
+    a textbox.
+    
+    Note that paste_username would be a unicode type per wtforms convention but
+    when we read text fields (user names or user ids) from a csv file those would be
+    returned as strings via python csv module.
     """
     name                    = StringField([Required()])
     description             = TextAreaField()
@@ -19,7 +24,7 @@ class CohortUpload(WikimetricsSecureForm):
         ('True', 'User Ids (Numbers found in the user_id column of the user table)'),
         ('False', 'User Names (Names found in the user_name column of the user table)')
     ])
-
+    
     @classmethod
     def from_request(cls, request):
         """
@@ -28,37 +33,39 @@ class CohortUpload(WikimetricsSecureForm):
         values = request.form.copy()
         values.update(request.files)
         return cls(values)
-
+    
     def parse_records(self):
         """
         You must call this to parse self.records out of the csv file
-
+        
         Parameters
             request : the request with the file to parse
-
+        
         Returns
             nothing, but sets self.records to the parsed lines of the csv
         """
-
+        
         if self.csv.data:
+            # uploaded a cohort file
             csv_file = normalize_newlines(self.csv.data.stream)
             unparsed = csv.reader(csv_file)
-
+        
         else:
             #TODO: Check valid input
+            # used upload box, note that wtforms returns unicode types here
             unparsed = parse_textarea_usernames(self.paste_username.data)
-
+        
         self.records = parse_records(unparsed, self.project.data)
 
 
 def parse_records(unparsed, default_project):
     """
-    Parses records read from a csv file
-
+    Parses records read from a csv file or coming from the upload box
+    
     Parameters
         unparsed        : records in array form, as read from a csv
         default_project : the default project to attribute to records without one
-
+    
     Returns
         the parsed records in this form:
             {'username':'parsed username', 'project':'as specified or default'}
@@ -77,7 +84,7 @@ def parse_records(unparsed, default_project):
             else:
                 username = r[0]
                 project = default_project
-
+            
             if username is not None and len(username):
                 records.append({
                     'username'  : parse_username(username),

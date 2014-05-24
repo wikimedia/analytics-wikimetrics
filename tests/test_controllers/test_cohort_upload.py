@@ -15,7 +15,7 @@ from wikimetrics.controllers.forms.cohort_upload import (
 class CohortsControllerTest(unittest.TestCase):
     
     def test_parse_username_unicode_handling(self):
-        unparsed_strings = ['sès', 'مو', 'èm']
+        unparsed_strings = [u'sès', u'مو', u'èm']
         expected_strings = ['S\xc3\xa8s', '\xd9\x85\xd9\x88', '\xc3\x88m']
 
         for unparsed, expected in zip(unparsed_strings, expected_strings):
