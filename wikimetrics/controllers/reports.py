@@ -214,9 +214,9 @@ def get_timeseries_csv(task_result, pj, parameters):
             columns = task_result[Aggregation.STD].values()[0].keys()
 
         # if task_result is not empty find header in first row
-        fieldnames = ['user_id', 'user_name', 'submetric'] + sorted(columns)
+        fieldnames = ['user_id', 'user_name', 'project', 'submetric'] + sorted(columns)
     else:
-        fieldnames = ['user_id', 'user_name', 'submetric']
+        fieldnames = ['user_id', 'user_name', 'project', 'submetric']
     writer = DictWriter(csv_io, fieldnames)
 
     # collect rows to output in CSV
@@ -231,10 +231,12 @@ def get_timeseries_csv(task_result, pj, parameters):
                 wiki_user_key = WikiUserKey.fromstr(wiki_user_key_str)
                 user_id = wiki_user_key.user_id
                 user_name = get_user_name(session, wiki_user_key)
+                project = wiki_user_key.user_project
                 for subrow in row.keys():
                     task_row = row[subrow].copy()
                     task_row['user_id'] = user_id
                     task_row['user_name'] = user_name
+                    task_row['project'] = project
                     task_row['submetric'] = subrow
                     task_rows.append(task_row)
     finally:
@@ -304,9 +306,9 @@ def get_simple_csv(task_result, pj, parameters):
             columns = task_result[Aggregation.STD].keys()
 
         # if task_result is not empty find header in first row
-        fieldnames = ['user_id', 'user_name'] + columns
+        fieldnames = ['user_id', 'user_name', 'project'] + columns
     else:
-        fieldnames = ['user_id', 'user_name']
+        fieldnames = ['user_id', 'user_name', 'project']
     writer = DictWriter(csv_io, fieldnames)
 
     # collect rows to output in CSV
@@ -321,9 +323,11 @@ def get_simple_csv(task_result, pj, parameters):
                 wiki_user_key = WikiUserKey.fromstr(wiki_user_key_str)
                 user_id = wiki_user_key.user_id
                 user_name = get_user_name(session, wiki_user_key)
+                project = wiki_user_key.user_project
                 task_row = row.copy()
                 task_row['user_id'] = user_id
                 task_row['user_name'] = user_name
+                task_row['project'] = project
                 task_rows.append(task_row)
     finally:
         session.close()

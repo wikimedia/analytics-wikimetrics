@@ -9,7 +9,7 @@ from flask import appcontext_pushed, g
 from nose.tools import assert_true, assert_equal, assert_false, raises
 from datetime import date, timedelta
 
-from tests.fixtures import WebTest, second_mediawiki_project
+from tests.fixtures import WebTest, mediawiki_project, second_mediawiki_project
 from wikimetrics.models import (
     ReportStore, WikiUserStore, CohortStore, CohortWikiUserStore, MediawikiUser
 )
@@ -248,7 +248,7 @@ class ReportsControllerTest(ControllerAsyncTest):
 
         # Check the csv result
         response = self.client.get('/reports/result/{0}.csv'.format(result_key))
-        assert_true(response.data.find('Average,,2.0') >= 0)
+        assert_true(response.data.find('Average,,,2.0') >= 0)
 
         # Testing to see if the parameters are also in the CSV
         # (related to Mingle 1089)
@@ -296,7 +296,7 @@ class ReportsControllerTest(ControllerAsyncTest):
 
         # Check the csv result
         response = self.client.get('/reports/result/{0}.csv'.format(result_key))
-        assert_true(response.data.find('Sum,,8.0') >= 0)
+        assert_true(response.data.find('Sum,,,8.0') >= 0)
 
     def test_report_result_std_dev_only_csv(self):
         # Make the request
@@ -448,21 +448,22 @@ class ReportsControllerTest(ControllerAsyncTest):
         Metric_start_date,2013-01-01 00:00:00,,,,,
         Metric_timeseries,month,,,,,
         '''
+
         assert_true(response.data.find(
-            'user_id,user_name,submetric,'
+            'user_id,user_name,project,submetric,'
             '2013-01-01 00:00:00,2013-02-01 00:00:00,'
             '2013-03-01 00:00:00,2013-04-01 00:00:00'
         ) >= 0)
         assert_true(response.data.find(
-            '{0},{1},edits,1,2,1,0'.format(
-                self.editors[0].user_id, self.editors[0].user_name)
+            '{0},{1},{2},edits,1,2,1,0'.format(
+                self.editors[0].user_id, self.editors[0].user_name, mediawiki_project)
         ) >= 0)
         assert_true(response.data.find(
-            '{0},{1},edits,1,2,1,0'.format(
-                self.editors[1].user_id, self.editors[1].user_name)
+            '{0},{1},{2},edits,1,2,1,0'.format(
+                self.editors[1].user_id, self.editors[1].user_name, mediawiki_project)
         ) >= 0)
         assert_true(response.data.find(
-            'Average,,edits,0.5000,1.0000,0.5000,0.0000'
+            'Average,,,edits,0.5000,1.0000,0.5000,0.0000'
         ) >= 0)
 
         # Testing to see if the parameters are also in the CSV
@@ -569,8 +570,9 @@ class MultiProjectTests(ControllerAsyncTest):
         # Check the csv result
         response = self.client.get('/reports/result/{0}.csv'.format(result_key))
         assert_true(response.data.find(
-            '{0},{1},edits,0,0,0,0'.format(
-                self.editors[0].user_id, 'Editor 0 in second wiki')
+            '{0},{1},{2},edits,0,0,0,0'.format(
+                self.editors[0].user_id, 'Editor 0 in second wiki',
+                second_mediawiki_project)
         ) >= 0)
     
     def test_two_users_same_id_same_cohort(self):
@@ -604,8 +606,9 @@ class MultiProjectTests(ControllerAsyncTest):
         # Check the csv result
         response = self.client.get('/reports/result/{0}.csv'.format(result_key))
         assert_true(response.data.find(
-            '{0},{1},edits,0,0,0,0'.format(
-                self.editors[0].user_id, 'Editor X with same id')
+            '{0},{1},{2},edits,0,0,0,0'.format(
+                self.editors[0].user_id, 'Editor X with same id',
+                second_mediawiki_project)
         ) >= 0)
     
     def test_two_users_same_id_different_cohort(self):
@@ -646,8 +649,9 @@ class MultiProjectTests(ControllerAsyncTest):
         # Check the csv result
         response = self.client.get('/reports/result/{0}.csv'.format(result_key))
         assert_true(response.data.find(
-            '{0},{1},edits,0,0,0,0'.format(
-                self.editors[0].user_id, 'Editor X should not show up')
+            '{0},{1},{2}edits,0,0,0,0'.format(
+                self.editors[0].user_id, 'Editor X should not show up',
+                second_mediawiki_project)
         ) < 0)
 
 
