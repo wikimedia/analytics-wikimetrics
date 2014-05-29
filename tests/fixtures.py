@@ -57,11 +57,6 @@ class DatabaseTest(unittest.TestCase):
              as part of test runs
     """
     
-    # NOTE: this seems useless but is needed to run tests manually in ipython
-    @nottest
-    def runTest(self):
-        pass
-    
     @nottest
     def create_test_cohort(
         self,
