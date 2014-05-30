@@ -371,7 +371,11 @@ class CohortsControllerUploadTest(WebTest):
         assert_equal(response.status_code, 200)
         assert_true(response.data.find(invalid.mediawiki_username) >= 0)
         assert_true(response.data.find(invalid.reason_invalid) >= 0)
-    
+
+    def test_invalid_wiki_user_view_works_when_cohort_invalid(self):
+        self.helper_reset_validation()
+        self.test_invalid_wiki_user_view()
+
     def test_invalid_wiki_user_view_error(self):
         response = self.app.get('/cohorts/detail/invalid-users/0')
         assert_equal(response.status_code, 200)

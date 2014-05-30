@@ -71,14 +71,17 @@ def cohorts_list():
 def cohort_invalid_detail(cohort_id):
     session = db.get_session()
     try:
-        cohort = g.cohort_service.get(session, current_user.id, by_id=cohort_id)
+        cohort = g.cohort_service.get_for_display(
+            session, current_user.id, by_id=cohort_id
+        )
         wikiusers = session\
             .query(WikiUserStore.mediawiki_username, WikiUserStore.reason_invalid)\
             .filter(WikiUserStore.validating_cohort == cohort.id) \
             .filter(WikiUserStore.valid.in_([False, None])) \
             .all()
         return json_response(invalid_wikiusers=[wu._asdict() for wu in wikiusers])
-    except:
+    except Exception, e:
+        app.logger.exception(str(e))
         return json_error('Error fetching invalid users for {0}'.format(cohort_id))
     finally:
         session.close()
