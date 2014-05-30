@@ -62,14 +62,23 @@ class CommaSeparatedIntegerListField(Field):
 class BetterDateTimeField(DateTimeField):
     
     def parse_datetime(self, value):
+        """
+        Parses a variety of inputs into a datetime instance
+
+        Parameters
+            value   : string in self.format, date, or datetime
+
+        Returns
+            valid datetime instance or calls report_invalid
+        """
         if not value:
             self.report_invalid()
         
-        if isinstance(value, date):
-            value = datetime.combine(value, time())
-        
         if isinstance(value, datetime):
             return value
+        
+        if isinstance(value, date):
+            return datetime.combine(value, time())
         
         try:
             return datetime.strptime(value, self.format)
