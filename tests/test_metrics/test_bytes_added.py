@@ -29,7 +29,6 @@ class BytesAddedTest(DatabaseTest):
         )
         results = metric(None, self.mwSession)
 
-        print results
         assert_equal(len(results), 4)
         expected1 = {
             'net_sum': -90,
