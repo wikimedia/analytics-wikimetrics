@@ -197,6 +197,21 @@ class DatabaseTest(unittest.TestCase):
             .order_by(MediawikiUser.user_id)\
             .all()
 
+        # Create logging table records for each inserted user
+        self.mwSession.bind.engine.execute(
+            Logging.__table__.insert(), [
+                {
+                    'log_user': editor.user_id,
+                    'log_timestamp': editor.user_registration,
+                    'log_title': editor.user_name,
+                    'log_type': 'newusers',
+                    'log_action': 'create',
+                }
+                for editor in editors
+            ]
+        )
+        self.mwSession.commit()
+
         if create_cohort:
             self.session.bind.engine.execute(
                 WikiUserStore.__table__.insert(), [
@@ -460,7 +475,51 @@ class DatabaseTest(unittest.TestCase):
             ],
             revision_lengths=10,
         )
-    
+
+    @nottest
+    def create_non_editors(self, user_tuples, name='some-identifier'):
+        """
+        Creates plain users that haven't edited anything.
+        You should pass a unique prefix parameter if called 2+ times before tearDown.
+
+        Parameters
+            user_tuples : tuples in the form:
+                          (<user_registration>, <log_type>, <log_action>)
+        """
+        by_name = {
+            'non-editor-user-{0}-{1}'.format(name, i): u
+            for i, u in enumerate(user_tuples)
+        }
+        self.mwSession.bind.engine.execute(
+            MediawikiUser.__table__.insert(), [
+                {
+                    'user_name': key,
+                    'user_registration': user[0],
+                    'user_email_token_expires': 20200101000000,
+                }
+                for key, user in by_name.items()
+            ]
+        )
+        self.mwSession.commit()
+        users = self.mwSession.query(MediawikiUser)\
+            .filter(MediawikiUser.user_name.like('non-editor-user-{0}-%'.format(name)))\
+            .order_by(MediawikiUser.user_id)\
+            .all()
+
+        self.mwSession.bind.engine.execute(
+            Logging.__table__.insert(), [
+                {
+                    'log_user': user.user_id,
+                    'log_title': user.user_name,
+                    'log_timestamp': user.user_registration,
+                    'log_type': by_name[user.user_name][1],
+                    'log_action': by_name[user.user_name][2],
+                }
+                for user in users
+            ]
+        )
+        self.mwSession.commit()
+
     @nottest
     def create_wiki_cohort(self, project=mediawiki_project):
         """

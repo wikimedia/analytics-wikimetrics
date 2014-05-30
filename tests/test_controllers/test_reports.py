@@ -162,7 +162,7 @@ class ReportsControllerTest(WebTest):
     def test_report_request_get(self):
         response = self.client.get('/reports/create/')
         assert_equal(response.status_code, 200)
-        assert_true(response.data.find('Create Analysis Report') >= 0)
+        assert_true(response.data.find('Create Report') >= 0)
 
     def test_report_result_csv_error(self):
         response = self.client.get('/reports/result/blah.csv')

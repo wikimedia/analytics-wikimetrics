@@ -7,6 +7,7 @@ from bytes_added import *
 from pages_created import *
 from threshold import *
 from survival import *
+from newly_registered import *
 
 # ignore flake8 because of F403 violation
 # flake8: noqa
