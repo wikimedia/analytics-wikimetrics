@@ -40,8 +40,7 @@ a.openid-logo.twitter {
 
 
 /* creating a new report */
-div.pick-cohorts .navbar-search { margin: 16px 0 0 0; }
-div.pick-cohorts .cohorts { margin: 14px 0 0 14px; max-height: 160px; overflow-x: hidden; overflow-y: auto; }
+div.pick-cohorts .cohorts { margin: 4px 0 0 14px; max-height: 160px; overflow-x: hidden; overflow-y: auto; }
 div.pick-metrics, .sample-result { background-color: #fff; }
 div.pick-metrics .tabbable, .sample-result .tabbable { margin: 22px 0 0 0; }
 td.blur-completely { text-shadow: 0 0 20px rgba(0,0,0,0.6); color: transparent; }
@@ -87,3 +86,6 @@ form.upload-cohort div.navbar-inner { margin: 0 0 20px 0; }
 }
 
 .icon.align-with-btn { margin: 4px 13px; }
+
+/* form field stuff */
+.disabled-field { display: none; }
