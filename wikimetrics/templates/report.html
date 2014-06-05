@@ -1,13 +1,25 @@
 {% extends "layout.html" %}
 {% block body %}
-<h3>Create Analysis Report</h3>
-<div class="well pick-cohorts">
-    <div class="navbar-inner">
-        <h4 class="pull-left">Pick Cohorts</h4>
-        <div class="navbar-search pull-right">
-            <a href="{{url_for('cohort_upload')}}">upload a new cohort</a>
+
+<h2>Create Report</h2>
+<div class="well well-small">
+<label class="checkbox">
+    <p><input type="checkbox"  data-bind="checked: request().recurrent"/>
+    Make this a <b>Public Scheduled </b> Report.  This means that
+	it will run daily at 00:00 UTC and compute results for each day it runs.
+	<p>
+    <p><small>Checking this box makes the results of this report <b>publicly</b> accessible.
+	There will be no way to stop the report once it starts.  When using this feature,
+	 make sure you understand these caveats or contact
+	 <a href mailto=wikimetrics@lists.wikimedia.org> wikimetrics@lists.wikimedia.org</a> for help.
+ </small>
+ </p>
+</label>
+</div>
+<div class="well well-small pick-cohorts">
+    <div class="form-inline">
+        	<label class="control-label"> <h4>Pick Cohorts</h4> </label> &nbsp;
             <input type="text"  placeholder="type to filter" data-bind="value: filter, valueUpdate:'afterkeydown'"/>
-        </div>
     </div>
     <div class="cohorts">
         <ul class="unstyled" data-bind="foreach: filteredCohorts">
@@ -20,10 +32,8 @@
         </ul>
     </div>
 </div>
-<div class="well pick-metrics">
-    <div class="navbar-inner">
-        <h4>Pick Metrics</h4>
-    </div>
+<div class="well well-small pick-metrics">
+    <h4>Pick Metrics</h4>
     <div class="tabbable tabs-left">
         <ul class="nav nav-tabs" data-bind="foreach: metrics">
             <li>
@@ -44,19 +54,9 @@
         </div>
     </div>
 </div>
-<div class="well pick-metrics">
-    <div class="navbar-inner">
+<div class="well well-small pick-metrics">
         <h4>Configure Output</h4>
-    </div>
-    <div class="well">
-        <label>
-            <input type="checkbox" data-bind="checked: request().recurrent"/>
-            Make this a Public Scheduled Report.  This means that it will run daily at 00:00 UTC and compute results for each day it runs.
-            <p>
-            NOTE: Checking this box makes the results of this report <strong>publicly</strong> accessible.  There will be no way to stop the report once it starts.  When using this feature, make sure you understand these caveats or contact the list for help.
-            <p>
-        </label>
-    </div>
+
     <div class="tabbable tabs-left">
         <ul class="nav nav-tabs" data-bind="foreach: request().metrics">
             <li>
@@ -76,7 +76,7 @@
                     <label class="control-label" data-bind="attr: {for: tabId() + '-a-agg'}">Aggregate Results</label>
                     <div class="controls">
                         <input type="checkbox" data-bind="checked: aggregateResults, attr: {id: tabId() + '-a-agg'}"/>
-                        
+
                         <div data-bind="if: aggregateResults">
                             <div class="control-group">
                                 <label class="control-label" data-bind="attr: {for: tabId() + '-a-sum'}">Sum</label>
@@ -103,10 +103,8 @@
         </div>
     </div>
 </div>
-<div class="well sample-result">
-    <div class="navbar-inner">
+<div class="well well-small sample-result">
         <h4>Sample Result</h4>
-    </div>
     <div class="tabbable tabs-left">
         <ul class="nav nav-tabs" data-bind="foreach: request().responses">
             <li>

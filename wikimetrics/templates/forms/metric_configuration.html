@@ -1,7 +1,10 @@
 {% import 'forms/field_validation.html' as validation %}<form class="form-horizontal metric-configuration" method="POST" action="{{action}}" data-bind="submit: $root.saveMetricConfiguration">
     {% for f in form %}
     {% if f.name != 'csrf_token' %}
-        <div class="control-group">
+    <div class="control-group"
+    {% if f.name in ['start_date', 'end_date', 'timeseries'] %}
+         data-bind="css: {'disabled-field': $root.request().recurrent}"
+    {% endif %}>
             {{ f.label(class="control-label") }}
             <div class="controls">
                 {% if f.type == 'BooleanField' or f.type == 'BetterBooleanField' %}
