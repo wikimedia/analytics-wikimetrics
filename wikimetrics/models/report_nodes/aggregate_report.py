@@ -3,7 +3,7 @@ from decimal import Decimal
 from collections import OrderedDict
 from celery.utils.log import get_task_logger
 
-from wikimetrics.utils import stringify, CENSORED, r
+from wikimetrics.utils import stringify, CENSORED, NO_RESULTS, r
 from report import ReportNode
 from multi_project_metric_report import MultiProjectMetricReport
 
@@ -87,6 +87,8 @@ class AggregateReport(ReportNode):
                 )
         
         if self.individual:
+            if NO_RESULTS in results_by_user:
+                results_by_user = {}
             aggregated_results[Aggregation.IND] = results_by_user
         
         return aggregated_results

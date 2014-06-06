@@ -98,6 +98,10 @@ class CohortStore(db.WikimetricsBase):
             ).order_by(WikiUserStore.project).all()
         finally:
             db_session.close()
+
+        if not len(user_id_projects):
+            return [(self.default_project, None)]
+
         groups = itertools.groupby(user_id_projects, key=itemgetter(1))
 
         return (

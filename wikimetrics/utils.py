@@ -14,6 +14,8 @@ MEDIAWIKI_TIMESTAMP = '%Y%m%d%H%M%S'
 PRETTY_TIMESTAMP = '%Y-%m-%d %H:%M:%S'
 # This is used to mean that a result was censored in some way
 CENSORED = 'censored'
+# Used to mean a metric is not returning any results
+NO_RESULTS = 'no-results'
 # Unicode NULL
 UNICODE_NULL = u'\x00'
 

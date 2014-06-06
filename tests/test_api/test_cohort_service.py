@@ -1,7 +1,7 @@
 from nose.tools import assert_equals, assert_true, raises
 from sqlalchemy.orm.exc import NoResultFound
 
-from tests.fixtures import DatabaseTest
+from tests.fixtures import DatabaseTest, mediawiki_project
 from wikimetrics.api import CohortService
 from wikimetrics.exceptions import Unauthorized, InvalidCohort
 from wikimetrics.models import CohortStore, CohortUserStore, CohortUserRole
@@ -116,3 +116,13 @@ class CohortServiceTest(DatabaseTest):
     def test_get_wikiusers_empty(self):
         users = self.cohort_service.get_wikiusers(self.empty_cohort)
         assert_equals(len(users), 0)
+
+    def test_wiki_cohort_group_by_project_works(self):
+        self.create_wiki_cohort()
+        c = self.cohort_service.get(
+            self.session, self.owner_user_id, by_id=self.basic_wiki_cohort.id
+        )
+        users_by_project = list(self.cohort_service.get_users_by_project(c))
+        assert_equals(len(users_by_project), 1)
+        assert_equals(users_by_project[0][0], mediawiki_project)
+        assert_equals(users_by_project[0][1], None)

@@ -538,7 +538,12 @@ class DatabaseTest(unittest.TestCase):
         self.session.add(basic_wiki_cohort)
         self.session.commit()
         self.basic_wiki_cohort = basic_wiki_cohort
-
+        
+        owner = UserStore(username='test cohort owner', email='test@test.com')
+        self.session.add(owner)
+        self.session.commit()
+        self.owner_user_id = owner.id
+        
         cohort_user = CohortUserStore(
             user_id=self.owner_user_id,
             cohort_id=basic_wiki_cohort.id,

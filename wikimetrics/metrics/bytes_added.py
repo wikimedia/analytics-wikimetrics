@@ -60,11 +60,13 @@ class BytesAdded(TimeseriesMetric):
             ) AS anon_1
       GROUP BY anon_1.rev_user
     """
-    show_in_ui  = True
-    id          = 'bytes-added'
-    label       = 'Bytes Added'
-    description = 'Compute different aggregations of the bytes\
-                   contributed or removed from a mediawiki project'
+    show_in_ui      = True
+    id              = 'bytes-added'
+    label           = 'Bytes Added'
+    description     = 'Compute different aggregations of the bytes\
+                       contributed or removed from a mediawiki project'
+    # filled in below as the default depends on options
+    default_result  = {}
     
     namespaces          = CommaSeparatedIntegerListField(
         None,
@@ -151,6 +153,8 @@ class BytesAdded(TimeseriesMetric):
                 )).label('negative_only_sum'),
             )
             index += 1
-        
+
+        self.default_result = {s[0]: s[2] for s in submetrics}
+
         query = self.apply_timeseries(bytes_added_by_user, rev=BC.c)
         return self.results_by_user(user_ids, query, submetrics, date_index=index)

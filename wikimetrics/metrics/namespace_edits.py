@@ -36,7 +36,10 @@ class NamespaceEdits(TimeseriesMetric):
         'Compute the number of edits in a specific'
         'namespace of a mediawiki project'
     )
-    
+    default_result  = {
+        'edits': 0,
+    }
+
     namespaces = CommaSeparatedIntegerListField(
         None,
         [Required()],

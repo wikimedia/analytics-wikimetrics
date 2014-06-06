@@ -13,13 +13,14 @@ class Metric(WikimetricsSecureForm):
     class level properties that can be introspected by an interface.
     """
     
-    show_in_ui  = False
-    id          = None  # unique identifier for client-side use
+    show_in_ui      = False
+    id              = None  # unique identifier for client-side use
     
     # this will be displayed as the title of the metric-specific
     # tab in the request form
-    label       = None
-    description = None  # basic description of what the metric does
+    label           = None
+    description     = None  # basic description of what the metric does
+    default_result  = {}    # if results are empty, default to this
     
     def __call__(self, user_ids, session):
         """

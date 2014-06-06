@@ -1,9 +1,7 @@
 from wikimetrics.configurables import db
 from report import ReportLeaf
 from wikimetrics.models.storage.wikiuser import WikiUserKey
-
-
-__all__ = ['MetricReport']
+from wikimetrics.utils import NO_RESULTS
 
 
 class MetricReport(ReportLeaf):
@@ -23,7 +21,10 @@ class MetricReport(ReportLeaf):
         """
         super(MetricReport, self).__init__(*args, **kwargs)
         self.metric = metric
-        self.user_ids = list(user_ids)
+        if user_ids is not None:
+            self.user_ids = list(user_ids)
+        else:
+            self.user_ids = None
         self.cohort_id = cohort_id
         self.project = project
 
@@ -31,10 +32,13 @@ class MetricReport(ReportLeaf):
         session = db.get_mw_session(self.project)
         try:
             results_by_user = self.metric(self.user_ids, session)
-            return {
+            results = {
                 str(WikiUserKey(key, self.project, self.cohort_id)) : value
                 for key, value in results_by_user.items()
             }
+            if not len(results):
+                results = {NO_RESULTS : self.metric.default_result}
+            return results
         finally:
             session.close()
     

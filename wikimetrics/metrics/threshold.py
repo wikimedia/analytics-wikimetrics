@@ -63,6 +63,11 @@ class Threshold(Metric):
         <registration> to <registration> + <threshold_hours>.  \
         Also compute the time it took them to reach that threshold, in hours.'
     )
+    default_result = {
+        'threshold': None,
+        'time_to_threshold': None,
+        CENSORED: None,
+    }
     
     number_of_edits = IntegerField(default=1)
     threshold_hours = IntegerField(default=24)

@@ -28,6 +28,9 @@ class NewlyRegistered(Metric):
         'A newly registered user is a previously unregistered user creating a username \
         for the first time on a Wikimedia project.'
     )
+    default_result  = {
+        'newly_registered': 0,
+    }
 
     start_date  = BetterDateTimeField(default=thirty_days_ago)
     end_date    = BetterDateTimeField(default=today)
@@ -66,6 +69,6 @@ class NewlyRegistered(Metric):
             return metric_results
         else:
             return {
-                uid: metric_results.get(uid, {NewlyRegistered.id : 0})
+                uid: metric_results.get(uid, self.default_result)
                 for uid in user_ids
             }

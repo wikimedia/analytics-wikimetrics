@@ -34,10 +34,11 @@ class RevertRate(Metric):
       group by rev_user
     """
     
-    show_in_ui  = False
-    id          = 'revert-rate'
-    label       = 'Revert Rate'
-    description = 'Compute the number of reverted edits in a mediawiki project'
+    show_in_ui      = False
+    id              = 'revert-rate'
+    label           = 'Revert Rate'
+    description     = 'Compute the number of reverted edits in a mediawiki project'
+    default_result  = {}
     
     start_date  = BetterDateTimeField(default=thirty_days_ago)
     end_date    = BetterDateTimeField(default=today)

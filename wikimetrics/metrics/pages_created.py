@@ -33,7 +33,10 @@ class PagesCreated(TimeseriesMetric):
         'Compute the number of pages created by each \
          editor in a time interval'
     )
-    
+    default_result  = {
+        'pages_created': 0,
+    }
+
     namespaces = CommaSeparatedIntegerListField(
         None,
         [Required()],

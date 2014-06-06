@@ -62,6 +62,10 @@ class Survival(Metric):
         If sunset_in_hours is 0, look for edits from \
         <registration> + <survival_hours> to <today>.'
     )
+    default_result = {
+        'survived': None,
+        CENSORED: None,
+    }
     
     number_of_edits = IntegerField(default=1)
     survival_hours  = IntegerField(default=0)
@@ -167,10 +171,7 @@ class Survival(Metric):
         }
         
         r = {
-            uid: metric_results.get(uid, {
-                Survival.id : None,
-                CENSORED    : None,
-            })
+            uid: metric_results.get(uid, self.default_result)
             for uid in user_ids or metric_results.keys()
         }
         
