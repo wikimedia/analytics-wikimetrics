@@ -13,17 +13,16 @@ $(document).ready(function(){
             cohort.validation_status(data.validation_status);
             cohort.wikiusers(data.wikiusers);
             cohort.delete_message(data.delete_message);
-            this._populateTags(cohort, data)
+            viewModel._populateTags(cohort, data);
         },
         
-        _populateTags: function(cohort,data){
-            cohort.tags(data.tags);
-            cohort.tagsForMatching  = []
-            data.tags.forEach(function(item){
-                cohort.tagsForMatching.push(item.name)
-            })
-            
+        _populateTags: function(cohort, data){
+            cohort.tags(data.tags.map(function(t){
+                t.highlight = ko.observable(false);
+                return t;
+            }));
         },
+        
         view: function(cohort, event, callback){
             $.get('/cohorts/detail/' + cohort.id)
                 .done(site.handleWith(function(data){
@@ -68,17 +67,22 @@ $(document).ready(function(){
         
         addTag: function(form){
             /*
-            * turns tag lowercase and replaces ' ' with '-'
-            */
+             * turns tag lowercase and replaces ' ' with '-'
+             */
             function parseTag(tag){
-                return tag.replace(/\s+/g, "-").toLowerCase()
+                return tag.replace(/\s+/g, "-").toLowerCase();
             }
             
             var cohort = this;
-            var tag = cohort.tag_name();
-            tag = parseTag(tag)
+            var tag = parseTag(cohort.tag_name());
             //Make sure match is exact
-            var existing = cohort.tagsForMatching.indexOf(tag) >= 0;
+            var existing = null;
+            $.each(cohort.tags(), function(){
+                if (this.name === tag){
+                    existing = this;
+                    return false;
+                }
+            });
             if (!existing){
                 $.post('/cohorts/' + cohort.id + '/tag/add/' + tag)
                     .done(site.handleWith(function(data){
@@ -91,10 +95,9 @@ $(document).ready(function(){
                     }))
                     .fail(site.failure);
             } else {
-                var matches = $('.tags span.label span:contains("' + tag + '")');
-                matches.addClass('highlight');
+                existing.highlight(true);
                 setTimeout(function(){
-                    matches.removeClass('highlight');
+                    existing.highlight(false);
                 }, 1500);
             }
             cohort.tag_name('');
@@ -104,9 +107,6 @@ $(document).ready(function(){
             $.post('/cohorts/' +  cohort.id + '/tag/delete/' + tag.id)
                 .done(site.handleWith(function(data){
                     cohort.tags.remove(tag);
-                    cohort.tagsForMatching.splice(
-                        cohort.tagsForMatching.indexOf(tag.name),1)
-                    
                 }))
                 .fail(site.failure);
         }
