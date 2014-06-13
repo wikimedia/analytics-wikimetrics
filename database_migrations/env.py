@@ -1,4 +1,5 @@
 from __future__ import with_statement
+from copy import deepcopy
 from alembic import context
 from sqlalchemy import engine_from_config, pool, create_engine
 from logging.config import fileConfig
@@ -67,23 +68,21 @@ def run_migrations_online():
     database.
 
     """
-    import copy
     config = db.config
     engine = get_engine(config)
+    migrations = [(engine, target_metadata)]
 
-    test_config = setup_testing_config(copy.deepcopy(config))
-    test_engine = get_engine(test_config)
+    if db.config['DEBUG'] is True:
+        test_config = setup_testing_config(deepcopy(config))
+        test_engine = get_engine(test_config)
+        test_metadata = db.WikimetricsBase.metadata
+        migrations.append((test_engine, test_metadata))
 
-    test_metadata = db.WikimetricsBase.metadata
-
-    for name, eng, meta_data in [(test_config['WIKIMETRICS_ENGINE_URL'],
-                                  test_engine, test_metadata),
-                                 (config['WIKIMETRICS_ENGINE_URL'],
-                                  engine, target_metadata)]:
+    for eng, meta_data in migrations:
         connection = eng.connect()
         context.configure(connection=connection, target_metadata=meta_data)
 
-        print "Running migration for " + name
+        print("Running migration for " + eng.url.database)
         try:
             with context.begin_transaction():
                 context.run_migrations()
