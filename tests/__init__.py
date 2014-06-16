@@ -2,6 +2,7 @@ from subprocess import Popen
 from os import devnull
 from signal import SIGINT
 from time import sleep
+from wikimetrics.configurables import queue
 
 celery_proc = None
 celery_sched_proc = None
@@ -34,6 +35,10 @@ def setUp():
                   '--override-config', 'wikimetrics/config/test_config.yaml']
     global celery_proc
     celery_proc = Popen(celery_cmd, stdout=celery_out, stderr=celery_out)
+    
+    # TODO remove from here when
+    # this bug is fixed: https://bugzilla.wikimedia.org/show_bug.cgi?id=66770
+    queue.conf['CELERY_ALWAYS_EAGER'] = True
     
     # wait until celery broker / worker is up
     tries = 0
