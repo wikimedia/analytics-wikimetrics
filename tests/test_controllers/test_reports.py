@@ -17,7 +17,7 @@ from wikimetrics.exceptions import InvalidCohort
 from wikimetrics.controllers.reports import (
     get_celery_task,
 )
-from wikimetrics.configurables import app, get_absolute_path, db
+from wikimetrics.configurables import app, get_absolute_path, db, queue
 
 
 @contextmanager
@@ -32,9 +32,25 @@ def filterStatus(collection, status):
     return filter(lambda j : j['status'] == status, collection)
 
 
-class ReportsControllerTest(WebTest):
+class ControllerAsyncTest(WebTest):
+    
     def setUp(self):
+        # it is too bad but until we remove usage of AsyncResult in the codebase
+        # there is no way to make these tests synchronous
+        # thus overriding queue config so these tests
+        # use celery in async mode
+        queue.conf['CELERY_ALWAYS_EAGER'] = False
         WebTest.setUp(self)
+    
+    def tearDown(self):
+        queue.conf['CELERY_ALWAYS_EAGER'] = True
+        WebTest.tearDown(self)
+
+
+class ReportsControllerTest(ControllerAsyncTest):
+    
+    def setUp(self):
+        ControllerAsyncTest.setUp(self)
         # add reports just for testing
         report_created = ReportStore(
             user_id=self.owner_user_id,
@@ -67,8 +83,9 @@ class ReportsControllerTest(WebTest):
             report_finished
         ])
         self.session.commit()
-
+        
     def test_full_report_create_and_result(self):
+        
         # Make the request
         desired_responses = [{
             'name': 'Edits - test',
@@ -109,7 +126,7 @@ class ReportsControllerTest(WebTest):
         # Get the result directly
         result = task.get()
         assert_true(result is not None)
-
+       
         # Check the status via get
         response = self.client.get('/reports/status/{0}'.format(result_key))
         assert_true(response.data.find('SUCCESS') >= 0)
@@ -466,10 +483,10 @@ class ReportsControllerTest(WebTest):
         ))
 
 
-class MultiProjectTests(WebTest):
+class MultiProjectTests(ControllerAsyncTest):
     
     def setUp(self):
-        WebTest.setUp(self)
+        ControllerAsyncTest.setUp(self)
         
         # Prepare the second wiki database by adding a user with the same id as editor 0
         self.mwSession2.add(MediawikiUser(

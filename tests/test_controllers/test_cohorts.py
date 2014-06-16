@@ -26,16 +26,16 @@ class CohortsControllerTest(WebTest):
     def setUp(self):
         WebTest.setUp(self)
         self.cohort_service = CohortService()
-    
+
     def test_index(self):
         response = self.app.get('/cohorts/', follow_redirects=True)
         assert_equal(response.status_code, 200)
-    
+
     def test_list(self):
         response = self.app.get('/cohorts/list', follow_redirects=True)
         parsed = json.loads(response.data)
         assert_equal(parsed['cohorts'][0]['name'], self.cohort.name)
-    
+
     def test_list_includes_only_validated(self):
         # There is already one cohort, add one more validated and one not validated
         cohorts = [
@@ -54,20 +54,20 @@ class CohortsControllerTest(WebTest):
         ]
         self.session.add_all(owners)
         self.session.commit()
-        
+
         response = self.app.get('/cohorts/list', follow_redirects=True)
         parsed = json.loads(response.data)
         assert_equal(len(parsed['cohorts']), 2)
         assert_false('c1' in [c['name'] for c in parsed['cohorts']])
         assert_true('c2' in [c['name'] for c in parsed['cohorts']])
-    
+
     def test_detail(self):
         with cohort_service_set(app, self.cohort_service):
             response = self.app.get('/cohorts/detail/{0}'.format(self.cohort.id))
         parsed = json.loads(response.data)
         assert_equal(response.status_code, 200)
         assert_equal(len(parsed['wikiusers']), 3)
-    
+
     def test_detail_by_name(self):
         with cohort_service_set(app, self.cohort_service):
             response = self.app.get('/cohorts/detail/{0}'.format(self.cohort.name))
@@ -78,21 +78,25 @@ class CohortsControllerTest(WebTest):
         assert_equal(parsed['validation_status'], 'UNKNOWN')
         assert_equal(parsed['validated_count'], 3)
         assert_equal(parsed['total_count'], 3)
-    
-    def test_detail_by_name_after_async_validate(self):
+
+    def test_detail_by_name_after_validate(self):
         self.helper_reset_validation()
-        validate_cohort = ValidateCohort(self.cohort)
-        async_result = validate_cohort.task.delay(validate_cohort)
-        self.cohort.validation_queue_key = async_result.task_id
-        async_result.get()
-        
+
+        # Set a fake validation_queue_key as we are running on sync mode
+        self.cohort.validation_queue_key = 33
+        self.session.commit()
+        #executed validation synchronously
+        vc = ValidateCohort(self.cohort)
+        vc.validate_records(self.session, self.cohort)
         with cohort_service_set(app, self.cohort_service):
             response = self.app.get('/cohorts/detail/{0}'.format(self.cohort.name))
-        parsed = json.loads(response.data)
-        assert_equal(parsed['validation_status'], 'SUCCESS')
+            parsed = json.loads(response.data)
+
+        # note than it does not make sense to assert validation status
+        # as that is retrieved directly from celery and celery was not used in this test
         assert_equal(parsed['validated_count'], 4)
         assert_equal(parsed['total_count'], 4)
-    
+
     def test_detail_allowed_if_invalid(self):
         self.helper_reset_validation()
         with cohort_service_set(app, self.cohort_service):
@@ -101,7 +105,7 @@ class CohortsControllerTest(WebTest):
         assert_equal(parsed['validation_status'], 'UNKNOWN')
         assert_equal(parsed['validated_count'], 0)
         assert_equal(parsed['total_count'], 0)
-    
+
     def test_full_detail(self):
         with cohort_service_set(app, self.cohort_service):
             response = self.app.get('/cohorts/detail/{0}?full_detail=true'.format(
@@ -110,60 +114,60 @@ class CohortsControllerTest(WebTest):
         parsed = json.loads(response.data)
         assert_equal(response.status_code, 200)
         assert_equal(len(parsed['wikiusers']), 4)
-    
+
     def test_detail_not_allowed(self):
         self.helper_remove_authorization()
         with cohort_service_set(app, self.cohort_service):
             response = self.app.get('/cohorts/detail/{0}'.format(self.cohort.id))
         assert_equal(response.status_code, 401)
         assert_equal(response.data, 'You are not allowed to access this Cohort')
-    
+
     def test_detail_not_found(self):
         with cohort_service_set(app, self.cohort_service):
             response = self.app.get('/cohorts/detail/{0}'.format(-999))
         assert_equal(response.status_code, 404)
         assert_equal(response.data, 'Could not find this Cohort')
-    
+
     def test_validate_cohort_name_allowed(self):
         response = self.app.get('/cohorts/validate/name?name=sleijslij')
-        
+
         assert_equal(response.status_code, 200)
         assert_equal(json.loads(response.data), True)
-    
+
     def test_validate_cohort_name_not_allowed(self):
         response = self.app.get('/cohorts/validate/name?name={0}'.format(
             self.cohort.name)
         )
-        
+
         assert_equal(response.status_code, 200)
         assert_equal(json.loads(response.data), False)
-    
+
     def test_validate_cohort_project_allowed(self):
         response = self.app.get('/cohorts/validate/project?project=wiki')
-        
+
         assert_equal(response.status_code, 200)
         assert_equal(json.loads(response.data), True)
-    
+
     def test_validate_nonexistent_cohort(self):
         with cohort_service_set(app, self.cohort_service):
             response = self.app.post('/cohorts/validate/0')
-        
+
         assert_true(response.data.find('isError') >= 0)
         assert_true(response.data.find('This cohort does not exist') >= 0)
-    
+
     def test_validate_unauthorized_cohort(self):
         self.helper_remove_authorization()
         with cohort_service_set(app, self.cohort_service):
             response = self.app.post('/cohorts/validate/{0}'.format(self.cohort.id))
-        
+
         assert_true(response.data.find('isError') >= 0)
         assert_true(response.data.find('You are not allowed to access this cohort') >= 0)
-    
+
     def test_validate_cohort_again_after_upload(self):
         self.helper_reset_validation()
         with cohort_service_set(app, self.cohort_service):
             response = self.app.post('/cohorts/validate/{0}'.format(self.cohort.id))
-        
+
         assert_true(response.data.find('message') >= 0)
         assert_true(
             response.data.find('Validating cohort') >= 0
@@ -345,18 +349,18 @@ class CohortsControllerUploadTest(WebTest):
     def setUp(self):
         WebTest.setUp(self)
         self.cohort_service = CohortService()
-    
+
     def test_get_upload_form(self):
         response = self.app.get('/cohorts/upload')
         assert_equal(response.status_code, 200)
         assert_true(response.data.find('<h3>Create a Cohort') >= 0)
-    
+
     def test_upload_invalid_form(self):
         response = self.app.post('/cohorts/upload')
         assert_equal(response.status_code, 200)
         assert_true(response.data.find('<h3>Create a Cohort') >= 0)
         assert_true(response.data.find('Please fix validation problems') >= 0)
-    
+
     def test_upload_taken_cohort_name(self):
         response = self.app.post('/cohorts/upload', data=dict(
             name=self.cohort.name,
@@ -367,7 +371,7 @@ class CohortsControllerUploadTest(WebTest):
         assert_equal(response.status_code, 200)
         assert_true(response.data.find('<h3>Create a Cohort') >= 0)
         assert_true(response.data.find('That Cohort name is already taken') >= 0)
-    
+
     def test_upload_works(self):
         response = self.app.post('/cohorts/upload', data=dict(
             name='new_cohort_name',
@@ -387,7 +391,7 @@ class CohortsControllerUploadTest(WebTest):
         ))
         assert_equal(response.status_code, 302)
         assert_true(response.data.find('href="/cohorts/#') >= 0)
-    
+
     def test_upload_raises_exception(self):
         response = self.app.post('/cohorts/upload', data=dict(
             name='new_cohort_name',
@@ -396,7 +400,7 @@ class CohortsControllerUploadTest(WebTest):
             validate_as_user_ids='True',
         ))
         assert_true(response.data.find('Server error while processing your upload') >= 0)
-    
+
     def test_invalid_wiki_user_view(self):
         invalid = self.session.query(WikiUserStore).first()
         invalid.valid = False

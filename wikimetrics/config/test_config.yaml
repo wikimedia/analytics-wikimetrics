@@ -1,3 +1,4 @@
+CELERY_ALWAYS_EAGER             : True
 TEST                            : True
 WIKIMETRICS_ENGINE_URL          : 'mysql://wikimetrics:wikimetrics@localhost/wikimetrics_testing'
 MEDIAWIKI_ENGINE_URL_TEMPLATE   : 'mysql://wikimetrics:wikimetrics@localhost/{0}_testing'
