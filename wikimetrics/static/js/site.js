@@ -169,3 +169,13 @@ var site = {
         return keys;
     }
 };
+
+// moment configuration
+moment.lang('en', { calendar: {
+    sameDay  : '[Today at] HH:mm z',
+    lastDay  : '[Yesterday at] HH:mm z',
+    nextDay  : '[Tomorrow at] HH:mm z',
+    lastWeek : '[last] dddd [at] HH:mm z',
+    nextWeek : 'dddd [at] HH:mm z',
+    sameElse : 'YYYY-MM-DD z'
+}});

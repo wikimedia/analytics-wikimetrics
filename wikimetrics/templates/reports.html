@@ -52,7 +52,7 @@
                 </div>
             </td>
             <td>
-                <span data-bind="text: moment(created).calendar()"></span>
+                <span data-bind="text: moment(created).utc().calendar()"></span>
             </td>
             <td>
                 <span data-bind="text: status, css: {
