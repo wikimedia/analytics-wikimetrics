@@ -70,8 +70,7 @@ class CohortService(object):
     def get(self, db_session, user_id, **kargs):
         """Same as _get but checks validity of the cohort"""
         cohort = self._get(db_session, user_id, **kargs)
-        should_be_valid = issubclass(cohort.__class__, ValidatedCohort)
-        if should_be_valid and (not cohort.validated or cohort.size == 0):
+        if self.is_invalid(cohort) is True:
             raise InvalidCohort('This cohort is not valid')
         return cohort
 
@@ -115,6 +114,54 @@ class CohortService(object):
             raise Unauthorized('You are not allowed to use this cohort')
 
         if role in CohortUserRole.SAFE_ROLES:
-            return cohort_classes[cohort.class_name](cohort, size=len(cohort))
+            return cohort_classes[cohort.class_name](cohort, len(cohort))
         else:
             raise Unauthorized('You are not allowed to use this cohort')
+
+    def get_list(self, db_session, user_id):
+        """
+        Lists the cohorts belonging to a certain user that
+        are available to create reports
+
+        Parameters
+            db_session      : open session to the database
+            user_id         : user id of the cohort to retrieve cohorts for
+
+        Returns
+            List of Cohort objects
+        """
+        cohorts = self._get_list(db_session, user_id)
+        cohorts = filter(lambda c: not self.is_invalid(c), cohorts)
+        return cohorts
+
+    def get_list_for_display(self, db_session, user_id):
+        """
+        Lists the cohorts belonging to a certain user, including invalid ones
+
+        Parameters
+            db_session      : open session to the database
+            user_id         : user id of the cohort to retrieve cohorts for
+
+        Returns
+            List of Cohort objects
+        """
+        return self._get_list(db_session, user_id)
+
+    def _get_list(self, db_session, user_id):
+        query = db_session.query(CohortStore)\
+            .join(CohortUserStore)\
+            .join(UserStore)\
+            .filter(UserStore.id == user_id)\
+            .filter(CohortUserStore.role.in_(CohortUserRole.SAFE_ROLES))\
+            .filter(CohortStore.enabled)
+
+        return [cohort_classes[c.class_name](c, len(c)) for c in query.all()]
+
+    def is_invalid(self, cohort):
+        """
+        Returns
+            True if this cohort should be valid but is not
+            False otherwise
+        """
+        should_be_valid = issubclass(cohort.__class__, ValidatedCohort)
+        return should_be_valid and (not cohort.validated or cohort.size == 0)

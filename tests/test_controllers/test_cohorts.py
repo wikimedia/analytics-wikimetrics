@@ -3,7 +3,7 @@ import time
 from contextlib import contextmanager
 from flask import appcontext_pushed, g
 from StringIO import StringIO
-from nose.tools import assert_equal, assert_not_equal, assert_true, assert_false
+from nose.tools import assert_equal, assert_not_equal, assert_true
 
 from wikimetrics.api import CohortService
 from wikimetrics.configurables import app
@@ -40,7 +40,8 @@ class CohortsControllerTest(WebTest):
         # There is already one cohort, add one more validated and one not validated
         cohorts = [
             CohortStore(name='c1', enabled=True, validated=False),
-            CohortStore(name='c2', enabled=True, validated=True)
+            CohortStore(name='c2', enabled=True, validated=True),
+            CohortStore(name='c3', enabled=True, validated=True)
         ]
         self.session.add_all(cohorts)
         self.session.commit()
@@ -53,13 +54,22 @@ class CohortsControllerTest(WebTest):
             for c in cohorts
         ]
         self.session.add_all(owners)
+        c1_user = WikiUserStore(valid=True)
+        c3_user = WikiUserStore(valid=True)
+        self.session.add_all([c1_user, c3_user])
+        self.session.commit()
+
+        self.session.add_all([
+            CohortWikiUserStore(wiki_user_id=c1_user.id, cohort_id=cohorts[0].id),
+            CohortWikiUserStore(wiki_user_id=c3_user.id, cohort_id=cohorts[2].id)
+        ])
         self.session.commit()
 
         response = self.app.get('/cohorts/list', follow_redirects=True)
         parsed = json.loads(response.data)
         assert_equal(len(parsed['cohorts']), 2)
-        assert_false('c1' in [c['name'] for c in parsed['cohorts']])
-        assert_true('c2' in [c['name'] for c in parsed['cohorts']])
+        assert_true(self.cohort.name in [c['name'] for c in parsed['cohorts']])
+        assert_true('c3' in [c['name'] for c in parsed['cohorts']])
 
     def test_detail(self):
         with cohort_service_set(app, self.cohort_service):

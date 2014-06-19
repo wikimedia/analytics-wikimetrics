@@ -42,29 +42,21 @@ def cohorts_index():
 
 @app.route('/cohorts/list/')
 def cohorts_list():
-    include_invalid = request.args.get('include_invalid', 'false')
-    db_session = db.get_session()
+    include_invalid = request.args.get('include_invalid', 'false') == 'true'
     try:
-        cohorts = db_session\
-            .query(CohortStore.id, CohortStore.name, CohortStore.description)\
-            .join(CohortUserStore)\
-            .join(UserStore)\
-            .filter(UserStore.id == current_user.id)\
-            .filter(CohortUserStore.role.in_(CohortUserRole.SAFE_ROLES))\
-            .filter(CohortStore.enabled)\
-            .filter(or_(
-                CohortStore.validated,
-                (include_invalid == 'true')
-            ))\
-            .all()
+        db_session = db.get_session()
+        if include_invalid:
+            cohorts = g.cohort_service.get_list_for_display(db_session, current_user.id)
+        else:
+            cohorts = g.cohort_service.get_list(db_session, current_user.id)
+
+        return json_response(cohorts=[{
+            'id': c.id,
+            'name': c.name,
+            'description': c.description,
+        } for c in cohorts])
     finally:
         db_session.close()
-    
-    return json_response(cohorts=[{
-        'id': c.id,
-        'name': c.name,
-        'description': c.description,
-    } for c in cohorts])
 
 
 @app.route('/cohorts/detail/invalid-users/<int:cohort_id>')
