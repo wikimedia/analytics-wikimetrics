@@ -8,7 +8,7 @@ from celery.exceptions import SoftTimeLimitExceeded
 
 from tests.fixtures import QueueDatabaseTest, DatabaseTest
 from wikimetrics.models import (
-    RunReport, Aggregation, ReportStore,
+    RunReport, Aggregation, ReportStore, WikiUserStore, CohortWikiUserStore
 )
 from wikimetrics.exceptions import InvalidCohort
 from wikimetrics.metrics import TimeseriesChoices, metric_classes
@@ -223,6 +223,59 @@ class RunReportTest(QueueDatabaseTest):
             except InvalidCohort:
                 continue
             assert_true(False)
+
+    def test_wiki_cohort_runs(self):
+        self.create_wiki_cohort()
+        # give the WikiCohort all the users of self.cohort, for easy testing
+        self.session.execute(
+            WikiUserStore.__table__.update().values(
+                validating_cohort=self.basic_wiki_cohort.id
+            ).where(
+                WikiUserStore.validating_cohort == self.cohort.id
+            )
+        )
+        self.session.execute(
+            CohortWikiUserStore.__table__.update().values(
+                cohort_id=self.basic_wiki_cohort.id
+            ).where(
+                CohortWikiUserStore.cohort_id == self.cohort.id
+            )
+        )
+        self.cohort = self.basic_wiki_cohort
+        parameters = {
+            'name': 'Edits - test',
+            'cohort': {
+                'id': self.cohort.id,
+                'name': self.cohort.name,
+            },
+            'metric': {
+                'name': 'NamespaceEdits',
+                'namespaces': [0, 1, 2],
+                'start_date': '2013-01-01 00:00:00',
+                'end_date': '2013-01-02 00:00:00',
+                'individualResults': True,
+                'aggregateResults': True,
+                'aggregateSum': True,
+                'aggregateAverage': False,
+                'aggregateStandardDeviation': False,
+            },
+        }
+        jr = RunReport(parameters, user_id=self.owner_user_id)
+        results = jr.task.delay(jr).get()
+        self.session.commit()
+        result_key = self.session.query(ReportStore) \
+            .get(jr.persistent_id) \
+            .result_key
+        results = results[result_key]
+        assert_equals(
+            results[Aggregation.IND][self.editor(0)]['edits'],
+            2,
+        )
+
+        assert_equals(
+            results[Aggregation.SUM]['edits'],
+            4,
+        )
 
     def test_aggregated_response_namespace_edits(self):
         parameters = {
