@@ -1,0 +1,161 @@
+#!/usr/bin/env python
+import argparse
+import sys
+
+from datetime import datetime
+
+
+def run_cohorts(args):
+    print('... validating list of projects')
+    projects = db.get_project_host_map()
+    if args.projects:
+        invalid_projects = [p for p in args.projects if p not in projects]
+        if invalid_projects:
+            print('These are unknown: {}'.format(invalid_projects))
+            sys.exit(1)
+        valid_projects = args.projects
+    elif args.all_projects:
+        valid_projects = projects
+
+    service = CohortService()
+    try:
+        session = db.get_session()
+        for project in valid_projects:
+            print('... adding "{}"'.format(project))
+            cohort = service.add_wiki_cohort(session, project)
+            service.share(session, cohort, args.user.id)
+    finally:
+        session.close()
+
+
+def run_reports(args):
+    print('... validating cohorts')
+    from wikimetrics.metrics import metric_classes
+    metric_choices = [k for k, v in metric_classes.items() if v.show_in_ui]
+    while not args.metric or args.metric not in metric_choices:
+        print('Please choose one METRIC: {}'.format(metric_choices))
+        args.metric = sys.stdin.readline().strip()
+
+    service = CohortService()
+    while not args.cohorts or not len(args.cohorts) or not args.cohorts[0]:
+        print('Please specify COHORT(s): (eg: enwiki commonswiki rowiki)')
+        args.cohorts = sys.stdin.readline().strip().split(' ')
+    cohorts = set(args.cohorts)
+    invalid = set()
+    unauthorized = set()
+    valid = []
+    try:
+        session = db.get_session()
+        for c in cohorts:
+            try:
+                cohort = service.get(session, args.user.id, by_name=c)
+                valid.append(cohort)
+            except (NoResultFound, InvalidCohort):
+                invalid.add(c)
+            except Unauthorized:
+                unauthorized.add(c)
+
+        if invalid or unauthorized:
+            print('Invalid Cohorts: {}'.format(list(invalid)))
+            print('Unauthorized Cohorts: {}'.format(list(unauthorized)))
+            sys.exit(1)
+
+        from wikimetrics.models.report_nodes.run_report import RunReport
+        from wikimetrics.utils import today
+        start = args.start or today()
+        for cohort in valid:
+            parameters = dict(
+                name='{} - {}'.format(cohort.name, args.metric),
+                cohort=dict(id=cohort.id, name=cohort.name),
+                metric=dict(name=args.metric),
+                recurrent=True,
+                public=True,
+            )
+            # Do not create duplicate reports (we can add an option to force later)
+            existing = session.query(ReportStore)\
+                .filter(ReportStore.name == parameters['name'])\
+                .filter(ReportStore.user_id == args.user.id)\
+                .count()
+            if existing == 0:
+                RunReport(parameters, user_id=args.user.id, created=start)
+                print('... queueing "{}"'.format(parameters['name']))
+            else:
+                print('... already exists: "{}"'.format(parameters['name']))
+    finally:
+        session.close()
+
+
+def get_user(args):
+    try:
+        s = db.get_session()
+        print('... looking up user')
+        q = s.query(UserStore)
+        if args.user:
+            u = q.get(args.user)
+        else:
+            u = q.filter(UserStore.username == 'WikimetricsBot').one()
+        print('... found user "{}", id: "{}"'.format(u.username or u.email, u.id))
+        args.user = u
+
+    except Exception, e:
+        print(e)
+        sys.exit(1)
+    finally:
+        s.close()
+
+
+parser = argparse.ArgumentParser(description='Manage cohorts or reports in bulk')
+parser.add_argument(
+    '-u', '--user',
+    help='Owner of any new records being inserted (default: id of WikimetricsBot)',
+    type=int,
+)
+
+subparsers = parser.add_subparsers(help='Different modes of administration')
+
+parse_cohorts = subparsers.add_parser('cohorts', help='Add wiki cohorts to a user')
+parse_reports = subparsers.add_parser('reports', help='Add recurrent reports for a user')
+
+parse_cohorts.set_defaults(func=run_cohorts)
+parse_reports.set_defaults(func=run_reports)
+
+parse_cohorts_projects = parse_cohorts.add_mutually_exclusive_group(required=True)
+parse_cohorts_projects.add_argument(
+    '-p', '--projects',
+    help='List of projects to add (default: no projects)',
+    nargs='+',
+)
+parse_cohorts_projects.add_argument(
+    '-a', '--all-projects',
+    help='Add all known projects',
+    action='store_true',
+)
+
+parse_reports.add_argument(
+    '-m', '--metric',
+    help='Name of a single metric to add reports for.  '
+         'Name is case sensitive and will be validated '
+         '(eg. BytesAdded, NamespaceEdits, NewlyRegistered, etc.)',
+)
+parse_reports.add_argument(
+    '-s', '--start',
+    help='Date to start the report, in YYYY-MM-DD format (default: today)',
+    type=lambda s: datetime.strptime(s, '%Y-%m-%d'),
+)
+# NOTE: the -c shorthand causes collisions with wikimetrics' argparse setup
+parse_reports.add_argument(
+    '--cohorts',
+    help='List of cohorts to add reports for (default: no cohorts)',
+    nargs='+',
+)
+
+args = parser.parse_args()
+# TODO: importing earlier makes the wikimetrics argparse clash with this file's argparse
+from wikimetrics.configurables import db
+from wikimetrics.models import UserStore, ReportStore
+from wikimetrics.api.cohorts import CohortService
+from wikimetrics.exceptions import InvalidCohort, Unauthorized
+from sqlalchemy.orm.exc import NoResultFound
+
+get_user(args)
+args.func(args)

@@ -5,6 +5,7 @@ from tests.fixtures import DatabaseTest, mediawiki_project
 from wikimetrics.api import CohortService
 from wikimetrics.exceptions import Unauthorized, InvalidCohort
 from wikimetrics.models import CohortStore, CohortUserStore, CohortUserRole
+from wikimetrics.models.cohorts import Cohort
 
 
 class CohortServiceTest(DatabaseTest):
@@ -126,3 +127,27 @@ class CohortServiceTest(DatabaseTest):
         assert_equals(len(users_by_project), 1)
         assert_equals(users_by_project[0][0], mediawiki_project)
         assert_equals(users_by_project[0][1], None)
+
+    def test_convert(self):
+        cohort = self.cohort_service.convert(self.cohort)
+        assert_true(issubclass(cohort.__class__, Cohort))
+
+    def test_add_wiki_cohort(self):
+        dewiki1 = self.cohort_service.add_wiki_cohort(self.session, 'dewiki')
+        assert_equals(dewiki1.name, 'dewiki')
+        assert_equals(dewiki1.default_project, 'dewiki')
+        assert_equals(type(dewiki1).__name__, 'WikiCohort')
+        assert_equals(dewiki1.enabled, True)
+        dewiki2 = self.cohort_service.add_wiki_cohort(self.session, 'dewiki')
+        # make sure the cohort doesn't get added twice
+        assert_equals(dewiki1.id, dewiki2.id)
+
+    def test_share(self):
+        cohorts = self.cohort_service.get_list(self.session, self.owner_user_id)
+        assert_true('dewiki' not in [c.default_project for c in cohorts])
+
+        dewiki = self.cohort_service.add_wiki_cohort(self.session, 'dewiki')
+        self.cohort_service.share(self.session, dewiki, self.owner_user_id)
+
+        cohorts = self.cohort_service.get_list(self.session, self.owner_user_id)
+        assert_true('dewiki' in [c.default_project for c in cohorts])
