@@ -61,7 +61,6 @@ class AggregateReport(ReportNode):
     
     def finish(self, child_results):
         aggregated_results = dict()
-        task_logger.info(str(child_results))
         results_by_user = child_results[0]
         
         if self.aggregate:
