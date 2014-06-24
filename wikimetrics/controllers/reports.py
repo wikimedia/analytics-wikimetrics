@@ -1,6 +1,7 @@
 import json
 from csv import DictWriter
 from StringIO import StringIO
+from sqlalchemy import or_
 from sqlalchemy.orm.exc import NoResultFound
 from flask import render_template, request, redirect, url_for, Response, abort, g
 from flask.ext.login import current_user
@@ -102,7 +103,7 @@ def reports_list():
     try:
         reports = db_session.query(ReportStore)\
             .filter(ReportStore.user_id == current_user.id)\
-            .filter(ReportStore.created > thirty_days_ago())\
+            .filter(or_(ReportStore.created > thirty_days_ago(), ReportStore.recurrent))\
             .filter(ReportStore.show_in_ui)\
             .all()
         # TODO: update status for all reports at all times (not just show_in_ui ones)

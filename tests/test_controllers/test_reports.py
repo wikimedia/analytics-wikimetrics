@@ -7,6 +7,7 @@ from mock import Mock, MagicMock
 from contextlib import contextmanager
 from flask import appcontext_pushed, g
 from nose.tools import assert_true, assert_equal, assert_false, raises
+from datetime import date, timedelta
 
 from tests.fixtures import WebTest, second_mediawiki_project
 from wikimetrics.models import (
@@ -76,11 +77,30 @@ class ReportsControllerTest(ControllerAsyncTest):
             queue_result_key=None,
             show_in_ui=True
         )
+        report_recurrent = ReportStore(
+            user_id=self.owner_user_id,
+            status=celery.states.SUCCESS,
+            queue_result_key=None,
+            show_in_ui=True,
+            recurrent=True
+        )
+        self.past_date = date.today() - timedelta(days=60)
+        
+        report_recurrent_two_months_ago = ReportStore(
+            user_id=self.owner_user_id,
+            status=celery.states.SUCCESS,
+            queue_result_key=None,
+            show_in_ui=True,
+            created=self.past_date,
+            recurrent=True
+        )
         self.session.add_all([
             report_created,
             report_started,
             report_started2,
-            report_finished
+            report_finished,
+            report_recurrent,
+            report_recurrent_two_months_ago,
         ])
         self.session.commit()
         
@@ -171,10 +191,12 @@ class ReportsControllerTest(ControllerAsyncTest):
         parsed = json.loads(response.data)
         assert_equal(
             len(filterStatus(parsed['reports'], celery.states.SUCCESS)),
-            1,
+            3,
             '/reports/list should return a list of report objects,'
             'but instead returned:\n{0}'.format(response.data)
         )
+        # data should display the report created a while back
+        assert_true(str(self.past_date) in str(parsed))
 
     def test_report_request_get(self):
         response = self.client.get('/reports/create/')
