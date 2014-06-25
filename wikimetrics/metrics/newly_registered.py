@@ -61,7 +61,6 @@ class NewlyRegistered(Metric):
 
         metric = self.filter(query, user_ids, column=Logging.log_user)
         data = metric.all()
-        print data
 
         metric_results = {r[0]: {NewlyRegistered.id : 1} for r in data}
 

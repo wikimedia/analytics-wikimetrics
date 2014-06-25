@@ -247,3 +247,19 @@ def parse_username(username):
 def parse_tag(tag):
     parsed_tag = " ".join(tag.lower().split()).replace(" ", "-")
     return parsed_tag
+
+
+def chunk(array, chunk_size):
+    """
+    Chunk a list into sub-lists
+
+    Parameters
+        array       : a list
+        chunk_size  : max size for each returned sublist
+
+    Returns
+        array chunked up into chunk_size pieces and returned as
+        a generator of those pieces (last piece might be < chunk_size)
+    """
+    for i in xrange(0, len(array), chunk_size):
+        yield array[i : i + chunk_size]

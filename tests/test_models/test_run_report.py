@@ -30,120 +30,127 @@ class RunReportClassMethodsTest(DatabaseTest):
         queue.conf['CELERYBEAT_SCHEDULE'] = {}
 
         self.common_cohort_1()
-        uid = self.owner_user_id
+        self.uid = self.owner_user_id
         self.today = strip_time(datetime.today())
-        ago_25 = self.today - timedelta(days=25)
-        ago_35 = self.today - timedelta(days=35)
-        ago_05 = self.today - timedelta(days=5)
+        # NOTE: running with 20 just makes the tests run faster, but any value > 11 works
+        self.no_more_than = 20
+        self.missed_by_index = {
+            0: [1, 2, 11],
+            1: [1, 2, 11, self.no_more_than + 1, self.no_more_than + 3],
+            2: [1, 2],
+            3: range(0, self.no_more_than + 10),
+        }
+        self.ago_by_index = {
+            0: 26,
+            1: self.no_more_than + 10,
+            2: 6,
+            3: self.no_more_than + 10
+        }
+        age = {
+            i: self.today - timedelta(days=v - 1)
+            for i, v in self.ago_by_index.items()
+        }
 
-        p = {
+        self.p = {
             'metric': {
-                'start_date': ago_05, 'end_date': self.today, 'name': 'NamespaceEdits',
+                'start_date': age[0], 'end_date': self.today, 'name': 'NamespaceEdits',
             },
             'recurrent': True,
             'cohort': {'id': self.cohort.id, 'name': self.cohort.name},
             'name': 'test-recurrent-reports',
         }
-        ps = stringify(p)
+        ps = stringify(self.p)
 
         self.reports = [
-            ReportStore(recurrent=True, created=ago_25, parameters=ps, user_id=uid),
-            ReportStore(recurrent=True, created=ago_35, parameters=ps, user_id=uid),
-            ReportStore(recurrent=True, created=ago_05, parameters=ps, user_id=uid),
+            ReportStore(recurrent=True, created=age[0], parameters=ps, user_id=self.uid),
+            ReportStore(recurrent=True, created=age[1], parameters=ps, user_id=self.uid),
+            ReportStore(recurrent=True, created=age[2], parameters=ps, user_id=self.uid),
+            ReportStore(recurrent=True, created=age[3], parameters=ps, user_id=self.uid),
         ]
         self.session.add_all(self.reports)
         self.session.commit()
 
+    def add_runs_to_report(self, index):
+        p = self.p
         self.report_runs = []
-        for d in range(0, 35):
+        for d in range(0, self.no_more_than + 10):
             day = self.today - timedelta(days=d)
             p['metric']['start_date'] = day - timedelta(days=1)
             p['metric']['end_date'] = day
             p['recurrent'] = False
             ps = stringify(p)
-            if d not in [1, 2, 11] and d < 26:
+            if d not in (self.missed_by_index[index]) and d < self.ago_by_index[index]:
                 self.report_runs.append(ReportStore(
-                    recurrent_parent_id=self.reports[0].id,
+                    recurrent_parent_id=self.reports[index].id,
                     created=day,
                     status='SUCCESS',
                     parameters=ps,
-                    user_id=uid,
-                ))
-            if d not in [1, 2, 11, 31, 33]:
-                self.report_runs.append(ReportStore(
-                    recurrent_parent_id=self.reports[1].id,
-                    created=day,
-                    status='SUCCESS',
-                    parameters=ps,
-                    user_id=uid,
-                ))
-            if d not in [1, 2] and d < 6:
-                self.report_runs.append(ReportStore(
-                    recurrent_parent_id=self.reports[2].id,
-                    created=day,
-                    status='SUCCESS',
-                    parameters=ps,
-                    user_id=uid,
+                    user_id=self.uid,
                 ))
 
         self.session.add_all(self.report_runs)
         self.session.commit()
 
     def test_days_missed_0(self):
+        self.add_runs_to_report(0)
         missed_days = RunReport.days_missed(self.reports[0], self.session)
-        assert_equals(missed_days, set([
-            self.today - timedelta(days=1),
-            self.today - timedelta(days=2),
-            self.today - timedelta(days=11),
+        assert_equals(set(missed_days), set([
+            self.today - timedelta(days=m)
+            for m in self.missed_by_index[0]
         ]))
 
     def test_days_missed_1(self):
+        self.add_runs_to_report(1)
         missed_days = RunReport.days_missed(self.reports[1], self.session)
-        assert_equals(missed_days, set([
-            self.today - timedelta(days=1),
-            self.today - timedelta(days=2),
-            self.today - timedelta(days=11),
-            # NOTE: search stops at 30 days, so it doesn't matter that
-            # the 31 and 33 days-ago runs were missed
+        assert_equals(set(missed_days), set([
+            self.today - timedelta(days=m)
+            for m in self.missed_by_index[1]
         ]))
 
     def test_days_missed_2(self):
+        self.add_runs_to_report(2)
         missed_days = RunReport.days_missed(self.reports[2], self.session)
-        assert_equals(missed_days, set([
-            self.today - timedelta(days=1),
-            self.today - timedelta(days=2),
+        assert_equals(set(missed_days), set([
+            self.today - timedelta(days=m)
+            for m in self.missed_by_index[2]
         ]))
 
     def test_create_reports_for_missed_days_0(self):
+        self.add_runs_to_report(0)
         new_runs = list(RunReport.create_reports_for_missed_days(
-            self.reports[0], self.session
+            self.reports[0], self.session, no_more_than=self.no_more_than
         ))
         assert_equals(set([r.created for r in new_runs]), set([
-            self.today - timedelta(days=1),
-            self.today - timedelta(days=2),
-            self.today - timedelta(days=11),
+            self.today - timedelta(days=m)
+            for m in self.missed_by_index[0]
         ]))
 
     def test_create_reports_for_missed_days_1(self):
+        self.add_runs_to_report(1)
         new_runs = list(RunReport.create_reports_for_missed_days(
-            self.reports[1], self.session
+            self.reports[1], self.session, no_more_than=self.no_more_than
         ))
         assert_equals(set([r.created for r in new_runs]), set([
-            self.today - timedelta(days=1),
-            self.today - timedelta(days=2),
-            self.today - timedelta(days=11),
+            self.today - timedelta(days=m)
+            for m in self.missed_by_index[1]
         ]))
-        # NOTE: search stops at 30 days, so it doesn't matter that
-        # the 31 and 33 days-ago runs were missed
 
     def test_create_reports_for_missed_days_2(self):
+        self.add_runs_to_report(2)
         new_runs = list(RunReport.create_reports_for_missed_days(
-            self.reports[2], self.session
+            self.reports[2], self.session, no_more_than=self.no_more_than
         ))
         assert_equals(set([r.created for r in new_runs]), set([
-            self.today - timedelta(days=1),
-            self.today - timedelta(days=2),
+            self.today - timedelta(days=m)
+            for m in self.missed_by_index[2]
         ]))
+
+    def test_create_reports_for_missed_days_3(self):
+        self.add_runs_to_report(3)
+        new_runs = list(RunReport.create_reports_for_missed_days(
+            self.reports[3], self.session, no_more_than=self.no_more_than
+        ))
+        assert_equals(len(new_runs), self.no_more_than)
 
 
 class RunReportTest(QueueDatabaseTest):

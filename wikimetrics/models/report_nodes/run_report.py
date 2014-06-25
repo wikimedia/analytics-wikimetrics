@@ -146,7 +146,7 @@ class RunReport(ReportNode):
 
     # TODO, this method belongs on a different class and it should not be a class method
     @classmethod
-    def create_reports_for_missed_days(cls, report, session):
+    def create_reports_for_missed_days(cls, report, session, no_more_than=365):
         """
         Find which runs of a recurrent report were missed and create one report for each
         of those runs.  This method considers at most the last 30 days when searching for
@@ -155,8 +155,9 @@ class RunReport(ReportNode):
         will set the start_date to yesterday and end_date to today.
 
         Parameters:
-            report  : the parent recurrent report
-            session : a database session to the wikimetrics database
+            report          : the parent recurrent report
+            session         : a database session to the wikimetrics database
+            no_more_than    : do not create more than this many reports, defaults to 365
 
         Returns:
             An array of RunReport instances that each represent a missed run of the
@@ -167,6 +168,7 @@ class RunReport(ReportNode):
         # get the days the report needs to be run for
         days_missed = cls.days_missed(report, session)
 
+        reports_created = 0
         for day in days_missed:
             try:
                 # get the report parameters
@@ -187,17 +189,21 @@ class RunReport(ReportNode):
                     recurrent_parent_id=report.id,
                     created=day,
                 )
+                reports_created += 1
             except Exception, e:
                 task_logger.error('Problem creating child report: {}'.format(e))
                 continue
 
             yield new_run
 
+            if reports_created >= no_more_than:
+                break
+
     # TODO, this method belongs on a different class and it should not be a class method
     @classmethod
     def days_missed(cls, report, session):
         """
-        Examine the past runs of a recurring report, for up to 30 days.
+        Examine the past runs of a recurring report
         Find any missed runs, including today's run.  Raise an exception if there
         are more runs than expected.
 
@@ -209,9 +215,6 @@ class RunReport(ReportNode):
             An array of datetimes representing the days when the report did not run
         """
         search_from = strip_time(report.created)
-        look_at_most_this_far = to_datetime(thirty_days_ago())
-        if search_from < look_at_most_this_far:
-            search_from = look_at_most_this_far
 
         completed_days = [pr[0] for pr in session.query(ReportStore.created)
                           .filter(ReportStore.recurrent_parent_id == report.id)
@@ -227,4 +230,4 @@ class RunReport(ReportNode):
             task_logger.warn('Unexpected runs: {}'.format(sorted(unexpected_days)))
             raise Exception('More reports ran than were supposed to')
 
-        return missed_days
+        return sorted(missed_days)

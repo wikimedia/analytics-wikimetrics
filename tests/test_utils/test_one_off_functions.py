@@ -13,7 +13,8 @@ from wikimetrics.utils import (
     format_pretty_date,
     diff_datewise,
     timestamps_to_now,
-    parse_tag
+    parse_tag,
+    chunk,
 )
 from wikimetrics.metrics import NamespaceEdits
 
@@ -147,3 +148,9 @@ class TestUtil(TestCase):
         ]
         timestamps = timestamps_to_now(start, timedelta(hours=1))
         self.assertEqual(expect, list(timestamps))
+
+    def test_chunk(self):
+        chunked = list(chunk(range(2, 9), 2))
+        assert_equal(chunked, [[2, 3], [4, 5], [6, 7], [8]])
+        chunked = list(chunk(range(2, 3), 2))
+        assert_equal(chunked, [[2]])
