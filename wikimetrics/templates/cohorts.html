@@ -17,11 +17,11 @@
     </ul>
     <div class="tab-content" data-bind="foreach: cohorts">
         <div class="tab-pane small" data-bind="attr: {id: id}">
-            <div class="well">
+            <div class="well well-large" style="height:200px">
                 <h2><span data-bind="text: name"></span>
                     <small data-bind="text: description"></small>
-                </h2>
-                <div style="padding:10px 0 10px 0" data-bind="foreach: tags" class="tags">
+                 </h2>  
+                <div  data-bind="foreach: tags" class="tags">
                     <span class="label">
                         <span data-bind="text: name, css: {highlight: highlight}"></span>
                         <a data-bind="click: $root.deleteTag.bind($data, event, $parent)"><i class="icon-remove"></i></a>
@@ -34,47 +34,44 @@
                         </form>
                 </div>
                 <br />
-                <div data-bind="if: validated_count() === total_count() && !validated()">
+                <div data-bind="visible: has_validation_info"> <!-- start validating info -->
+                    <div data-bind="if: validating">
+                        <hr/>
+                        <p>
+                            Validation: <span data-bind="text: validation_progress"></span>
+                            <a class="btn" data-bind="attr: {href: '#' + id}, click: $root.view"><span class="icon-refresh"></span> refresh</a>
+                        </p>
+                    </div>
                     <hr/>
-                    <p>
-                        Validation: <span>FINISHING UP</span>
-                        <a class="btn" data-bind="attr: {href: '#' + id}, click: $root.view"><span class="icon-refresh"></span> refresh</a>
-                    </p>
+                    <div  class="validated-users">
+                        <p>
+                            Validated
+                            <span data-bind="text: validated_count"></span> of
+                            <span data-bind="text: total_count"></span> cohort members.
+                            <span data-bind="text: valid_count"></span> are valid,
+                            <a data-bind="attr: {href: '/cohorts/detail/invalid-users/' + id}" target="_blank">
+                                <span data-bind="text: invalid_count"></span> are invalid.
+                            </a>
+                        </p>
+                    </div>
                 </div>
-                <div data-bind="if: validated_count() < total_count()">
-                    <hr/>
-                    <p>
-                        Validation: <span data-bind="text: validation_status"></span>
-                        <!-- ko if: validation_status() === 'PENDING' -->
-                        <a class="btn" data-bind="attr: {href: '#' + id}, click: $root.view"><span class="icon-refresh"></span> refresh</a>
-                        <!-- /ko -->
-                    </p>
-                </div>
-                <hr />
-                <div>
-                <p class="validated-users">
-                    Validated
-                    <span data-bind="text: validated_count"></span> of
-                    <span data-bind="text: total_count"></span> cohort members.
-                    <span data-bind="text: valid_count"></span> are valid,
-                    <a data-bind="attr: {href: '/cohorts/detail/invalid-users/' + id}" target="_blank">
-                        <span data-bind="text: invalid_count"></span> are invalid.
-                    </a>
-                </p>
-                <span data-bind="if: valid_count() < total_count()">
-                    <p>
-                        <a data-bind="click: $root.validateWikiusers"
-                           class="btn"
-                           title="cancel and restart validation for this cohort">Validate Again</a>
-                    </p>
-                </span>
-                </div>
-            </div>
+           </div><!-- end validating info -->
             <div class="pull-right">
-                <div class="btn-group pull-left" data-bind="if: validated() && valid_count() > 0">
+                <div class="btn-group pull-left" data-bind="if: can_run_report">
                     <a data-bind="attr:{href:'{{url_for('reports_request')}}#'+id}"
                        class="btn btn-primary">Create Report</a>
                 </div>
+                <!-- TODO: IMPORTANT: "Validate Again" functionality is broken.
+                     A cohort which has some valid and some invalid users will end up with ALL invalid users if this functionality is used as is.
+                <div class="btn-group pull-left" data-bind="if: has_validation_info">
+                    <span data-bind="if: not_all_valid">
+                        <p>
+                            <a data-bind="click: $root.validateWikiusers"
+                               class="btn"
+                               title="cancel and restart validation for this cohort">Validate Again</a>
+                        </p>
+                    </span>
+                </div> -->
                 <div class="btn-group">
                     <a data-bind="click: $root.deleteCohort, attr: { title: delete_message }"
                        class="btn btn-danger">Remove Cohort</a>

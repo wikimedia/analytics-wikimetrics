@@ -41,3 +41,4 @@ class Cohort(object):
     created             = CohortProperty()
     enabled             = CohortProperty()
     public              = CohortProperty()
+    has_validation_info = False

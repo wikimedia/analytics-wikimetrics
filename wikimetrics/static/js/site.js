@@ -167,6 +167,11 @@ var site = {
         }
         
         return keys;
+    },
+    //Serializes object to json and verifies is an empty string
+    isEmpty: function(obj){
+        var empty = JSON.stringify(obj) === "{}";
+        return empty
     }
 };
 

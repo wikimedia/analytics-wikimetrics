@@ -24,7 +24,7 @@ class PagesCreatedWikiCohortTest(DatabaseTest):
         # would be WikiUserStore objects, so we should treat it as such
         self.user_ids = [
             w.mediawiki_userid
-            for w in self.cohort_service.get_wikiusers(self.wiki_cohort)
+            for w in self.cohort_service.get_wikiusers(self.wiki_cohort, self.session)
         ]
 
     def test_pages_created_happy_case(self):

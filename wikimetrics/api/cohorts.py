@@ -1,5 +1,5 @@
 from sqlalchemy.orm.exc import NoResultFound
-
+from sqlalchemy import func
 from wikimetrics.configurables import db
 from wikimetrics.exceptions import Unauthorized, InvalidCohort
 from wikimetrics.models import cohort_classes, ValidatedCohort, WikiCohort
@@ -24,7 +24,7 @@ class CohortService(object):
     # TODO: check ownership of the cohort
     # TODO: once we have logical models for wikiusers, we may want to eagerly
     #       load wikiusers with the logical cohort instance and use that here
-    def get_wikiusers(self, cohort, limit=None):
+    def get_wikiusers(self, cohort, session, limit=None):
         """
         Parameters
             cohort: a logical Cohort object
@@ -37,12 +37,9 @@ class CohortService(object):
         """
         c = self.fetch(cohort)
         if limit:
-            try:
-                session = db.get_session()
-                return c.filter_wikiuser_query(
-                    session.query(WikiUserStore)).limit(limit).all()
-            finally:
-                session.close()
+
+            return c.filter_wikiuser_query(
+                session.query(WikiUserStore)).limit(limit).all()
         else:
             return list(c)
 
@@ -166,11 +163,11 @@ class CohortService(object):
     def is_invalid(self, cohort):
         """
         Returns
-            True if this cohort should be valid but is not
+            True if this cohort should be validated and valid
+            to be used but is not
             False otherwise
         """
-        should_be_valid = issubclass(cohort.__class__, ValidatedCohort)
-        return should_be_valid and (not cohort.validated or cohort.size == 0)
+        return cohort.has_validation_info and (not cohort.validated or cohort.size == 0)
 
     def add_wiki_cohort(self, session, project):
         """
@@ -226,3 +223,57 @@ class CohortService(object):
         if existing is None:
             session.add(search)
             session.commit()
+
+    def get_validation_info(self, cohort, session):
+        """
+        Returns
+            If the cohort has no validation information, an empty dictionary
+            Otherwise, a dictionary with cohort validation stats:
+
+            invalid_count       : number of invalid users
+            valid_count         : number of valid users
+            total_count         : number of users in the cohort
+            not_validated_count : users in the cohort not yet validated at all
+        """
+        if not cohort.has_validation_info:
+            # make UI work as little as possible, do not return nulls
+            return {}
+
+        """
+            select valid, count(*)
+              from wikimetrics.wiki_user
+             group by valid
+
+        Returns:
+            +-------+----------+
+            | valid | count(*) |
+            +-------+----------+
+            |  null |     1576 |
+            |     0 |       61 |
+            |     1 |     1593 |
+            +-------+----------+
+
+            Since valid is defined as boolean on bindings 1 and 0 are translated to
+            True and False, null to None
+        """
+
+        rows = session\
+            .query(WikiUserStore.valid, func.count(WikiUserStore).label('count'))\
+            .filter(WikiUserStore.validating_cohort == cohort.id)\
+            .group_by(WikiUserStore.valid)\
+            .all()
+
+        counts_by_valid = {r.valid : r.count for r in rows}
+        stats = {
+            label : counts_by_valid.get(valid, 0)
+            for valid, label in {
+                None: 'not_validated_count',
+                True: 'valid_count',
+                False: 'invalid_count'
+            }.items()
+        }
+
+        stats['total_count'] = sum(stats.values())
+        stats['validated_count'] = stats['valid_count'] + stats['invalid_count']
+
+        return stats

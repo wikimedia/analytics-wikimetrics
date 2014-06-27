@@ -90,8 +90,6 @@ def cohort_detail(name_or_id):
         {mediawiki_username: 'Gabriele', mediawiki_userid: 8, project: 'dewiki'},
     ]}
     """
-    full_detail = request.args.get('full_detail', 0)
-    
     cohort = None
     db_session = db.get_session()
     try:
@@ -101,91 +99,79 @@ def cohort_detail(name_or_id):
         else:
             kargs['by_name'] = name_or_id
         cohort = g.cohort_service.get_for_display(db_session, current_user.id, **kargs)
+
+        cohort_dict = cohort.__dict__
+        cohort_dict['tags'] = populate_cohort_tags(cohort.id, db_session)
+
+        cohort_dict['validation'] =\
+            populate_cohort_validation_status(cohort, db_session, cohort.size)
+        
     except Unauthorized:
         return 'You are not allowed to access this Cohort', 401
     except NoResultFound:
         return 'Could not find this Cohort', 404
     finally:
         db_session.close()
-    
-    limit = 200 if full_detail == 'true' else 3
-    cohort_with_wikiusers = populate_cohort_wikiusers(cohort, limit)
-    cohort_with_tags = populate_cohort_tags(cohort_with_wikiusers, cohort.id)
-    cohort_with_status = populate_cohort_validation_status(cohort_with_tags)
-    return json_response(cohort_with_status)
+
+    return json_response(cohort_dict)
 
 
-def populate_cohort_wikiusers(cohort, limit):
+def populate_cohort_validation_status(cohort, db_session, number_of_wikiusers):
     """
-    Fetches up to <limit> WikiUser records belonging to <cohort>
+    Fetches the validation information for the cohort
+    returns an empty dictionary if the cohort does not have validation information
     """
-    wikiusers = g.cohort_service.get_wikiusers(cohort, limit=limit)
-    cohort_dict = cohort.__dict__
-    cohort_dict['wikiusers'] = [wu._asdict() for wu in wikiusers]
-    return cohort_dict
+    validation = {}
 
+    if cohort.has_validation_info:
 
-def populate_cohort_tags(cohort_dict, cohort_id):
-    session = db.get_session()
-    try:
-        tags = session.query(TagStore) \
-            .filter(CohortTagStore.cohort_id == cohort_id) \
-            .filter(CohortTagStore.tag_id == TagStore.id) \
-            .all()
-    finally:
-        session.close()
+        task_key = cohort.validation_queue_key
 
-    cohort_dict['tags'] = [t._asdict() for t in tags]
-    return cohort_dict
+        if not task_key:
+            validation['validation_status'] = 'UNKNOWN'
+            #TODO do these defaults really make sense?
+            validation['validated_count'] = number_of_wikiusers
+            validation['total_count'] = number_of_wikiusers
+            validation['valid_count'] = validation['total_count']
+            validation['invalid_count'] = 0
+            validation['delete_message'] = None
 
-
-def populate_cohort_validation_status(cohort_dict):
-    task_key = cohort_dict['validation_queue_key']
-    if not task_key:
-        cohort_dict['validation_status'] = 'UNKNOWN'
-        cohort_dict['validated_count'] = len(cohort_dict['wikiusers'])
-        cohort_dict['total_count'] = len(cohort_dict['wikiusers'])
-        cohort_dict['valid_count'] = cohort_dict['total_count']
-        cohort_dict['invalid_count'] = 0
-        cohort_dict['delete_message'] = None
-        return cohort_dict
-    
-    validation_task = ValidateCohort.task.AsyncResult(task_key)
-    cohort_dict['validation_status'] = validation_task.status
-    
-    session = db.get_session()
-    try:
-        cohort_dict['invalid_count'] = session.query(func.count(WikiUserStore)) \
-            .filter(WikiUserStore.validating_cohort == cohort_dict['id']) \
-            .filter(WikiUserStore.valid.in_([False])) \
-            .one()[0]
-        cohort_dict['valid_count'] = session.query(func.count(WikiUserStore)) \
-            .filter(WikiUserStore.validating_cohort == cohort_dict['id']) \
-            .filter(WikiUserStore.valid) \
-            .one()[0]
-        cohort_dict['validated_count'] = cohort_dict['valid_count'] \
-            + cohort_dict['invalid_count']
-        cohort_dict['total_count'] = session.query(func.count(WikiUserStore)) \
-            .filter(WikiUserStore.validating_cohort == cohort_dict['id']) \
-            .one()[0]
-        users = num_users(session, cohort_dict['id'])
-        non_owners = users - 1
-        role = get_role(session, cohort_dict['id'])
-        if users != 1 and role == CohortUserRole.OWNER:
-            cohort_dict['delete_message'] = 'delete this cohort? ' + \
-                'There are {0} other user(s) shared on this cohort.'.format(non_owners)
         else:
-            cohort_dict['delete_message'] = 'delete this cohort?'
-    finally:
-        session.close()
-    return cohort_dict
+            validation = g.cohort_service.get_validation_info(cohort, db_session)
+            validation_task = ValidateCohort.task.AsyncResult(task_key)
+            validation['validation_status'] = validation_task.status
+            # celery returns 'PENDING' for unknown task ids
+            # if we are looking at a task after a restart it will be an unknown one
+            if (validation['total_count'] == validation['validated_count']):
+                validation['validation_status'] = "SUCCESS"
+            
+            users = num_users(db_session, cohort.id)
+            non_owners = users - 1
+            role = get_role(db_session, cohort.id)
+            if users != 1 and role == CohortUserRole.OWNER:
+                validation['delete_message'] = 'delete this cohort? ' + \
+                    'There are {0} other user(s) shared on this \
+                    cohort.'.format(non_owners)
+            else:
+                validation['delete_message'] = 'delete this cohort?'
+
+    return validation
+
+
+def populate_cohort_tags(cohort_id, db_session):
+    tags = db_session.query(TagStore) \
+        .filter(CohortTagStore.cohort_id == cohort_id) \
+        .filter(CohortTagStore.tag_id == TagStore.id) \
+        .all()
+
+    return [t._asdict() for t in tags]
 
 
 @app.route('/cohorts/upload', methods=['GET', 'POST'])
 def cohort_upload():
     """ View for uploading and validating a new cohort via CSV """
     form = CohortUpload()
-    
+
     if request.method == 'POST':
         form = CohortUpload.from_request(request)
         try:
@@ -204,7 +190,7 @@ def cohort_upload():
         except Exception, e:
             app.logger.exception(str(e))
             flash('Server error while processing your upload', 'error')
-    
+
     return render_template(
         'csv_upload.html',
         projects=json.dumps(sorted(db.get_project_host_map().keys())),
@@ -290,7 +276,7 @@ def delete_viewer_cohort(session, cohort_id):
         .filter(CohortUserStore.user_id == current_user.id) \
         .filter(CohortUserStore.role == CohortUserRole.VIEWER) \
         .delete()
-    
+
     if cu != 1:
         session.rollback()
         raise DatabaseError('Viewer attempt delete cohort failed.')
@@ -382,6 +368,7 @@ def add_tag(cohort_id, tag):
         return json_error(message='You cannot submit an empty tag.')
     parsed_tag = parse_tag(tag)
     session = db.get_session()
+    data = {}
     try:
         t = session.query(TagStore).filter(TagStore.name == parsed_tag).first()
         if not t:
@@ -405,14 +392,13 @@ def add_tag(cohort_id, tag):
         )
         session.add(cohort_tag)
         session.commit()
+        data['tags'] = populate_cohort_tags(cohort_id, session)
     except DatabaseError as e:
         session.rollback()
         return json_error(e.message)
     finally:
         session.close()
 
-    data = {}
-    populate_cohort_tags(data, cohort_id)
     return json_response(data)
 
 

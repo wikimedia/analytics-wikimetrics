@@ -107,15 +107,15 @@ class CohortServiceTest(DatabaseTest):
         assert_equals(len(wikiusers), 4)
 
     def test_get_wikiusers(self):
-        users = self.cohort_service.get_wikiusers(self.fixed_cohort)
+        users = self.cohort_service.get_wikiusers(self.fixed_cohort, self.session)
         assert_equals(users, self.editor_user_ids)
 
     def test_get_wikiusers_limited(self):
-        users = self.cohort_service.get_wikiusers(self.fixed_cohort, 2)
+        users = self.cohort_service.get_wikiusers(self.fixed_cohort, self.session, 2)
         assert_equals(len(users), 2)
 
     def test_get_wikiusers_empty(self):
-        users = self.cohort_service.get_wikiusers(self.empty_cohort)
+        users = self.cohort_service.get_wikiusers(self.empty_cohort, self.session)
         assert_equals(len(users), 0)
 
     def test_wiki_cohort_group_by_project_works(self):

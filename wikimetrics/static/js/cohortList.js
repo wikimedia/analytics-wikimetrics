@@ -6,14 +6,17 @@ $(document).ready(function(){
         
         populate: function(cohort, data){
             cohort.validated(data.validated);
-            cohort.validated_count(data.validated_count);
-            cohort.valid_count(data.valid_count);
-            cohort.invalid_count(data.invalid_count);
-            cohort.total_count(data.total_count);
-            cohort.validation_status(data.validation_status);
             cohort.wikiusers(data.wikiusers);
-            cohort.delete_message(data.delete_message);
             viewModel._populateTags(cohort, data);
+
+            var v = data.validation;
+            cohort.delete_message(v.delete_message);
+            cohort.has_validation_info(!site.isEmpty(v));
+            cohort.validated_count(v.validated_count);
+            cohort.valid_count(v.valid_count);
+            cohort.invalid_count(v.invalid_count);
+            cohort.total_count(v.total_count);
+            cohort.validation_status(v.validation_status);
         },
         
         _populateTags: function(cohort, data){
@@ -139,6 +142,7 @@ $(document).ready(function(){
         ko.utils.arrayForEach(bareList, function(item){
             // TODO: auto-map the new properties
             item.wikiusers = ko.observableArray([]);
+            item.has_validation_info = ko.observable(true);
             item.validated = ko.observable(false);
             item.validated_count = ko.observable(0);
             item.invalid_count = ko.observable(0);
@@ -148,6 +152,23 @@ $(document).ready(function(){
             item.delete_message = ko.observable();
             item.tag_name = ko.observable();
             item.tags = ko.observableArray([]);
+
+            item.can_run_report = ko.computed(function(){
+                return !this.has_validation_info() ||
+                       (this.validated() && this.valid_count() > 0);
+            }, item);
+            item.validating = ko.computed(function(){
+                return this.validation_status() !== 'SUCCESS';
+            }, item);
+            item.validation_progress = ko.computed(function(){
+                return this.validated_count() === this.total_count() &&
+                       this.validated_count() > 0 &&
+                       !this.validated() ?
+                    'FINISHING_UP' : this.validation_status();
+            }, item);
+            item.not_all_valid = ko.computed(function(){
+                return this.valid_count() < this.total_count();
+            }, item);
         });
     }
 });

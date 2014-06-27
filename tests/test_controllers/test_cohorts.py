@@ -76,18 +76,17 @@ class CohortsControllerTest(WebTest):
             response = self.app.get('/cohorts/detail/{0}'.format(self.cohort.id))
         parsed = json.loads(response.data)
         assert_equal(response.status_code, 200)
-        assert_equal(len(parsed['wikiusers']), 3)
+        assert_equal(parsed['public'], False)
 
     def test_detail_by_name(self):
         with cohort_service_set(app, self.cohort_service):
             response = self.app.get('/cohorts/detail/{0}'.format(self.cohort.name))
         parsed = json.loads(response.data)
         assert_equal(response.status_code, 200)
-        assert_equal(len(parsed['wikiusers']), 3)
         # this cohort did not go through async validation
-        assert_equal(parsed['validation_status'], 'UNKNOWN')
-        assert_equal(parsed['validated_count'], 3)
-        assert_equal(parsed['total_count'], 3)
+        assert_equal(parsed['validation']['validation_status'], 'UNKNOWN')
+        assert_equal(parsed['validation']['validated_count'], 4)
+        assert_equal(parsed['validation']['total_count'], 4)
 
     def test_detail_by_name_after_validate(self):
         self.helper_reset_validation()
@@ -104,26 +103,24 @@ class CohortsControllerTest(WebTest):
 
         # note than it does not make sense to assert validation status
         # as that is retrieved directly from celery and celery was not used in this test
-        assert_equal(parsed['validated_count'], 4)
-        assert_equal(parsed['total_count'], 4)
+        assert_equal(parsed['validation']['validated_count'], 4)
+        assert_equal(parsed['validation']['total_count'], 4)
 
     def test_detail_allowed_if_invalid(self):
         self.helper_reset_validation()
         with cohort_service_set(app, self.cohort_service):
             response = self.app.get('/cohorts/detail/{0}'.format(self.cohort.name))
         parsed = json.loads(response.data)
-        assert_equal(parsed['validation_status'], 'UNKNOWN')
-        assert_equal(parsed['validated_count'], 0)
-        assert_equal(parsed['total_count'], 0)
+        assert_equal(parsed['validation']['validation_status'], 'UNKNOWN')
+        assert_equal(parsed['validation']['validated_count'], 0)
+        assert_equal(parsed['validation']['total_count'], 0)
 
     def test_full_detail(self):
         with cohort_service_set(app, self.cohort_service):
             response = self.app.get('/cohorts/detail/{0}?full_detail=true'.format(
                 self.cohort.id
             ))
-        parsed = json.loads(response.data)
         assert_equal(response.status_code, 200)
-        assert_equal(len(parsed['wikiusers']), 4)
 
     def test_detail_not_allowed(self):
         self.helper_remove_authorization()
