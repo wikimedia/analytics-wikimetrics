@@ -342,6 +342,7 @@ class CohortsControllerTest(WebTest):
             name=duplicate_tag
         )
         self.session.add(tag)
+        self.session.commit()
         response = self.app.post('/cohorts/{0}/tag/add/{1}'
                                  .format(self.cohort.id, duplicate_tag))
         assert_true(response.data.find('"tags":') >= 0)
