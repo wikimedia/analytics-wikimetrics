@@ -5,6 +5,9 @@ import sys
 from datetime import datetime
 
 
+WIKIMETRICS_BOT_NAME = 'WikimetricsBot'
+
+
 def run_cohorts(args):
     print('... validating list of projects')
     projects = db.get_project_host_map()
@@ -62,6 +65,43 @@ def run_reports(args):
 
         from wikimetrics.models.report_nodes.run_report import RunReport
         from wikimetrics.utils import today
+
+        if args.user.username == WIKIMETRICS_BOT_NAME:
+            import os
+            from wikimetrics.configurables import app
+            from wikimetrics.api.file_manager import (
+                PublicReportFileManager, COALESCED_REPORT_FILE
+            )
+            file_manager = PublicReportFileManager(
+                app.logger,
+                app.absolute_path_to_app_root,
+            )
+            print('... will make pretty symlink for {}'.format(WIKIMETRICS_BOT_NAME))
+            public_folder = os.path.join(
+                app.absolute_path_to_app_root,
+                'static',
+                'public',
+            )
+            public_stat = os.stat(public_folder)
+
+            datafiles_folder = os.path.join(
+                public_folder,
+                'datafiles',
+            )
+            if not os.path.exists(datafiles_folder):
+                os.makedirs(datafiles_folder)
+                # keep ownership in the public subdirectory uniform
+                os.chown(datafiles_folder, public_stat.st_uid, public_stat.st_gid)
+
+            symlink_folder = os.path.join(
+                datafiles_folder,
+                args.metric,
+            )
+            if not os.path.exists(symlink_folder):
+                os.makedirs(symlink_folder)
+                # keep ownership in the public subdirectory uniform
+                os.chown(symlink_folder, public_stat.st_uid, public_stat.st_gid)
+
         start = args.start or today()
         for cohort in valid:
             parameters = dict(
@@ -77,8 +117,23 @@ def run_reports(args):
                 .filter(ReportStore.user_id == args.user.id)\
                 .count()
             if existing == 0:
-                RunReport(parameters, user_id=args.user.id, created=start)
-                print('... queueing "{}"'.format(parameters['name']))
+                report = RunReport(parameters, user_id=args.user.id, created=start)
+                if args.user.username == WIKIMETRICS_BOT_NAME:
+                    path = os.path.join(file_manager.get_public_report_path(
+                        report.persistent_id,
+                        recurrent=True
+                    ), COALESCED_REPORT_FILE)
+                    pretty_path = os.path.join(
+                        symlink_folder,
+                        '{}.json'.format(cohort.name),
+                    )
+                    try:
+                        os.symlink(path, pretty_path)
+                        os.lchown(pretty_path, public_stat.st_uid, public_stat.st_gid)
+                    except OSError, err:
+                        print('... ERROR creating pretty link: {}'.format(err))
+
+                print('... queued "{}"'.format(parameters['name']))
             else:
                 print('... already exists: "{}"'.format(parameters['name']))
     finally:
@@ -88,12 +143,12 @@ def run_reports(args):
 def get_user(args):
     try:
         s = db.get_session()
-        print('... looking up user')
+        print('... looking up user (defaulting to {})'.format(WIKIMETRICS_BOT_NAME))
         q = s.query(UserStore)
         if args.user:
             u = q.get(args.user)
         else:
-            u = q.filter(UserStore.username == 'WikimetricsBot').one()
+            u = q.filter(UserStore.username == WIKIMETRICS_BOT_NAME).one()
         print('... found user "{}", id: "{}"'.format(u.username or u.email, u.id))
         args.user = u
 
