@@ -128,7 +128,8 @@ def run_reports(args):
                         '{}.json'.format(cohort.name),
                     )
                     try:
-                        os.symlink(path, pretty_path)
+                        rel_path = os.path.relpath(path, symlink_folder)
+                        os.symlink(rel_path, pretty_path)
                         os.lchown(pretty_path, public_stat.st_uid, public_stat.st_gid)
                     except OSError, err:
                         print('... ERROR creating pretty link: {}'.format(err))
