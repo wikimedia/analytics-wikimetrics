@@ -34,3 +34,27 @@ ko.bindingHandlers.metricConfigurationForm = {
         }
     }
 };
+
+/**
+ * Custom binding that adds bootstrap typeahead functionality to any input:
+ * `<input data-bind="autocomplete: property()"></section>`
+ * And works as follows:
+ *     In the example above, property is a ko.observableArray holding an autocomplete list
+ */
+ko.bindingHandlers.autocomplete = {
+    init: function(element){
+        $(element).attr('autocomplete', 'off');
+        $(element).data('provide', 'typeahead');
+    },
+    update: function(element, valueAccessor) {
+        var unwrapped = ko.unwrap(valueAccessor);
+
+        if (unwrapped !== null) {
+            // typeaheads are made to be unmutable in bootstrap
+            // so we 'kind of' destroy it and create it again
+            $(element).data('typeahead', null);
+            $(element).unbind('keyup');
+            $(element).typeahead({'source': unwrapped, 'minLength': 2});
+        }
+    }
+};

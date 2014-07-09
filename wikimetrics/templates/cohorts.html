@@ -2,12 +2,13 @@
 {% block body %}
 
 <div class="page-header">
-    <h2>Cohorts 
+    <h2>Cohorts
         <input type="text" class="search-query" placeholder="type to filter your search" data-bind="value: filter, valueUpdate:'afterkeydown'"/>
         <small class="pull-right">
             <a class="btn btn-primary " href="{{url_for('cohort_upload')}}">Upload a New Cohort</a>
         </small>
     </h2>
+    <span id="tagsForAutocomplete" style="display:none">{{tags}}</span>
 </div>
 <div class="tabbable tabs-left">
       <ul class="nav nav-tabs" data-bind="foreach: filteredCohorts">
@@ -29,7 +30,9 @@
                 </div>
                 <div>
                         <form class="navbar-form pull-left" data-bind="submit: $root.addTag.bind($data)">
-                            <input data-bind= "value: tag_name" type="text" class="span4" required>
+                            <input type="text"
+                                   data-bind="value: tag_name_to_add, autocomplete: $root.tagsAutocompleteList()"
+                                    />
                             <input type="submit" class="btn small" value="Add Tag"/>
                         </form>
                 </div>

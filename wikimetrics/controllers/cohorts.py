@@ -16,7 +16,7 @@ from wikimetrics.models import (
     MediawikiUser, ValidateCohort, TagStore, CohortTagStore
 )
 from wikimetrics.enums import CohortUserRole
-from wikimetrics.api import CohortService
+from wikimetrics.api import CohortService, TagService
 
 
 # TODO: because this is injected by the tests into the REAL controller, it is
@@ -28,8 +28,11 @@ def setup_cohort_service():
     if request.endpoint is not None:
         if request.path.startswith('/cohorts'):
             cohort_service = getattr(g, 'cohort_service', None)
+            tag_service = getattr(g, 'tag_service', None)
             if cohort_service is None:
                 g.cohort_service = CohortService()
+            if tag_service is None:
+                g.tag_service = TagService()
 
 
 @app.route('/cohorts/')
@@ -38,7 +41,10 @@ def cohorts_index():
     Renders a page with a list cohorts belonging to the currently logged in user.
     If the user is an admin, she has the option of seeing other users' cohorts.
     """
-    return render_template('cohorts.html')
+    session = db.get_session()
+    tags = g.tag_service.get_all_tags(session)
+    session.close()
+    return render_template('cohorts.html', tags=json.dumps(tags))
 
 
 @app.route('/cohorts/list/')
@@ -394,6 +400,10 @@ def add_tag(cohort_id, tag):
         session.add(cohort_tag)
         session.commit()
         data['tags'] = populate_cohort_tags(cohort_id, session)
+        
+        tagsAutocompleteList = g.tag_service.get_all_tags(session)
+        data['tagsAutocompleteList'] = json.dumps(tagsAutocompleteList)
+        
     except DatabaseError as e:
         session.rollback()
         return json_error(e.message)
@@ -425,6 +435,9 @@ def delete_tag(cohort_id, tag_id):
             .filter(CohortTagStore.tag_id == tag_id) \
             .delete()
         session.commit()
-        return json_response(message='success')
+      
+        tags = g.tag_service.get_all_tags(session)
+        return json_response(message='success', tagsAutocompleteList=json.dumps(tags))
+        
     finally:
         session.close()
