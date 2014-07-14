@@ -1,6 +1,6 @@
 from datetime import datetime, timedelta
 from nose.tools import assert_true, assert_equal
-
+from nose.plugins.attrib import attr
 from tests.fixtures import DatabaseTest, i, d
 from wikimetrics.metrics import NamespaceEdits
 
@@ -28,6 +28,7 @@ class ManualLoad(DatabaseTest):
             revision_lengths=10,
         )
     
+    @attr('manual')
     def test_edits_runs(self):
         one_day = timedelta(days=1)
         metric = NamespaceEdits(

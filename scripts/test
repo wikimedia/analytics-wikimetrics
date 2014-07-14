@@ -5,4 +5,6 @@
 TO_TEST=${1:-$(echo "tests")}
 echo "Running tests in: ./"$TO_TEST
 find . -name *.pyc | xargs --no-run-if-empty rm
-nosetests --cover-erase -a "!nonDeterministic" ./$TO_TEST
+# NOTE: this script excludes certain tagged tests.  To run excluded tests, you can do:
+#   nosetests tests/path/to/test
+nosetests --cover-erase -a "!nonDeterministic,!manual" ./$TO_TEST
