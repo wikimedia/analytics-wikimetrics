@@ -264,3 +264,18 @@ def chunk(array, chunk_size):
     """
     for i in xrange(0, len(array), chunk_size):
         yield array[i : i + chunk_size]
+
+
+def update_dict(target, source):
+    """
+    Updates a target dictionary recursively from a source dictionary
+    """
+    for key, val in source.items():
+        if isinstance(val, collections.Mapping):
+            tmp = target.get(key, {})
+            update_dict(tmp, val)
+            target[key] = tmp
+        elif isinstance(val, list):
+            target[key] = target.get(key, []) + val
+        else:
+            target[key] = source[key]

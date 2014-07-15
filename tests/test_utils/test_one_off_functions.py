@@ -15,6 +15,7 @@ from wikimetrics.utils import (
     timestamps_to_now,
     parse_tag,
     chunk,
+    update_dict,
 )
 from wikimetrics.metrics import NamespaceEdits
 
@@ -154,3 +155,28 @@ class TestUtil(TestCase):
         assert_equal(chunked, [[2, 3], [4, 5], [6, 7], [8]])
         chunked = list(chunk(range(2, 3), 2))
         assert_equal(chunked, [[2]])
+
+    def test_update_dict(self):
+        target = {}
+        source = {
+            'deep dict': {'nested': {'one': 1}},
+            'list': [1, 2, 3],
+            'value': 1,
+        }
+        update_dict(target, source)
+        assert_equal(target['deep dict']['nested']['one'], 1)
+        assert_equal(target['list'], [1, 2, 3])
+        assert_equal(target['value'], 1)
+
+        source2 = {
+            'deep dict': {'nested': {'one': 9}, 'nested1': {'two': 10}},
+            'list': [4, 5],
+            'value': 3,
+            'value1': 2,
+        }
+        update_dict(target, source2)
+        assert_equal(target['deep dict']['nested']['one'], 9)
+        assert_equal(target['deep dict']['nested1']['two'], 10)
+        assert_equal(target['list'], [1, 2, 3, 4, 5])
+        assert_equal(target['value'], 3)
+        assert_equal(target['value1'], 2)

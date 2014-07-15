@@ -2,7 +2,12 @@ import os
 import os.path
 import json
 import shutil
+import collections
+
 from wikimetrics.exceptions import PublicReportIOError
+from wikimetrics.utils import update_dict
+from wikimetrics.enums import Aggregation
+from wikimetrics.metrics import TimeseriesChoices
 # TODO ultils imports flask response -> fix
 
 # Illegal filename characters
@@ -179,11 +184,8 @@ class PublicReportFileManager():
                     with open(full_path, 'r') as saved_report:
                         try:
                             data = json.load(saved_report)
-                            if 'parameters' not in coalesced_reports:
-                                coalesced_reports['parameters'] = data['parameters']
+                            _merge_run(coalesced_reports, data)
 
-                            key = data['parameters']['Metric_end_date']
-                            coalesced_reports[key] = data['result']
                         except KeyError, e:
                             msg = 'Key "{}" not in JSON file "{}"'.format(e, full_path)
                             self.logger.exception(msg)
@@ -196,3 +198,43 @@ class PublicReportFileManager():
             msg = 'Could not concatenate public report {0}'.format(report_id)
             self.logger.exception(msg)
             raise PublicReportIOError(msg)
+
+
+def _merge_run(coalesced, data):
+    """
+    Helper function, handles merging of new report results into an existing dictionary
+    that represents the output of a recurrent report.  Correctly merges both timeseries
+    and non-timeseries results into a timeseries-like format.
+
+    Parameters
+        coalesced   : the coalesced report to update, could be an empty dictionary
+        data        : the json result of the new report
+    """
+    coalesced.setdefault('parameters', data['parameters'])
+    coalesced.setdefault('result', {})
+
+    timeseries = data['parameters'].get('Metric_timeseries', TimeseriesChoices.NONE)
+    if timeseries == TimeseriesChoices.NONE:
+        date = data['parameters']['Metric_end_date']
+        for aggregate in data['result']:
+            if aggregate == Aggregation.IND:
+                # shape the data so it all looks like timeseries
+                data['result'][aggregate] = {
+                    user: {
+                        submetric: {
+                            date: data['result'][aggregate][user][submetric]
+                        }
+                        for submetric in data['result'][aggregate][user]
+                    }
+                    for user in data['result'][aggregate]
+                }
+            else:
+                # shape the data so it all looks like timeseries
+                data['result'][aggregate] = {
+                    submetric: {
+                        date: data['result'][aggregate][submetric]
+                    }
+                    for submetric in data['result'][aggregate]
+                }
+
+    update_dict(coalesced['result'], data['result'])
