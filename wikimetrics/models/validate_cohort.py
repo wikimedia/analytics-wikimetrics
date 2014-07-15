@@ -8,9 +8,9 @@ from sqlalchemy.orm.exc import NoResultFound, MultipleResultsFound
 from sqlalchemy.sql.expression import label, between, and_, or_
 from wikimetrics.utils import deduplicate_by_key
 from wikimetrics.models import (
-    MediawikiUser, CohortUserRole,
-    CohortStore, CohortUserStore, WikiUserStore, CohortWikiUserStore,
+    MediawikiUser, CohortStore, CohortUserStore, WikiUserStore, CohortWikiUserStore,
 )
+from wikimetrics.enums import CohortUserRole
 
 
 task_logger = get_task_logger(__name__)

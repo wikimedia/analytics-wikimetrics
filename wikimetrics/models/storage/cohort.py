@@ -1,11 +1,11 @@
 import itertools
 from operator import itemgetter
 from sqlalchemy import Column, Integer, Boolean, DateTime, String, func
+
 from wikimetrics.exceptions import Unauthorized
 from wikimetrics.configurables import db
 from wikiuser import WikiUserStore
 from cohort_wikiuser import CohortWikiUserStore
-from cohort_user import CohortUserStore, CohortUserRole
 from user import UserStore
 
 

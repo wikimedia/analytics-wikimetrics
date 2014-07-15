@@ -2,12 +2,6 @@ from sqlalchemy import Column, Integer, ForeignKey, String
 from wikimetrics.configurables import db
 
 
-class CohortUserRole(object):
-    OWNER = 'OWNER'
-    VIEWER = 'VIEWER'
-    SAFE_ROLES = [OWNER, VIEWER]
-
-
 class CohortUserStore(db.WikimetricsBase):
     """
     Represents the join table between `cohort` and `user`

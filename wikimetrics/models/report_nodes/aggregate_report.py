@@ -4,20 +4,12 @@ from collections import OrderedDict
 from celery.utils.log import get_task_logger
 
 from wikimetrics.utils import stringify, CENSORED, NO_RESULTS, r
+from wikimetrics.enums import Aggregation
 from report import ReportNode
 from multi_project_metric_report import MultiProjectMetricReport
 
 
-__all__ = ['AggregateReport', 'Aggregation']
-
 task_logger = get_task_logger(__name__)
-
-
-class Aggregation(object):
-    IND = 'Individual Results'
-    SUM = 'Sum'
-    AVG = 'Average'
-    STD = 'Standard Deviation'
 
 
 class AggregateReport(ReportNode):

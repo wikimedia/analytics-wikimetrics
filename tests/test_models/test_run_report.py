@@ -7,12 +7,11 @@ from mock import MagicMock
 from celery.exceptions import SoftTimeLimitExceeded
 
 from tests.fixtures import QueueDatabaseTest, DatabaseTest
-from wikimetrics.models import (
-    RunReport, Aggregation, ReportStore, WikiUserStore, CohortWikiUserStore
-)
+from wikimetrics.models import RunReport, ReportStore, WikiUserStore, CohortWikiUserStore
 from wikimetrics.exceptions import InvalidCohort
 from wikimetrics.metrics import TimeseriesChoices, metric_classes
 from wikimetrics.utils import diff_datewise, stringify, strip_time
+from wikimetrics.enums import Aggregation
 from wikimetrics.configurables import queue
 from wikimetrics.schedules.daily import recurring_reports
 

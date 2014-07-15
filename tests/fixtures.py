@@ -16,7 +16,6 @@ from wikimetrics.models import (
     WikiUserKey,
     CohortStore,
     CohortWikiUserStore,
-    CohortUserRole,
     CohortUserStore,
     TagStore,
     CohortTagStore,
@@ -26,6 +25,7 @@ from wikimetrics.models import (
     MediawikiUser,
     Logging,
 )
+from wikimetrics.enums import CohortUserRole
 
 mediawiki_project = 'wiki'
 second_mediawiki_project = 'wiki2'

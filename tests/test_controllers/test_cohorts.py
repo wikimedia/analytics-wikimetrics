@@ -10,8 +10,9 @@ from wikimetrics.configurables import app
 from tests.fixtures import WebTest
 from wikimetrics.models import (
     CohortStore, CohortUserStore, CohortWikiUserStore, WikiUserStore, UserStore,
-    CohortUserRole, ValidateCohort, CohortTagStore, TagStore
+    ValidateCohort, CohortTagStore, TagStore
 )
+from wikimetrics.enums import CohortUserRole
 
 
 @contextmanager

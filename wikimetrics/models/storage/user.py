@@ -1,11 +1,6 @@
 from sqlalchemy import Column, Integer, String, Boolean
 from wikimetrics.configurables import db
-
-
-class UserRole(object):
-    ADMIN = 'ADMIN'
-    USER = 'USER'
-    GUEST = 'GUEST'
+from wikimetrics.enums import UserRole
 
 
 class UserStore(db.WikimetricsBase):

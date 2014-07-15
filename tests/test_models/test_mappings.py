@@ -3,10 +3,8 @@ import celery
 from wikimetrics.models import (
     ReportStore,
     UserStore,
-    UserRole,
     CohortStore,
     CohortUserStore,
-    CohortUserRole,
     CohortWikiUserStore,
     WikiUserStore,
     Logging,
@@ -14,6 +12,7 @@ from wikimetrics.models import (
     MediawikiUser,
     Revision,
 )
+from wikimetrics.enums import CohortUserRole, UserRole
 from tests.fixtures import DatabaseTest
 
 

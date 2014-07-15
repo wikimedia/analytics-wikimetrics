@@ -1,12 +1,11 @@
 from nose.tools import assert_equals, assert_true
 
 from wikimetrics.utils import r
+from wikimetrics.enums import Aggregation
 from wikimetrics.metrics import (
     metric_classes, NamespaceEdits, TimeseriesChoices,
 )
-from wikimetrics.models import (
-    Aggregation, AggregateReport, CohortStore,
-)
+from wikimetrics.models import AggregateReport, CohortStore
 from ..fixtures import QueueDatabaseTest, DatabaseTest
 
 

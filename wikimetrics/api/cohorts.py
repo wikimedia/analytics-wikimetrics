@@ -4,8 +4,9 @@ from wikimetrics.configurables import db
 from wikimetrics.exceptions import Unauthorized, InvalidCohort
 from wikimetrics.models import cohort_classes, ValidatedCohort, WikiCohort
 from wikimetrics.models.storage import (
-    CohortStore, CohortUserStore, UserStore, CohortUserRole, WikiUserStore,
+    CohortStore, CohortUserStore, UserStore, WikiUserStore,
 )
+from wikimetrics.enums import CohortUserRole
 
 
 class CohortService(object):

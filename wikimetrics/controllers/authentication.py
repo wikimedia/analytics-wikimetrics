@@ -15,7 +15,8 @@ from sqlalchemy.orm.exc import NoResultFound, MultipleResultsFound
 from flask.ext.login import login_user, logout_user, current_user
 
 from wikimetrics.configurables import app, db, login_manager, google, meta_mw
-from wikimetrics.models import UserStore, UserRole
+from wikimetrics.models import UserStore
+from wikimetrics.enums import UserRole
 from wikimetrics.utils import json_error
 
 

@@ -13,8 +13,9 @@ from wikimetrics.configurables import app, db
 from wikimetrics.controllers.forms import CohortUpload
 from wikimetrics.models import (
     CohortStore, CohortUserStore, UserStore, WikiUserStore, CohortWikiUserStore,
-    CohortUserRole, MediawikiUser, ValidateCohort, TagStore, CohortTagStore
+    MediawikiUser, ValidateCohort, TagStore, CohortTagStore
 )
+from wikimetrics.enums import CohortUserRole
 from wikimetrics.api import CohortService
 
 

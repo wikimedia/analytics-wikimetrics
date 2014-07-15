@@ -7,7 +7,6 @@ from sqlalchemy.sql.expression import and_
 from sqlalchemy.exc import SQLAlchemyError
 from wikimetrics.configurables import db, app
 from wikimetrics.exceptions import UnauthorizedReportAccessError, PublicReportIOError
-from wikimetrics.api import PublicReportFileManager
 
 
 class ReportStore(db.WikimetricsBase):

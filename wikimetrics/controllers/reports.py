@@ -8,13 +8,13 @@ from flask.ext.login import current_user
 from sqlalchemy.exc import SQLAlchemyError
 from wikimetrics.configurables import app, db
 from wikimetrics.models import (
-    Report, RunReport, Aggregation,
-    ReportStore, WikiUserStore, WikiUserKey,
+    Report, RunReport, ReportStore, WikiUserStore, WikiUserKey,
 )
 from wikimetrics.metrics import TimeseriesChoices
 from wikimetrics.utils import (
     json_response, json_error, json_redirect, thirty_days_ago, stringify
 )
+from wikimetrics.enums import Aggregation
 from wikimetrics.exceptions import UnauthorizedReportAccessError
 from wikimetrics.api import PublicReportFileManager
 

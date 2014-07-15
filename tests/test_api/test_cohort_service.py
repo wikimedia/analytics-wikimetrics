@@ -4,7 +4,8 @@ from sqlalchemy.orm.exc import NoResultFound
 from tests.fixtures import DatabaseTest, mediawiki_project
 from wikimetrics.api import CohortService
 from wikimetrics.exceptions import Unauthorized, InvalidCohort
-from wikimetrics.models import CohortStore, CohortUserStore, CohortUserRole
+from wikimetrics.models import CohortStore, CohortUserStore
+from wikimetrics.enums import CohortUserRole
 from wikimetrics.models.cohorts import Cohort
 
 

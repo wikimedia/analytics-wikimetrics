@@ -7,7 +7,8 @@ from wikimetrics.metrics import (
     metric_classes, NamespaceEdits, TimeseriesChoices,
 )
 from wikimetrics.utils import r
-from wikimetrics.models import Aggregation, AggregateReport
+from wikimetrics.enums import Aggregation
+from wikimetrics.models import AggregateReport
 
 
 class EdgeCasesTest(QueueDatabaseTest):
