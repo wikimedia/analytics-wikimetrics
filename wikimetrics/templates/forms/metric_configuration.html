@@ -12,7 +12,7 @@
                 {% elif f.type == 'DateField' %}
                     {{ f(**{'type':'date', 'data-bind':'value: '+f.name}) }}
                 {% elif f.type == 'BetterDateTimeField' %}
-                    <div class="input-append date datetimepicker">
+                    <div class="input-append date datetimepicker" title="{{f.description}}">
                         {{ f(**{'type':'text', 'data-bind':'value: '+f.name, 'data-format':'yyyy-MM-dd hh:mm:ss'}) }}
                         <span class="add-on">
                             <i data-time-icon="icon-time" data-date-icon="icon-calendar">

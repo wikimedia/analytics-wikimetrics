@@ -176,6 +176,8 @@ class RunReport(ReportNode):
 
                 # update the date parameters for this run of the metric
                 metric = parameters['metric']
+                # TODO: all metrics need to have an 'end_date' parameter in order to run
+                # recurrently.  This should be at least less hardcoded if not more elegant
                 metric['start_date'] = day - timedelta(days=1)
                 metric['end_date'] = day
 
