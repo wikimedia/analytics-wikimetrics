@@ -24,6 +24,7 @@ from wikimetrics.models import (
     Page,
     MediawikiUser,
     Logging,
+    Archive,
 )
 from wikimetrics.enums import CohortUserRole
 
@@ -503,7 +504,7 @@ class DatabaseTest(unittest.TestCase):
             ]
         )
         self.mwSession.commit()
-        users = self.mwSession.query(MediawikiUser)\
+        self.non_editors = users = self.mwSession.query(MediawikiUser)\
             .filter(MediawikiUser.user_name.like('non-editor-user-{0}-%'.format(name)))\
             .order_by(MediawikiUser.user_id)\
             .all()
@@ -553,6 +554,29 @@ class DatabaseTest(unittest.TestCase):
         self.session.commit()
         self.basic_wiki_cohort_owner = cohort_user
 
+    def archive_revisions(self):
+        """
+        Archive all the revisions in the revision table
+        NOTE: only populates ar_timestamp, and ar_user
+        NOTE: leaves ar_rev_id NULL because that's valid and a good edge case
+        NOTE: creates duplicates with NULL ar_rev_id
+        """
+        query = self.mwSession.query(Revision)
+        revisions = query.all()
+        self.mwSession.execute(
+            Archive.__table__.insert(), [
+                {
+                    'ar_rev_id': None,
+                    'ar_timestamp': r.rev_timestamp,
+                    'ar_user': r.rev_user
+                }
+                for r in revisions
+            ]
+        )
+
+        query.delete()
+        self.mwSession.commit()
+
     def setUp(self):
         #****************************************************************
         # set up and clean database (Warning: this DESTROYS ALL DATA)
@@ -572,6 +596,7 @@ class DatabaseTest(unittest.TestCase):
         # delete records
         self.mwSession.query(Logging).delete()
         self.mwSession.query(Revision).delete()
+        self.mwSession.query(Archive).delete()
         self.mwSession.query(MediawikiUser).delete()
         self.mwSession.query(Page).delete()
         self.mwSession.commit()
@@ -579,6 +604,7 @@ class DatabaseTest(unittest.TestCase):
         
         self.mwSession2.query(Logging).delete()
         self.mwSession2.query(Revision).delete()
+        self.mwSession2.query(Archive).delete()
         self.mwSession2.query(MediawikiUser).delete()
         self.mwSession2.query(Page).delete()
         self.mwSession2.commit()
