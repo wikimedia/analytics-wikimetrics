@@ -6,19 +6,9 @@ from wtforms import SelectField
 
 from wikimetrics.models import Revision
 from wikimetrics.utils import thirty_days_ago, today, format_pretty_date
+from wikimetrics.enums import TimeseriesChoices
+from wikimetrics.forms.fields import CommaSeparatedIntegerListField, BetterDateTimeField
 from metric import Metric
-from form_fields import CommaSeparatedIntegerListField, BetterDateTimeField
-
-
-__all__ = ['TimeseriesChoices', 'TimeseriesMetric']
-
-
-class TimeseriesChoices(object):
-    NONE = 'none'
-    HOUR = 'hour'
-    DAY = 'day'
-    MONTH = 'month'
-    YEAR = 'year'
 
 
 class TimeseriesMetric(Metric):

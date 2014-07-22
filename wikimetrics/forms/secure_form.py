@@ -1,9 +1,9 @@
 from flask import session
 from flask import current_app
 from datetime import timedelta
+from wtforms.ext.csrf.session import SessionSecureForm
 
 from wikimetrics.configurables import app
-from wtforms.ext.csrf.session import SessionSecureForm
 
 
 class WikimetricsSecureForm(SessionSecureForm):

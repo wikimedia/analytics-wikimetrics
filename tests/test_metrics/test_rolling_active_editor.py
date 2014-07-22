@@ -4,7 +4,8 @@ from nose.tools import assert_true, assert_equal, assert_false
 from tests.fixtures import DatabaseTest, i, d
 from wikimetrics.utils import format_pretty_date as s
 from wikimetrics.models import Revision
-from wikimetrics.metrics import RollingActiveEditor, TimeseriesChoices
+from wikimetrics.metrics import RollingActiveEditor
+from wikimetrics.enums import TimeseriesChoices
 
 
 class RollingActiveEditorTest(DatabaseTest):

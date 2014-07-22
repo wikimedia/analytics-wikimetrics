@@ -1,14 +1,10 @@
 from sqlalchemy import func
-from timeseries_metric import TimeseriesMetric, TimeseriesChoices
-from form_fields import CommaSeparatedIntegerListField
 from wtforms.validators import Required
+
 from wikimetrics.utils import thirty_days_ago, today
 from wikimetrics.models import Page, Revision
-
-
-__all__ = [
-    'NamespaceEdits',
-]
+from wikimetrics.forms.fields import CommaSeparatedIntegerListField
+from timeseries_metric import TimeseriesMetric
 
 
 class NamespaceEdits(TimeseriesMetric):

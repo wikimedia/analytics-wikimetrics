@@ -1,6 +1,7 @@
 from nose.tools import assert_true, assert_equal, assert_false
 from tests.fixtures import DatabaseTest
-from wikimetrics.metrics import BytesAdded, TimeseriesChoices
+from wikimetrics.metrics import BytesAdded
+from wikimetrics.enums import TimeseriesChoices
 
 
 class BytesAddedTest(DatabaseTest):

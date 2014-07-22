@@ -2,12 +2,9 @@ from datetime import datetime, timedelta
 from nose.tools import assert_true, assert_equals, assert_false
 
 from tests.fixtures import QueueDatabaseTest
-from wikimetrics.metrics import NewlyRegistered
-from wikimetrics.metrics import (
-    metric_classes, NamespaceEdits, TimeseriesChoices,
-)
+from wikimetrics.metrics import metric_classes, NewlyRegistered, NamespaceEdits
 from wikimetrics.utils import r
-from wikimetrics.enums import Aggregation
+from wikimetrics.enums import Aggregation, TimeseriesChoices
 from wikimetrics.models import AggregateReport
 
 

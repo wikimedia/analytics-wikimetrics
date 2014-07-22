@@ -1,11 +1,8 @@
-from metric import Metric
-from ..utils import thirty_days_ago, today
-from form_fields import CommaSeparatedIntegerListField, BetterDateTimeField
 from wtforms.validators import Required
 
-__all__ = [
-    'RevertRate',
-]
+from wikimetrics.utils import thirty_days_ago, today
+from wikimetrics.forms.fields import CommaSeparatedIntegerListField, BetterDateTimeField
+from metric import Metric
 
 
 class RevertRate(Metric):

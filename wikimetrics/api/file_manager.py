@@ -6,8 +6,7 @@ import collections
 
 from wikimetrics.exceptions import PublicReportIOError
 from wikimetrics.utils import update_dict
-from wikimetrics.enums import Aggregation
-from wikimetrics.metrics import TimeseriesChoices
+from wikimetrics.enums import Aggregation, TimeseriesChoices
 # TODO ultils imports flask response -> fix
 
 # Illegal filename characters

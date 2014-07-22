@@ -15,3 +15,11 @@ class UserRole(object):
     ADMIN = 'ADMIN'
     USER = 'USER'
     GUEST = 'GUEST'
+
+
+class TimeseriesChoices(object):
+    NONE = 'none'
+    HOUR = 'hour'
+    DAY = 'day'
+    MONTH = 'month'
+    YEAR = 'year'

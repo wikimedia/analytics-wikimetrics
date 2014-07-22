@@ -1,10 +1,8 @@
 from collections import OrderedDict
 from datetime import datetime
 from nose.tools import assert_equals
-from wikimetrics.metrics.timeseries_metric import (
-    TimeseriesMetric,
-    TimeseriesChoices,
-)
+from wikimetrics.metrics.timeseries_metric import TimeseriesMetric
+from wikimetrics.enums import TimeseriesChoices
 from tests.fixtures import DatabaseTest
 
 

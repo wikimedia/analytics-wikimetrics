@@ -10,7 +10,7 @@ from wikimetrics.utils import (
 )
 from wikimetrics.exceptions import Unauthorized, DatabaseError
 from wikimetrics.configurables import app, db
-from wikimetrics.controllers.forms import CohortUpload
+from wikimetrics.forms import CohortUpload
 from wikimetrics.models import (
     CohortStore, CohortUserStore, UserStore, WikiUserStore, CohortWikiUserStore,
     MediawikiUser, ValidateCohort, TagStore, CohortTagStore

@@ -3,7 +3,7 @@ import os
 from nose.tools import assert_equal, raises, assert_true, assert_false, nottest
 from wikimetrics.configurables import app, get_absolute_path
 from tests.fixtures import WebTest, QueueDatabaseTest, DatabaseTest, mediawiki_project
-from wikimetrics.controllers.forms import CohortUpload
+from wikimetrics.forms import CohortUpload
 from wikimetrics.models import (
     CohortStore, WikiUserStore, UserStore,
     MediawikiUser, ValidateCohort, normalize_project,

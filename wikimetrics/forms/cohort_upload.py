@@ -1,8 +1,9 @@
 import csv
 from wtforms import StringField, FileField, TextAreaField, RadioField
 from wtforms.validators import Required
-from wikimetrics.metrics.form_fields import RequiredIfNot
+
 from wikimetrics.utils import parse_username
+from fields import RequiredIfNot
 from secure_form import WikimetricsSecureForm
 
 

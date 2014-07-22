@@ -1,18 +1,15 @@
-from wikimetrics.metrics import Metric
 import datetime
 import calendar
 from sqlalchemy import func, case, Integer
 from sqlalchemy.orm import aliased
 from sqlalchemy.sql.expression import label, between, and_, or_
-
-from wikimetrics.models import Page, Revision, MediawikiUser
-from wikimetrics.utils import thirty_days_ago, today, CENSORED
-from form_fields import CommaSeparatedIntegerListField, BetterDateTimeField
 from wtforms.validators import Required
 from wtforms import BooleanField, IntegerField
 
-
-__all__ = ['Threshold']
+from wikimetrics.models import Page, Revision, MediawikiUser
+from wikimetrics.utils import thirty_days_ago, today, CENSORED
+from wikimetrics.forms.fields import CommaSeparatedIntegerListField, BetterDateTimeField
+from metric import Metric
 
 
 class Threshold(Metric):

@@ -4,10 +4,10 @@ from datetime import timedelta
 from wtforms.validators import Required
 from wtforms import IntegerField
 
-from metric import Metric
-from form_fields import BetterDateTimeField
+from wikimetrics.forms.fields import BetterDateTimeField
 from wikimetrics.utils import today
 from wikimetrics.models.mediawiki import Revision, MediawikiUser, Archive
+from metric import Metric
 
 
 class RollingActiveEditor(Metric):

@@ -1,8 +1,7 @@
-from wikimetrics.metrics import Metric
-
 from wikimetrics.models.mediawiki import Logging
 from wikimetrics.utils import thirty_days_ago, today
-from form_fields import BetterDateTimeField
+from wikimetrics.forms.fields import BetterDateTimeField
+from metric import Metric
 
 
 class NewlyRegistered(Metric):

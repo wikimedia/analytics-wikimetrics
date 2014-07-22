@@ -1,19 +1,15 @@
-from ..utils import thirty_days_ago, today
-from ..models import Revision, Page
-from timeseries_metric import TimeseriesMetric
-from form_fields import (
+from sqlalchemy import func, case, cast, Integer
+from sqlalchemy.sql.expression import label
+from wtforms.validators import Required
+
+from wikimetrics.utils import thirty_days_ago, today
+from wikimetrics.models import Revision, Page
+from wikimetrics.forms.fields import (
     BetterDateTimeField,
     BetterBooleanField,
     CommaSeparatedIntegerListField,
 )
-from wtforms.validators import Required
-from sqlalchemy import func, case, cast, Integer
-from sqlalchemy.sql.expression import label
-
-
-__all__ = [
-    'BytesAdded',
-]
+from timeseries_metric import TimeseriesMetric
 
 
 class BytesAdded(TimeseriesMetric):

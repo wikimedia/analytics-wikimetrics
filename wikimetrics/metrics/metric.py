@@ -1,4 +1,4 @@
-from wikimetrics.controllers.forms.secure_form import WikimetricsSecureForm
+from wikimetrics.forms import WikimetricsSecureForm
 from wikimetrics.models import Revision
 
 

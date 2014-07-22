@@ -8,7 +8,7 @@ from datetime import timedelta
 from wikimetrics.configurables import db
 from wikimetrics.models.storage.cohort import CohortStore
 from wikimetrics.models.storage.report import ReportStore
-from wikimetrics.metrics import metric_classes, TimeseriesChoices
+from wikimetrics.metrics import metric_classes
 from wikimetrics.utils import (
     diff_datewise, timestamps_to_now, strip_time, to_datetime, thirty_days_ago,
 )

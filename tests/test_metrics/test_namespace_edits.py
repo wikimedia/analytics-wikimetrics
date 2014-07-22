@@ -3,7 +3,8 @@ from nose.tools import assert_true, assert_equal
 from tests.fixtures import QueueDatabaseTest, DatabaseTest, mediawiki_project
 
 from wikimetrics.configurables import db
-from wikimetrics.metrics import NamespaceEdits, TimeseriesChoices
+from wikimetrics.metrics import NamespaceEdits
+from wikimetrics.enums import TimeseriesChoices
 from wikimetrics.models import MetricReport
 
 

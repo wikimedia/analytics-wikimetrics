@@ -4,7 +4,7 @@ from nose.tools import assert_equal, raises, assert_true, assert_false, assert_r
 from exceptions import StopIteration
 
 from tests.fixtures import WebTest
-from wikimetrics.controllers.forms.cohort_upload import (
+from wikimetrics.forms.cohort_upload import (
     parse_records,
     parse_username,
     normalize_newlines,
