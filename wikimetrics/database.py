@@ -97,6 +97,7 @@ class Database(object):
                 self.config['WIKIMETRICS_ENGINE_URL'],
                 echo=self.config['SQL_ECHO'],
                 connect_args={"charset" : "utf8"},
+                pool_size=self.config['WIKIMETRICS_POOL_SIZE'],
             )
 
         return self.wikimetrics_engine
@@ -168,7 +169,8 @@ class Database(object):
             engine = create_engine(
                 engine_template.format(project),
                 echo=self.config['SQL_ECHO'],
-                convert_unicode=True
+                convert_unicode=True,
+                pool_size=self.config['MEDIAWIKI_POOL_SIZE'],
             )
             self.mediawiki_engines[project] = engine
             return engine
