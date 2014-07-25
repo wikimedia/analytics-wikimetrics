@@ -12,6 +12,9 @@ class DatabaseSetupTest(TestCase):
 
     @raises(TimeoutError)
     def test_pool_size_can_be_exceeded(self):
+        # The 11 in the following statement is 10 (default for
+        # max_overflow) + 1. So this is the lowest value for which we
+        # expect the connection to fail.
         pool_size = db.config['MEDIAWIKI_POOL_SIZE'] + 11
         self.sessions = [
             db.get_mw_session(mediawiki_project)
