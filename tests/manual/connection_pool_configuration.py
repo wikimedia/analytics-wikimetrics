@@ -1,6 +1,6 @@
 from unittest import TestCase
 from sqlalchemy.exc import TimeoutError
-from nose.tools import assert_equals, assert_true, raises
+from nose.tools import assert_true, raises
 
 from tests.fixtures import mediawiki_project
 from wikimetrics.configurables import db, parse_db_connection_string, queue
