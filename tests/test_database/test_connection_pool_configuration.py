@@ -1,5 +1,6 @@
 from unittest import TestCase
 from sqlalchemy.exc import TimeoutError
+from nose.plugins.attrib import attr
 from nose.tools import raises
 
 from tests.fixtures import mediawiki_project
@@ -10,6 +11,7 @@ from wikimetrics.models import Page
 
 class DatabaseSetupTest(TestCase):
 
+    @attr('slow')
     @raises(TimeoutError)
     def test_pool_size_can_be_exceeded(self):
         # The 11 in the following statement is 10 (default for
