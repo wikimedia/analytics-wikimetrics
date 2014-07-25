@@ -36,7 +36,10 @@ def get_engine(config):
 
     return create_engine(
         config['WIKIMETRICS_ENGINE_URL'],
-        echo=config['SQL_ECHO'])
+        echo=config['SQL_ECHO'],
+        connect_args={"charset" : "utf8"},
+        pool_size=config['WIKIMETRICS_POOL_SIZE'],
+    )
 
 
 def run_migrations_offline():

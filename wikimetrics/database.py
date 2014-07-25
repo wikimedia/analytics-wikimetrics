@@ -93,6 +93,9 @@ class Database(object):
             new or cached sqlalchemy engine connected to the wikimetrics database.
         """
         if self.wikimetrics_engine is None:
+            # If changing the parameters to create_engine below, be
+            # sure to also reflect them in
+            # database_migrations/env.py's create_engine.
             self.wikimetrics_engine = create_engine(
                 self.config['WIKIMETRICS_ENGINE_URL'],
                 echo=self.config['SQL_ECHO'],
