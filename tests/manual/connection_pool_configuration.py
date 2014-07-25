@@ -20,7 +20,7 @@ class DatabaseSetupTest(TestCase):
             db.get_mw_session(mediawiki_project)
             for i in range(pool_size)
         ]
-        [self.sessions[i].query(Page).all() for i in range(pool_size)]
+        [self.sessions[i].query(Page).first() for i in range(pool_size)]
 
     def test_pool_size_is_used(self):
         pool_size = db.config['MEDIAWIKI_POOL_SIZE']
@@ -28,7 +28,7 @@ class DatabaseSetupTest(TestCase):
             db.get_mw_session(mediawiki_project)
             for i in range(pool_size)
         ]
-        [self.sessions[i].query(Page).all() for i in range(pool_size)]
+        [self.sessions[i].query(Page).first() for i in range(pool_size)]
         assert_true(True)
 
     def tearDown(self):
