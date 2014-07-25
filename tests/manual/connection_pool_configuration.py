@@ -1,6 +1,6 @@
 from unittest import TestCase
 from sqlalchemy.exc import TimeoutError
-from nose.tools import assert_true, raises
+from nose.tools import raises
 
 from tests.fixtures import mediawiki_project
 from wikimetrics.configurables import db, parse_db_connection_string, queue
@@ -29,7 +29,6 @@ class DatabaseSetupTest(TestCase):
             for i in range(pool_size)
         ]
         [self.sessions[i].query(Page).first() for i in range(pool_size)]
-        assert_true(True)
 
     def tearDown(self):
         if hasattr(self, 'sessions'):
