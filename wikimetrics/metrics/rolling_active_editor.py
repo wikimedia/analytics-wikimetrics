@@ -86,10 +86,12 @@ class RollingActiveEditor(Metric):
         revisions = session.query(rev_user, count)\
             .filter(between(Revision.rev_timestamp, start_date, end_date))\
             .group_by(Revision.rev_user)
+        revisions = self.filter(revisions, user_ids, column=Revision.rev_user)
 
         archived = session.query(ar_user, count)\
             .filter(between(Archive.ar_timestamp, start_date, end_date))\
             .group_by(Archive.ar_user)
+        archived = self.filter(archived, user_ids, column=Archive.ar_user)
 
         edits = revisions.union_all(archived).subquery()
         edits_by_user = session.query(
@@ -98,9 +100,7 @@ class RollingActiveEditor(Metric):
         )\
             .group_by(edits.c.user_id)
 
-        metric = self.filter(edits_by_user, user_ids, column=edits.c.user_id)
-
-        metric_results = {r[0]: {self.id : r[1]} for r in metric.all()}
+        metric_results = {r[0]: {self.id : r[1]} for r in edits_by_user.all()}
 
         if user_ids is None:
             return metric_results
