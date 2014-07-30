@@ -40,30 +40,36 @@ def run_reports(args):
         args.metric = sys.stdin.readline().strip()
 
     service = CohortService()
-    while not args.cohorts or not len(args.cohorts) or not args.cohorts[0]:
-        print('Please specify COHORT(s): (eg: enwiki commonswiki rowiki)')
-        args.cohorts = sys.stdin.readline().strip().split(' ')
-    cohorts = set(args.cohorts)
-    invalid = set()
-    unauthorized = set()
-    valid = []
     try:
         session = db.get_session()
-        for c in cohorts:
-            try:
-                cohort = service.get(session, args.user.id, by_name=c)
-                valid.append(cohort)
-            except (NoResultFound, InvalidCohort):
-                # don't need to roll back session because it's just a query
-                invalid.add(c)
-            except Unauthorized:
-                # don't need to roll back session because it's just a query
-                unauthorized.add(c)
+        if args.all_cohorts:
+            valid = service.get_list(session, args.user.id)
+            if not valid:
+                print('This user has no valid cohorts')
+                sys.exit(1)
+        else:
+            while not args.cohorts or not len(args.cohorts) or not args.cohorts[0]:
+                print('Please specify COHORT(s): (eg: enwiki commonswiki rowiki)')
+                args.cohorts = sys.stdin.readline().strip().split(' ')
+            cohorts = set(args.cohorts)
+            invalid = set()
+            unauthorized = set()
+            valid = []
+            for c in cohorts:
+                try:
+                    cohort = service.get(session, args.user.id, by_name=c)
+                    valid.append(cohort)
+                except (NoResultFound, InvalidCohort):
+                    # don't need to roll back session because it's just a query
+                    invalid.add(c)
+                except Unauthorized:
+                    # don't need to roll back session because it's just a query
+                    unauthorized.add(c)
 
-        if invalid or unauthorized:
-            print('Invalid Cohorts: {}'.format(list(invalid)))
-            print('Unauthorized Cohorts: {}'.format(list(unauthorized)))
-            sys.exit(1)
+            if invalid or unauthorized:
+                print('Invalid Cohorts: {}'.format(list(invalid)))
+                print('Unauthorized Cohorts: {}'.format(list(unauthorized)))
+                sys.exit(1)
 
         from wikimetrics.models.report_nodes.run_report import RunReport
         from wikimetrics.utils import today
@@ -200,11 +206,17 @@ parse_reports.add_argument(
     help='Date to start the report, in YYYY-MM-DD format (default: today)',
     type=lambda s: datetime.strptime(s, '%Y-%m-%d'),
 )
+parse_reports_cohorts = parse_reports.add_mutually_exclusive_group(required=True)
 # NOTE: the -c shorthand causes collisions with wikimetrics' argparse setup
-parse_reports.add_argument(
+parse_reports_cohorts.add_argument(
     '--cohorts',
     help='List of cohorts to add reports for (default: no cohorts)',
     nargs='+',
+)
+parse_reports_cohorts.add_argument(
+    '--all-cohorts',
+    help='Add a report for each cohort assigned to this user',
+    action='store_true',
 )
 
 args = parser.parse_args()
