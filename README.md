@@ -19,14 +19,6 @@ below:
 ````
 $ vagrant enable-role wikimetrics
 $ git submodule update --init
-$ vim Vagrantfile
-````
-
-* Add this under the other config.vm.network section(s):
-
-````
-config.vm.network :forwarded_port,
-    guest: 5000, host: 5000, id: 'wikimetrics'
 ````
 
 * Reload vagrant: `$ vagrant reload --provision`
