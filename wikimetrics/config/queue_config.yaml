@@ -4,12 +4,11 @@ CELERY_RESULT_BACKEND               : 'redis://localhost:6379/0'
 CELERY_TASK_RESULT_EXPIRES          : 3600
 CELERY_DISABLE_RATE_LIMITS          : True
 CELERY_STORE_ERRORS_EVEN_IF_IGNORED : True
-CELERYD_CONCURRENCY                 : 16
+CELERYD_CONCURRENCY                 : 10
 CELERYD_TASK_TIME_LIMIT             : 3630
 CELERYD_TASK_SOFT_TIME_LIMIT        : 3600
 DEBUG                               : True
 LOG_LEVEL                           : 'DEBUG'
-MAX_PARALLEL_PER_RUN                : 10
 MAX_INSTANCES_PER_RECURRENT_REPORT  : 100
 CELERY_BEAT_DATAFILE                : './generated/scheduled_tasks'
 CELERY_BEAT_PIDFILE                 : './generated/celerybeat.pid'

@@ -29,25 +29,16 @@ class ParallelReports(DatabaseTest):
         #   total_runs = 200 and parallelism = 2
         #     no longer causes maximum recursion
         #
-        # sleep = 10 was enough time on Dan's machine to make all cases work
 
         self.total_runs = 200
-        self.parallelism = 2
         self.sleep = 10
 
         # crank up the queue parallel report configuration
-        self.save_parallelism = queue.conf['MAX_PARALLEL_PER_RUN']
         self.save_instances = queue.conf['MAX_INSTANCES_PER_RECURRENT_REPORT']
-        self.save_eager = queue.conf['CELERY_ALWAYS_EAGER']
-        queue.conf['MAX_PARALLEL_PER_RUN'] = self.parallelism
         queue.conf['MAX_INSTANCES_PER_RECURRENT_REPORT'] = self.total_runs
-        queue.conf['CELERY_ALWAYS_EAGER'] = False
 
     def tearDown(self):
-        # re-enable the scheduler after these tests
-        queue.conf['MAX_PARALLEL_PER_RUN'] = self.save_parallelism
         queue.conf['MAX_INSTANCES_PER_RECURRENT_REPORT'] = self.save_instances
-        queue.conf['CELERY_ALWAYS_EAGER'] = self.save_eager
         DatabaseTest.tearDown(self)
 
     @attr('manual')
@@ -82,8 +73,6 @@ class ParallelReports(DatabaseTest):
 
         # executing directly the code that will be run by the scheduler
         recurring_reports()
-
-        time.sleep(self.sleep)
 
         recurrent_runs = self.session.query(ReportStore) \
             .filter(ReportStore.recurrent_parent_id == jr.persistent_id) \
