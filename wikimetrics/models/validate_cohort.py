@@ -96,20 +96,16 @@ class ValidateCohort(object):
             session.commit()
             return cls(cohort)
         except Exception, e:
+            session.rollback()
             app.logger.error(str(e))
             return None
-        finally:
-            session.close()
 
     def run(self):
         session = db.get_session()
-        try:
-            cohort = session.query(CohortStore).get(self.cohort_id)
-            cohort.validation_queue_key = current_task.request.id
-            session.commit()
-            self.validate_records(session, cohort)
-        finally:
-            session.close()
+        cohort = session.query(CohortStore).get(self.cohort_id)
+        cohort.validation_queue_key = current_task.request.id
+        session.commit()
+        self.validate_records(session, cohort)
 
     def validate_records(self, session, cohort):
         """
@@ -170,6 +166,7 @@ class ValidateCohort(object):
                     session.commit()
                     wikiusers_by_project[wu.project] = []
             except:
+                session.rollback()
                 continue
 
         # validate anything that wasn't big enough for a batch
@@ -270,6 +267,7 @@ def validate_users(wikiusers, project, validate_as_user_ids):
                 users_dict[key].reason_invalid = "invalid user_name"
             users_dict[key].valid = False
     except Exception, e:
+        # don't need to roll back session because it's just a query
         msg = traceback.print_exc()
         task_logger.error(msg)
 
@@ -277,5 +275,3 @@ def validate_users(wikiusers, project, validate_as_user_ids):
         for key in users_dict.keys():
             users_dict.pop(key)
         raise e
-    finally:
-        session.close()

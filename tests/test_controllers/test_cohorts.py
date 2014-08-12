@@ -92,10 +92,12 @@ class CohortsControllerTest(WebTest):
     def test_detail_by_name_after_validate(self):
         self.helper_reset_validation()
 
-        # Set a fake validation_queue_key as we are running on sync mode
-        self.cohort.validation_queue_key = 33
+        # Set a fake validation_queue_key as we are running in sync mode
+        self.cohort.validation_queue_key = '33'
+        self.session.add(self.cohort)
         self.session.commit()
-        #executed validation synchronously
+
+        # executed validation synchronously
         vc = ValidateCohort(self.cohort)
         vc.validate_records(self.session, self.cohort)
         with cohort_service_set(app, self.cohort_service):

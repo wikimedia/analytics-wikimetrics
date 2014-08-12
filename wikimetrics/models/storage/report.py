@@ -42,13 +42,8 @@ class ReportStore(db.WikimetricsBase):
             existing_session = Session.object_session(self)
             if not existing_session:
                 existing_session = db.get_session()
-                try:
-                    existing_session.add(self)
-                    existing_session.commit()
-                finally:
-                    existing_session.close()
-            else:
-                existing_session.commit()
+                existing_session.add(self)
+            existing_session.commit()
 
     @staticmethod
     def update_reports(report_ids, owner_id, public=None, recurrent=None):
@@ -69,23 +64,20 @@ class ReportStore(db.WikimetricsBase):
             False otherwise
         """
         db_session = db.get_session()
-        try:
-            values = {}
-            if public is not None:
-                values['public'] = public
-            if recurrent is not None:
-                values['recurrent'] = recurrent
-            update = db_session.execute(
-                ReportStore.__table__.update()
-                .values(**values)
-                .where(and_(
-                    ReportStore.id.in_(report_ids),
-                    ReportStore.user_id == owner_id
-                ))
-            )
-            db_session.commit()
-        finally:
-            db_session.close()
+        values = {}
+        if public is not None:
+            values['public'] = public
+        if recurrent is not None:
+            values['recurrent'] = recurrent
+        update = db_session.execute(
+            ReportStore.__table__.update()
+            .values(**values)
+            .where(and_(
+                ReportStore.id.in_(report_ids),
+                ReportStore.user_id == owner_id
+            ))
+        )
+        db_session.commit()
 
         if update and update.rowcount == len(report_ids):
             return True
@@ -159,7 +151,6 @@ class ReportStore(db.WikimetricsBase):
 
         # good no exception
         try:
-            db_session = db.get_session()
             path = file_manager.get_public_report_path(report_id)
             if public:
                 file_manager.write_data(path, data)
@@ -174,9 +165,6 @@ class ReportStore(db.WikimetricsBase):
             # transaction scope are now the same
             ReportStore.update_reports([report_id], owner_id, public=not public)
             raise e
-
-        finally:
-            db_session.close()
 
     def get_result_safely(self, result):
         if result and isinstance(result, dict) and self.result_key in result:

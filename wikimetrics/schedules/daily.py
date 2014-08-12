@@ -1,4 +1,3 @@
-import sys
 import traceback
 from celery import group, chain
 from celery.utils.log import get_task_logger
@@ -30,7 +29,7 @@ def recurring_reports(report_id=None):
                 kwargs = dict()
                 if no_more_than:
                     kwargs['no_more_than'] = no_more_than
-
+                
                 days_to_run = RunReport.create_reports_for_missed_days(
                     report,
                     session,
@@ -38,7 +37,7 @@ def recurring_reports(report_id=None):
                 )
                 for day_to_run in days_to_run:
                     day_to_run.task.delay(day_to_run)
-
+            
             except Exception:
                 task_logger.error('Problem running recurring report "{}": {}'.format(
                     report, traceback.format_exc()
@@ -48,5 +47,14 @@ def recurring_reports(report_id=None):
         task_logger.error('Problem running recurring reports: {}'.format(
             traceback.format_exc()
         ))
-    finally:
-        session.close()
+
+
+if queue.conf.get('DEBUG'):
+    @queue.task
+    def get_session_and_leave_open(*args, **kwargs):
+        from wikimetrics.configurables import db
+        from wikimetrics.models import ReportStore, RunReport
+        session = db.get_session()
+        session2 = db.get_session()
+        session2.query(ReportStore).first()
+        session.query(ReportStore).first()

@@ -2,6 +2,7 @@ import imp
 import os
 import yaml
 import subprocess
+from celery.signals import task_postrun
 
 
 def compose_connection_string(user, password, host, dbName):
@@ -261,6 +262,16 @@ def config_queue(args):
             schedules[key]['schedule'] = timedelta(seconds=1)
         else:
             schedules[key]['schedule'] = timedelta(seconds=120)
+
+
+@task_postrun.connect()
+def task_postrun(*args, **kwargs):
+    # always, no matter exceptions or not, remove database sessions
+    from . import db
+    if db.wikimetrics_session:
+        db.wikimetrics_session.remove()
+    for project, session in db.mediawiki_sessions.items():
+        session.remove()
 
 
 def get_absolute_path():

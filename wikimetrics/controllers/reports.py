@@ -48,12 +48,9 @@ def set_public_report(report_id):
     # in order to move code to the PersistenReport class need to fetch report
     # data here
     db_session = db.get_session()
-    try:
-        result_key = db_session.query(ReportStore.result_key)\
-            .filter(ReportStore.id == report_id)\
-            .one()[0]
-    finally:
-        db_session.close()
+    result_key = db_session.query(ReportStore.result_key)\
+        .filter(ReportStore.id == report_id)\
+        .one()[0]
 
     data = report_result_json(result_key).data
 
@@ -99,21 +96,18 @@ def reports_request():
 @app.route('/reports/list/')
 def reports_list():
     db_session = db.get_session()
-    try:
-        reports = db_session.query(ReportStore)\
-            .filter(ReportStore.user_id == current_user.id)\
-            .filter(or_(ReportStore.created > thirty_days_ago(), ReportStore.recurrent))\
-            .filter(ReportStore.show_in_ui)\
-            .all()
-        # TODO: update status for all reports at all times (not just show_in_ui ones)
-        # update status for each report
-        for report in reports:
-            report.update_status()
+    reports = db_session.query(ReportStore)\
+        .filter(ReportStore.user_id == current_user.id)\
+        .filter(or_(ReportStore.created > thirty_days_ago(), ReportStore.recurrent))\
+        .filter(ReportStore.show_in_ui)\
+        .all()
+    # TODO: update status for all reports at all times (not just show_in_ui ones)
+    # update status for each report
+    for report in reports:
+        report.update_status()
 
-        # TODO fix json_response to deal with ReportStore objects
-        reports_json = json_response(reports=[report._asdict() for report in reports])
-    finally:
-        db_session.close()
+    # TODO fix json_response to deal with ReportStore objects
+    reports_json = json_response(reports=[report._asdict() for report in reports])
     return reports_json
 
 
@@ -133,16 +127,14 @@ def get_celery_task(result_key):
 
     try:
         db_session = db.get_session()
-        try:
-            pj = db_session.query(ReportStore)\
-                .filter(ReportStore.result_key == result_key)\
-                .one()
+        pj = db_session.query(ReportStore)\
+            .filter(ReportStore.result_key == result_key)\
+            .one()
 
-            celery_task = Report.task.AsyncResult(pj.queue_result_key)
-        finally:
-            db_session.close()
+        celery_task = Report.task.AsyncResult(pj.queue_result_key)
         return (celery_task, pj)
     except NoResultFound:
+        # don't need to roll back session because it's just a query
         return (None, None)
 
 
@@ -221,25 +213,22 @@ def get_timeseries_csv(task_result, pj, parameters):
     # collect rows to output in CSV
     task_rows = []
 
-    try:
-        session = db.get_session()
-        # Individual Results
-        if Aggregation.IND in task_result:
-            # fold user_id into dict so we can use DictWriter to escape things
-            for wiki_user_key_str, row in task_result[Aggregation.IND].iteritems():
-                wiki_user_key = WikiUserKey.fromstr(wiki_user_key_str)
-                user_id = wiki_user_key.user_id
-                user_name = get_user_name(session, wiki_user_key)
-                project = wiki_user_key.user_project
-                for subrow in row.keys():
-                    task_row = row[subrow].copy()
-                    task_row['user_id'] = user_id
-                    task_row['user_name'] = user_name
-                    task_row['project'] = project
-                    task_row['submetric'] = subrow
-                    task_rows.append(task_row)
-    finally:
-        session.close()
+    session = db.get_session()
+    # Individual Results
+    if Aggregation.IND in task_result:
+        # fold user_id into dict so we can use DictWriter to escape things
+        for wiki_user_key_str, row in task_result[Aggregation.IND].iteritems():
+            wiki_user_key = WikiUserKey.fromstr(wiki_user_key_str)
+            user_id = wiki_user_key.user_id
+            user_name = get_user_name(session, wiki_user_key)
+            project = wiki_user_key.user_project
+            for subrow in row.keys():
+                task_row = row[subrow].copy()
+                task_row['user_id'] = user_id
+                task_row['user_name'] = user_name
+                task_row['project'] = project
+                task_row['submetric'] = subrow
+                task_rows.append(task_row)
 
     # Aggregate Results
     if Aggregation.SUM in task_result:
@@ -313,23 +302,20 @@ def get_simple_csv(task_result, pj, parameters):
     # collect rows to output in CSV
     task_rows = []
 
-    try:
-        session = db.get_session()
-        # Individual Results
-        if Aggregation.IND in task_result:
-            # fold user_id into dict so we can use DictWriter to escape things
-            for wiki_user_key_str, row in task_result[Aggregation.IND].iteritems():
-                wiki_user_key = WikiUserKey.fromstr(wiki_user_key_str)
-                user_id = wiki_user_key.user_id
-                user_name = get_user_name(session, wiki_user_key)
-                project = wiki_user_key.user_project
-                task_row = row.copy()
-                task_row['user_id'] = user_id
-                task_row['user_name'] = user_name
-                task_row['project'] = project
-                task_rows.append(task_row)
-    finally:
-        session.close()
+    session = db.get_session()
+    # Individual Results
+    if Aggregation.IND in task_result:
+        # fold user_id into dict so we can use DictWriter to escape things
+        for wiki_user_key_str, row in task_result[Aggregation.IND].iteritems():
+            wiki_user_key = WikiUserKey.fromstr(wiki_user_key_str)
+            user_id = wiki_user_key.user_id
+            user_name = get_user_name(session, wiki_user_key)
+            project = wiki_user_key.user_project
+            task_row = row.copy()
+            task_row['user_id'] = user_id
+            task_row['user_name'] = user_name
+            task_row['project'] = project
+            task_rows.append(task_row)
 
     # Aggregate Results
     if Aggregation.SUM in task_result:

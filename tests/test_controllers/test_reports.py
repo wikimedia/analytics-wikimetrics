@@ -478,6 +478,7 @@ class ReportsControllerTest(ControllerAsyncTest):
     def test_report_does_not_run_on_invalid_cohort(self):
 
         self.cohort.validated = False
+        self.session.add(self.cohort)
         self.session.commit()
 
         desired_responses = [{

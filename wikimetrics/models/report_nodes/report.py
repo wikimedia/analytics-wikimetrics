@@ -96,16 +96,17 @@ class Report(object):
                          recurrent=recurrent,
                          recurrent_parent_id=recurrent_parent_id,
                          created=created or datetime.now())
-        session = db.get_session()
         try:
+            session = db.get_session()
             session.add(pj)
             session.commit()
             self.persistent_id = pj.id
             self.created = pj.created
             pj.name = self.name or str(self)
             session.commit()
-        finally:
-            session.close()
+        except:
+            session.rollback()
+            raise
     
     def __repr__(self):
         return '<{0}("{1}")>'.format(type(self).__name__, self.persistent_id)
@@ -118,14 +119,11 @@ class Report(object):
         task has been started
         """
         session = db.get_session()
-        try:
-            pj = session.query(ReportStore).get(self.persistent_id)
-            pj.status = status
-            if task_id:
-                pj.queue_result_key = task_id
-            session.commit()
-        finally:
-            session.close()
+        pj = session.query(ReportStore).get(self.persistent_id)
+        pj.status = status
+        if task_id:
+            pj.queue_result_key = task_id
+        session.commit()
     
     def run(self):
         """
@@ -209,13 +207,10 @@ class ReportNode(Report):
         
         self.result_key = str(uuid4())
         db_session = db.get_session()
-        try:
-            pj = db_session.query(ReportStore).get(self.persistent_id)
-            pj.result_key = self.result_key
-            db_session.add(pj)
-            db_session.commit()
-        finally:
-            db_session.close()
+        pj = db_session.query(ReportStore).get(self.persistent_id)
+        pj.result_key = self.result_key
+        db_session.add(pj)
+        db_session.commit()
         
         merged = {self.result_key: results}
         for child_result in child_results:

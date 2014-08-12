@@ -28,7 +28,7 @@ def run_cohorts(args):
             cohort = service.add_wiki_cohort(session, project)
             service.share(session, cohort, args.user.id)
     finally:
-        session.close()
+        session.remove()
 
 
 def run_reports(args):
@@ -54,8 +54,10 @@ def run_reports(args):
                 cohort = service.get(session, args.user.id, by_name=c)
                 valid.append(cohort)
             except (NoResultFound, InvalidCohort):
+                # don't need to roll back session because it's just a query
                 invalid.add(c)
             except Unauthorized:
+                # don't need to roll back session because it's just a query
                 unauthorized.add(c)
 
         if invalid or unauthorized:
@@ -138,7 +140,7 @@ def run_reports(args):
             else:
                 print('... already exists: "{}"'.format(parameters['name']))
     finally:
-        session.close()
+        session.remove()
 
 
 def get_user(args):
@@ -157,7 +159,7 @@ def get_user(args):
         print(e)
         sys.exit(1)
     finally:
-        s.close()
+        s.remove()
 
 
 parser = argparse.ArgumentParser(description='Manage cohorts or reports in bulk')

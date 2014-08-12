@@ -608,7 +608,7 @@ class DatabaseTest(unittest.TestCase):
         self.mwSession.query(MediawikiUser).delete()
         self.mwSession.query(Page).delete()
         self.mwSession.commit()
-        self.mwSession.close()
+        self.mwSession.remove()
         
         self.mwSession2.query(Logging).delete()
         self.mwSession2.query(Revision).delete()
@@ -616,7 +616,7 @@ class DatabaseTest(unittest.TestCase):
         self.mwSession2.query(MediawikiUser).delete()
         self.mwSession2.query(Page).delete()
         self.mwSession2.commit()
-        self.mwSession2.close()
+        self.mwSession2.remove()
         
         self.session.query(CohortTagStore).delete()
         self.session.query(TagStore).delete()
@@ -627,7 +627,7 @@ class DatabaseTest(unittest.TestCase):
         self.session.query(UserStore).delete()
         self.session.query(ReportStore).delete()
         self.session.commit()
-        self.session.close()
+        self.session.remove()
 
 
 class QueueTest(unittest.TestCase):
@@ -665,6 +665,7 @@ class WebTestAnonymous(DatabaseTest):
         """
         DatabaseTest.setUp(self)
         self.common_cohort_5()
+        app.testing = True
         self.client = app.test_client()
         
         # TODO change all tests, tests than inherit from

@@ -39,17 +39,14 @@ class ValidateReport(ReportLeaf):
         """
         self.set_status(celery.states.STARTED, task_id=current_task.request.id)
         session = db.get_session()
-        try:
-            from wikimetrics.models.storage import ReportStore
-            pj = session.query(ReportStore).get(self.persistent_id)
-            pj.name = '{0} - {1} (failed validation)'.format(
-                self.metric_label,
-                self.cohort_name,
-            )
-            pj.status = celery.states.FAILURE
-            session.commit()
-        finally:
-            session.close()
+        from wikimetrics.models.storage import ReportStore
+        pj = session.query(ReportStore).get(self.persistent_id)
+        pj.name = '{0} - {1} (failed validation)'.format(
+            self.metric_label,
+            self.cohort_name,
+        )
+        pj.status = celery.states.FAILURE
+        session.commit()
         
         message = ''
         if not self.metric_valid:

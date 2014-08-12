@@ -3,6 +3,7 @@ from os import devnull
 from signal import SIGINT
 from time import sleep
 from wikimetrics.configurables import queue
+from celery.utils import LOG_LEVELS
 
 celery_proc = None
 celery_sched_proc = None
@@ -39,7 +40,8 @@ def setUp():
     # TODO remove from here when
     # this bug is fixed: https://bugzilla.wikimedia.org/show_bug.cgi?id=66770
     queue.conf['CELERY_ALWAYS_EAGER'] = True
-    
+    queue.conf['EAGER_PROPAGATES_EXCEPTION'] = True
+    queue.conf.CELERYD_LOG_LEVEL = LOG_LEVELS['DEBUG']
     # wait until celery broker / worker is up
     tries = 0
     while(not celery_is_alive() and tries < 20):

@@ -43,27 +43,23 @@ def cohorts_index():
     """
     session = db.get_session()
     tags = g.tag_service.get_all_tags(session)
-    session.close()
     return render_template('cohorts.html', tags=json.dumps(tags))
 
 
 @app.route('/cohorts/list/')
 def cohorts_list():
     include_invalid = request.args.get('include_invalid', 'false') == 'true'
-    try:
-        db_session = db.get_session()
-        if include_invalid:
-            cohorts = g.cohort_service.get_list_for_display(db_session, current_user.id)
-        else:
-            cohorts = g.cohort_service.get_list(db_session, current_user.id)
+    db_session = db.get_session()
+    if include_invalid:
+        cohorts = g.cohort_service.get_list_for_display(db_session, current_user.id)
+    else:
+        cohorts = g.cohort_service.get_list(db_session, current_user.id)
 
-        return json_response(cohorts=[{
-            'id': c.id,
-            'name': c.name,
-            'description': c.description,
-        } for c in cohorts])
-    finally:
-        db_session.close()
+    return json_response(cohorts=[{
+        'id': c.id,
+        'name': c.name,
+        'description': c.description,
+    } for c in cohorts])
 
 
 @app.route('/cohorts/detail/invalid-users/<int:cohort_id>')
@@ -80,10 +76,9 @@ def cohort_invalid_detail(cohort_id):
             .all()
         return json_response(invalid_wikiusers=[wu._asdict() for wu in wikiusers])
     except Exception, e:
+        # don't need to roll back session because it's just a query
         app.logger.exception(str(e))
         return json_error('Error fetching invalid users for {0}'.format(cohort_id))
-    finally:
-        session.close()
 
 
 @app.route('/cohorts/detail/<string:name_or_id>')
@@ -112,13 +107,12 @@ def cohort_detail(name_or_id):
 
         cohort_dict['validation'] =\
             populate_cohort_validation_status(cohort, db_session, cohort.size)
-        
+
+    # don't need to roll back session because it's just a query
     except Unauthorized:
         return 'You are not allowed to access this Cohort', 401
     except NoResultFound:
         return 'Could not find this Cohort', 404
-    finally:
-        db_session.close()
 
     return json_response(cohort_dict)
 
@@ -209,11 +203,8 @@ def get_cohort_by_name(name):
     """
     Gets a cohort by name, without checking access or worrying about duplicates
     """
-    try:
-        db_session = db.get_session()
-        return db_session.query(CohortStore).filter(CohortStore.name == name).first()
-    finally:
-        db_session.close()
+    db_session = db.get_session()
+    return db_session.query(CohortStore).filter(CohortStore.name == name).first()
 
 
 @app.route('/cohorts/validate/name')
@@ -245,8 +236,6 @@ def validate_cohort(cohort_id):
         return json_error('You are not allowed to access this cohort')
     except NoResultFound:
         return json_error('This cohort does not exist')
-    finally:
-        session.close()
 
 
 def num_users(session, cohort_id):
@@ -361,8 +350,6 @@ def delete_cohort(cohort_id):
     except DatabaseError as e:
         session.rollback()
         return json_error(e.message)
-    finally:
-        session.close()
 
 
 @app.route('/cohorts/<int:cohort_id>/tag/add/', defaults={'tag': None}, methods=['POST'])
@@ -400,15 +387,13 @@ def add_tag(cohort_id, tag):
         session.add(cohort_tag)
         session.commit()
         data['tags'] = populate_cohort_tags(cohort_id, session)
-        
+
         tagsAutocompleteList = g.tag_service.get_all_tags(session)
         data['tagsAutocompleteList'] = json.dumps(tagsAutocompleteList)
-        
+
     except DatabaseError as e:
         session.rollback()
         return json_error(e.message)
-    finally:
-        session.close()
 
     return json_response(data)
 
@@ -429,15 +414,11 @@ def cohort_tag_list(cohort_id):
 @app.route('/cohorts/<int:cohort_id>/tag/delete/<int:tag_id>', methods=['POST'])
 def delete_tag(cohort_id, tag_id):
     session = db.get_session()
-    try:
-        session.query(CohortTagStore) \
-            .filter(CohortTagStore.cohort_id == cohort_id) \
-            .filter(CohortTagStore.tag_id == tag_id) \
-            .delete()
-        session.commit()
-      
-        tags = g.tag_service.get_all_tags(session)
-        return json_response(message='success', tagsAutocompleteList=json.dumps(tags))
-        
-    finally:
-        session.close()
+    session.query(CohortTagStore) \
+        .filter(CohortTagStore.cohort_id == cohort_id) \
+        .filter(CohortTagStore.tag_id == tag_id) \
+        .delete()
+    session.commit()
+
+    tags = g.tag_service.get_all_tags(session)
+    return json_response(message='success', tagsAutocompleteList=json.dumps(tags))

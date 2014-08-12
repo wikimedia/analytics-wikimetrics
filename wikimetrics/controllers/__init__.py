@@ -14,6 +14,7 @@ from metrics import *
 from cohorts import *
 from reports import *
 from demo import *
+from request_interceptors import *
 
 # ignore flake8 because of F403 violation
 # flake8: noqa

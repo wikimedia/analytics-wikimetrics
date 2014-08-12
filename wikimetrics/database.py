@@ -12,7 +12,7 @@ from os.path import exists
 from urllib2 import urlopen
 
 from sqlalchemy import create_engine
-from sqlalchemy.orm import sessionmaker
+from sqlalchemy.orm import sessionmaker, scoped_session
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy import exc
 from sqlalchemy import event
@@ -78,9 +78,10 @@ class Database(object):
 
         self.wikimetrics_engine = None
         self.wikimetrics_sessionmaker = None
+        self.wikimetrics_session = None
 
         self.mediawiki_engines = {}
-        self.mediawiki_sessionmakers = {}
+        self.mediawiki_sessions = {}
 
         # we instantiate project_host_map lazily
         self._project_host_map = None
@@ -119,9 +120,18 @@ class Database(object):
             # This import is necessary here so that
             # WikimetricsBase knows about all its children.
             import wikimetrics.models
-            self.wikimetrics_sessionmaker = sessionmaker(self.wikimetrics_engine)
+            self.wikimetrics_sessionmaker = sessionmaker(
+                self.wikimetrics_engine,
+                expire_on_commit=False,
+            )
 
-        return self.wikimetrics_sessionmaker()
+        if self.wikimetrics_session is None:
+            self.wikimetrics_session = scoped_session(self.wikimetrics_sessionmaker)
+
+        # an unhandled exception would leave the session in a bad state, roll it back:
+        if not self.wikimetrics_session.is_active:
+            self.wikimetrics_session.rollback()
+        return self.wikimetrics_session
 
     def get_mw_session(self, project):
         """
@@ -134,9 +144,7 @@ class Database(object):
             new sqlalchemy session connected to the appropriate database.  This method
             caches sqlalchemy session makers and creates sessions from those.
         """
-        if project in self.mediawiki_sessionmakers:
-            return self.mediawiki_sessionmakers[project]()
-        else:
+        if project not in self.mediawiki_sessions:
             import wikimetrics.models.mediawiki
             engine = self.get_mw_engine(project)
             if self.config['DEBUG']:
@@ -145,14 +153,12 @@ class Database(object):
                     checkfirst=True
                 )
 
-            # Assuming that we're not using the real mediawiki databases in debug mode,
-            # we have to create the tables
-            #if self.config['DEBUG']:
-                #self.MediawikiBase.metadata.create_all(engine, checkfirst=True)
+            self.mediawiki_sessions[project] = scoped_session(sessionmaker(engine))
 
-            project_sessionmaker = sessionmaker(engine)
-            self.mediawiki_sessionmakers[project] = project_sessionmaker
-            return project_sessionmaker()
+        # an unhandled exception would leave the session in a bad state, roll it back:
+        if not self.mediawiki_sessions[project].is_active:
+            self.mediawiki_sessions[project].rollback()
+        return self.mediawiki_sessions[project]
 
     def get_mw_engine(self, project):
         """
@@ -164,19 +170,17 @@ class Database(object):
         Returns:
             new or cached sqlalchemy engine connected to the appropriate database.
         """
-        if project in self.mediawiki_engines:
-            return self.mediawiki_engines[project]
-        else:
+        if project not in self.mediawiki_engines:
             engine_template = self.config['MEDIAWIKI_ENGINE_URL_TEMPLATE']
 
-            engine = create_engine(
+            self.mediawiki_engines[project] = create_engine(
                 engine_template.format(project),
                 echo=self.config['SQL_ECHO'],
                 convert_unicode=True,
                 pool_size=self.config['MEDIAWIKI_POOL_SIZE'],
             )
-            self.mediawiki_engines[project] = engine
-            return engine
+
+        return self.mediawiki_engines[project]
 
     def get_project_host_map(self, usecache=True):
         """

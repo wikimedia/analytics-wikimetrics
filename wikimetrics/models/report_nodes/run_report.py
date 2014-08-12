@@ -67,10 +67,7 @@ class RunReport(ReportNode):
         cohort_service = CohortService()
         cohort_dict = parameters['cohort']
         session = db.get_session()
-        try:
-            cohort = cohort_service.get(session, user_id, by_id=cohort_dict['id'])
-        finally:
-            session.close()
+        cohort = cohort_service.get(session, user_id, by_id=cohort_dict['id'])
 
         parameters['cohort']['size'] = cohort.size
 
@@ -140,11 +137,8 @@ class RunReport(ReportNode):
         if self.public is False:
             return
 
-        try:
-            session = db.get_session()
-            db_report = session.query(ReportStore).get(self.persistent_id)
-        finally:
-            session.close()
+        session = db.get_session()
+        db_report = session.query(ReportStore).get(self.persistent_id)
 
         data = db_report.get_json_result(results)
 
@@ -202,6 +196,7 @@ class RunReport(ReportNode):
                 )
                 reports_created += 1
             except Exception, e:
+                # don't need to roll back session because it's just a query
                 task_logger.error('Problem creating child report: {}'.format(e))
                 continue
 

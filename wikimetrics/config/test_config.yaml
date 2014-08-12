@@ -1,3 +1,5 @@
+# this higher concurrency enables tests that stress resources such as database connections
+CELERYD_CONCURRENCY             : 170
 CELERY_ALWAYS_EAGER             : True
 TEST                            : True
 WIKIMETRICS_ENGINE_URL          : 'mysql://wikimetrics:wikimetrics@localhost/wikimetrics_testing'

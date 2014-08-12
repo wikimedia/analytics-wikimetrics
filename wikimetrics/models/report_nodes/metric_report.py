@@ -30,14 +30,11 @@ class MetricReport(ReportLeaf):
 
     def run(self):
         session = db.get_mw_session(self.project)
-        try:
-            results_by_user = self.metric(self.user_ids, session)
-            results = {
-                str(WikiUserKey(key, self.project, self.cohort_id)) : value
-                for key, value in results_by_user.items()
-            }
-            if not len(results):
-                results = {NO_RESULTS : self.metric.default_result}
-            return results
-        finally:
-            session.close()
+        results_by_user = self.metric(self.user_ids, session)
+        results = {
+            str(WikiUserKey(key, self.project, self.cohort_id)) : value
+            for key, value in results_by_user.items()
+        }
+        if not len(results):
+            results = {NO_RESULTS : self.metric.default_result}
+        return results
