@@ -46,7 +46,18 @@ class RunReport(ReportNode):
                 public          : whether to expose results publicly
             user_id             : the user wishing to run this report
             recurrent_parent_id : the parent ReportStore.id for a recurrent run
-            created             : if set, represents the date of a recurrent run
+            created             : if set, represents the date of a recurrent run.
+                                  This need not be the timestamp when the
+                                  recurrent run has been created -- for example
+                                  when backfilling. Hence, this does not fully
+                                  match the semantics of the word 'created'.
+                                  But since neither start nor end date have a
+                                  separate column in the report table in the
+                                  database, the covered period for backfilled
+                                  recurring reports would be hard to identify
+                                  when only looking at the raw database
+                                  tables. To overcome this issue, we abuse the
+                                  created date here.
 
         Raises:
             KeyError if required parameters are missing
@@ -189,7 +200,7 @@ class RunReport(ReportNode):
                     parameters,
                     user_id=report.user_id,
                     recurrent_parent_id=report.id,
-                    created=day,
+                    created=day,  # See constructor of RunReport
                 )
                 reports_created += 1
             except Exception, e:
