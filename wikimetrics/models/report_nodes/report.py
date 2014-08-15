@@ -108,7 +108,7 @@ class Report(object):
             session.close()
     
     def __repr__(self):
-        return '<Report("{0}")>'.format(self.persistent_id)
+        return '<{0}("{1}")>'.format(type(self).__name__, self.persistent_id)
     
     # TODO if this function needs to use the db session it should be passed on
     # on method params not retrieved from a singleton

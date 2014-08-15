@@ -57,6 +57,3 @@ class ValidateReport(ReportLeaf):
                 self.metric_label,
             )
         return {'FAILURE': message or 'False'}
-    
-    def __repr__(self):
-        return '<ValidateReport("{0}")>'.format(self.persistent_id)

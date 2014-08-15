@@ -178,9 +178,6 @@ class AggregateReport(ReportNode):
                         )))
         
         return aggregation
-    
-    def __repr__(self):
-        return '<AggregateReport("{0}")>'.format(self.persistent_id)
 
 
 def safe_average(cummulative_sum, count):

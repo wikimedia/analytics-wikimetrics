@@ -42,6 +42,3 @@ class MultiProjectMetricReport(ReportNode):
             merged_individual_results.update(res)
         
         return merged_individual_results
-    
-    def __repr__(self):
-        return '<MultiProjectMetricReport("{0}")>'.format(self.persistent_id)

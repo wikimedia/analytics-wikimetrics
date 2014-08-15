@@ -141,9 +141,6 @@ class RunReport(ReportNode):
         '''
         recurring_reports(self.persistent_id)
 
-    def __repr__(self):
-        return '<RunReport("{0}")>'.format(self.persistent_id)
-
     # TODO, this method belongs on a different class and it should not be a class method
     @classmethod
     def create_reports_for_missed_days(cls, report, session, no_more_than=365):

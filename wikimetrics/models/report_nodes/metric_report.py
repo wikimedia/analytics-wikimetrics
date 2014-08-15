@@ -41,6 +41,3 @@ class MetricReport(ReportLeaf):
             return results
         finally:
             session.close()
-    
-    def __repr__(self):
-        return '<MetricReport("{0}")>'.format(self.persistent_id)
