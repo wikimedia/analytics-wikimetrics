@@ -179,10 +179,6 @@ def cohort_upload():
             if not form.validate():
                 flash('Please fix validation problems.', 'warning')
 
-            # NOTE: The following two lines will be removed in validation refactor
-            elif g.cohort_service.get_cohort_by_name(db.get_session(), form.name.data):
-                flash('That Cohort name is already taken.', 'warning')
-
             else:
                 form.parse_records()
                 vc = ValidateCohort.from_upload(form, current_user.id)
@@ -204,6 +200,10 @@ def cohort_upload():
 
 @app.route('/cohorts/validate/name')
 def validate_cohort_name_allowed():
+    """
+    Returns true if there are no other cohorts with this name. Remote call is
+    set up in static/js/cohortUpload.js.
+    """
     name = request.args.get('name')
     session = db.get_session()
     available = g.cohort_service.get_cohort_by_name(session, name) is None
@@ -212,6 +212,10 @@ def validate_cohort_name_allowed():
 
 @app.route('/cohorts/validate/project')
 def validate_cohort_project_allowed():
+    """
+    Returns true if a valid project is provided. Remote call is set up in
+    static/js/cohortUpload.js.
+    """
     project = request.args.get('project')
     valid = project in db.get_project_host_map()
     return json.dumps(valid)

@@ -3,8 +3,10 @@ from wtforms import StringField, FileField, TextAreaField, RadioField
 from wtforms.validators import Required
 
 from wikimetrics.utils import parse_username
-from fields import RequiredIfNot
 from secure_form import WikimetricsSecureForm
+from validators import (
+    CohortNameUnused, CohortNameLegalCharacters, ProjectExists, RequiredIfNot
+)
 
 
 class CohortUpload(WikimetricsSecureForm):
@@ -16,10 +18,15 @@ class CohortUpload(WikimetricsSecureForm):
     when we read text fields (user names or user ids) from a csv file those would be
     returned as strings via python csv module.
     """
-    name                    = StringField([Required()])
+    name                    = StringField('Name',
+                                          [Required(), CohortNameUnused(),
+                                           CohortNameLegalCharacters()])
+
     description             = TextAreaField()
-    project                 = StringField('Default Project', [Required()])
-    csv                     = FileField('Upload File', [RequiredIfNot('paste_usernames')])
+    project                 = StringField('Default Project',
+                                          [Required(), ProjectExists()])
+
+    csv                     = FileField('Upload File', [RequiredIfNot('paste_username')])
     paste_username          = TextAreaField('Paste Usernames', [RequiredIfNot('csv')])
     validate_as_user_ids    = RadioField('Validate As', [Required()], choices=[
         ('True', 'User Ids (Numbers found in the user_id column of the user table)'),

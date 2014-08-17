@@ -381,7 +381,7 @@ class CohortsControllerUploadTest(WebTest):
         ))
         assert_equal(response.status_code, 200)
         assert_true(response.data.find('<h3>Create a Cohort') >= 0)
-        assert_true(response.data.find('That Cohort name is already taken') >= 0)
+        assert_true(response.data.find('This cohort name is taken.') >= 0)
 
     def test_upload_works(self):
         response = self.app.post('/cohorts/upload', data=dict(
