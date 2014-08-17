@@ -178,8 +178,11 @@ def cohort_upload():
         try:
             if not form.validate():
                 flash('Please fix validation problems.', 'warning')
-            elif get_cohort_by_name(form.name.data):
+
+            # NOTE: The following two lines will be removed in validation refactor
+            elif g.cohort_service.get_cohort_by_name(db.get_session(), form.name.data):
                 flash('That Cohort name is already taken.', 'warning')
+
             else:
                 form.parse_records()
                 vc = ValidateCohort.from_upload(form, current_user.id)
@@ -199,18 +202,11 @@ def cohort_upload():
     )
 
 
-def get_cohort_by_name(name):
-    """
-    Gets a cohort by name, without checking access or worrying about duplicates
-    """
-    db_session = db.get_session()
-    return db_session.query(CohortStore).filter(CohortStore.name == name).first()
-
-
 @app.route('/cohorts/validate/name')
 def validate_cohort_name_allowed():
     name = request.args.get('name')
-    available = get_cohort_by_name(name) is None
+    session = db.get_session()
+    available = g.cohort_service.get_cohort_by_name(session, name) is None
     return json.dumps(available)
 
 

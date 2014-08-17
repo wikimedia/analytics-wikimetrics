@@ -71,6 +71,12 @@ class CohortService(object):
         db_session = db.get_session()
         return db_session.query(CohortStore).get(cohort.id)
 
+    def get_cohort_by_name(self, db_session, name):
+        """
+        Gets a cohort by name, without worrying about access, ownership or duplicates.
+        """
+        return db_session.query(CohortStore).filter(CohortStore.name == name).first()
+
     def get(self, db_session, user_id, **kargs):
         """Same as _get but checks validity of the cohort"""
         cohort = self._get(db_session, user_id, **kargs)
