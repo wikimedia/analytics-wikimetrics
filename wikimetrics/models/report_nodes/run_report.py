@@ -82,13 +82,14 @@ class RunReport(ReportNode):
             self.show_in_ui = False
 
         public = parameters.get('public', False)
+        recurrent = parameters.get('recurrent', False)
 
         super(RunReport, self).__init__(
             name=parameters['name'],
             user_id=user_id,
             parameters=parameters,
             public=public,
-            recurrent=parameters.get('recurrent', False),
+            recurrent=recurrent,
             recurrent_parent_id=recurrent_parent_id,
             created=created,
         )
@@ -100,9 +101,20 @@ class RunReport(ReportNode):
             metric, cohort, recurrent_parent_id is None, user_id=user_id
         )
         if validate_report.valid():
-            self.children = [AggregateReport(
-                metric, cohort, metric_dict, parameters=parameters, user_id=user_id
-            )]
+            if recurrent and recurrent_parent_id is None:
+                # Valid parent recurrent report
+                # We do not add children that compute data as parent recurrent
+                # reports just help the scheduler orchestrate child runs. The
+                # initial run for this report will be kicked off in
+                # post_process.
+                self.children = []
+            else:
+                # Valid, but not a parent recurring report, so we add the child
+                # node that does the real computation
+                self.children = [AggregateReport(
+                    metric, cohort, metric_dict, parameters=parameters,
+                    user_id=user_id
+                )]
         else:
             self.children = [validate_report]
 
