@@ -16,7 +16,7 @@ from sqlalchemy.orm import sessionmaker, scoped_session
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy import exc
 from sqlalchemy import event
-from sqlalchemy.pool import Pool
+from sqlalchemy.pool import Pool, NullPool
 
 __all__ = [
     'Database',
@@ -177,7 +177,13 @@ class Database(object):
                 engine_template.format(project),
                 echo=self.config['SQL_ECHO'],
                 convert_unicode=True,
-                pool_size=self.config['MEDIAWIKI_POOL_SIZE'],
+                # because we are hitting 900 projects in parallel at the same time,
+                # pooling does not work as we exhaust our allowed connections for the
+                # labsdb user.  This is because we connect with database-specific URIs
+                # TODO: connect to all mediawiki databases with one generic URI and
+                #       re-enable pooling
+                # NOTE: when doing this, don't use s4.labsdb as quarry has dibs :)
+                poolclass=NullPool,
             )
 
         return self.mediawiki_engines[project]
