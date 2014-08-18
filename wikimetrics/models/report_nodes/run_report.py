@@ -14,6 +14,7 @@ from wikimetrics.utils import (
 )
 from report import ReportNode
 from aggregate_report import AggregateReport
+from null_report import NullReport
 from validate_report import ValidateReport
 from metric_report import MetricReport
 from wikimetrics.api import write_report_task, CohortService
@@ -104,10 +105,10 @@ class RunReport(ReportNode):
             if recurrent and recurrent_parent_id is None:
                 # Valid parent recurrent report
                 # We do not add children that compute data as parent recurrent
-                # reports just help the scheduler orchestrate child runs. The
-                # initial run for this report will be kicked off in
-                # post_process.
-                self.children = []
+                # reports just help the scheduler orchestrate child runs.
+                # However, we employ a NullReport to allow coalescing even
+                # when there was no recurrent run yet.
+                self.children = [NullReport()]
             else:
                 # Valid, but not a parent recurring report, so we add the child
                 # node that does the real computation
@@ -148,21 +149,10 @@ class RunReport(ReportNode):
         data = db_report.get_json_result(results)
 
         # code below schedules an async task on celery to write the file
+        report_id_to_write = self.persistent_id
         if self.recurrent_parent_id is not None:
-            write_report_task.delay(self.recurrent_parent_id, self.created, data)
-        else:
-            # report is public and does not have a recurrent_parent_id, it's
-            # the parent report, call the first run of the report
-            self._run_child_report()
-
-    def _run_child_report(self):
-        '''
-        Returns the scheduler we use for recurrent reports, right
-        now the secduler for recurrent reports is a task on another python module
-        what makes testing difficult.
-        Ading this level of indirection makes testing easier
-        '''
-        recurring_reports(self.persistent_id)
+            report_id_to_write = self.recurrent_parent_id
+        write_report_task.delay(report_id_to_write, self.created, data)
 
     # TODO, this method belongs on a different class and it should not be a class method
     @classmethod

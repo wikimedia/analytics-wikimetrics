@@ -387,39 +387,6 @@ class RunReportTest(QueueDatabaseTest):
             results[result_key]['FAILURE'].find('Edits was incorrectly configured') >= 0,
         )
 
-    def test_first_run_of_recurrent_report_happens(self):
-        '''
-        Scheduling a recurrent report should run the 1st run of the report right away
-        and not wait for the scheduled run
-        '''
-
-        parameters = {
-            'name': 'Edits - test',
-            'cohort': {
-                'id': self.cohort.id,
-                'name': self.cohort.name,
-            },
-            'metric': {
-                'name': 'NamespaceEdits',
-                'namespaces': [0, 1, 2],
-                'start_date': '2013-01-01 00:00:00',
-                'end_date': '2013-01-03 00:00:00',
-                'individualResults': True,
-                'aggregateResults': False,
-                'aggregateSum': False,
-                'aggregateAverage': False,
-                'aggregateStandardDeviation': False,
-            },
-            'recurrent': True,
-            'public': True
-        }
-
-        # with patch.object(RunReport, '_run_child_report', mock_run):
-        rr = RunReport(parameters, user_id=self.owner_user_id)
-        rr._run_child_report = MagicMock()
-        rr.task.delay(rr)
-        rr._run_child_report.assert_called_once_with()
-
 
 class RunReportBasicTest(DatabaseTest):
     def setUp(self):
