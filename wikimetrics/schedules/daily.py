@@ -2,6 +2,7 @@ import traceback
 from celery import group, chain
 from celery.utils.log import get_task_logger
 
+from wikimetrics.api import ReplicationLagService
 from wikimetrics.configurables import queue
 from wikimetrics.utils import chunk
 
@@ -14,6 +15,14 @@ def recurring_reports(report_id=None):
     from wikimetrics.configurables import db
     from wikimetrics.models import ReportStore, RunReport
     
+    replication_lag_service = ReplicationLagService()
+    if replication_lag_service.is_any_lagged():
+        task_logger.warning(
+            'Replication lag detected. '
+            'Hence, skipping creating new recurring reports.'
+        )
+        return
+
     try:
         session = db.get_session()
         query = session.query(ReportStore) \

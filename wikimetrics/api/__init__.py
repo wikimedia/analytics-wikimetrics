@@ -1,6 +1,7 @@
 from file_manager import *
 from cohorts import *
 from tags import *
+from replication_lag import *
 
 from batch import *
 

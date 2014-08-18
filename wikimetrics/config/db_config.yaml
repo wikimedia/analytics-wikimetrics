@@ -6,3 +6,5 @@ MEDIAWIKI_ENGINE_URL_TEMPLATE   : 'mysql://wikimetrics:wikimetrics@localhost/{0}
 MEDIAWIKI_POOL_SIZE             : 32
 DEBUG                           : True
 REVISION_TABLENAME              : 'revision_userindex'
+REPLICATION_LAG_MW_PROJECTS     : [] # empty, so inactive test wikis don't block us
+REPLICATION_LAG_THRESHOLD       : 3 # (measured in hours)

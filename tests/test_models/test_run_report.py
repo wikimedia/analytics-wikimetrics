@@ -2,9 +2,11 @@ import time
 from datetime import timedelta, datetime
 from sqlalchemy import func
 from nose.tools import assert_equals, assert_true, raises
+from mock import patch
 from celery.exceptions import SoftTimeLimitExceeded
 
 from tests.fixtures import QueueDatabaseTest, DatabaseTest
+from wikimetrics.api import ReplicationLagService
 from wikimetrics.models import RunReport, ReportStore, WikiUserStore, CohortWikiUserStore
 from wikimetrics.exceptions import InvalidCohort
 from wikimetrics.metrics import metric_classes
@@ -519,7 +521,7 @@ class RunReportScheduledTest(QueueDatabaseTest):
         QueueDatabaseTest.setUp(self)
         self.common_cohort_1()
 
-    def test_scheduler(self):
+    def inject_and_fetch_recurrent_run(self):
         parameters = {
             'name': 'Edits - test',
             'cohort': {
@@ -550,8 +552,21 @@ class RunReportScheduledTest(QueueDatabaseTest):
             .filter(ReportStore.recurrent_parent_id == jr.persistent_id) \
             .all()
 
+        return recurrent_runs
+
+    @patch.object(ReplicationLagService, 'is_any_lagged', return_value=False)
+    def test_scheduler_without_lag(self, is_any_lagged_mock):
+        recurrent_runs = self.inject_and_fetch_recurrent_run()
+
         # make sure we have one and no more than one recurrent run
         assert_equals(len(recurrent_runs), 1)
+
+    @patch.object(ReplicationLagService, 'is_any_lagged', return_value=True)
+    def test_scheduler_with_lag(self, is_any_lagged_mock):
+        recurrent_runs = self.inject_and_fetch_recurrent_run()
+
+        # make sure we no recurrent run has been scheduled
+        assert_equals(len(recurrent_runs), 0)
 
     def test_user_id_assigned_properly(self):
         parameters = {
