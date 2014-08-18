@@ -256,7 +256,7 @@ def config_queue(args):
     for key in schedules:
         schedule_type = schedules[key]['schedule']
         if schedule_type == 'daily':
-            schedules[key]['schedule'] = crontab(minute=0, hour=0)
+            schedules[key]['schedule'] = crontab(minute=0, hour=3)
         elif schedule_type == 'test':
             schedules[key]['schedule'] = timedelta(seconds=1)
         else:
