@@ -99,6 +99,8 @@ class DatabaseTest(unittest.TestCase):
             owner_user_id           : record in the User table that owns this cohort
             page_touched            : required for Page creation, usually default is ok
             user_email_token_expires: required for User creation, usually default is ok
+            mwSession               : the MediaWiki session to use.
+                                        Default: self.mwSession
         
         Returns
             Nothing but creates the following, to be accessed in a test:
@@ -139,6 +141,7 @@ class DatabaseTest(unittest.TestCase):
         page_touched=20130102000000,
         user_email_token_expires=20200101000000,
         create_cohort=True,
+        mw_session=None,
     ):
         """
         Internal multi-purpose data creator.
@@ -181,12 +184,15 @@ class DatabaseTest(unittest.TestCase):
             self.session.add(cohort)
             self.session.commit()
         
+        if not mw_session:
+            mw_session = self.mwSession
+        
         page = Page(page_namespace=0, page_title='{0}-page'.format(name),
                     page_touched=page_touched)
-        self.mwSession.add(page)
-        self.mwSession.commit()
+        mw_session.add(page)
+        mw_session.commit()
         
-        self.mwSession.bind.engine.execute(
+        mw_session.bind.engine.execute(
             MediawikiUser.__table__.insert(), [
                 {
                     'user_name': 'Editor {0}-{1}'.format(name, e),
@@ -196,14 +202,14 @@ class DatabaseTest(unittest.TestCase):
                 for e in range(editor_count)
             ]
         )
-        self.mwSession.commit()
-        editors = self.mwSession.query(MediawikiUser)\
+        mw_session.commit()
+        editors = mw_session.query(MediawikiUser)\
             .filter(MediawikiUser.user_name.like('Editor {0}-%'.format(name)))\
             .order_by(MediawikiUser.user_id)\
             .all()
 
         # Create logging table records for each inserted user
-        self.mwSession.bind.engine.execute(
+        mw_session.bind.engine.execute(
             Logging.__table__.insert(), [
                 {
                     'log_user': editor.user_id,
@@ -215,7 +221,7 @@ class DatabaseTest(unittest.TestCase):
                 for editor in editors
             ]
         )
-        self.mwSession.commit()
+        mw_session.commit()
 
         if create_cohort:
             self.session.bind.engine.execute(
@@ -246,7 +252,7 @@ class DatabaseTest(unittest.TestCase):
             )
             self.session.commit()
         
-        self.mwSession.bind.engine.execute(
+        mw_session.bind.engine.execute(
             Revision.__table__.insert(), [
                 {
                     'rev_page'      : page.page_id,
@@ -259,8 +265,8 @@ class DatabaseTest(unittest.TestCase):
                 for e, r in product(range(editor_count), range(revisions_per_editor))
             ]
         )
-        self.mwSession.commit()
-        revisions = self.mwSession.query(Revision)\
+        mw_session.commit()
+        revisions = mw_session.query(Revision)\
             .filter(Revision.rev_page == page.page_id)\
             .order_by(Revision.rev_id)\
             .all()
@@ -274,7 +280,7 @@ class DatabaseTest(unittest.TestCase):
             else:
                 revision.rev_parent_id = ordered_revisions[idx - 1].rev_id
         
-        self.mwSession.commit()
+        mw_session.commit()
         
         if create_cohort:
             # establish ownership for this cohort
@@ -300,7 +306,7 @@ class DatabaseTest(unittest.TestCase):
             if type(page_creator_index) is int:
                 page_creator_index = [page_creator_index] * page_count
             
-            self.mwSession.bind.engine.execute(
+            mw_session.bind.engine.execute(
                 Page.__table__.insert(), [
                     {
                         'page_namespace'    : page_namespaces[p],
@@ -310,13 +316,13 @@ class DatabaseTest(unittest.TestCase):
                     for p in range(page_count)
                 ]
             )
-            self.mwSession.commit()
-            pages = self.mwSession.query(Page)\
+            mw_session.commit()
+            pages = mw_session.query(Page)\
                 .filter(Page.page_title.like('{0}-additional-page-%'.format(name)))\
                 .order_by(Page.page_id)\
                 .all()
             
-            self.mwSession.bind.engine.execute(
+            mw_session.bind.engine.execute(
                 Revision.__table__.insert(), [
                     {
                         'rev_page'      : pages[p].page_id,
@@ -329,7 +335,7 @@ class DatabaseTest(unittest.TestCase):
                     for p in range(page_count)
                 ]
             )
-            self.mwSession.commit()
+            mw_session.commit()
 
         if create_cohort:
             self.project = project
