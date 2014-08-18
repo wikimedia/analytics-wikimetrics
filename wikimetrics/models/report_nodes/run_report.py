@@ -146,10 +146,9 @@ class RunReport(ReportNode):
     def create_reports_for_missed_days(cls, report, session, no_more_than=365):
         """
         Find which runs of a recurrent report were missed and create one report for each
-        of those runs.  This method considers at most the last 30 days when searching for
-        missed runs, due to performance reasons.  For reports on timeseries metrics, this
-        method will set the end_date to midnight, today.  For non-timeseries metrics, it
-        will set the start_date to yesterday and end_date to today.
+        of those runs.  For reports on timeseries metrics, this method will set the
+        end_date to midnight, today.  For non-timeseries metrics, it will set the
+        start_date to yesterday and end_date to today.
 
         Parameters:
             report          : the parent recurrent report
