@@ -8,9 +8,48 @@ from datetime import datetime
 WIKIMETRICS_BOT_NAME = 'WikimetricsBot'
 
 
+def get_public_wikis():
+    all_wikis = db.get_project_host_map()
+    private_or_invalid_wikis = {
+        'wiki',
+        'boardgovcomwiki',
+        'ilwikimedia',
+        'wikimaniateamwiki',
+        'stewardwiki',
+        'spcomwiki',
+        'grantswiki',
+        'transitionteamwiki',
+        'auditcomwiki',
+        'arbcom_nlwiki',
+        'internalwiki',
+        'collabwiki',
+        'wikimania2015wiki',
+        'movementroleswiki',
+        'officewiki',
+        'arbcom_enwiki',
+        'arbcom_dewiki',
+        'chairwiki',
+        'noboard_chapterswikimedia',
+        'wg_enwiki',
+        'searchcomwiki',
+        'checkuserwiki',
+        'ombudsmenwiki',
+        'otrs_wikiwiki',
+        'legalteamwiki',
+        'chapcomwiki',
+        'execwiki',
+        'boardwiki',
+        'fdcwiki',
+        'iegcomwiki',
+        'arbcom_fiwiki',
+        'zerowiki',
+    }
+    return {p for p in all_wikis if p not in private_or_invalid_wikis}
+
+
 def run_cohorts(args):
     print('... validating list of projects')
-    projects = db.get_project_host_map()
+    projects = get_public_wikis()
     if args.projects:
         invalid_projects = [p for p in args.projects if p not in projects]
         if invalid_projects:
