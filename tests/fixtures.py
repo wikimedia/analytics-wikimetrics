@@ -76,8 +76,8 @@ class DatabaseTest(unittest.TestCase):
                                         an array of length editor_count
             revisions_per_editor    : count of revisions we want for each editor
             revision_timestamps     : the timestamp of each revision either as
-                                        an integer that applies to all revisions OR
-                                        a two dimensional array indexed by
+                                        an integer, or datetime that applies to all
+                                        revisions OR a two dimensional array indexed by
                                             editor from 0 to editor_count-1
                                             revision from 0 to revisions_per_editor-1
             revision_lengths        : the length of each revision either as
@@ -155,6 +155,8 @@ class DatabaseTest(unittest.TestCase):
         if page_creator_index is None:
             page_creator_index = []
         
+        if type(revision_timestamps) is datetime:
+            revision_timestamps = i(revision_timestamps)
         if type(revision_timestamps) is int:
             revision_timestamps = [
                 [revision_timestamps] * revisions_per_editor
@@ -266,11 +268,11 @@ class DatabaseTest(unittest.TestCase):
         # add rev_parent_id chain in chronological order
         real_revisions = filter(lambda r: r.rev_timestamp, revisions)
         ordered_revisions = sorted(real_revisions, key=lambda r: r.rev_timestamp)
-        for i, revision in enumerate(ordered_revisions):
-            if i == 0:
+        for idx, revision in enumerate(ordered_revisions):
+            if idx == 0:
                 revision.rev_parent_id = 0
             else:
-                revision.rev_parent_id = ordered_revisions[i - 1].rev_id
+                revision.rev_parent_id = ordered_revisions[idx - 1].rev_id
         
         self.mwSession.commit()
         
