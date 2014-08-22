@@ -2,15 +2,13 @@ import time
 from datetime import timedelta, datetime
 from sqlalchemy import func
 from nose.tools import assert_equals, assert_true, raises
-from nose.plugins.attrib import attr
-from mock import MagicMock
 from celery.exceptions import SoftTimeLimitExceeded
 
 from tests.fixtures import QueueDatabaseTest, DatabaseTest
 from wikimetrics.models import RunReport, ReportStore, WikiUserStore, CohortWikiUserStore
 from wikimetrics.exceptions import InvalidCohort
 from wikimetrics.metrics import metric_classes
-from wikimetrics.utils import diff_datewise, stringify, strip_time
+from wikimetrics.utils import stringify, strip_time
 from wikimetrics.enums import Aggregation, TimeseriesChoices
 from wikimetrics.configurables import queue
 from wikimetrics.schedules.daily import recurring_reports
