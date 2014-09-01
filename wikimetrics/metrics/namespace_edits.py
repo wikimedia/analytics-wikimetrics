@@ -28,6 +28,7 @@ class NamespaceEdits(TimeseriesMetric):
     show_in_ui  = True
     id          = 'edits'
     label       = 'Edits'
+    category    = 'Community'
     description = (
         'Compute the number of edits in a specific'
         'namespace of a mediawiki project'

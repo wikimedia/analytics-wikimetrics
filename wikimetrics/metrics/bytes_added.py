@@ -56,9 +56,11 @@ class BytesAdded(TimeseriesMetric):
             ) AS anon_1
       GROUP BY anon_1.rev_user
     """
-    show_in_ui      = True
-    id              = 'bytes-added'
-    label           = 'Bytes Added'
+    show_in_ui          = True
+    id                  = 'bytes-added'
+    label               = 'Bytes Added'
+    category            = 'Community'
+    default_submetric   = 'net_sum'
     description     = 'Compute different aggregations of the bytes\
                        contributed or removed from a mediawiki project'
     # filled in below as the default depends on options

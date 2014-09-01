@@ -55,6 +55,7 @@ class Threshold(Metric):
     id                      = 'threshold'
     time_to_threshold_id    = 'time_to_threshold'
     label                   = 'Threshold'
+    category                = 'Activation'
     description = (
         'Compute whether editors made <number_of_edits> from \
         <registration> to <registration> + <threshold_hours>.  \

@@ -48,6 +48,7 @@ class RollingActiveEditor(Metric):
     show_in_ui  = True
     id          = 'rolling_active_editor'
     label       = 'Rolling Active Editor'
+    category    = 'Retention'
     description = (
         'Compute the number of registered users who complete <<n>> edits to pages'
         ' in any namespace of a Wikimedia project between <<end date>> minus <<u>> days'

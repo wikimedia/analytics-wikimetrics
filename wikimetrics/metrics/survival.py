@@ -52,6 +52,7 @@ class Survival(Metric):
     show_in_ui  = True
     id          = 'survived'
     label       = 'Survival'
+    category    = 'Retention'
     description = (
         'Compute whether editors "survived" by making <number_of_edits> from \
         <registration> + <survival_hours> to \
