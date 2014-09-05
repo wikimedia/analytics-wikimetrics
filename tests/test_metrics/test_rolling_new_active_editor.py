@@ -136,8 +136,6 @@ class RollingNewActiveEditorTest(DatabaseTest):
         }
         for user_id, result in expected_results.items():
             assert_equal(results[user_id][metric.id], result)
-        # users with no edits at all just won't show up
-        assert_equal(results.get(self.editor_ids[3], -1), -1)
 
     def test_wiki_cohort_nobody_qualifying(self):
         # make everyone fail the registration criteria and make sure they're excluded

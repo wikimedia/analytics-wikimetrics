@@ -82,7 +82,10 @@ class RollingNewActiveEditor(Metric):
             session     : sqlalchemy session open on a mediawiki database
 
         Returns:
-            dict from user ids to: 1 if they're a rolling new active editor, 0 if not
+            {
+                user id: 1 if they're a rolling new active editor, 0 otherwise
+                for all cohort users, or all users that have edits in the time period
+            }
         """
         number_of_edits = int(self.number_of_edits.data)
         rolling_days = int(self.rolling_days.data)
