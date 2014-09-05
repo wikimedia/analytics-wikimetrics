@@ -9,6 +9,7 @@ from threshold import *
 from survival import *
 from newly_registered import *
 from rolling_active_editor import *
+from rolling_new_active_editor import *
 
 # ignore flake8 because of F403 violation
 # flake8: noqa
