@@ -1,5 +1,6 @@
 import json
 import celery
+import traceback
 from celery.utils.log import get_task_logger
 from copy import deepcopy
 from sqlalchemy.orm.exc import NoResultFound
@@ -18,7 +19,7 @@ from null_report import NullReport
 from validate_report import ValidateReport
 from metric_report import MetricReport
 from wikimetrics.api import write_report_task, CohortService
-from wikimetrics.utils import BetterEncoder
+from wikimetrics.utils import stringify
 from wikimetrics.schedules import recurring_reports
 
 __all__ = ['RunReport']
@@ -197,7 +198,10 @@ class RunReport(ReportNode):
                 reports_created += 1
             except Exception, e:
                 # don't need to roll back session because it's just a query
-                task_logger.error('Problem creating child report: {}'.format(e))
+                task_logger.error('Problem creating child report: {}, params: {}'.format(
+                    traceback.format_exc(e),
+                    stringify(parameters)
+                ))
                 continue
 
             yield new_run
