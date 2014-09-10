@@ -10,7 +10,18 @@ from wikimetrics.utils import chunk
 task_logger = get_task_logger(__name__)
 
 
-@queue.task()
+# NOTE: We found an interesting problem leading to the default timeouts expiring.
+#       The scheduler would run, create the generator of child reports, and delay each one
+#       This works but causes the scheduler to execute more slowly (we think because the
+#       workers handling the report tasks are taking up resources).  So in a situation
+#       where reports are running quickly, this task will need to be allowed to live
+#       for the entire life of all the other tasks.  Therefore, extending timeout to 3
+#       times the amount allotted to normal tasks.
+configured_soft_limit = queue.conf.get('CELERYD_TASK_SOFT_TIME_LIMIT', 3600)
+new_limit = 3 * configured_soft_limit
+
+
+@queue.task(time_limit=new_limit, soft_time_limit=new_limit)
 def recurring_reports(report_id=None):
     from wikimetrics.configurables import db
     from wikimetrics.models import ReportStore, RunReport

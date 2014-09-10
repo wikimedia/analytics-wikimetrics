@@ -226,6 +226,13 @@ class RunReport(ReportNode):
         """
         search_from = strip_time(report.created)
 
+        # if a report is pending by this point, it means that it should be re-tried
+        session.query(ReportStore) \
+            .filter(ReportStore.recurrent_parent_id == report.id) \
+            .filter(ReportStore.created >= search_from) \
+            .filter(ReportStore.status == celery.states.PENDING) \
+            .delete()
+
         completed_days = [pr[0] for pr in session.query(ReportStore.created)
                           .filter(ReportStore.recurrent_parent_id == report.id)
                           .filter(ReportStore.created >= search_from)

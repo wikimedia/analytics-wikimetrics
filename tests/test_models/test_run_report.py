@@ -16,6 +16,10 @@ from wikimetrics.configurables import queue
 from wikimetrics.schedules.daily import recurring_reports
 
 
+def make_pending(report):
+    report.status = 'PENDING'
+
+
 class RunReportClassMethodsTest(DatabaseTest):
     def tearDown(self):
         # re-enable the scheduler after these tests
@@ -113,6 +117,45 @@ class RunReportClassMethodsTest(DatabaseTest):
             self.today - timedelta(days=m)
             for m in self.missed_by_index[2]
         ]))
+
+    def test_days_missed_0_with_cleanup(self):
+        self.add_runs_to_report(0)
+
+        # change some reports back to pending to make sure they're cleaned up
+        map(make_pending, self.report_runs[0::2])
+        self.session.commit()
+
+        missed_days = RunReport.days_missed(self.reports[0], self.session)
+        assert_equals(set(missed_days), set([
+            self.today - timedelta(days=m)
+            for m in self.missed_by_index[0]
+        ] + [r.created for r in self.report_runs[0::2]]))
+
+    def test_days_missed_1_with_cleanup(self):
+        self.add_runs_to_report(1)
+
+        # change some reports back to pending to make sure they're cleaned up
+        map(make_pending, self.report_runs[0::2])
+        self.session.commit()
+
+        missed_days = RunReport.days_missed(self.reports[1], self.session)
+        assert_equals(set(missed_days), set([
+            self.today - timedelta(days=m)
+            for m in self.missed_by_index[1]
+        ] + [r.created for r in self.report_runs[0::2]]))
+
+    def test_days_missed_2_with_cleanup(self):
+        self.add_runs_to_report(2)
+
+        # change some reports back to pending to make sure they're cleaned up
+        map(make_pending, self.report_runs[0::2])
+        self.session.commit()
+
+        missed_days = RunReport.days_missed(self.reports[2], self.session)
+        assert_equals(set(missed_days), set([
+            self.today - timedelta(days=m)
+            for m in self.missed_by_index[2]
+        ] + [r.created for r in self.report_runs[0::2]]))
 
     def test_create_reports_for_missed_days_0(self):
         self.add_runs_to_report(0)
