@@ -59,7 +59,7 @@ SET @T = <<end date passed in, or each date between start and end if timeseries>
     show_in_ui  = True
     id          = 'rolling_surviving_new_active_editor'
     label       = 'Rolling Surviving New Active Editor'
-    category    = 'Acquisition'
+    category    = 'Community'
     description = (
         'Compute the number of users newly registered within <<end date>> minus <<u>> * 2'
         ' days who complete <<n>> edits to pages in any namespace of a Wikimedia project'

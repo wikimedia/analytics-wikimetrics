@@ -56,7 +56,7 @@ class RollingNewActiveEditor(Metric):
     show_in_ui  = True
     id          = 'rolling_new_active_editor'
     label       = 'Rolling New Active Editor'
-    category    = 'Acquisition'
+    category    = 'Community'
     description = (
         'Compute the number of newly registered users who complete <<n>> edits to pages'
         ' in any namespace of a Wikimedia project between <<end date>> minus <<u>> days'

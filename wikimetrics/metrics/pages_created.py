@@ -27,7 +27,7 @@ class PagesCreated(TimeseriesMetric):
     show_in_ui  = True
     id          = 'pages_created'
     label       = 'Pages Created'
-    category    = 'Community'
+    category    = 'Content'
     description = (
         'Compute the number of pages created by each \
          editor in a time interval'

@@ -23,7 +23,7 @@ class NewlyRegistered(Metric):
     show_in_ui  = True
     id          = 'newly_registered'
     label       = 'Newly Registered'
-    category    = 'Acquisition'
+    category    = 'New users'
     description = (
         'A newly registered user is a previously unregistered user creating a username \
         for the first time on a Wikimedia project.'
