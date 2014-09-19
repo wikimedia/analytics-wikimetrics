@@ -6,7 +6,7 @@
          data-bind="css: {'disabled-field': $root.request().recurrent}"
     {% endif %}>
             {{ f.label(class="control-label") }}
-            <div class="controls">
+            <div class="controls" title="{{f.description}}">
                 {% if f.type == 'BooleanField' or f.type == 'BetterBooleanField' %}
                     {{ f(**{'data-bind':'checked: '+f.name}) }}
                 {% elif f.type == 'DateField' %}

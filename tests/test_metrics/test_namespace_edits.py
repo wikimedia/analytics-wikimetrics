@@ -97,6 +97,10 @@ class NamespaceEditsDatabaseTest(DatabaseTest):
         self.archive_revisions()
         self.test_reports_zero_edits()
 
+    def test_validates_properly_with_archive(self):
+        self.archive_revisions()
+        self.test_validates_properly()
+
 
 class NamespaceEditsFullTest(QueueDatabaseTest):
     def setUp(self):
@@ -114,6 +118,10 @@ class NamespaceEditsFullTest(QueueDatabaseTest):
             self.editor_ids, mediawiki_project
         )
         results = report.task.delay(report).get()
+
+        # for some reason, during testing with archive, these users lose the session
+        # when they're being operated on in the queue
+        self.mwSession.add_all(self.editors)
         
         assert_true(results is not None)
         assert_equal(results[self.editor(0)]['edits'], 3)
@@ -121,32 +129,40 @@ class NamespaceEditsFullTest(QueueDatabaseTest):
     def test_namespace_edits_namespace_filter(self):
         metric = NamespaceEdits(
             namespaces=[3],
-            start_date='2013-05-01 00:00:00',
-            end_date='2013-08-01 00:00:00',
+            start_date='2012-12-31 22:59:59',
+            end_date='2014-02-01 00:00:00',
         )
         report = MetricReport(
             metric, self.cohort.id,
             self.editor_ids, mediawiki_project
         )
         results = report.task.delay(report).get()
+
+        # for some reason, during testing with archive, these users lose the session
+        # when they're being operated on in the queue
+        self.mwSession.add_all(self.editors)
         
         assert_true(results is not None)
         assert_equal(results[self.editor(0)]['edits'], 0)
     
-    def test_namespace_edits_namespace_filter_no_namespace(self):
+    def test_namespace_edits_namespace_filter_all_namespaces(self):
         metric = NamespaceEdits(
             namespaces=[],
-            start_date='2013-05-01 00:00:00',
-            end_date='2013-08-01 00:00:00',
+            start_date='2012-12-31 22:59:59',
+            end_date='2013-01-01 12:00:00',
         )
         report = MetricReport(
             metric, self.cohort.id,
             self.editor_ids, mediawiki_project
         )
         results = report.task.delay(report).get()
+
+        # for some reason, during testing with archive, these users lose the session
+        # when they're being operated on in the queue
+        self.mwSession.add_all(self.editors)
         
         assert_true(results is not None)
-        assert_equal(results[self.editor(0)]['edits'], 0)
+        assert_equal(results[self.editor(0)]['edits'], 3)
     
     def test_namespace_edits_with_multiple_namespaces(self):
         metric = NamespaceEdits(
@@ -159,6 +175,10 @@ class NamespaceEditsFullTest(QueueDatabaseTest):
             self.editor_ids, mediawiki_project
         )
         results = report.task.delay(report).get()
+
+        # for some reason, during testing with archive, these users lose the session
+        # when they're being operated on in the queue
+        self.mwSession.add_all(self.editors)
         
         assert_true(results is not None)
         assert_equal(results[self.editor(0)]['edits'], 3)
@@ -174,12 +194,33 @@ class NamespaceEditsFullTest(QueueDatabaseTest):
             self.editor_ids, mediawiki_project
         )
         results = report.task.delay(report).get()
+
+        # for some reason, during testing with archive, these users lose the session
+        # when they're being operated on in the queue
+        self.mwSession.add_all(self.editors)
         
         assert_true(results is not None)
         assert_equal(results[self.editor(0)]['edits'], 3)
 
-    def test_all_with_archive(self):
-        pass
+    def test_namespace_edits_with_archive(self):
+        self.archive_revisions()
+        self.test_namespace_edits()
+
+    def test_namespace_edits_namespace_filter_with_archive(self):
+        self.archive_revisions()
+        self.test_namespace_edits_namespace_filter()
+
+    def test_namespace_edits_namespace_filter_all_namespaces_with_archive(self):
+        self.archive_revisions()
+        self.test_namespace_edits_namespace_filter_all_namespaces()
+
+    def test_namespace_edits_with_multiple_namespaces_with_archive(self):
+        self.archive_revisions()
+        self.test_namespace_edits_with_multiple_namespaces()
+
+    def test_namespace_edits_multi_namespaces_when_passing_csv_string_with_archive(self):
+        self.archive_revisions()
+        self.test_namespace_edits_with_multiple_namespaces_when_passing_csv_string()
 
 
 class NamespaceEditsTimestampTest(DatabaseTest):
@@ -226,8 +267,17 @@ class NamespaceEditsTimestampTest(DatabaseTest):
         results = metric(self.editor_ids, self.mwSession)
         assert_equal(results[self.editors[0].user_id]['edits'], 1)
 
-    def test_all_with_archive(self):
-        pass
+    def test_timestamp_range_hour_with_archive(self):
+        self.archive_revisions()
+        self.test_timestamp_range_hour()
+
+    def test_timestamp_range_minutes_with_archive(self):
+        self.archive_revisions()
+        self.test_timestamp_range_minutes()
+
+    def test_timestamp_range_seconds_with_archive(self):
+        self.archive_revisions()
+        self.test_timestamp_range_seconds()
 
 
 class NamespaceEditsTimeseriesTest(DatabaseTest):
@@ -287,5 +337,14 @@ class NamespaceEditsTimeseriesTest(DatabaseTest):
             }
         )
 
-    def test_all_with_archive(self):
-        pass
+    def test_no_timeseries_with_archive(self):
+        self.archive_revisions()
+        self.test_no_timeseries()
+
+    def test_timeseries_day_with_archive(self):
+        self.archive_revisions()
+        self.test_timeseries_day()
+
+    def test_timeseries_hour_with_archive(self):
+        self.archive_revisions()
+        self.test_timeseries_hour()
