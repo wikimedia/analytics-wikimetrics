@@ -572,7 +572,8 @@ class DatabaseTest(unittest.TestCase):
         query = self.mwSession.query(
             Revision.rev_timestamp,
             Revision.rev_user,
-            Page.page_namespace
+            Revision.rev_parent_id,
+            Page.page_namespace,
         ).join(Page)
         revisions = query.all()
 
@@ -582,6 +583,7 @@ class DatabaseTest(unittest.TestCase):
                     'ar_rev_id': None,
                     'ar_timestamp': r.rev_timestamp,
                     'ar_user': r.rev_user,
+                    'ar_parent_id': r.rev_parent_id,
                     'ar_namespace': r.page_namespace,
                 }
                 for r in revisions
