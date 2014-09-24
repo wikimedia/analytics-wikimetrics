@@ -384,6 +384,7 @@ def run_reports(args):
             )
             # Do not create duplicate reports (we can add an option to force later)
             existing = session.query(ReportStore)\
+                .filter(ReportStore.recurrent == 1)\
                 .filter(ReportStore.name == parameters['name'])\
                 .filter(ReportStore.user_id == args.user.id)\
                 .count()
