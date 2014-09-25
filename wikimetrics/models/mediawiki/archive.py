@@ -43,3 +43,4 @@ class Archive(db.MediawikiBase):
     ar_flags      = Column(TINYBLOB, nullable=False, default='')
     ar_rev_id     = Column(Integer, nullable=True)
     ar_deleted    = Column(Boolean, nullable=False, default=False)
+    ar_parent_id  = Column(Integer, nullable=True)
