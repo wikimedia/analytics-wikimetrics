@@ -31,7 +31,7 @@ class Archive(db.MediawikiBase):
     | ar_sha1       | varbinary(32)       | YES  |     | NULL    |       |
     +---------------+---------------------+------+-----+---------+-------+
     """
-    __tablename__ = 'archive'
+    __tablename__ = db.config['ARCHIVE_TABLENAME']
 
     ar_id         = Column(Integer, primary_key=True)
     ar_namespace  = Column(Integer, nullable=False, default=0)
