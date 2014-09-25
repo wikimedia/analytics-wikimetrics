@@ -154,5 +154,5 @@ class BytesAdded(TimeseriesMetric):
 
         self.default_result = {s[0]: s[2] for s in submetrics}
 
-        query = self.apply_timeseries(bytes_added_by_user, rev=BC.c)
+        query = self.apply_timeseries(bytes_added_by_user, column=BC.c.rev_timestamp)
         return self.results_by_user(user_ids, query, submetrics, date_index=index)

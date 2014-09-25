@@ -81,6 +81,22 @@ class NamespaceEditsDatabaseTest(DatabaseTest):
         )
         assert_true(not metric.validate())
 
+    def test_filters_out_other_editors_with_archive(self):
+        self.archive_revisions()
+        self.test_filters_out_other_editors()
+
+    def test_runs_for_an_entire_wiki_with_archive(self):
+        self.archive_revisions()
+        self.test_runs_for_an_entire_wiki()
+
+    def test_finds_edits_with_archive(self):
+        self.archive_revisions()
+        self.test_finds_edits()
+
+    def test_reports_zero_edits_with_archive(self):
+        self.archive_revisions()
+        self.test_reports_zero_edits()
+
 
 class NamespaceEditsFullTest(QueueDatabaseTest):
     def setUp(self):
@@ -162,6 +178,9 @@ class NamespaceEditsFullTest(QueueDatabaseTest):
         assert_true(results is not None)
         assert_equal(results[self.editor(0)]['edits'], 3)
 
+    def test_all_with_archive(self):
+        pass
+
 
 class NamespaceEditsTimestampTest(DatabaseTest):
     
@@ -206,6 +225,9 @@ class NamespaceEditsTimestampTest(DatabaseTest):
         )
         results = metric(self.editor_ids, self.mwSession)
         assert_equal(results[self.editors[0].user_id]['edits'], 1)
+
+    def test_all_with_archive(self):
+        pass
 
 
 class NamespaceEditsTimeseriesTest(DatabaseTest):
@@ -264,3 +286,6 @@ class NamespaceEditsTimeseriesTest(DatabaseTest):
                 '2013-01-01 01:00:00' : 1,
             }
         )
+
+    def test_all_with_archive(self):
+        pass

@@ -32,14 +32,14 @@ class TimeseriesMetric(Metric):
         ],
     )
     
-    def apply_timeseries(self, query, rev=Revision):
+    def apply_timeseries(self, query, column=Revision.rev_timestamp):
         """
         Take a query and slice it up into equal time intervals
         
         Parameters
             query   : a sql alchemy query
-            rev     : defaults to Revision, specifies the object that
-                      contains the appropriate rev_timestamp
+            column  : defaults to Revision.rev_timestamp, specifies the timestamp
+                      column to use for the timeseries
         
         Returns
             The query parameter passed in, with a grouping by the desired time slice
@@ -49,26 +49,26 @@ class TimeseriesMetric(Metric):
         if choice == TimeseriesChoices.NONE:
             return query
         
-        query = query.add_column(func.year(rev.rev_timestamp))
-        query = query.group_by(func.year(rev.rev_timestamp))
+        query = query.add_column(func.year(column))
+        query = query.group_by(func.year(column))
         
         if choice == TimeseriesChoices.YEAR:
             return query
         
-        query = query.add_column(func.month(rev.rev_timestamp))
-        query = query.group_by(func.month(rev.rev_timestamp))
+        query = query.add_column(func.month(column))
+        query = query.group_by(func.month(column))
         
         if choice == TimeseriesChoices.MONTH:
             return query
         
-        query = query.add_column(func.day(rev.rev_timestamp))
-        query = query.group_by(func.day(rev.rev_timestamp))
+        query = query.add_column(func.day(column))
+        query = query.group_by(func.day(column))
         
         if choice == TimeseriesChoices.DAY:
             return query
         
-        query = query.add_column(func.hour(rev.rev_timestamp))
-        query = query.group_by(func.hour(rev.rev_timestamp))
+        query = query.add_column(func.hour(column))
+        query = query.group_by(func.hour(column))
         
         if choice == TimeseriesChoices.HOUR:
             return query
