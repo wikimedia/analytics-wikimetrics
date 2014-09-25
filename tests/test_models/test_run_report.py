@@ -417,11 +417,12 @@ class RunReportTest(QueueDatabaseTest):
             },
             'metric': {
                 'name': 'NamespaceEdits',
-                'namespaces': 'blah blah',
+                'start_date': 'blah',
             },
         }, user_id=self.owner_user_id)
 
         results = jr.task.delay(jr).get()
+        print results
         self.session.commit()
         result_key = self.session.query(ReportStore) \
             .get(jr.persistent_id) \

@@ -30,6 +30,7 @@ class TimeseriesMetric(Metric):
             (TimeseriesChoices.MONTH, TimeseriesChoices.MONTH),
             (TimeseriesChoices.YEAR, TimeseriesChoices.YEAR),
         ],
+        description='Report results by year, month, day, or hour',
     )
     
     def apply_timeseries(self, query, column=Revision.rev_timestamp):

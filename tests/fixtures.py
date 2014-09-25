@@ -565,24 +565,30 @@ class DatabaseTest(unittest.TestCase):
     def archive_revisions(self):
         """
         Archive all the revisions in the revision table
-        NOTE: only populates ar_timestamp, and ar_user
+        NOTE: only populates ar_namespace, ar_timestamp, and ar_user
         NOTE: leaves ar_rev_id NULL because that's valid and a good edge case
         NOTE: creates duplicates with NULL ar_rev_id
         """
-        query = self.mwSession.query(Revision)
+        query = self.mwSession.query(
+            Revision.rev_timestamp,
+            Revision.rev_user,
+            Page.page_namespace
+        ).join(Page)
         revisions = query.all()
+
         self.mwSession.execute(
             Archive.__table__.insert(), [
                 {
                     'ar_rev_id': None,
                     'ar_timestamp': r.rev_timestamp,
-                    'ar_user': r.rev_user
+                    'ar_user': r.rev_user,
+                    'ar_namespace': r.page_namespace,
                 }
                 for r in revisions
             ]
         )
 
-        query.delete()
+        self.mwSession.query(Revision).delete()
         self.mwSession.commit()
 
     def setUp(self):
