@@ -51,10 +51,9 @@
                             Validated
                             <span data-bind="text: validated_count"></span> of
                             <span data-bind="text: total_count"></span> cohort members.
-                            <span data-bind="text: valid_count"></span> are valid,
-                            <a data-bind="attr: {href: '/cohorts/detail/invalid-users/' + id}" target="_blank">
-                                <span data-bind="text: invalid_count"></span> are invalid.
-                            </a>
+                            <span data-bind="text: valid_count"></span> are valid<span data-bind="if: invalid_count">,
+                                <a data-bind="attr: {href: '/cohorts/detail/invalid-users/' + id}" target="_blank">
+                                    <span data-bind="text: invalid_count"></span> are invalid</a></span>.
                         </p>
                     </div>
                 </div>
