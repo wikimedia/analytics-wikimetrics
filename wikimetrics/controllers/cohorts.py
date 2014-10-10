@@ -65,6 +65,7 @@ def cohorts_list():
 @app.route('/cohorts/detail/invalid-users/<int:cohort_id>')
 def cohort_invalid_detail(cohort_id):
     session = db.get_session()
+    cohort, wikiusers = None, []
     try:
         cohort = g.cohort_service.get_for_display(
             session, current_user.id, by_id=cohort_id
@@ -74,11 +75,19 @@ def cohort_invalid_detail(cohort_id):
             .filter(WikiUserStore.validating_cohort == cohort.id) \
             .filter(WikiUserStore.valid.in_([False, None])) \
             .all()
-        return json_response(invalid_wikiusers=[wu._asdict() for wu in wikiusers])
+        wikiusers = [{
+            'mediawiki_username': wu[0].decode('utf-8'),
+            'reason_invalid': wu[1]
+        } for wu in wikiusers]
     except Exception, e:
         # don't need to roll back session because it's just a query
         app.logger.exception(str(e))
-        return json_error('Error fetching invalid users for {0}'.format(cohort_id))
+        if cohort:
+            cohort_name = "cohort '%s'" % cohort.name
+        else:
+            cohort_name = "cohort with id '%d'" % cohort_id
+        flash('Error fetching invalid users for {0}'.format(cohort_name), 'error')
+    return render_template('invalid_wikiusers.html', wikiusers=wikiusers)
 
 
 @app.route('/cohorts/detail/<string:name_or_id>')

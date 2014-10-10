@@ -1,0 +1,25 @@
+{% extends "layout.html" %}
+{% block body %}
+<h3>Invalid Cohort Members</h3>
+
+<table class="table table-striped">
+    <thead>
+        <tr>
+            <th>Username</th>
+            <th>Reason</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for wikiuser in wikiusers %}
+        <tr>
+            <td>
+                <span>{{ wikiuser.mediawiki_username }}</span>
+            </td>
+            <td>
+                <span>{{ wikiuser.reason_invalid }}</span>
+            </td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% endblock %}
