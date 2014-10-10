@@ -8,6 +8,7 @@ from wikimetrics.models import Revision
 from wikimetrics.utils import thirty_days_ago, today, format_pretty_date
 from wikimetrics.enums import TimeseriesChoices
 from wikimetrics.forms.fields import CommaSeparatedIntegerListField, BetterDateTimeField
+from wikimetrics.forms.validators import NotGreater
 from metric import Metric
 
 
@@ -18,7 +19,8 @@ class TimeseriesMetric(Metric):
     output.
     """
     
-    start_date  = BetterDateTimeField(default=thirty_days_ago)
+    start_date  = BetterDateTimeField(
+        default=thirty_days_ago, validators=[NotGreater('end_date')])
     end_date    = BetterDateTimeField(default=today)
     timeseries  = SelectField(
         'Time Series by',

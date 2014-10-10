@@ -69,3 +69,29 @@ class RequiredIfNot(Required):
             raise ValidationError('Please use either {0} or {1}'.format(
                 other_field.label.text, field.label.text
             ))
+
+
+class NotGreater(object):
+    """
+    Checks that this field's value is less than or equal to another field's value
+    """
+
+    def __init__(self, field_name):
+        self.field_name = field_name
+
+    def __call__(self, form, field):
+        try:
+            other = form[self.field_name]
+        except KeyError:
+            raise ValidationError(
+                field.gettext("Invalid field name '%s'.") % self.field_name)
+
+        # make sure both values are of the same type
+        if type(field.data) != type(other.data):
+            raise ValidationError(
+                'Cannot compare the two fields: they are of different types.')
+
+        if field.data > other.data:
+            raise ValidationError(
+                'Please make sure %s is not greater than %s.' %
+                (field.label.text, other.label.text))
