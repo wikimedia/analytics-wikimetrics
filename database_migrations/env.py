@@ -1,8 +1,19 @@
 from __future__ import with_statement
 from copy import deepcopy
+from os import environ, path
 from alembic import context
 from sqlalchemy import engine_from_config, pool, create_engine
 from logging.config import fileConfig
+
+# try to link puppet config files to be used by wikimetrics
+# this has to be done before importing any module from it
+# if file does not exist, default local file will be used
+db_config_file = '/etc/wikimetrics/db_config.yaml'
+queue_config_file = '/etc/wikimetrics/queue_config.yaml'
+if path.isfile(db_config_file):
+    environ['WIKIMETRICS_DB_CONFIG'] = db_config_file
+if path.isfile(queue_config_file):
+    environ['WIKIMETRICS_QUEUE_CONFIG'] = queue_config_file
 
 from wikimetrics.configurables import db, setup_testing_config
 
