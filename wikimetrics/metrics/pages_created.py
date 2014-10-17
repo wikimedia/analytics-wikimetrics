@@ -43,7 +43,6 @@ class PagesCreated(TimeseriesMetric):
     )
     namespaces = CommaSeparatedIntegerListField(
         None,
-        default='0',
         description='0, 2, 4, etc. (leave blank for *all*)',
     )
     
