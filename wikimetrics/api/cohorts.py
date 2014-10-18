@@ -4,7 +4,7 @@ from wikimetrics.configurables import db
 from wikimetrics.exceptions import Unauthorized, InvalidCohort
 from wikimetrics.models import cohort_classes, ValidatedCohort, WikiCohort
 from wikimetrics.models.storage import (
-    CohortStore, CohortUserStore, UserStore, WikiUserStore,
+    CohortStore, CohortUserStore, UserStore, WikiUserStore, WikiUserKey
 )
 from wikimetrics.enums import CohortUserRole
 
@@ -43,6 +43,34 @@ class CohortService(object):
                 session.query(WikiUserStore)).limit(limit).all()
         else:
             return list(c)
+
+    def get_wikiusernames_for_cohort(self, cohort_id, session):
+        """
+        Convenience function for the UI to retrieve
+        wikiuser names given a cohort_id
+
+        Parameters:
+            cohort_id
+            session
+        Returns:
+            Dictionary keyed by WikiUserKey or empty dictionary
+            if records not found.
+        """
+        user_names = {}
+
+        try:
+            results = session.query(WikiUserStore.mediawiki_username,
+                                    WikiUserStore.project,
+                                    WikiUserStore.mediawiki_userid)\
+                .filter(WikiUserStore.validating_cohort == cohort_id).all()
+
+        except NoResultFound:
+            return user_names
+
+        for r in results:
+            user_names[WikiUserKey(r[2], r[1], cohort_id)] = r[0]
+
+        return user_names
 
     # TODO: check ownership of the cohort
     def get_users_by_project(self, cohort):

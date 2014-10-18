@@ -15,7 +15,7 @@ from wikimetrics.utils import (
 )
 from wikimetrics.enums import Aggregation, TimeseriesChoices
 from wikimetrics.exceptions import UnauthorizedReportAccessError
-from wikimetrics.api import PublicReportFileManager
+from wikimetrics.api import PublicReportFileManager, CohortService
 
 
 @app.before_request
@@ -27,6 +27,10 @@ def setup_filemanager():
                 g.file_manager = PublicReportFileManager(
                     app.logger,
                     app.absolute_path_to_app_root)
+        if request.path.startswith('/reports/result/'):
+            cohort_service = getattr(g, 'cohort_service', None)
+            if cohort_service is None:
+                g.cohort_service = CohortService()
 
 
 @app.route('/reports/unset-public/<int:report_id>', methods=['POST'])
@@ -155,10 +159,12 @@ def report_result_csv(result_key):
         task_result = pj.get_result_safely(result)
         p = pj.pretty_parameters()
 
+        user_names = get_usernames_for_task_result(task_result)
+
         if 'Metric_timeseries' in p and p['Metric_timeseries'] != TimeseriesChoices.NONE:
-            csv_io = get_timeseries_csv(task_result, pj, p)
+            csv_io = get_timeseries_csv(task_result, pj, p, user_names)
         else:
-            csv_io = get_simple_csv(task_result, pj, p)
+            csv_io = get_simple_csv(task_result, pj, p, user_names)
 
         res = Response(csv_io.getvalue(), mimetype='text/csv')
         res.headers['Content-Disposition'] =\
@@ -168,25 +174,41 @@ def report_result_csv(result_key):
         return json_response(status=celery_task.status)
 
 
-def get_user_name(session, wiki_user_key):
+def get_usernames_for_task_result(task_result):
     """
     Parameters
-        session         : a session to the wikimetrics database to search with
-        wiki_user_key   : an instance of WikiUserKey to search for a WikiUser with
+        task_result : the result dictionary from Celery
+    Returns
+         user_names : dictionary of user names (keyed by (user_id, project))
+                      empty if results are not detailed by user
+
+    TODO: this function should move outside the controller,
+          at the time of writing the function we are
+          consolidating code that wasduplicated
     """
-    return session.query(WikiUserStore.mediawiki_username)\
-        .filter(WikiUserStore.mediawiki_userid == wiki_user_key.user_id)\
-        .filter(WikiUserStore.project == wiki_user_key.user_project)\
-        .filter(WikiUserStore.validating_cohort == wiki_user_key.cohort_id)\
-        .one()[0]
+    user_names = {}
+    if Aggregation.IND in task_result:
+        session = db.get_session()
+        # cohort should be the same for all users
+        # get cohort from first key
+        cohort_id = None
+
+        for wiki_user_key_str, row in task_result[Aggregation.IND].iteritems():
+            wiki_user_key = WikiUserKey.fromstr(wiki_user_key_str)
+            cohort_id = wiki_user_key.cohort_id
+            break
+
+        user_names = g.cohort_service.get_wikiusernames_for_cohort(cohort_id, session)
+    return user_names
 
 
-def get_timeseries_csv(task_result, pj, parameters):
+def get_timeseries_csv(task_result, pj, parameters, user_names):
     """
     Parameters
         task_result : the result dictionary from Celery
         pj          : a pointer to the permanent job
         parameters  : a dictionary of pj.parameters
+        user_names  : dictionary of user names (keyed by (user_id, project))
 
     Returns
         A StringIO instance representing timeseries CSV
@@ -213,15 +235,15 @@ def get_timeseries_csv(task_result, pj, parameters):
     # collect rows to output in CSV
     task_rows = []
 
-    session = db.get_session()
     # Individual Results
     if Aggregation.IND in task_result:
         # fold user_id into dict so we can use DictWriter to escape things
         for wiki_user_key_str, row in task_result[Aggregation.IND].iteritems():
             wiki_user_key = WikiUserKey.fromstr(wiki_user_key_str)
             user_id = wiki_user_key.user_id
-            user_name = get_user_name(session, wiki_user_key)
             project = wiki_user_key.user_project
+            # careful tuple stores user_id like a string
+            user_name = user_names.get(wiki_user_key, '')
             for subrow in row.keys():
                 task_row = row[subrow].copy()
                 task_row['user_id'] = user_id
@@ -269,12 +291,13 @@ def get_timeseries_csv(task_result, pj, parameters):
     return csv_io
 
 
-def get_simple_csv(task_result, pj, parameters):
+def get_simple_csv(task_result, pj, parameters, user_names):
     """
     Parameters
         task_result : the result dictionary from Celery
         pj          : a pointer to the permanent job
         parameters  : a dictionary of pj.parameters
+        user_names  : dictionary of user names (keyed by (user_id, project))
 
     Returns
         A StringIO instance representing simple CSV
@@ -301,16 +324,16 @@ def get_simple_csv(task_result, pj, parameters):
 
     # collect rows to output in CSV
     task_rows = []
-
-    session = db.get_session()
     # Individual Results
     if Aggregation.IND in task_result:
         # fold user_id into dict so we can use DictWriter to escape things
         for wiki_user_key_str, row in task_result[Aggregation.IND].iteritems():
             wiki_user_key = WikiUserKey.fromstr(wiki_user_key_str)
             user_id = wiki_user_key.user_id
-            user_name = get_user_name(session, wiki_user_key)
             project = wiki_user_key.user_project
+
+            # careful tuple stores user_id like a string
+            user_name = user_names.get(wiki_user_key, '')
             task_row = row.copy()
             task_row['user_id'] = user_id
             task_row['user_name'] = user_name

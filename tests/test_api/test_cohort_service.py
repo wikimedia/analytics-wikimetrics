@@ -152,3 +152,36 @@ class CohortServiceTest(DatabaseTest):
 
         cohorts = self.cohort_service.get_list(self.session, self.owner_user_id)
         assert_true('dewiki' in [c.default_project for c in cohorts])
+
+    def test_wikiusernames_for_not_existing_cohort(self):
+        """
+        If a cohort does not exist it returns an empty list of user names to make
+        things easy for the UI
+        """
+        user_names = self.cohort_service.get_wikiusernames_for_cohort('9999',
+                                                                      self.session)
+        assert_equals(len(user_names.keys()), 0)
+
+    def test_wikiusernames(self):
+        """
+        Make sure usernames can be retrieved using Wikiuserkey
+        """
+        from wikimetrics.models.storage import (
+            WikiUserKey
+        )
+        # let's get two users and see that names match
+        # this returns a list of WikiUserStore objects
+        users = self.cohort_service.get_wikiusers(self.fixed_cohort, self.session, 2)
+        user1 = users[0]
+        key1 = WikiUserKey(user1.mediawiki_userid, user1.project,
+                           user1.validating_cohort)
+
+        user2 = users[1]
+        key2 = WikiUserKey(user2.mediawiki_userid, user2.project,
+                           user2.validating_cohort)
+
+        user_names = self.cohort_service.get_wikiusernames_for_cohort(
+            self.fixed_cohort.id, self.session)
+
+        assert_equals(user_names[key1], user1.mediawiki_username)
+        assert_equals(user_names[key2], user2.mediawiki_username)

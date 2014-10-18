@@ -53,3 +53,11 @@ class WikiUserKey(object):
         return WikiUserKey.SEPARATOR.join(
             (self.user_id, self.user_project, self.cohort_id)
         )
+        
+    def __hash__(self):
+        # using tuples to hash using internal hashing mechanism as much as possible
+        return hash(((self.user_id, self.user_project), self.cohort_id))
+        
+    def __eq__(self, other):
+        return (other.user_id == self.user_id and other.user_project == self.user_project
+                and other.cohort_id == self.cohort_id)
