@@ -145,19 +145,15 @@ SET @T = <<end date passed in, or each date between start and end if timeseries>
         #   sum the count_one values together, check it's >= number_of_edits
         #   sum the count_two values together, check it's >= number_of_edits
         new_edits = revisions.union_all(archived).subquery()
-        new_edits_by_user = session.query(
-            new_edits.c.user_id,
-            func.IF(
-                and_(
-                    func.SUM(new_edits.c.count_one) >= number_of_edits,
-                    func.SUM(new_edits.c.count_two) >= number_of_edits,
-                ), 1, 0
-            )
-        )\
+        new_edits_by_user = session.query(new_edits.c.user_id)\
             .filter(new_edits.c.user_id.notin_(bot_user_ids))\
-            .group_by(new_edits.c.user_id)
+            .group_by(new_edits.c.user_id)\
+            .having(and_(
+                func.SUM(new_edits.c.count_one) >= number_of_edits,
+                func.SUM(new_edits.c.count_two) >= number_of_edits,
+            ))
 
-        metric_results = {r[0]: {self.id : r[1]} for r in new_edits_by_user.all()}
+        metric_results = {r[0]: {self.id : 1} for r in new_edits_by_user.all()}
 
         if user_ids is None:
             return metric_results

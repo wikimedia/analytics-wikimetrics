@@ -118,24 +118,18 @@ class RollingNewActiveEditorTest(DatabaseTest):
         expected.remove(self.editor_ids[2])
         expected.remove(self.editor_ids[3])
         expected.remove(self.editor_ids[4])
+        # editors that haven't made enough queries won't pass the test
+        expected.remove(self.editor_ids[6])
 
         metric = RollingNewActiveEditor(
             end_date=self.r_plus_30,
         )
         results = metric(None, self.mwSession)
 
+        # all wiki cohort results will be editors that pass the test
         assert_equal(set(results.keys()), expected)
-        expected_results = {
-            # all actives show, whether in a cohort or not
-            self.editor_ids[5] : 1,
-            self.editor_ids[7] : 1,
-            self.editor_ids[9] : 1,
-            make_active.user_id : 1,
-            # users with not enough edits will show up with 0 as the result
-            self.editor_ids[6] : 0,
-        }
-        for user_id, result in expected_results.items():
-            assert_equal(results[user_id][metric.id], result)
+        for user_id in expected:
+            assert_equal(results[user_id][metric.id], 1)
 
     def test_wiki_cohort_nobody_qualifying(self):
         # make everyone fail the registration criteria and make sure they're excluded

@@ -107,14 +107,12 @@ class RollingActiveEditor(Metric):
             .subquery()
 
         edits = revisions.union_all(archived).subquery()
-        edits_by_user = session.query(
-            edits.c.user_id,
-            func.IF(func.SUM(edits.c.count) >= number_of_edits, 1, 0)
-        )\
+        edits_by_user = session.query(edits.c.user_id)\
             .filter(edits.c.user_id.notin_(bot_user_ids))\
-            .group_by(edits.c.user_id)
+            .group_by(edits.c.user_id)\
+            .having(func.SUM(edits.c.count) >= number_of_edits)
 
-        metric_results = {r[0]: {self.id : r[1]} for r in edits_by_user.all()}
+        metric_results = {r[0]: {self.id : 1} for r in edits_by_user.all()}
 
         if user_ids is None:
             return metric_results
