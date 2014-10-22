@@ -20,7 +20,10 @@
                         </span>
                     </div>
                 {% else %}
-                    {{ f(placeholder=f.description, **{'data-bind':'value: '+f.name}) }}
+                    {{ f(**{'data-bind':'value: '+f.name}) }}
+                    {% if f.name == 'namespaces' %}
+                        {{ f.description }}
+                    {% endif %}
                 {% endif %}
                 {% if f.type == 'CommaSeparatedIntegerListField' %}(comma separated){% endif %}
                 {{ validation.messages(f) }}
