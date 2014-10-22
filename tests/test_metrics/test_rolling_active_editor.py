@@ -96,26 +96,18 @@ class RollingActiveEditorTest(DatabaseTest):
         expected = set(self.editor_ids + [make_active.user_id])
         # editors with no edits at all won't be picked up by the query
         expected.remove(self.editor_ids[3])
+        # editors that haven't made enough queries won't pass the test
+        expected.remove(self.editor_ids[1])
 
         metric = RollingActiveEditor(
             end_date=self.r_plus_30,
         )
         results = metric(None, self.mwSession)
 
+        # all wiki cohort results will be editors that pass the test
         assert_equal(set(results.keys()), expected)
-        expected_results = {
-            # all actives show, whether in a cohort or not
-            self.editor_ids[0] : 1,
-            self.editor_ids[2] : 1,
-            self.editor_ids[4] : 1,
-            make_active.user_id : 1,
-            # users with not enough edits will show up with 0 as the result
-            self.editor_ids[1] : 0,
-        }
-        for user_id, result in expected_results.items():
-            assert_equal(results[user_id][metric.id], result)
-        # users with no edits at all just won't show up
-        assert_equal(results.get(self.editor_ids[3], -1), -1)
+        for user_id in expected:
+            assert_equal(results[user_id][metric.id], 1)
 
     def test_wiki_cohort_all_bots(self):
         # make everyone a bot and make sure they're excluded
