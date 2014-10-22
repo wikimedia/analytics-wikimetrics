@@ -5,7 +5,7 @@ from wtforms import IntegerField
 
 from wikimetrics.forms.fields import BetterDateTimeField
 from wikimetrics.utils import today
-from wikimetrics.models.mediawiki import Revision, Archive, Logging
+from wikimetrics.models.mediawiki import Revision, Archive, Logging, MediawikiUserGroups
 from metric import Metric
 
 
@@ -52,8 +52,14 @@ SET @T = <<end date passed in, or each date between start and end if timeseries>
           GROUP BY user_id
         ) AS user_content_revision_count
   GROUP BY user_id
- HAVING SUM(revisions1) >= @n;
-    AND SUM(revisions2) >= @n;
+ HAVING SUM(revisions1) >= @n
+    AND SUM(revisions2) >= @n
+
+    NOTE: updated to exclude bots as identified by:
+
+ SELECT ug_user
+   FROM user_groups
+  WHERE ug_group = 'bot'
     """
 
     show_in_ui  = True
@@ -131,6 +137,10 @@ SET @T = <<end date passed in, or each date between start and end if timeseries>
             .filter(Archive.ar_user.in_(filtered_new))\
             .group_by(Archive.ar_user)
 
+        bot_user_ids = session.query(MediawikiUserGroups.ug_user)\
+            .filter(MediawikiUserGroups.ug_group == 'bot')\
+            .subquery()
+
         # For each user, with both counts from both tables,
         #   sum the count_one values together, check it's >= number_of_edits
         #   sum the count_two values together, check it's >= number_of_edits
@@ -144,6 +154,7 @@ SET @T = <<end date passed in, or each date between start and end if timeseries>
                 ), 1, 0
             )
         )\
+            .filter(new_edits.c.user_id.notin_(bot_user_ids))\
             .group_by(new_edits.c.user_id)
 
         metric_results = {r[0]: {self.id : r[1]} for r in new_edits_by_user.all()}

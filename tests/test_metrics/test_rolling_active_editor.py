@@ -3,7 +3,7 @@ from nose.tools import assert_true, assert_equal, assert_false
 
 from tests.fixtures import DatabaseTest, i, d
 from wikimetrics.utils import format_pretty_date as s
-from wikimetrics.models import Revision
+from wikimetrics.models import Revision, MediawikiUser
 from wikimetrics.metrics import RollingActiveEditor
 from wikimetrics.enums import TimeseriesChoices
 
@@ -116,3 +116,15 @@ class RollingActiveEditorTest(DatabaseTest):
             assert_equal(results[user_id][metric.id], result)
         # users with no edits at all just won't show up
         assert_equal(results.get(self.editor_ids[3], -1), -1)
+
+    def test_wiki_cohort_all_bots(self):
+        # make everyone a bot and make sure they're excluded
+        for r in self.mwSession.query(MediawikiUser.user_id).all():
+            self.make_bot(r[0], self.mwSession)
+
+        metric = RollingActiveEditor(
+            end_date=self.r_plus_30,
+        )
+        results = metric(None, self.mwSession)
+
+        assert_equal(results.keys(), [])

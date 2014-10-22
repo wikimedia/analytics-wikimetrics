@@ -23,6 +23,7 @@ from wikimetrics.models import (
     Revision,
     Page,
     MediawikiUser,
+    MediawikiUserGroups,
     Logging,
     Archive,
 )
@@ -593,6 +594,13 @@ class DatabaseTest(unittest.TestCase):
         self.mwSession.query(Revision).delete()
         self.mwSession.commit()
 
+    def make_bot(self, user_id, session):
+        """
+        Update the database to make user_id a bot
+        """
+        session.add(MediawikiUserGroups(ug_user=user_id, ug_group='bot'))
+        session.commit()
+
     def setUp(self):
         #****************************************************************
         # set up and clean database (Warning: this DESTROYS ALL DATA)
@@ -613,6 +621,7 @@ class DatabaseTest(unittest.TestCase):
         self.mwSession.query(Logging).delete()
         self.mwSession.query(Revision).delete()
         self.mwSession.query(Archive).delete()
+        self.mwSession.query(MediawikiUserGroups).delete()
         self.mwSession.query(MediawikiUser).delete()
         self.mwSession.query(Page).delete()
         self.mwSession.commit()

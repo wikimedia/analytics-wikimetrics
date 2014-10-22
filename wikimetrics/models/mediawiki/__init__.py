@@ -3,6 +3,7 @@ from custom_columns import *
 from revision import *
 from page import *
 from user import *
+from user_groups import *
 from logging import *
 from archive import *
 

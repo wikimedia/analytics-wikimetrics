@@ -10,6 +10,7 @@ from wikimetrics.models import (
     Logging,
     Page,
     MediawikiUser,
+    MediawikiUserGroups,
     Revision,
 )
 from wikimetrics.enums import CohortUserRole, UserRole
@@ -70,6 +71,13 @@ class TestMappings(DatabaseTest):
     def test_mediawiki_user(self):
         row = self.mwSession.query(MediawikiUser).get(self.editors[0].user_id)
         assert_equal(row.user_name, 'Editor test-specific-0')
+    
+    def test_mediawiki_user_groups(self):
+        ug = MediawikiUserGroups(ug_user=self.editors[0].user_id, ug_group='test')
+        self.mwSession.add(ug)
+        self.mwSession.commit()
+        fetch = self.mwSession.query(MediawikiUserGroups).first()
+        assert_equal(fetch.ug_group, 'test')
     
     def test_mediawiki_page(self):
         row = self.mwSession.query(Page).get(self.revisions[0].rev_page)

@@ -6,7 +6,9 @@ from wtforms import IntegerField
 
 from wikimetrics.forms.fields import BetterDateTimeField
 from wikimetrics.utils import today
-from wikimetrics.models.mediawiki import Revision, MediawikiUser, Archive
+from wikimetrics.models.mediawiki import (
+    Revision, MediawikiUser, Archive, MediawikiUserGroups
+)
 from metric import Metric
 
 
@@ -43,6 +45,12 @@ class RollingActiveEditor(Metric):
             ) AS user_content_revision_count
       GROUP BY user_id
      HAVING SUM(revisions) >= @n;
+
+    NOTE: updated to exclude bots as identified by:
+
+     SELECT ug_user
+       FROM user_groups
+      WHERE ug_group = 'bot'
     """
 
     show_in_ui  = True
@@ -94,11 +102,16 @@ class RollingActiveEditor(Metric):
             .group_by(Archive.ar_user)
         archived = self.filter(archived, user_ids, column=Archive.ar_user)
 
+        bot_user_ids = session.query(MediawikiUserGroups.ug_user)\
+            .filter(MediawikiUserGroups.ug_group == 'bot')\
+            .subquery()
+
         edits = revisions.union_all(archived).subquery()
         edits_by_user = session.query(
             edits.c.user_id,
             func.IF(func.SUM(edits.c.count) >= number_of_edits, 1, 0)
         )\
+            .filter(edits.c.user_id.notin_(bot_user_ids))\
             .group_by(edits.c.user_id)
 
         metric_results = {r[0]: {self.id : r[1]} for r in edits_by_user.all()}
