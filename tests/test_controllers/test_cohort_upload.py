@@ -35,14 +35,15 @@ class CohortsControllerTest(unittest.TestCase):
     def test_normalize_newlines(self):
         stream = [
             'blahblah\r',
-            'blahblahblahnor',
+            'blahblahblah\r\n',
+            'blahblahblahnormal',
             'blahblah1\rblahblah2',
         ]
         lines = list(normalize_newlines(stream))
         assert_equal(len(lines), 5)
         assert_equal(lines[0], 'blahblah')
-        assert_equal(lines[1], '')
-        assert_equal(lines[2], 'blahblahblahnor')
+        assert_equal(lines[1], 'blahblahblah')
+        assert_equal(lines[2], 'blahblahblahnormal')
         assert_equal(lines[3], 'blahblah1')
         assert_equal(lines[4], 'blahblah2')
 

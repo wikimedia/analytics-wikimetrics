@@ -105,7 +105,9 @@ def normalize_newlines(lines):
     for line in lines:
         if '\r' in line:
             for tok in line.split('\r'):
-                yield tok
+                tok = tok.strip()
+                if tok != '':
+                    yield tok
         else:
             yield line
 
