@@ -26,6 +26,7 @@ from wikimetrics.models import (
     MediawikiUserGroups,
     Logging,
     Archive,
+    CentralAuthLocalUser,
 )
 from wikimetrics.enums import CohortUserRole
 
@@ -204,6 +205,7 @@ class DatabaseTest(unittest.TestCase):
             ]
         )
         mw_session.commit()
+        self.add_centralauth_users(['Editor {0}-0'.format(name)], ['wiki', 'wiki2'])
         editors = mw_session.query(MediawikiUser)\
             .filter(MediawikiUser.user_name.like('Editor {0}-%'.format(name)))\
             .order_by(MediawikiUser.user_id)\
@@ -349,7 +351,36 @@ class DatabaseTest(unittest.TestCase):
             self.editor_ids = [e.user_id for e in editors]
             self.revisions = revisions
             self.owner_user_id = owner_user_id
-    
+
+    @nottest
+    def add_centralauth_users(self, usernames, projects):
+        """
+         Adds users to centralauth's localuser table  with corresponding projects.
+         usernames: A list containing usernames to be added
+         projects: A list of projects each username will be associated with
+
+         usernames = ['Terrrydactyl', 'Milimetric']
+         projects = ['wiki', 'wiki2']
+
+         Will result in:
+         Terrrydactyl, wiki
+         Terrrydactyl, wiki2
+         Milimetric, wiki
+         Milimetric, wiki2
+        """
+        self.caSession.bind.engine.execute(
+            CentralAuthLocalUser.__table__.insert(),
+            [
+                {
+                    'lu_wiki': project,
+                    'lu_name': username
+                }
+                for project in projects
+                for username in usernames
+            ]
+        )
+        self.caSession.commit()
+
     @nottest
     def editor(self, index):
         """Gets the proper key to look up a member of a create_test_cohort result"""
@@ -610,9 +641,12 @@ class DatabaseTest(unittest.TestCase):
         db.MediawikiBase.metadata.create_all(engine, checkfirst=True)
         engine2 = db.get_mw_engine(second_mediawiki_project)
         db.MediawikiBase.metadata.create_all(engine2, checkfirst=True)
+        ca_engine = db.get_ca_engine()
+        db.CentralAuthBase.metadata.create_all(ca_engine)
         # mediawiki_project is a global defined on this file
         self.mwSession = db.get_mw_session(mediawiki_project)
         self.mwSession2 = db.get_mw_session(second_mediawiki_project)
+        self.caSession = db.get_ca_session()
         DatabaseTest.tearDown(self)
     
     def tearDown(self):
@@ -635,6 +669,10 @@ class DatabaseTest(unittest.TestCase):
         self.mwSession2.commit()
         self.mwSession2.remove()
         
+        self.caSession.query(CentralAuthLocalUser).delete()
+        self.caSession.commit()
+        self.caSession.close()
+
         self.session.query(CohortTagStore).delete()
         self.session.query(TagStore).delete()
         self.session.query(CohortWikiUserStore).delete()

@@ -37,7 +37,7 @@ target_metadata = db.WikimetricsBase.metadata
 # ... etc.
 
 
-def get_engine(config):
+def get_engine(config, url_field='WIKIMETRICS_ENGINE_URL'):
     """
     Create a sqlalchemy engine for a database.
 
@@ -46,7 +46,7 @@ def get_engine(config):
     """
 
     return create_engine(
-        config['WIKIMETRICS_ENGINE_URL'],
+        config[url_field],
         echo=config['SQL_ECHO'],
         connect_args={"charset" : "utf8"},
         pool_size=config['WIKIMETRICS_POOL_SIZE'],
@@ -78,8 +78,8 @@ def run_migrations_online():
     In this scenario we need to create an Engine
     and associate a connection with the context.
 
-    Runs for both wikimetrics and wikimetrics_testing
-    database.
+    Runs for wikimetrics, wikimetrics_testing
+    and centralauth_testing databases.
 
     """
     config = db.config
@@ -88,9 +88,14 @@ def run_migrations_online():
 
     if db.config['DEBUG'] is True:
         test_config = setup_testing_config(deepcopy(config))
-        test_engine = get_engine(test_config)
-        test_metadata = db.WikimetricsBase.metadata
-        migrations.append((test_engine, test_metadata))
+        # add mediawiki_testing migrations
+        mw_test_engine = get_engine(test_config)
+        mw_test_metadata = db.WikimetricsBase.metadata
+        migrations.append((mw_test_engine, mw_test_metadata))
+        # add centralauth_testing migrations
+        ca_test_engine = get_engine(test_config, 'CENTRALAUTH_ENGINE_URL')
+        ca_test_metadata = db.CentralAuthBase.metadata
+        migrations.append((ca_test_engine, ca_test_metadata))
 
     for eng, meta_data in migrations:
         connection = eng.connect()

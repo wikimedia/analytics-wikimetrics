@@ -1,0 +1,5 @@
+create database IF NOT EXISTS centralauth;
+create database IF NOT EXISTS centralauth_testing;
+grant ALL on centralauth.* TO wikimetrics@'localhost';
+grant ALL on centralauth_testing.* TO wikimetrics@'localhost';
+grant ALL on centralauth_testing.* TO wikimetrics@'%';

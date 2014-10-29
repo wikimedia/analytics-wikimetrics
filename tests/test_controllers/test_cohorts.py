@@ -5,7 +5,7 @@ from flask import appcontext_pushed, g
 from StringIO import StringIO
 from nose.tools import assert_equal, assert_not_equal, assert_true
 
-from wikimetrics.api import CohortService
+from wikimetrics.api import CohortService, CentralAuthService
 from wikimetrics.configurables import app
 from tests.fixtures import WebTest
 from wikimetrics.models import (
@@ -19,6 +19,14 @@ from wikimetrics.enums import CohortUserRole
 def cohort_service_set(app, cohort_service):
     def handler(sender, **kwargs):
         g.cohort_service = cohort_service
+    with appcontext_pushed.connected_to(handler, app):
+        yield
+
+
+@contextmanager
+def centralauth_service_set(app, centralauth_service):
+    def handler(sender, **kwargs):
+        g.centralauth_service = centralauth_service
     with appcontext_pushed.connected_to(handler, app):
         yield
 
@@ -445,3 +453,46 @@ class CohortsControllerUploadTest(WebTest):
         assert_equal(response.status_code, 200)
         assert_true(response.data.find('<h3>Create a Cohort') >= 0)
         assert_true(response.data.find('Please fix validation problems') >= 0)
+
+    def test_upload_with_centralauth_expansion_works(self):
+        data = 'actual validation tested elsewhere'
+        centralauth_called = [False]
+
+        def expand_via_ca_mock(cohort_users, session):
+            centralauth_called[0] = True
+            assert_true([data] in cohort_users)
+            return []
+
+        ca_service_mock = CentralAuthService()
+        ca_service_mock.expand_via_centralauth = expand_via_ca_mock
+        with centralauth_service_set(app, ca_service_mock):
+            response = self.app.post('/cohorts/upload', data=dict(
+                name='new_cohort_name',
+                project='wiki',
+                csv=(StringIO(data), 'cohort.csv'),
+                validate_as_user_ids='False',
+                centralauth=True
+            ))
+        assert_true(centralauth_called[0])
+        assert_equal(response.status_code, 302)
+        assert_true(response.data.find('href="/cohorts/#') >= 0)
+
+    def test_normal_upload_does_not_call_centralauth(self):
+        data = 'actual validation tested elsewhere'
+        centralauth_called = [False]
+
+        def expand_via_ca_mock(cohort_users, session):
+            centralauth_called[0] = True
+            return []
+
+        ca_service_mock = CentralAuthService()
+        ca_service_mock.expand_via_centralauth = expand_via_ca_mock
+        with centralauth_service_set(app, ca_service_mock):
+            self.app.post('/cohorts/upload', data=dict(
+                name='new_cohort_name',
+                project='wiki',
+                csv=(StringIO(data), 'cohort.csv'),
+                validate_as_user_ids='True',
+                centralauth=False
+            ))
+        assert_true(not centralauth_called[0])

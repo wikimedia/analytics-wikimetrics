@@ -12,6 +12,7 @@ from wikimetrics.models import (
     MediawikiUser,
     MediawikiUserGroups,
     Revision,
+    CentralAuthLocalUser
 )
 from wikimetrics.enums import CohortUserRole, UserRole
 from tests.fixtures import DatabaseTest
@@ -86,7 +87,14 @@ class TestMappings(DatabaseTest):
     def test_mediawiki_revision(self):
         row = self.mwSession.query(Revision).get(self.revisions[0].rev_id)
         assert_equal(row.rev_comment, 'revision 0, editor 0')
-    
+
+    #***********
+    # Mapping tests for centralauth tables
+    #***********
+    def test_centralauth_localuser(self):
+        row = self.caSession.query(CentralAuthLocalUser).first()
+        assert_equal(row.lu_name, 'Editor test-specific-0')
+
     #***********
     # Join tests
     #***********

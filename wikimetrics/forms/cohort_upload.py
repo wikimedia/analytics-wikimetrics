@@ -1,5 +1,9 @@
 import csv
+import requests
+from flask import g
+from wikimetrics.configurables import db
 from wtforms import StringField, FileField, TextAreaField, RadioField
+from wikimetrics.forms.fields import BetterBooleanField
 from wtforms.validators import Required
 
 from wikimetrics.utils import parse_username
@@ -32,6 +36,7 @@ class CohortUpload(WikimetricsSecureForm):
         ('True', 'User Ids (Numbers found in the user_id column of the user table)'),
         ('False', 'User Names (Names found in the user_name column of the user table)')
     ])
+    centralauth             = BetterBooleanField(default=True)
     
     @classmethod
     def from_request(cls, request):
@@ -52,7 +57,7 @@ class CohortUpload(WikimetricsSecureForm):
         Returns
             nothing, but sets self.records to the parsed lines of the csv
         """
-        
+
         if self.csv.data:
             # uploaded a cohort file
             csv_file = normalize_newlines(self.csv.data.stream)
@@ -62,7 +67,12 @@ class CohortUpload(WikimetricsSecureForm):
             #TODO: Check valid input
             # used upload box, note that wtforms returns unicode types here
             unparsed = parse_textarea_usernames(self.paste_username.data)
-        
+
+        if self.centralauth.data is True:
+            ca_session = db.get_ca_session()
+            unparsed = g.centralauth_service.expand_via_centralauth(
+                unparsed, ca_session)
+
         self.records = parse_records(unparsed, self.project.data)
 
 

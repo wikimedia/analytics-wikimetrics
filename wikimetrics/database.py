@@ -68,13 +68,14 @@ class Database(object):
         """
         Initializes the declarative bases that are used throughout the project.
         Initializes the empty engines and sessionmakers that support
-        `get_session` and `get_mw_session`.
+        `get_session`, `get_mw_session` and `get_ca_session`.
         """
 
         self.config = config
 
         self.WikimetricsBase = declarative_base(cls=SerializableBase)
         self.MediawikiBase = declarative_base(cls=SerializableBase)
+        self.CentralAuthBase = declarative_base(cls=SerializableBase)
 
         self.wikimetrics_engine = None
         self.wikimetrics_sessionmaker = None
@@ -82,6 +83,10 @@ class Database(object):
 
         self.mediawiki_engines = {}
         self.mediawiki_sessions = {}
+
+        self.centralauth_engine = None
+        self.centralauth_sessionmaker = None
+        self.centralauth_session = None
 
         # we instantiate project_host_map lazily
         self._project_host_map = None
@@ -187,6 +192,56 @@ class Database(object):
             )
 
         return self.mediawiki_engines[project]
+
+    def get_ca_session(self):
+        """
+        On the first run, instantiates the centralauth session maker.
+        On subsequent runs, it does not re-define the session maker or engine.
+
+        Returns:
+            new sqlalchemy session open to the centralauth database
+        """
+        if self.centralauth_sessionmaker is None:
+            # This import is necessary here so that
+            # CentralAuthBase knows about all its children.
+            import wikimetrics.models.centralauth
+            engine = self.get_ca_engine()
+            if self.config['DEBUG']:
+                self.CentralAuthBase.metadata.create_all(
+                    engine,
+                    checkfirst=True
+                )
+            self.centralauth_sessionmaker = sessionmaker(
+                self.centralauth_engine,
+                expire_on_commit=False,
+            )
+
+        if self.centralauth_session is None:
+            self.centralauth_session = scoped_session(
+                self.centralauth_sessionmaker
+            )
+
+        # an unhandled exception would leave the session
+        # in a bad state, roll it back:
+        if not self.centralauth_session.is_active:
+            self.centralauth_session.rollback()
+        return self.centralauth_session
+
+    def get_ca_engine(self):
+        """
+        Create a sqlalchemy engine for the centralauth database.
+
+        Returns:
+            new or cached sqlalchemy engine connected to the centralauth database.
+        """
+        if self.centralauth_engine is None:
+            self.centralauth_engine = create_engine(
+                self.config['CENTRALAUTH_ENGINE_URL'],
+                echo=self.config['SQL_ECHO'],
+                convert_unicode=True,
+                poolclass=NullPool,
+            )
+        return self.centralauth_engine
 
     def get_project_host_map(self, usecache=True):
         """

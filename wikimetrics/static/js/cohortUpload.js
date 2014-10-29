@@ -1,4 +1,13 @@
 $(document).ready(function(){
+
+    var adjustValidationType = function () {
+        var checked = $('form #centralauth').prop('checked'),
+            idsButton = $('form .validation-type input[value="True"]'),
+            namesButton = $('form .validation-type input[value="False"]');
+
+        idsButton.prop('disabled', checked);
+        namesButton.prop('checked', checked);
+    };
     
     jQuery.validator.addMethod('cohortName', function(value, element) {
         return /^[0-9_\-A-Za-z ]*$/.test(value);
@@ -28,4 +37,10 @@ $(document).ready(function(){
             }
         }
     });
+
+    $('form.upload-cohort').on('click', '#centralauth', function () {
+        adjustValidationType();
+    });
+
+    adjustValidationType();
 });

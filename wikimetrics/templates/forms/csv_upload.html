@@ -1,13 +1,12 @@
 {% import 'forms/field_validation.html' as validation %}
 
-<form
-    enctype="multipart/form-data"
-    action="{{url_for('cohort_upload')}}"
-    method="POST"
-    class="upload-cohort form-horizontal">
-    
+<form enctype="multipart/form-data"
+      action="{{url_for('cohort_upload')}}"
+      method="POST"
+      class="upload-cohort form-horizontal">
+
     {{ form.csrf_token }}
-    
+
     <div class="navbar-inner">
         <h3>Create a Cohort</h3>
     </div>
@@ -15,8 +14,8 @@
         <label for="name" class="control-label">Name</label>
         <div class="controls">
             <input type="text" name="name" id="name"
-                class="required"
-                value="{{form.name.data or ''}}"/>
+                   class="required"
+                   value="{{form.name.data or ''}}"/>
             <label for="name">(automatically checks availability)</label>
             {{ validation.messages(form.name) }}
         </div>
@@ -25,8 +24,8 @@
         <label for="description" class="control-label">Description</label>
         <div class="controls">
             <textarea name="description" id="description"
-                rows="4"
-                cols="50">{{form.description.data or ''}}</textarea>
+                      rows="4"
+                      cols="50">{{form.description.data or ''}}</textarea>
             {{ validation.messages(form.description) }}
         </div>
     </div>
@@ -34,11 +33,11 @@
         <label for="project" class="control-label">Default Project</label>
         <div class="controls">
             <input type="text" name="project" id="project"
-                value="{{form.project.data or ''}}"
-                data-provide="typeahead"
-                data-source='{{projects}}'
-                autocomplete="off"
-            />
+                   value="{{form.project.data or ''}}"
+                   data-provide="typeahead"
+                   data-source='{{projects}}'
+                   autocomplete="off"
+                    />
             {{ validation.messages(form.project) }}
         </div>
     </div>
@@ -63,8 +62,14 @@
     </div>
 
     <div class="control-group">
-        <label class="control-label">{{form.validate_as_user_ids.label}}</label>
+        <label class="control-label"><strong>CentralAuth</strong></label>
         <div class="controls">
+            <input id="centralauth" type="checkbox" name="centralauth" value="{{form.centralauth.data}}"> Expand cohort to all user’s accounts across projects (via CentralAuth)
+        </div>
+    </div>
+    <div class="control-group">
+        <label class="control-label">{{form.validate_as_user_ids.label}}</label>
+        <div class="controls validation-type">
             {% for radio in form.validate_as_user_ids %}
             {{ radio(class="required") }} {{ radio.label(style="display: inline-block;") }}
             <br/>

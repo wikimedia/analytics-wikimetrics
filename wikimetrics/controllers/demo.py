@@ -2,7 +2,9 @@ import time
 from sqlalchemy import func
 
 from wikimetrics.configurables import app, db
-from wikimetrics.models import MediawikiUser, ReportStore
+from wikimetrics.models import (
+    MediawikiUser, CentralAuthLocalUser, ReportStore
+)
 from wikimetrics.controllers.authentication import is_public
 
 
@@ -19,19 +21,60 @@ if app.config['DEBUG']:
 
     @app.route('/demo/create/fake-<string:project>-users/<int:n>')
     def add_fake_wiki_users(project, n):
-        session = db.get_mw_session(project)
-        max_id = session.query(func.max(MediawikiUser.user_id)).one()[0] or 0
-        start = max_id + 1
-        session.bind.engine.execute(
-            MediawikiUser.__table__.insert(),
-            [
-                {
-                    'user_name'         : 'User-{0}'.format(r),
-                    'user_id'           : r,
-                    'user_registration' : '20130101000000'
-                }
-                for r in range(start, start + n)
-            ]
+        name_formatter = lambda x: 'FakeUser{0}'.format(x)
+        generate_mediawiki_users(project, n, name_formatter)
+        generate_centralauth_users(project, n, name_formatter)
+        return 'Up to {0} records created in {1} and centralauth'.format(n, project)
+
+
+def generate_mediawiki_users(project, n, name_formatter):
+    session = db.get_mw_session(project)
+    try:
+        user_count = (
+            session.query(func.count()).
+            filter(MediawikiUser.user_name.like(name_formatter('%'))).
+            one()[0]
         )
-        session.commit()
-        return '{0} user records created in {1}'.format(n, project)
+        users_to_generate = n - user_count
+        if users_to_generate > 0:
+            start_index = user_count + 1
+            session.bind.engine.execute(
+                MediawikiUser.__table__.insert(),
+                [
+                    {
+                        'user_name'         : name_formatter(start_index + i),
+                        'user_registration' : '20130101000000'
+                    }
+                    for i in range(users_to_generate)
+                ]
+            )
+            session.commit()
+    finally:
+        session.close()
+
+
+def generate_centralauth_users(project, n, name_formatter):
+    session = db.get_ca_session()
+    try:
+        user_count = (
+            session.query(func.count()).
+            filter(CentralAuthLocalUser.lu_wiki == project).
+            filter(CentralAuthLocalUser.lu_name.like(name_formatter('%'))).
+            one()[0]
+        )
+        users_to_generate = n - user_count
+        if users_to_generate > 0:
+            start_index = user_count + 1
+            session.bind.engine.execute(
+                CentralAuthLocalUser.__table__.insert(),
+                [
+                    {
+                        'lu_wiki' : project,
+                        'lu_name' : name_formatter(start_index + i)
+                    }
+                    for i in range(users_to_generate)
+                ]
+            )
+            session.commit()
+    finally:
+        session.close()
