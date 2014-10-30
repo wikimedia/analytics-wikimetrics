@@ -1,4 +1,5 @@
 import unittest
+import mock
 import os
 from nose.tools import assert_equal, raises, assert_true, assert_false, nottest
 from wikimetrics.configurables import app, get_absolute_path
@@ -9,6 +10,12 @@ from wikimetrics.models import (
     MediawikiUser, ValidateCohort, normalize_project,
 )
 from wikimetrics.utils import parse_username
+
+
+def mock_normalize_project(project):
+    # does not check wrong project names
+    # this will force database connection errors
+    return project
 
 
 class MockCohort(object):
@@ -207,6 +214,38 @@ class ValidateCohortTest(WebTest):
                 .filter(WikiUserStore.valid.in_([False]))
                 .all()
         ), 2)
+
+    @mock.patch('wikimetrics.models.validate_cohort.normalize_project',
+                side_effect=mock_normalize_project)
+    def test_validate_cohorts_when_invalid_project_causes_exception(self, mock):
+        '''
+        Mocks normalize_project to force an exception when accessing
+        an unexisting project database. This exception should not be
+        forwarded.
+        '''
+        self.helper_reset_validation()
+        self.cohort.validate_as_user_ids = False
+        wikiusers = self.session.query(WikiUserStore).all()
+        wikiusers[0].project = 'blah'
+        v = ValidateCohort(self.cohort)
+        try:
+            v.validate_records(self.session, self.cohort)
+        except:
+            assert_true(False, 'validate_records should not raise an exception')
+        else:
+            assert_equal(self.cohort.validated, True)
+            assert_equal(len(
+                self.session.query(WikiUserStore)
+                    .filter(WikiUserStore.validating_cohort == self.cohort.id)
+                    .filter(WikiUserStore.valid)
+                    .all()
+            ), 3)
+            records = (self.session.query(WikiUserStore)
+                       .filter(WikiUserStore.validating_cohort == self.cohort.id)
+                       .filter(WikiUserStore.valid.in_([False]))
+                       .all())
+            assert_equal(len(records), 1)
+            assert_equal(records[0].reason_invalid, 'invalid project')
 
 
 class ValidateCohortQueueTest(QueueDatabaseTest):
