@@ -3,7 +3,6 @@ from report import ReportLeaf
 from celery import current_task
 
 from wikimetrics.utils import stringify
-from wikimetrics.configurables import db
 
 
 class ValidateReport(ReportLeaf):
@@ -38,15 +37,6 @@ class ValidateReport(ReportLeaf):
         failures should happen unless the user tries to hack the system.
         """
         self.set_status(celery.states.STARTED, task_id=current_task.request.id)
-        session = db.get_session()
-        from wikimetrics.models.storage import ReportStore
-        pj = session.query(ReportStore).get(self.persistent_id)
-        pj.name = '{0} - {1} (failed validation)'.format(
-            self.metric_label,
-            self.cohort_name,
-        )
-        pj.status = celery.states.FAILURE
-        session.commit()
         
         message = ''
         if not self.metric_valid:

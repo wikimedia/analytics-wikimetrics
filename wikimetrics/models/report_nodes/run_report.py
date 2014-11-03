@@ -91,6 +91,7 @@ class RunReport(ReportNode):
             recurrent=recurrent,
             recurrent_parent_id=recurrent_parent_id,
             created=created,
+            store=True,
         )
 
         self.recurrent_parent_id = recurrent_parent_id

@@ -66,7 +66,8 @@ class Report(object):
                  parameters={},
                  recurrent=False,
                  recurrent_parent_id=None,
-                 created=None):
+                 created=None,
+                 store=False):
         
         if children is None:
             children = []
@@ -85,31 +86,39 @@ class Report(object):
         self.queue_result_key = queue_result_key
         self.children = children
         self.public = public
-        
-        # store report to database
-        # note that queue_result_key is always empty at this stage
-        pj = ReportStore(user_id=self.user_id,
-                         status=self.status,
-                         show_in_ui=self.show_in_ui,
-                         parameters=stringify(parameters),
-                         public=self.public,
-                         recurrent=recurrent,
-                         recurrent_parent_id=recurrent_parent_id,
-                         created=created or datetime.now())
-        try:
-            session = db.get_session()
-            session.add(pj)
-            session.commit()
-            self.persistent_id = pj.id
-            self.created = pj.created
-            pj.name = self.name or str(self)
-            session.commit()
-        except:
-            session.rollback()
-            raise
+        self.store = store
+        self.persistent_id = None
+        self.created = None
+
+        if self.store is True:
+            # store report to database
+            # note that queue_result_key is always empty at this stage
+            pj = ReportStore(user_id=self.user_id,
+                             status=self.status,
+                             show_in_ui=self.show_in_ui,
+                             parameters=stringify(parameters),
+                             public=self.public,
+                             recurrent=recurrent,
+                             recurrent_parent_id=recurrent_parent_id,
+                             created=created or datetime.now())
+            try:
+                session = db.get_session()
+                session.add(pj)
+                session.commit()
+                self.persistent_id = pj.id
+                self.created = pj.created
+                pj.name = self.name or str(self)
+                session.commit()
+            except:
+                session.rollback()
+                raise
     
     def __repr__(self):
-        return '<{0}("{1}")>'.format(type(self).__name__, self.persistent_id)
+        if self.store:
+            persistent_id = self.persistent_id
+        else:
+            persistent_id = 'no persistent id'
+        return '<{0}("{1}")>'.format(type(self).__name__, persistent_id)
     
     # TODO if this function needs to use the db session it should be passed on
     # on method params not retrieved from a singleton
@@ -118,12 +127,14 @@ class Report(object):
         helper function for updating database status after celery
         task has been started
         """
-        session = db.get_session()
-        pj = session.query(ReportStore).get(self.persistent_id)
-        pj.status = status
-        if task_id:
-            pj.queue_result_key = task_id
-        session.commit()
+        self.status = status
+        if self.store is True:
+            session = db.get_session()
+            pj = session.query(ReportStore).get(self.persistent_id)
+            pj.status = status
+            if task_id:
+                pj.queue_result_key = task_id
+            session.commit()
     
     def run(self):
         """
@@ -206,11 +217,13 @@ class ReportNode(Report):
             child_results = []
         
         self.result_key = str(uuid4())
-        db_session = db.get_session()
-        pj = db_session.query(ReportStore).get(self.persistent_id)
-        pj.result_key = self.result_key
-        db_session.add(pj)
-        db_session.commit()
+
+        if self.store:
+            db_session = db.get_session()
+            pj = db_session.query(ReportStore).get(self.persistent_id)
+            pj.result_key = self.result_key
+            db_session.add(pj)
+            db_session.commit()
         
         merged = {self.result_key: results}
         for child_result in child_results:

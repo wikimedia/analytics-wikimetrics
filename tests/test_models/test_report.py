@@ -80,5 +80,10 @@ class FakeReport(Report):
     """
     This just helps with some of the tests above
     """
+    def __init__(self):
+        # store param must be True so that the result is retrievable
+        # this param only defaults to True for RunReport
+        super(FakeReport, self).__init__(store=True)
+
     def run(self):
         return 'hello world'
