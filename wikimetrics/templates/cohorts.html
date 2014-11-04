@@ -18,10 +18,14 @@
     </ul>
     <div class="tab-content" data-bind="foreach: cohorts">
         <div class="tab-pane small" data-bind="attr: {id: id}">
-            <div class="well well-large" style="height:200px">
+            <div class="well well-large" style="height:280px">
                 <h2><span data-bind="text: name"></span>
                     <small data-bind="text: description"></small>
                 </h2>
+                <p>Default project: <b data-bind="text: default_project"></b></p>
+                <p data-bind="if: centralauth">
+                    ✓ <small>Expanded to all user's accounts across projects</small>
+                </p>
                 <div  data-bind="foreach: tags" class="tags">
                     <span class="label">
                         <span data-bind="text: name, css: {highlight: highlight}"></span>
@@ -37,6 +41,10 @@
                         </form>
                 </div>
                 <br />
+                <br />
+                <a href="https://www.mediawiki.org/wiki/Analytics/Wikimetrics/Standard_tags" target="_blank">
+                    <small>Standard Tags List</small>
+                </a>
                 <div data-bind="visible: has_validation_info"> <!-- start validating info -->
                     <div data-bind="if: validating">
                         <hr/>

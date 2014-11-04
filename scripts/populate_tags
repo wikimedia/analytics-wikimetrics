@@ -1,0 +1,64 @@
+#!/usr/bin/python
+#!coding: utf-8
+
+# Enters the tags passed in the input file to the database.
+# There's no problem if some tags are already there, the script
+# will leave them untouched and won't create any duplicates.
+
+
+def get_clean_line(line):
+    comment_index = line.find('#')
+    if comment_index >= 0:
+        line = line[0:comment_index]
+    line = line.strip()
+    return line if line != '' else None
+
+
+def log(msg, args):
+    if args.verbose:
+        print msg
+
+
+# setup argument parser
+from argparse import ArgumentParser
+parser = ArgumentParser(description='Insert tags into wikimetrics database')
+parser.add_argument('input_file', metavar='INPUT_FILE', type=str,
+                    help='The file with the tags, one for each line. '+
+                    "Blank lines and comments starting with '#' are supported. "+
+                    'Unicode characters are also OK.')
+parser.add_argument('-v', '--verbose', action='store_true',
+                    help='output what is being done')
+args = parser.parse_args()
+
+# these imports must come after argparse to avoid colisions with run.py
+from wikimetrics.configurables import db
+from wikimetrics.models.storage import TagStore
+
+# get existing tags
+session = db.get_session()
+records = session.query(TagStore).all()
+existing_tags = set([x.name for x in records])
+
+# get new tags
+new_tags = []
+with open(args.input_file, 'r') as input_file:
+    for line in input_file:
+        tag = get_clean_line(line)
+        if tag is not None:
+            if tag in existing_tags:
+                log(' ALREADY THERE: ' + tag, args)
+            else:
+                new_tags.append(tag)
+                log('        ADDING: ' + tag, args)
+        else:
+            log('      IGNORING: ' + line.strip(), args)
+
+# insert new tags
+for new_tag in new_tags:
+    record = TagStore(name=new_tag)
+    session.add(record)
+try:
+    session.commit()
+except Exception, e:
+    session.rollback()
+    raise e

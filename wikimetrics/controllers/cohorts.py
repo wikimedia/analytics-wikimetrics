@@ -15,6 +15,7 @@ from wikimetrics.models import (
     CohortStore, CohortUserStore, UserStore, WikiUserStore, CohortWikiUserStore,
     MediawikiUser, ValidateCohort, TagStore, CohortTagStore
 )
+from wikimetrics.models.cohorts.centralauth_cohort import CentralAuthCohort
 from wikimetrics.enums import CohortUserRole
 from wikimetrics.api import CohortService, TagService, CentralAuthService
 
@@ -62,6 +63,8 @@ def cohorts_list():
         'id': c.id,
         'name': c.name,
         'description': c.description,
+        'default_project': c.default_project,
+        'centralauth': type(c) == CentralAuthCohort,
     } for c in cohorts])
 
 
