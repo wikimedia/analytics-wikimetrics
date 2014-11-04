@@ -120,9 +120,10 @@ $(document).ready(function(){
             cohort.tag_name_to_add('');
         },
 
-        deleteTag: function(event, cohort, tag){
+        deleteTag: function(tag){
+            var cohort = this;
             $.post('/cohorts/' +  cohort.id + '/tag/delete/' + tag.id)
-                .done(site.handleWith(function(data){
+                .done(site.handleWith(function(){
                     cohort.tags.remove(tag);
                     // NOTE: autocomplete doesn't change
                     // because tags are only removed from the cohort
