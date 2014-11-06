@@ -16,7 +16,7 @@
             <a data-bind="text: name, attr: {href: '#' + id}, click: $root.view" data-toggle="tab"></a>
         </li>
     </ul>
-    <div class="tab-content" data-bind="foreach: cohorts">
+    <div class="tab-content" data-bind="foreach: cohorts, visible: shouldShowCohort">
         <div class="tab-pane small" data-bind="attr: {id: id}">
             <div class="well well-large" style="height:280px">
                 <h2><span data-bind="text: name"></span>

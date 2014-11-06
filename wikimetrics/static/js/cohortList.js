@@ -143,6 +143,10 @@ $(document).ready(function(){
         return this.cohorts();
     }, viewModel);
 
+    viewModel.shouldShowCohort = ko.computed(function(){
+        return !!(this.filteredCohorts().length);
+    }, viewModel);
+
     // fetch this user's cohorts
     $.get('/cohorts/list/?include_invalid=true')
         .done(site.handleWith(function(data){
