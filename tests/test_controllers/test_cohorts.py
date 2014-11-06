@@ -324,6 +324,36 @@ class CohortsControllerTest(WebTest):
         response = json.loads(response.data)
         assert_equal(len(response['cohorts']), 0)
 
+    def test_delete_cohort_with_tags(self):
+        # add a tag to the cohort
+        unparsed_tag = "test-tag"
+        response = self.app.post('/cohorts/{0}/tag/add/{1}'
+                                 .format(self.cohort.id, unparsed_tag))
+        assert_true(response.data.find('"tags":') >= 0)
+        assert_true(response.data.find('"name": "test-tag"') >= 0)
+        self.session.commit()
+
+        t = self.session.query(TagStore.id) \
+            .filter(TagStore.name == 'test-tag') \
+            .first()
+        assert_not_equal(t, None)
+        ct = self.session.query(CohortTagStore) \
+            .filter(CohortTagStore.cohort_id == self.cohort.id) \
+            .filter(CohortTagStore.tag_id == t[0]) \
+            .first()
+        assert_not_equal(ct, None)
+
+        # delete the cohort
+        cohort_id = self.cohort.id
+        response = self.app.post('/cohorts/delete/{0}'.format(self.cohort.id))
+
+        assert_true(response.data.find('isRedirect') >= 0)
+        assert_true(response.data.find('/cohorts') >= 0)
+        self.session.commit()
+
+        c = self.session.query(CohortStore).get(cohort_id)
+        assert_equal(c, None)
+
     def test_add_new_tag(self):
         unparsed_tag = "  saMPLE tag  with BAD FORMatting   "
         response = self.app.post('/cohorts/{0}/tag/add/{1}'

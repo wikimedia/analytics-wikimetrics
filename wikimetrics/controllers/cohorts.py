@@ -323,6 +323,11 @@ def delete_owner_cohort(session, cohort_id):
                 .filter(WikiUserStore.validating_cohort == cohort_id) \
                 .delete()
 
+            # Delete tags related to the cohort
+            session.query(CohortTagStore) \
+                .filter(CohortTagStore.cohort_id == cohort_id) \
+                .delete()
+
             c = session.query(CohortStore) \
                 .filter(CohortStore.id == cohort_id) \
                 .delete()
