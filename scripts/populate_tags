@@ -30,6 +30,11 @@ parser.add_argument('-v', '--verbose', action='store_true',
                     help='output what is being done')
 args = parser.parse_args()
 
+# specify the production db config file for when script is run in production
+# when this file does not exist, the system defaults to local config file
+from os import environ
+environ['WIKIMETRICS_DB_CONFIG'] = '/etc/wikimetrics/db_config.yaml'
+
 # these imports must come after argparse to avoid colisions with run.py
 from wikimetrics.configurables import db
 from wikimetrics.models.storage import TagStore
