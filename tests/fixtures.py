@@ -599,7 +599,7 @@ class DatabaseTest(unittest.TestCase):
     def archive_revisions(self):
         """
         Archive all the revisions in the revision table
-        NOTE: only populates ar_namespace, ar_timestamp, and ar_user
+        NOTE: only populates ar_page_id, ar_namespace, ar_timestamp, and ar_user
         NOTE: leaves ar_rev_id NULL because that's valid and a good edge case
         NOTE: creates duplicates with NULL ar_rev_id
         """
@@ -608,6 +608,7 @@ class DatabaseTest(unittest.TestCase):
             Revision.rev_user,
             Revision.rev_parent_id,
             Page.page_namespace,
+            Page.page_id,
         ).join(Page)
         revisions = query.all()
 
@@ -619,6 +620,7 @@ class DatabaseTest(unittest.TestCase):
                     'ar_user': r.rev_user,
                     'ar_parent_id': r.rev_parent_id,
                     'ar_namespace': r.page_namespace,
+                    'ar_page_id': r.page_id,
                 }
                 for r in revisions
             ]

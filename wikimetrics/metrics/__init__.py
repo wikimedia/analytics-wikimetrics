@@ -5,6 +5,7 @@ from namespace_edits import *
 from revert_rate import *
 from bytes_added import *
 from pages_created import *
+from pages_edited import *
 from threshold import *
 from survival import *
 from newly_registered import *
