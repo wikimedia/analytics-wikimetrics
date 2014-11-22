@@ -32,6 +32,16 @@
         </ul>
     </div>
 </div>
+<div class="well well-small pick-timezone">
+    <div class="form-inline">
+        <label class="control-label"> <h4>Pick Timezone</h4> </label> &nbsp;
+        <select data-bind="options: availableTimezones,
+             optionsText: function (item) {
+                 return item.value + ' ' + item.name;
+             },
+             value:timezone"></select>
+    </div>
+</div>
 <div class="well well-small pick-metrics">
     <h4>Pick Metrics</h4>
     <div class="tabbable tabs-left">
