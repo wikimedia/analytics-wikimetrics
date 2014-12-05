@@ -5,7 +5,8 @@ var site = site;
 
 $(document).ready(function(){
     
-    var viewModel = {
+    var utcTimezone = {name: 'UTC', value: '+00:00'},
+        viewModel = {
         filter: ko.observable(''),
         cohorts: ko.observableArray([]),
         toggleCohort: function(cohort){
@@ -20,6 +21,21 @@ $(document).ready(function(){
             }
             return true;
         },
+
+        // Add more timezones as necessary
+        availableTimezones : ko.observableArray([
+            {name: 'Central European Time', value: '+01:00'},
+            {name: 'Eastern European Time', value: '+02:00'},
+            {name: 'East Australian Standard Time', value: '+10:00'},
+            utcTimezone,
+            {name: 'Atlantic Standard Time', value: '-04:00'},
+            {name: 'Eastern Standard Time', value: '-05:00'},
+            {name: 'Central Standard Time', value: '-06:00'},
+            {name: 'Mountain Standard Time', value: '-07:00'},
+            {name: 'Pacific Standard Time', value: '-08:00'},
+            {name: 'Hawaii Standard Time', value: '-10:00'}
+        ]),
+        timezone: ko.observable(utcTimezone), // no default
 
         metrics: ko.observableArray([]),
         toggleMetric: function(metric){
@@ -41,12 +57,13 @@ $(document).ready(function(){
         },
         
         save: function(formElement){
-            
+            var timezone = this.timezone();
+
             if (site.hasValidationErrors()){
                 site.showWarning('Please configure and click Save Configuration for each selected metric.');
                 return;
             }
-            
+
             var vm = ko.dataFor(formElement);
             if (vm.request().responses().length === 0){
                 site.showWarning('Please select at least one cohort and one metric.');
@@ -69,7 +86,7 @@ $(document).ready(function(){
             var form = $(formElement);
             var data = ko.toJSON(vm.request().responses);
             data = JSON.parse(data);
-            
+
             ko.utils.arrayForEach(data, function(response){
                 delete response.metric.configure;
                 delete response.cohort.wikiusers;
@@ -80,9 +97,16 @@ $(document).ready(function(){
                 delete response.metric.tabIdSelector;
                 delete response.metric.selected;
                 delete response.metric.description;
+                // apply timezone info
+                ko.utils.arrayForEach(response.metric.dateTimeFieldNames, function(name) {
+                    response.metric[name] = moment
+                        .utc(response.metric[name] + ' ' + timezone.value)
+                        .format('YYYY-MM-DD HH:mm:ss');
+                });
+                delete response.metric.dateTimeFieldNames;
             });
             data = JSON.stringify(data);
-            
+
             $.ajax({ type: 'post', url: form.attr('action'), data: {responses: data, recurrent: vm.request().recurrent()} })
                 .done(site.handleWith(function(response){
                     // should redirect to the reports page, so show an error otherwise
@@ -235,6 +259,11 @@ $(document).ready(function(){
         var parentId = metric.tabId();
         var controls = $('#' + parentId + ' div.datetimepicker');
         controls.datetimepicker({language: 'en'});
+        // save datetime field names for later use (timezone conversion)
+        metric.dateTimeFieldNames = [];
+        controls.each(function () {
+            metric.dateTimeFieldNames.push($(this).find('input').attr('name'));
+        });
         // TODO: this might be cleaner if it metric[name] was an observable
         controls.on('changeDate', function(){
             var input = $(this).find('input');
@@ -248,8 +277,7 @@ $(document).ready(function(){
         e.preventDefault();
         $(this).tab('show');
     });
-    
-    
+
     // apply bindings - this connects the DOM with the view model constructed above
     ko.applyBindings(viewModel);
 });
