@@ -1,4 +1,4 @@
-# -*- coding:utf-8 -*-
+# -*- coding: utf-8 -*-
 import unittest
 from nose.tools import assert_equal, raises, assert_true, assert_false, assert_raises
 from exceptions import StopIteration

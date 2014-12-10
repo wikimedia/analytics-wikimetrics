@@ -1,10 +1,11 @@
 from sqlalchemy.orm.exc import NoResultFound
 from sqlalchemy import func
 from wikimetrics.configurables import db
-from wikimetrics.exceptions import Unauthorized, InvalidCohort
+from wikimetrics.exceptions import Unauthorized, InvalidCohort, DatabaseError
 from wikimetrics.models import cohort_classes, ValidatedCohort, WikiCohort
 from wikimetrics.models.storage import (
-    CohortStore, CohortUserStore, UserStore, WikiUserStore, WikiUserKey
+    CohortStore, CohortUserStore, UserStore,
+    WikiUserStore, WikiUserKey, CohortWikiUserStore
 )
 from wikimetrics.enums import CohortUserRole
 
@@ -155,6 +156,21 @@ class CohortService(object):
             return self.convert(cohort)
         else:
             raise Unauthorized('You are not allowed to use this cohort')
+
+    def is_owned_by_user(self, db_session, cohort_id, user_id, raise_errors=False):
+        """
+        Returns True if the user is the owner of the cohort.
+        Returns False otherwise.
+        """
+        try:
+            # _get method will raise Unauthorized error
+            # if the user is not the owner of the cohort
+            self._get(db_session, user_id, by_id=cohort_id)
+            return True
+        except Unauthorized, e:
+            if raise_errors:
+                raise e
+            return False
 
     def get_list(self, db_session, user_id):
         """
@@ -312,3 +328,66 @@ class CohortService(object):
         stats['validated_count'] = stats['valid_count'] + stats['invalid_count']
 
         return stats
+
+    def get_membership(self, cohort, session):
+        wikiusers = (
+            session.query(
+                WikiUserStore.mediawiki_username,
+                WikiUserStore.project,
+                WikiUserStore.valid,
+                WikiUserStore.reason_invalid
+            )
+            .filter(WikiUserStore.validating_cohort == cohort.id)
+            .all()
+        )
+
+        by_username = {}
+        for wikiuser in wikiusers:
+            wikiuser_info = by_username.get(wikiuser[0])
+            if not wikiuser_info:
+                wikiuser_info = {
+                    'username': wikiuser[0],
+                    'projects': [],
+                    'invalidProjects': [],
+                    'invalidReasons': []
+                }
+                by_username[wikiuser[0]] = wikiuser_info
+
+            wikiuser_info['projects'].append(wikiuser[1])
+            if not wikiuser[2]:  # if not valid
+                wikiuser_info['invalidProjects'].append(wikiuser[1])
+                wikiuser_info['invalidReasons'].append(wikiuser[3])
+
+        membership = by_username.values()
+        membership.sort(key=lambda x: x['username'])
+        return membership
+
+    def delete_cohort_wikiuser(
+            self, username, cohort_id, user_id, session, invalid_only=False):
+        # raises Unauthorized error if the user has no permits on the cohort
+        self.is_owned_by_user(session, cohort_id, user_id, True)
+        wikiusers = (
+            session.query(WikiUserStore)
+            .join(CohortWikiUserStore)
+            .filter(WikiUserStore.mediawiki_username == username)
+            .filter(CohortWikiUserStore.cohort_id == cohort_id)
+            .all()
+        )
+        ids_to_delete = []
+        for x in wikiusers:
+            if not invalid_only or not x.valid:
+                ids_to_delete.append(x.id)
+        try:
+            (session
+                .query(CohortWikiUserStore)
+                .filter(CohortWikiUserStore.wiki_user_id.in_(ids_to_delete))
+                .filter(CohortWikiUserStore.cohort_id == cohort_id)
+                .delete(synchronize_session='fetch'))
+            (session
+                .query(WikiUserStore)
+                .filter(WikiUserStore.id.in_(ids_to_delete))
+                .delete(synchronize_session='fetch'))
+            session.commit()
+        except DatabaseError, e:
+            session.rollback()
+            raise e

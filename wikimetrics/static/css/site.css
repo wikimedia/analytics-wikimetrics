@@ -94,3 +94,13 @@ form.upload-cohort div.navbar-inner { margin: 0 0 20px 0; }
 
 p.validated-users { font-size: medium }
 
+/* cohort membership */
+.btn.narrow {
+    height: 10px;
+    line-height: 10px;
+    font-size: 12px;
+}
+
+select {
+    margin: 0;
+}

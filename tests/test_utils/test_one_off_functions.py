@@ -1,4 +1,4 @@
-# -*- coding:utf-8 -*-
+# -*- coding: utf-8 -*-
 from datetime import datetime, timedelta, date
 import decimal
 from nose.tools import assert_true, assert_equal

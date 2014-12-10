@@ -1,0 +1,44 @@
+{% extends "layout.html" %}
+{% block body %}
+<div class="page-header">
+    <h2>Cohort Membership</h2>
+</div>
+
+<h3>{{ cohort.name }} <small data-bind="text: summary"></small></h3>
+<p>
+    <input type="text" class="search-query" placeholder="Type to filter your search" data-bind="value: textFilter, valueUpdate: 'afterkeydown'"/>
+    <select class="pull-right" data-bind="options: validityFilter, value: selectedValidity"></select>
+</p>
+<br>
+
+<table class="table table-striped">
+    <thead>
+        <tr>
+            <th>Username</th>
+            <th>Projects</th>
+            <th>Valid</th>
+        </tr>
+    </thead>
+    <tbody data-bind="foreach: filteredWikiusers">
+        <tr>
+            <td><span data-bind="text: username"></span></td>
+            <td><span data-bind="text: project, attr: {title: projectTitle}"></span></td>
+            <td><span data-bind="text: valid, attr: {title: validTitle}"></span></td>
+            <td>
+                <div data-bind="if: showDeleteInvalid" class="btn-group pull-right" role="group">
+                    <a data-bind="click: $root.deleteWikiuser, attr: { title: $root.delete_invalid_message }" class="btn btn-warning narrow" data-delete-invalid="true">Remove invalid</a>
+                    <a data-bind="click: $root.deleteWikiuser, attr: { title: $root.delete_message }" class="btn btn-danger narrow" data-remove-invalid="false">Remove</a>
+                </div>
+                <div data-bind="ifnot: showDeleteInvalid" class="btn-group pull-right" role="group">
+                    <a data-bind="click: $root.deleteWikiuser, attr: { title: $root.delete_message }" class="btn btn-danger narrow" data-remove-invalid="false">Remove</a>
+                </div>
+            </td>
+        </tr>
+    </tbody>
+</table>
+<h3><small data-bind="text: pageInfo"></small></h3>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/cohortMembership.js') }}"></script>
+{% endblock %}

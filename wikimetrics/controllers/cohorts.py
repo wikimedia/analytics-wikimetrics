@@ -68,32 +68,46 @@ def cohorts_list():
     } for c in cohorts])
 
 
-@app.route('/cohorts/detail/invalid-users/<int:cohort_id>')
-def cohort_invalid_detail(cohort_id):
+@app.route('/cohorts/<string:cohort_id>/membership')
+def cohort_membership(cohort_id):
+    """
+    If full_detail flag is set to 'true', it returns a json with
+    a list of wikiusers grouped by username.
+    Otherwise, it renders the html with basic cohort information.
+    """
     session = db.get_session()
-    cohort, wikiusers = None, []
     try:
         cohort = g.cohort_service.get_for_display(
             session, current_user.id, by_id=cohort_id
         )
-        wikiusers = session\
-            .query(WikiUserStore.mediawiki_username, WikiUserStore.reason_invalid)\
-            .filter(WikiUserStore.validating_cohort == cohort.id) \
-            .filter(WikiUserStore.valid.in_([False, None])) \
-            .all()
-        wikiusers = [{
-            'mediawiki_username': wu[0].decode('utf-8'),
-            'reason_invalid': wu[1]
-        } for wu in wikiusers]
+        if request.args.get('full_detail') == 'true':
+            membership = g.cohort_service.get_membership(cohort, session)
+            return json_response({'membership': membership})
+        else:
+            return render_template('cohort_membership.html', cohort=cohort)
     except Exception, e:
         # don't need to roll back session because it's just a query
         app.logger.exception(str(e))
-        if cohort:
-            cohort_name = "cohort '%s'" % cohort.name
-        else:
-            cohort_name = "cohort with id '%d'" % cohort_id
-        flash('Error fetching invalid users for {0}'.format(cohort_name), 'error')
-    return render_template('invalid_wikiusers.html', wikiusers=wikiusers)
+        return 'Error fetching membership for this cohort', 500
+
+
+@app.route('/cohorts/<string:cohort_id>/membership/delete', methods=['POST'])
+def delete_cohort_wikiuser(cohort_id):
+    """
+    Deletes all WikiUsers from the given Cohort with
+    mediawiki_username == <username>. If the invalidOnly
+    flag is passed, it will delete the ones that are invalid only.
+    """
+    username = request.form.get('username')
+    invalid_only = True if request.form.get('invalidOnly') == 'true' else False
+    session = db.get_session()
+    try:
+        g.cohort_service.delete_cohort_wikiuser(
+            username, cohort_id, current_user.id, session, invalid_only)
+        return json_response(message='success')
+    except Exception as e:
+        app.logger.exception(str(e))
+        return json_error(e.message)
 
 
 @app.route('/cohorts/detail/<string:name_or_id>')

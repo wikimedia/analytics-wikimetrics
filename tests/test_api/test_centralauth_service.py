@@ -1,4 +1,4 @@
-# coding=utf-8
+# -*- coding: utf-8 -*-
 from nose.tools import assert_equal, assert_true
 from tests.fixtures import DatabaseTest
 from wikimetrics.models.centralauth import CentralAuthLocalUser as LocalUser
@@ -9,6 +9,7 @@ class CentralAuthServiceTest(DatabaseTest):
     def setUp(self):
         DatabaseTest.setUp(self)
         self.expand = CentralAuthService().expand_via_centralauth
+        self.default_project = 'defaultproject'
 
     def test_expand_via_centralauth(self):
         username_1, username_2 = 'User 1', 'User 2'
@@ -22,20 +23,32 @@ class CentralAuthServiceTest(DatabaseTest):
         ])
         self.caSession.commit()
 
-        records = self.expand([[username_1]], self.caSession)
+        records = self.expand(
+            [[username_1, wiki_1]],
+            self.caSession,
+            self.default_project
+        )
         assert_equal([
             [username_1, wiki_1],
             [username_1, wiki_2],
             [username_1, wiki_3],
         ], records)
 
-        records = self.expand([[username_2]], self.caSession)
+        records = self.expand(
+            [[username_2, wiki_1]],
+            self.caSession,
+            self.default_project
+        )
         assert_equal([
             [username_2, wiki_1],
             [username_2, wiki_2],
         ], records)
 
-        records = self.expand([[username_1], [username_2]], self.caSession)
+        records = self.expand(
+            [[username_1, wiki_1], [username_2, wiki_1]],
+            self.caSession,
+            self.default_project
+        )
         assert_equal(len(records), 5)
 
     def test_expand_user_without_centralauth(self):
@@ -44,8 +57,12 @@ class CentralAuthServiceTest(DatabaseTest):
         it should not be filtered out by expand_via_centralauth
         or else the user won't receive the negative validation feedback.
         '''
-        username = 'Non-existent'
-        records = self.expand([[username]], self.caSession)
+        username, wiki = 'Non-existent', 'notimportant'
+        records = self.expand(
+            [[username, wiki]],
+            self.caSession,
+            self.default_project
+        )
         assert_equal(len(records), 1)
         assert_equal(records[0][0], username)
 
@@ -61,7 +78,11 @@ class CentralAuthServiceTest(DatabaseTest):
             LocalUser(lu_name=username, lu_wiki=wiki_2),
         ])
         self.caSession.commit()
-        records = self.expand([[username]], self.caSession)
+        records = self.expand(
+            [[username, wiki_1]],
+            self.caSession,
+            self.default_project
+        )
         assert_equal([
             [username, wiki_1],
             [username, wiki_2],
@@ -79,7 +100,11 @@ class CentralAuthServiceTest(DatabaseTest):
             LocalUser(lu_name=username, lu_wiki=wiki_2),
         ])
         self.caSession.commit()
-        records = self.expand([[username], [username]], self.caSession)
+        records = self.expand(
+            [[username, wiki_1], [username, wiki_1]],
+            self.caSession,
+            self.default_project
+        )
         assert_equal([
             [username, wiki_1],
             [username, wiki_2],
