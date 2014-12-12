@@ -18,7 +18,7 @@
     </ul>
     <div class="tab-content" data-bind="foreach: cohorts, visible: shouldShowCohort">
         <div class="tab-pane small" data-bind="attr: {id: id}">
-            <div class="well well-large" style="height:280px">
+            <div class="well well-large">
                 <h2><span data-bind="text: name"></span>
                     <small data-bind="text: description"></small>
                 </h2>
@@ -59,34 +59,36 @@
                             Validated
                             <span data-bind="text: validated_count"></span> of
                             <span data-bind="text: total_count"></span> cohort members.
-                            <span data-bind="text: valid_count"></span> are valid<span data-bind="if: invalid_count">,
-                                <a data-bind="attr: {href: '/cohorts/detail/invalid-users/' + id}" target="_blank">
-                                    <span data-bind="text: invalid_count"></span> are invalid</a></span>.
+                            <span data-bind="text: valid_count"></span> are valid<span data-bind="if: invalid_count">, <span data-bind="text: invalid_count"></span> are invalid</span>.
                         </p>
                     </div>
                 </div>
-           </div><!-- end validating info -->
-            <div class="pull-right">
-                <div class="btn-group pull-left" data-bind="if: can_run_report">
-                    <a data-bind="attr:{href:'{{url_for('reports_request')}}#'+id}"
-                       class="btn btn-primary">Create Report</a>
+                <div>
+                    <div class="btn-group">
+                        <a data-bind="attr:{href:'{{url_for('cohort_membership', cohort_id='id')}}'.replace('id', id)}" class="btn btn-primary">View Members</a>
+                    </div>
+                    <div class="btn-group" data-bind="if: can_run_report">
+                        <a data-bind="attr:{href:'{{url_for('reports_request')}}#'+id}"
+                           class="btn btn-success">Create Report</a>
+                    </div>
+                    <!-- TODO: IMPORTANT: "Validate Again" functionality is broken.
+                         See this task: https://phabricator.wikimedia.org/T78339
+                         A cohort which has some valid and some invalid users will end up with ALL invalid users if this functionality is used as is.
+                    <div class="btn-group pull-left" data-bind="if: has_validation_info">
+                        <span data-bind="if: not_all_valid">
+                            <p>
+                                <a data-bind="click: $root.validateWikiusers"
+                                   class="btn"
+                                   title="cancel and restart validation for this cohort">Validate Again</a>
+                            </p>
+                        </span>
+                    </div> -->
+                    <div class="btn-group pull-right">
+                        <a data-bind="click: $root.deleteCohort, attr: { title: delete_message }"
+                           class="btn btn-danger">Remove Cohort</a>
+                    </div>
                 </div>
-                <!-- TODO: IMPORTANT: "Validate Again" functionality is broken.
-                     A cohort which has some valid and some invalid users will end up with ALL invalid users if this functionality is used as is.
-                <div class="btn-group pull-left" data-bind="if: has_validation_info">
-                    <span data-bind="if: not_all_valid">
-                        <p>
-                            <a data-bind="click: $root.validateWikiusers"
-                               class="btn"
-                               title="cancel and restart validation for this cohort">Validate Again</a>
-                        </p>
-                    </span>
-                </div> -->
-                <div class="btn-group">
-                    <a data-bind="click: $root.deleteCohort, attr: { title: delete_message }"
-                       class="btn btn-danger">Remove Cohort</a>
-                </div>
-            </div>
+            </div><!-- end validating info -->
 
         </div>
     </div>

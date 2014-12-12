@@ -1,10 +1,13 @@
-from nose.tools import assert_equals, assert_true, raises
+# -*- coding: utf-8 -*-
+from nose.tools import assert_equals, assert_true, assert_false, raises
 from sqlalchemy.orm.exc import NoResultFound
 
 from tests.fixtures import DatabaseTest, mediawiki_project
 from wikimetrics.api import CohortService
 from wikimetrics.exceptions import Unauthorized, InvalidCohort
-from wikimetrics.models import CohortStore, CohortUserStore
+from wikimetrics.models import (
+    CohortStore, CohortUserStore, WikiUserStore, CohortWikiUserStore
+)
 from wikimetrics.enums import CohortUserRole
 from wikimetrics.models.cohorts import Cohort
 
@@ -185,3 +188,161 @@ class CohortServiceTest(DatabaseTest):
 
         assert_equals(user_names[key1], user1.mediawiki_username)
         assert_equals(user_names[key2], user2.mediawiki_username)
+
+    def test_get_membership_contents(self):
+        """
+        The wikiuser properties must be returned
+        under the expected data structure.
+        """
+        wikiusers = self.session.query(WikiUserStore).all()
+        membership = self.cohort_service.get_membership(self.cohort, self.session)
+
+        assert_equals(len(membership), len(wikiusers))
+        for i in range(len(membership)):
+            wikiuser, member = wikiusers[i], membership[i]
+            assert_equals(len(membership), 4)
+            assert_equals(member['username'], wikiuser.mediawiki_username)
+            assert_equals(len(member['projects']), 1)
+            assert_equals(member['projects'][0], wikiuser.project)
+            assert_equals(len(member['invalidProjects']), 0)
+            assert_equals(len(member['invalidReasons']), 0)
+
+    def test_get_membership_group_by_username(self):
+        """
+        The wikiusers must be grouped by username,
+        returning their projects, validities and reasons
+        in the corresponding lists.
+        """
+        wikiusers = self.session.query(WikiUserStore).all()
+        username_1, username_2 = 'Username 1', 'Username 2'
+        project_1, project_2 = 'Project 1', 'Project 2'
+        reason_invalid_1 = 'Reason Invalid 1'
+
+        wikiusers[0].mediawiki_username = username_1
+        wikiusers[1].mediawiki_username = username_1
+        wikiusers[2].mediawiki_username = username_2
+        wikiusers[2].project = project_1
+        wikiusers[3].mediawiki_username = username_2
+        wikiusers[3].project = project_2
+        wikiusers[3].valid = False
+        wikiusers[3].reason_invalid = reason_invalid_1
+        self.session.commit()
+
+        membership = self.cohort_service.get_membership(self.cohort, self.session)
+
+        assert_equals(len(membership), 2)
+        assert_equals(membership[0]['username'], username_1)
+        assert_equals(membership[1]['username'], username_2)
+        assert_equals(membership[1]['projects'], [project_1, project_2])
+        assert_equals(membership[1]['invalidProjects'], [project_2])
+        assert_equals(membership[1]['invalidReasons'], [reason_invalid_1])
+
+    def test_get_membership_order_by_name(self):
+        wikiusers = self.session.query(WikiUserStore).all()
+        wikiusers[0].mediawiki_username = 'D'
+        wikiusers[1].mediawiki_username = 'C'
+        wikiusers[2].mediawiki_username = 'B'
+        wikiusers[3].mediawiki_username = 'A'
+        self.session.commit()
+
+        membership = self.cohort_service.get_membership(self.cohort, self.session)
+        assert_equals(len(membership), len(wikiusers))
+        assert_equals(membership[0]['username'], 'A')
+        assert_equals(membership[1]['username'], 'B')
+        assert_equals(membership[2]['username'], 'C')
+        assert_equals(membership[3]['username'], 'D')
+
+    def test_delete_cohort_wikiuser(self):
+        username = 'To Delete'
+        wikiuser = self.session.query(WikiUserStore).first()
+        wikiuser.mediawiki_username = username
+        self.session.commit()
+
+        self.cohort_service.delete_cohort_wikiuser(
+            username, self.cohort.id, self.owner_user_id, self.session)
+
+        wikiusers = (
+            self.session.query(WikiUserStore)
+            .filter(WikiUserStore.mediawiki_username == username)
+            .filter(WikiUserStore.validating_cohort == self.cohort.id)
+            .all())
+        assert_equals(len(wikiusers), 0)
+        cohort_wikiusers = (
+            self.session.query(CohortWikiUserStore)
+            .filter(CohortWikiUserStore.cohort_id == self.cohort.id)
+            .filter(CohortWikiUserStore.wiki_user_id == wikiuser.id)
+            .all())
+        assert_equals(len(cohort_wikiusers), 0)
+
+    def test_delete_cohort_wikiuser_invalid_only(self):
+        username = 'To Delete'
+        wikiusers = self.session.query(WikiUserStore).all()
+        wikiusers[0].mediawiki_username = username
+        wikiusers[1].mediawiki_username = username
+        wikiusers[1].valid = False
+        wikiuser_ids = [wikiusers[0].id, wikiusers[1]]
+        self.session.commit()
+
+        self.cohort_service.delete_cohort_wikiuser(
+            username, self.cohort.id, self.owner_user_id, self.session, True)
+
+        wikiusers = (
+            self.session.query(WikiUserStore)
+            .filter(WikiUserStore.mediawiki_username == username)
+            .filter(WikiUserStore.validating_cohort == self.cohort.id)
+            .all())
+        assert_equals(len(wikiusers), 1)
+        cohort_wikiusers = (
+            self.session.query(CohortWikiUserStore)
+            .filter(CohortWikiUserStore.cohort_id == self.cohort.id)
+            .filter(CohortWikiUserStore.wiki_user_id.in_(wikiuser_ids))
+            .all())
+        assert_equals(len(cohort_wikiusers), 1)
+
+    def test_delete_cohort_wikiuser_utf8(self):
+        username = '18Наталь'
+        wikiuser = self.session.query(WikiUserStore).first()
+        wikiuser.mediawiki_username = username
+        self.session.commit()
+
+        self.cohort_service.delete_cohort_wikiuser(
+            username, self.cohort.id, self.owner_user_id, self.session)
+
+        wikiusers = (
+            self.session.query(WikiUserStore)
+            .filter(WikiUserStore.mediawiki_username == username)
+            .filter(WikiUserStore.validating_cohort == self.cohort.id)
+            .all())
+        assert_equals(len(wikiusers), 0)
+
+    @raises(Unauthorized)
+    def test_delete_cohort_wikiuser_ownership(self):
+        self.cohort_service.delete_cohort_wikiuser(
+            'To Delete', self.cohort.id, self.owner_user_id + 1, self.session)
+
+    def test_is_owned_by_user_positive(self):
+        cohort_user = (
+            self.session.query(CohortUserStore)
+            .filter(CohortUserStore.cohort_id == self.cohort.id)
+            .one())
+        result = self.cohort_service.is_owned_by_user(
+            self.session, self.cohort.id, cohort_user.user_id)
+        assert_true(result)
+
+    def test_is_owned_by_user_negative(self):
+        cohort_user = (
+            self.session.query(CohortUserStore)
+            .filter(CohortUserStore.cohort_id == self.cohort.id)
+            .one())
+        result = self.cohort_service.is_owned_by_user(
+            self.session, self.cohort.id, cohort_user.user_id + 1)
+        assert_false(result)
+
+    @raises(Unauthorized)
+    def test_is_owned_by_user_exception(self):
+        cohort_user = (
+            self.session.query(CohortUserStore)
+            .filter(CohortUserStore.cohort_id == self.cohort.id)
+            .one())
+        self.cohort_service.is_owned_by_user(
+            self.session, self.cohort.id, cohort_user.user_id + 1, True)

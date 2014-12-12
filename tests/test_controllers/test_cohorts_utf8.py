@@ -1,28 +1,15 @@
-# coding=utf-8
-from nose.tools import assert_true, assert_equal
-from contextlib import contextmanager
-from flask import appcontext_pushed, g
+# -*- coding: utf-8 -*-
+from nose.tools import assert_true
 from tests.fixtures import WebTest
 from wikimetrics.utils import parse_tag
-from wikimetrics.api import CohortService
-from wikimetrics.configurables import app
 from wikimetrics.models import (
-    TagStore, WikiUserStore
+    TagStore
 )
-
-
-@contextmanager
-def cohort_service_set(app, cohort_service):
-    def handler(sender, **kwargs):
-        g.cohort_service = cohort_service
-    with appcontext_pushed.connected_to(handler, app):
-        yield
 
 
 class CohortsControllerUTF8Test(WebTest):
     def setUp(self):
         WebTest.setUp(self)
-        self.cohort_service = CohortService()
 
     def test_add_new_tag_utf8(self):
         '''
@@ -44,21 +31,3 @@ class CohortsControllerUTF8Test(WebTest):
         self.session.commit()
         t = self.session.query(TagStore).filter(TagStore.name == parsed_tag).first()
         assert_true(t is not None)
-
-    def test_invalid_wiki_user_utf8(self):
-        '''
-        Tests if usernames with utf-8 chars are rendered as expected in the
-        list of invalid cohort users. For this test to work, 1st line of file
-        should read '# coding=utf-8'.
-        '''
-        invalid = self.session.query(WikiUserStore).first()
-        invalid.valid = False
-        invalid.mediawiki_username = "ام محمود عبد المحس"
-        invalid.reason_invalid = 'some reason'
-        self.session.commit()
-        with cohort_service_set(app, self.cohort_service):
-            response = self.app.get('/cohorts/detail/invalid-users/{0}'.format(
-                self.cohort.id
-            ))
-        assert_equal(response.status_code, 200)
-        assert_true(response.data.find(invalid.mediawiki_username) >= 0)

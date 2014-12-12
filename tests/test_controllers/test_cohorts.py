@@ -13,6 +13,7 @@ from wikimetrics.models import (
     ValidateCohort, CohortTagStore, TagStore
 )
 from wikimetrics.enums import CohortUserRole
+from wikimetrics.exceptions import Unauthorized
 
 
 @contextmanager
@@ -393,6 +394,58 @@ class CohortsControllerTest(WebTest):
             .count()
         assert_equal(tag_count, 1)
 
+    def test_cohort_membership_basic_detail(self):
+        def get_for_display_mock(session, user_id, by_id):
+            assert_equal(by_id, unicode(self.cohort.id))
+            return self.cohort
+
+        cohort_service_mock = CohortService()
+        cohort_service_mock.get_for_display = get_for_display_mock
+        with cohort_service_set(app, cohort_service_mock):
+            response = self.app.get('/cohorts/{0}/membership'.format(
+                self.cohort.id
+            ))
+        assert_equal(response.status_code, 200)
+        assert_true(response.data.find(self.cohort.name) >= 0)
+
+    def test_cohort_membership_full_detail(self):
+        def get_for_display_mock(session, user_id, by_id):
+            assert_equal(by_id, unicode(self.cohort.id))
+            return self.cohort
+
+        def get_membership_mock(cohort, session):
+            assert_equal(cohort, self.cohort)
+            return 'mock'
+
+        cohort_service_mock = CohortService()
+        cohort_service_mock.get_for_display = get_for_display_mock
+        cohort_service_mock.get_membership = get_membership_mock
+        with cohort_service_set(app, cohort_service_mock):
+            response = self.app.get('/cohorts/{0}/membership?full_detail=true'.format(
+                self.cohort.id
+            ))
+        assert_equal(response.status_code, 200)
+        assert_equal(json.loads(response.data), {'membership': 'mock'})
+
+    def test_delete_cohort_wikiuser(self):
+        username_to_delete = 'To Delete'
+
+        def delete_cohort_wikiuser_mock(
+                username, cohort_id, user_id, session, invalid_only):
+            assert_equal(username, username_to_delete)
+            assert_equal(cohort_id, unicode(self.cohort.id))
+            assert_equal(invalid_only, False)
+
+        cohort_service_mock = CohortService()
+        cohort_service_mock.delete_cohort_wikiuser = delete_cohort_wikiuser_mock
+        with cohort_service_set(app, cohort_service_mock):
+            response = self.app.post(
+                '/cohorts/{0}/membership/delete'.format(self.cohort.id),
+                data={'username': username_to_delete}
+            )
+        assert_equal(response.status_code, 200)
+        assert_equal(json.loads(response.data)['message'], 'success')
+
 
 class CohortsControllerUploadTest(WebTest):
     def setUp(self):
@@ -450,28 +503,6 @@ class CohortsControllerUploadTest(WebTest):
         ))
         assert_true(response.data.find('Server error while processing your upload') >= 0)
 
-    def test_invalid_wiki_user_view(self):
-        invalid = self.session.query(WikiUserStore).first()
-        invalid.valid = False
-        invalid.reason_invalid = 'check for this in an assert'
-        self.session.commit()
-        with cohort_service_set(app, self.cohort_service):
-            response = self.app.get('/cohorts/detail/invalid-users/{0}'.format(
-                self.cohort.id
-            ))
-        assert_equal(response.status_code, 200)
-        assert_true(response.data.find(invalid.mediawiki_username) >= 0)
-        assert_true(response.data.find(invalid.reason_invalid) >= 0)
-
-    def test_invalid_wiki_user_view_works_when_cohort_invalid(self):
-        self.helper_reset_validation()
-        self.test_invalid_wiki_user_view()
-
-    def test_invalid_wiki_user_view_error(self):
-        response = self.app.get('/cohorts/detail/invalid-users/0')
-        assert_equal(response.status_code, 200)
-        assert_true(response.data.find('Error fetching invalid users for') >= 0)
-
     def test_both_upload_and_paste_usernames(self):
         response = self.app.post('/cohorts/upload', data=dict(
             name='new_cohort_name',
@@ -488,7 +519,7 @@ class CohortsControllerUploadTest(WebTest):
         data = 'actual validation tested elsewhere'
         centralauth_called = [False]
 
-        def expand_via_ca_mock(cohort_users, session):
+        def expand_via_ca_mock(cohort_users, session, default_project):
             centralauth_called[0] = True
             assert_true([data] in cohort_users)
             return []
