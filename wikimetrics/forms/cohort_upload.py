@@ -17,10 +17,6 @@ class CohortUpload(WikimetricsSecureForm):
     """
     Defines the fields necessary to upload a cohort from a csv file or
     a textbox.
-    
-    Note that paste_username would be a unicode type per wtforms convention but
-    when we read text fields (user names or user ids) from a csv file those would be
-    returned as strings via python csv module.
     """
     name                    = StringField('Name',
                                           [Required(), CohortNameUnused(),
@@ -37,7 +33,7 @@ class CohortUpload(WikimetricsSecureForm):
         ('False', 'User Names (Names found in the user_name column of the user table)')
     ])
     centralauth             = BetterBooleanField(default=True)
-    
+
     @classmethod
     def from_request(cls, request):
         """
@@ -46,23 +42,22 @@ class CohortUpload(WikimetricsSecureForm):
         values = request.form.copy()
         values.update(request.files)
         return cls(values)
-    
+
     def parse_records(self):
         """
-        You must call this to parse self.records out of the csv file
-        
-        Parameters
-            request : the request with the file to parse
-        
+        Called by controller code to parse form submission, it being a cvs file
+        or input box
+
         Returns
             nothing, but sets self.records to the parsed lines of the csv
+            as string types
         """
 
         if self.csv.data:
             # uploaded a cohort file
             csv_file = normalize_newlines(self.csv.data.stream)
             unparsed = csv.reader(csv_file)
-        
+
         else:
             #TODO: Check valid input
             # used upload box, note that wtforms returns unicode types here
@@ -73,20 +68,23 @@ class CohortUpload(WikimetricsSecureForm):
             unparsed = g.centralauth_service.expand_via_centralauth(
                 unparsed, ca_session, self.project.data)
 
-        self.records = parse_records(unparsed, self.project.data)
+        self.records = format_records(unparsed, self.project.data)
 
 
-def parse_records(unparsed, default_project):
+def format_records(unparsed, default_project):
     """
-    Parses records read from a csv file or coming from the upload box
-    
+    Process and formats records read from a csv file or coming from the upload box
+    Note this method assumes bytes (str) not unicode types as input
+
     Parameters
-        unparsed        : records in array form, as read from a csv
+        unparsed        : records in array form
         default_project : the default project to attribute to records without one
-    
+
     Returns
-        the parsed records in this form:
-            {'username':'parsed username', 'project':'as specified or default'}
+        a list of the formatted records in which each element is of this form:
+        {'username':'parsed username', 'project':'as specified or default'}
+
+
     """
     records = []
     for r in unparsed:
@@ -98,11 +96,11 @@ def parse_records(unparsed, default_project):
             # and the username to be the last or maybe change to a tsv format
             if len(r) > 1:
                 username = ",".join([str(p) for p in r[:-1]])
-                project = r[-1].decode('utf8') or default_project
+                project = r[-1] or default_project
             else:
                 username = r[0]
                 project = default_project
-            
+
             if username is not None and len(username):
                 records.append({
                     'username'  : parse_username(username),
@@ -124,9 +122,22 @@ def normalize_newlines(lines):
 
 def parse_textarea_usernames(paste_username):
     """
-    Takes csv format text and parses it into a list of lists of usernames
+    Takes text and parses it into a list of lists of usernames
     and their wiki. i.e. "dan,en v" becomes [['dan','en'],['v']]. Whitespace is
     the delimiter of each list. Prepares text to go through parse_records().
+
+    Note that paste_username is going to be a unicode type as flask builds it
+    that way. Output is plain bytes (str type) as the rest of our code
+    does not assume unicode types.
+
+    Parameters
+        paste_username : lines representing a username and (optionally)
+        a project separated by comas
+
+    Returns
+        list with username at index 0 and project at index 1
+        Unicode types are transformed to bytes.
     """
     for username in paste_username.splitlines():
-        yield username.strip().split(',')
+        _username = username.encode("utf-8")
+        yield _username.strip().split(',')

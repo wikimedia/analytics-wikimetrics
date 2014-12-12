@@ -5,7 +5,7 @@ from exceptions import StopIteration
 
 from tests.fixtures import WebTest
 from wikimetrics.forms.cohort_upload import (
-    parse_records,
+    format_records,
     parse_username,
     normalize_newlines,
     parse_textarea_usernames,
@@ -13,7 +13,7 @@ from wikimetrics.forms.cohort_upload import (
 
 
 class CohortsControllerTest(unittest.TestCase):
-    
+
     def test_parse_username_unicode_handling(self):
         unparsed_strings = [u'sès', u'مو', u'èm']
         expected_strings = ['S\xc3\xa8s', '\xd9\x85\xd9\x88', '\xc3\x88m']
@@ -28,10 +28,10 @@ class CohortsControllerTest(unittest.TestCase):
         # 2. lowercase
         # 3. nasty trailing unicode space (the reason this file has coding:utf-8)
         problem_username = ' editor test-specific-0 '
-        
+
         parsed_user = parse_username(problem_username)
         assert_equal(parsed_user, 'Editor test-specific-0')
-    
+
     def test_normalize_newlines(self):
         stream = [
             'blahblah\r',
@@ -55,9 +55,17 @@ class CohortsControllerTest(unittest.TestCase):
         assert_equal(parsed.next(), ['', ''])
         assert_equal(parsed.next(), ['something with spaces'])
         assert_raises(StopIteration, parsed.next)
+        # needs to deal with unicode types as that is what this
+        # method will get from flask
+        unparsed = u'تيسير سامى سلامة,en\rv\n,\r\nsomething with spaces'
+        parsed = parse_textarea_usernames(unparsed)
+        username = parsed.next()[0]
+        # username will be just plain bytes, convert to unicode
+        # to be able to compare
+        assert_equal(username.decode("utf-8"), u'تيسير سامى سلامة')
 
-    def test_parse_records_with_project(self):
-        parsed = parse_records(
+    def test_format_records_with_project(self):
+        parsed = format_records(
             [
                 ['dan', 'wiki'],
                 ['v', 'wiki'],
@@ -70,9 +78,9 @@ class CohortsControllerTest(unittest.TestCase):
         assert_equal(parsed[0]['project'], 'wiki')
         assert_equal(parsed[1]['username'], 'V')
         assert_equal(parsed[1]['project'], 'wiki')
-    
-    def test_parse_records_without_project(self):
-        parsed = parse_records(
+
+    def test_format_records_without_project(self):
+        parsed = format_records(
             [
                 ['dan'],
                 ['v']
@@ -84,9 +92,9 @@ class CohortsControllerTest(unittest.TestCase):
         assert_equal(parsed[0]['project'], 'wiki')
         assert_equal(parsed[1]['username'], 'V')
         assert_equal(parsed[1]['project'], 'wiki')
-    
-    def test_parse_records_with_shorthand_project(self):
-        parsed = parse_records(
+
+    def test_format_records_with_shorthand_project(self):
+        parsed = format_records(
             [
                 ['dan', 'en']
             ],
@@ -95,14 +103,19 @@ class CohortsControllerTest(unittest.TestCase):
         assert_equal(len(parsed), 1)
         assert_equal(parsed[0]['username'], 'Dan')
         assert_equal(parsed[0]['project'], 'en')
-    
-    def test_parse_records_with_utf8(self):
-        parsed = parse_records(
+
+    def test_format_records_with_utf8(self):
+        '''
+        Format records deals with bytes but should be
+        able to handle non ascii chars
+        '''
+        username = u'Kán'.encode("utf-8")
+        parsed = format_records(
             [
-                [u'dan', 'en']
+                [username, 'en']
             ],
             None
         )
         assert_equal(len(parsed), 1)
-        assert_equal(parsed[0]['username'], 'Dan')
+        assert_equal(parsed[0]['username'], u'Kán'.encode("utf-8"))
         assert_equal(parsed[0]['project'], 'en')
