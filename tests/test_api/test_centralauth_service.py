@@ -9,7 +9,6 @@ class CentralAuthServiceTest(DatabaseTest):
     def setUp(self):
         DatabaseTest.setUp(self)
         self.expand = CentralAuthService().expand_via_centralauth
-        self.default_project = 'defaultproject'
 
     def test_expand_via_centralauth(self):
         username_1, username_2 = 'User 1', 'User 2'
@@ -24,30 +23,30 @@ class CentralAuthServiceTest(DatabaseTest):
         self.caSession.commit()
 
         records = self.expand(
-            [[username_1, wiki_1]],
-            self.caSession,
-            self.default_project
+            [{'username': username_1, 'project': wiki_1}],
+            self.caSession
         )
         assert_equal([
-            [username_1, wiki_1],
-            [username_1, wiki_2],
-            [username_1, wiki_3],
+            {'username': username_1, 'project': wiki_1},
+            {'username': username_1, 'project': wiki_2},
+            {'username': username_1, 'project': wiki_3},
         ], records)
 
         records = self.expand(
-            [[username_2, wiki_1]],
-            self.caSession,
-            self.default_project
+            [{'username': username_2, 'project': wiki_1}],
+            self.caSession
         )
         assert_equal([
-            [username_2, wiki_1],
-            [username_2, wiki_2],
+            {'username': username_2, 'project': wiki_1},
+            {'username': username_2, 'project': wiki_2},
         ], records)
 
         records = self.expand(
-            [[username_1, wiki_1], [username_2, wiki_1]],
-            self.caSession,
-            self.default_project
+            [
+                {'username': username_1, 'project': wiki_1},
+                {'username': username_2, 'project': wiki_1},
+            ],
+            self.caSession
         )
         assert_equal(len(records), 5)
 
@@ -59,12 +58,11 @@ class CentralAuthServiceTest(DatabaseTest):
         '''
         username, wiki = 'Non-existent', 'notimportant'
         records = self.expand(
-            [[username, wiki]],
-            self.caSession,
-            self.default_project
+            [{'username': username, 'project': wiki}],
+            self.caSession
         )
         assert_equal(len(records), 1)
-        assert_equal(records[0][0], username)
+        assert_equal(records[0]['username'], username)
 
     def test_expand_utf8_user(self):
         '''
@@ -79,13 +77,12 @@ class CentralAuthServiceTest(DatabaseTest):
         ])
         self.caSession.commit()
         records = self.expand(
-            [[username, wiki_1]],
-            self.caSession,
-            self.default_project
+            [{'username': username, 'project': wiki_1}],
+            self.caSession
         )
         assert_equal([
-            [username, wiki_1],
-            [username, wiki_2],
+            {'username': username, 'project': wiki_1},
+            {'username': username, 'project': wiki_2},
         ], records)
 
     def test_expand_user_without_duplicates(self):
@@ -101,11 +98,13 @@ class CentralAuthServiceTest(DatabaseTest):
         ])
         self.caSession.commit()
         records = self.expand(
-            [[username, wiki_1], [username, wiki_1]],
-            self.caSession,
-            self.default_project
+            [
+                {'username': username, 'project': wiki_1},
+                {'username': username, 'project': wiki_1},
+            ],
+            self.caSession
         )
         assert_equal([
-            [username, wiki_1],
-            [username, wiki_2],
+            {'username': username, 'project': wiki_1},
+            {'username': username, 'project': wiki_2},
         ], records)

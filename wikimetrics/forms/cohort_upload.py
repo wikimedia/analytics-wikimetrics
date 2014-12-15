@@ -1,5 +1,4 @@
 import csv
-import requests
 from flask import g
 from wikimetrics.configurables import db
 from wtforms import StringField, FileField, TextAreaField, RadioField
@@ -55,39 +54,37 @@ class CohortUpload(WikimetricsSecureForm):
 
         if self.csv.data:
             # uploaded a cohort file
-            csv_file = normalize_newlines(self.csv.data.stream)
-            unparsed = csv.reader(csv_file)
+            csv_lines = normalize_newlines(self.csv.data.stream)
 
         else:
-            #TODO: Check valid input
             # used upload box, note that wtforms returns unicode types here
-            unparsed = parse_textarea_usernames(self.paste_username.data)
+            csv_lines = parse_textarea_usernames(self.paste_username.data)
+
+        records = format_records(csv_lines, self.project.data)
 
         if self.centralauth.data is True:
             ca_session = db.get_ca_session()
-            unparsed = g.centralauth_service.expand_via_centralauth(
-                unparsed, ca_session, self.project.data)
+            records = g.centralauth_service.expand_via_centralauth(records, ca_session)
 
-        self.records = format_records(unparsed, self.project.data)
+        self.records = records
 
 
-def format_records(unparsed, default_project):
+def format_records(csv_lines, default_project):
     """
-    Process and formats records read from a csv file or coming from the upload box
+    Processes and formats lines read from a csv file or coming from the upload box.
+    i.e. "dan,en" becomes {'username': 'dan', 'project': 'en'}.
     Note this method assumes bytes (str) not unicode types as input
 
     Parameters
-        unparsed        : records in array form
+        csv_lines       : collection of strings, each with csv format
         default_project : the default project to attribute to records without one
 
     Returns
         a list of the formatted records in which each element is of this form:
         {'username':'parsed username', 'project':'as specified or default'}
-
-
     """
     records = []
-    for r in unparsed:
+    for r in csv.reader(csv_lines):
         if r is not None and len(r) > 0:
             # NOTE: the reason for the crazy -1 and comma joins
             # is that some users can have commas in their name
@@ -96,7 +93,7 @@ def format_records(unparsed, default_project):
             # and the username to be the last or maybe change to a tsv format
             if len(r) > 1:
                 username = ",".join([str(p) for p in r[:-1]])
-                project = r[-1] or default_project
+                project = r[-1].strip() or default_project
             else:
                 username = r[0]
                 project = default_project
@@ -120,24 +117,19 @@ def normalize_newlines(lines):
             yield line
 
 
-def parse_textarea_usernames(paste_username):
+def parse_textarea_usernames(textarea_contents):
     """
-    Takes text and parses it into a list of lists of usernames
-    and their wiki. i.e. "dan,en v" becomes [['dan','en'],['v']]. Whitespace is
-    the delimiter of each list. Prepares text to go through parse_records().
+    Prepares text to go through format_records().
 
-    Note that paste_username is going to be a unicode type as flask builds it
+    Note that textarea_contents is going to be a unicode type as flask builds it
     that way. Output is plain bytes (str type) as the rest of our code
     does not assume unicode types.
 
     Parameters
-        paste_username : lines representing a username and (optionally)
-        a project separated by comas
+        textarea_contents : the text pasted into the textarea.
 
     Returns
-        list with username at index 0 and project at index 1
+        list of strings, each holding a line of the input.
         Unicode types are transformed to bytes.
     """
-    for username in paste_username.splitlines():
-        _username = username.encode("utf-8")
-        yield _username.strip().split(',')
+    return textarea_contents.encode('utf-8').splitlines()

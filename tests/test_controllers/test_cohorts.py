@@ -516,12 +516,12 @@ class CohortsControllerUploadTest(WebTest):
         assert_true(response.data.find('Please fix validation problems') >= 0)
 
     def test_upload_with_centralauth_expansion_works(self):
-        data = 'actual validation tested elsewhere'
+        data = 'Actual validation tested elsewhere'
         centralauth_called = [False]
 
-        def expand_via_ca_mock(cohort_users, session, default_project):
+        def expand_via_ca_mock(cohort_users, session):
+            assert_equal(cohort_users[0]['username'], data)
             centralauth_called[0] = True
-            assert_true([data] in cohort_users)
             return []
 
         ca_service_mock = CentralAuthService()
@@ -539,7 +539,7 @@ class CohortsControllerUploadTest(WebTest):
         assert_true(response.data.find('href="/cohorts/#') >= 0)
 
     def test_normal_upload_does_not_call_centralauth(self):
-        data = 'actual validation tested elsewhere'
+        data = 'Actual validation tested elsewhere'
         centralauth_called = [False]
 
         def expand_via_ca_mock(cohort_users, session):

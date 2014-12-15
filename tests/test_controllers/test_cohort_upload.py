@@ -50,26 +50,26 @@ class CohortsControllerTest(unittest.TestCase):
     def test_parse_textarea_usernames(self):
         unparsed = 'dan,en\rv\n,\r\nsomething with spaces'
         parsed = parse_textarea_usernames(unparsed)
-        assert_equal(parsed.next(), ['dan', 'en'])
-        assert_equal(parsed.next(), ['v'])
-        assert_equal(parsed.next(), ['', ''])
-        assert_equal(parsed.next(), ['something with spaces'])
-        assert_raises(StopIteration, parsed.next)
+        assert_equal(parsed[0], 'dan,en')
+        assert_equal(parsed[1], 'v')
+        assert_equal(parsed[2], ',')
+        assert_equal(parsed[3], 'something with spaces')
+        assert_equal(len(parsed), 4)
         # needs to deal with unicode types as that is what this
         # method will get from flask
         unparsed = u'تيسير سامى سلامة,en\rv\n,\r\nsomething with spaces'
         parsed = parse_textarea_usernames(unparsed)
-        username = parsed.next()[0]
+        username = parsed[0]
         # username will be just plain bytes, convert to unicode
         # to be able to compare
-        assert_equal(username.decode("utf-8"), u'تيسير سامى سلامة')
+        assert_equal(username.decode("utf-8"), u'تيسير سامى سلامة,en')
 
     def test_format_records_with_project(self):
         parsed = format_records(
             [
-                ['dan', 'wiki'],
-                ['v', 'wiki'],
-                [',', 'wiki']
+                'dan,wiki',
+                'v,wiki',
+                ',,wiki',
             ],
             None
         )
@@ -81,10 +81,7 @@ class CohortsControllerTest(unittest.TestCase):
 
     def test_format_records_without_project(self):
         parsed = format_records(
-            [
-                ['dan'],
-                ['v']
-            ],
+            ['dan', 'v'],
             'wiki'
         )
         assert_equal(len(parsed), 2)
@@ -95,9 +92,7 @@ class CohortsControllerTest(unittest.TestCase):
 
     def test_format_records_with_shorthand_project(self):
         parsed = format_records(
-            [
-                ['dan', 'en']
-            ],
+            ['dan,en'],
             None
         )
         assert_equal(len(parsed), 1)
@@ -111,11 +106,18 @@ class CohortsControllerTest(unittest.TestCase):
         '''
         username = u'Kán'.encode("utf-8")
         parsed = format_records(
-            [
-                [username, 'en']
-            ],
+            [username + ',en'],
             None
         )
         assert_equal(len(parsed), 1)
         assert_equal(parsed[0]['username'], u'Kán'.encode("utf-8"))
+        assert_equal(parsed[0]['project'], 'en')
+
+    def test_format_records_with_spaces_in_project(self):
+        parsed = format_records(
+            ['dan, en'],
+            None
+        )
+        assert_equal(len(parsed), 1)
+        assert_equal(parsed[0]['username'], 'Dan')
         assert_equal(parsed[0]['project'], 'en')
