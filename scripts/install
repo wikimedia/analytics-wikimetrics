@@ -10,21 +10,8 @@ pip=$(which pip)
 
 $pip install --upgrade --no-use-wheel setuptools
 
-($pip freeze | grep -P httplib2==[0-9.]+) && sudo $pip uninstall -y httplib2 && echo "*** uninstalled httplib2"
-
 # is it wikimetrics_dir=${$1:-$(pwd)}?
 wikimetrics_dir=${1:-$(pwd)}
-
-good_httplib=$(pip freeze | grep 'httplib2.*pywikibot')
-if [ -z "${good_httplib}" ]
-    then
-        tmpdir=$(mktemp -d /tmp/wikimetrics_httplib2.XXXXXXXXX)
-        cd "${tmpdir}"
-        git clone --depth=1 https://github.com/wikimedia/pywikibot-externals-httplib2
-        cd pywikibot-externals-httplib2
-        sudo python setup.py install
-        echo "*** installed pywikibot's httplib2"
-fi
 
 cd $wikimetrics_dir
 sudo $pip install -e .

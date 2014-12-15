@@ -24,10 +24,6 @@ setup(
         'wikimetrics',
     ],
     install_requires=REQS,
-    dependency_links=[
-        'https://git.wikimedia.org/zip/?r=pywikibot/externals/httplib2.git'
-        '&format=gz#egg=httplib2-0.8-pywikibot1'
-    ],
     entry_points={
         'console_scripts': [
             'wikimetrics = wikimetrics.run:main'

@@ -56,7 +56,7 @@ class TestAuthenticationControllerLoggedOut(WebTestAnonymous):
     def test_login_meta_mw(self):
         response = self.app.get('/login/meta_mw')
         assert_true(
-            response.data.find('Special:OAuth/authorize') >= 0,
+            response.data.find('//meta.wikimedia.org') >= 0,
             'should redirect to meta.wikimedia.org'
         )
         assert_equal(response.status_code, 302)

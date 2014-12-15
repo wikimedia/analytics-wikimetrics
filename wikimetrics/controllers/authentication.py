@@ -3,6 +3,7 @@ import requests
 import urllib2
 import jwt
 import time
+import traceback
 from flask import (
     render_template,
     redirect,
@@ -11,10 +12,11 @@ from flask import (
     session,
     flash,
 )
+from mwoauth import Handshaker, RequestToken
 from sqlalchemy.orm.exc import NoResultFound, MultipleResultsFound
 from flask.ext.login import login_user, logout_user, current_user
 
-from wikimetrics.configurables import app, db, login_manager, google, meta_mw
+from wikimetrics.configurables import app, db, login_manager, google, mw_oauth_token
 from wikimetrics.models import UserStore
 from wikimetrics.enums import UserRole
 from wikimetrics.utils import json_error
@@ -87,6 +89,13 @@ def logout():
     return redirect(url_for('home_index'))
 
 
+def make_handshaker_mw():
+    return Handshaker(
+        app.config['META_MW_BASE_URL'] + app.config['META_MW_BASE_INDEX'],
+        mw_oauth_token,
+    )
+
+
 @app.route('/login/meta_mw')
 @is_public
 def login_meta_mw():
@@ -94,85 +103,38 @@ def login_meta_mw():
     Make a request to meta.wikimedia.org for Authentication.
     """
     session['access_token'] = None
-    redirector = meta_mw.authorize()
-    
-    # MW's authorize requires an oauth_consumer_key
-    redirector.headers['Location'] += '&oauth_consumer_key=' + meta_mw.consumer_key
-    return redirector
 
-
-def process_mw_jwt(identify_token_encoded):
-    try:
-        identify_token = jwt.decode(
-            identify_token_encoded,
-            app.config['META_MW_CLIENT_SECRET']
-        )
-        
-        # Verify the issuer is who we expect (server sends $wgCanonicalServer)
-        iss = urllib2.urlparse.urlparse(identify_token['iss']).netloc
-        mw_domain = urllib2.urlparse.urlparse(app.config['META_MW_BASE_URL']).netloc
-        if iss != mw_domain:
-            raise Exception('JSON Web Token Validation Problem, iss')
-        
-        # Verify we are the intended audience
-        if identify_token['aud'] != app.config['META_MW_CONSUMER_KEY']:
-            raise Exception('JSON Web Token Validation Problem, aud')
-        
-        # Verify we are within the time limits of the token.
-        # Issued at (iat) should be in the past
-        now = int(time.time())
-        if int(identify_token['iat']) > now:
-            raise Exception('JSON Web Token Validation Problem, iat')
-        
-        # Expiration (exp) should be in the future
-        if int(identify_token['exp']) < now:
-            raise Exception('JSON Web Token Validation Problem, exp')
-        
-        # Verify we haven't seen this nonce before,
-        # which would indicate a replay attack
-        # TODO: implement nonce but this is not high priority
-        #if identify_token['nonce'] != <<original request nonce>>
-            #raise Exception('JSON Web Token Validation Problem, nonce')
-        
-        return identify_token
-    except Exception, e:
-        flash(e.message)
-        raise e
+    handshaker = make_handshaker_mw()
+    redirect_url, request_token = handshaker.initiate()
+    session['request_token'] = request_token
+    return redirect(redirect_url)
 
 
 @app.route('/auth/meta_mw')
-@meta_mw.authorized_handler
 @is_public
-def auth_meta_mw(resp):
+def auth_meta_mw():
     """
     Callback for meta.wikimedia.org to send us authentication results.
     This is responsible for fetching existing users or creating new ones.
     If a new user is created, they get the default role of GUEST and
     an email or username to match their details from the OAuth provider.
     """
-    if resp is None:
-        flash('You need to grant the app permissions in order to login.', 'error')
-        return redirect(url_for('login'))
-    
-    session['access_token'] = (
-        resp['oauth_token'],
-        resp['oauth_token_secret']
-    )
-    
     try:
-        identify_token_encoded = meta_mw.post(
-            app.config['META_MW_BASE_URL'] + app.config['META_MW_IDENTIFY_URI'],
-        ).data
-        identify_token = process_mw_jwt(identify_token_encoded)
-        
-        username = identify_token['username']
-        userid = identify_token['sub']
-        
+        handshaker = make_handshaker_mw()
+        raw_req_token = session['request_token']
+        request_token = RequestToken(key=raw_req_token[0], secret=raw_req_token[1])
+        access_token = handshaker.complete(request_token, request.query_string)
+        session['access_token'] = access_token
+
+        identity = handshaker.identify(access_token)
+        username = identity['username']
+        userid = identity['sub']
+
         db_session = db.get_session()
         user = None
         try:
             user = db_session.query(UserStore).filter_by(meta_mw_id=userid).one()
-        
+
         except NoResultFound:
             try:
                 user = UserStore(
@@ -185,29 +147,23 @@ def auth_meta_mw(resp):
             except:
                 db_session.rollback()
                 raise
-        
+
         except MultipleResultsFound:
-            return 'Multiple users found with your id!!! Contact Administrator'
-        
+            flash('Multiple users found with your id!!! Contact Administrator', 'error')
+            return redirect(url_for('login'))
+
         user.login(db_session)
         if login_user(user):
             user.detach_from(db_session)
-            redirect_to = session.get('next') or url_for('home_index')
-            redirect_to = urllib2.unquote(redirect_to)
-            return redirect(redirect_to)
-    
-    except Exception, e:
-        flash('Access to this application was revoked. Please re-login!')
-        app.logger.exception(str(e))
+            del session['request_token']
+
+    except Exception:
+        flash('You need to grant the app permissions in order to login.', 'error')
+        app.logger.exception(traceback.format_exc())
         return redirect(url_for('login'))
-    
-    next_url = request.args.get('next') or url_for('index')
-    return redirect(next_url)
 
-
-@meta_mw.tokengetter
-def get_meta_wiki_token(token=None):
-    return session.get('access_token')
+    redirect_to = session.get('next') or url_for('home_index')
+    return redirect(urllib2.unquote(redirect_to))
 
 
 @app.route('/login/google')

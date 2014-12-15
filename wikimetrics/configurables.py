@@ -3,6 +3,7 @@ import os
 import yaml
 import subprocess
 from celery.signals import task_postrun
+from mwoauth import ConsumerToken
 
 
 def compose_connection_string(user, password, host, dbName):
@@ -135,76 +136,11 @@ def config_web(args):
         consumer_secret=app.config['GOOGLE_CLIENT_SECRET'],
     )
 
-    def better_parse_response(resp, content, strict=False):
-        ct, options = parse_options_header(resp['content-type'])
-        if ct in ('application/json', 'text/javascript'):
-            try:
-                return json.loads(content)
-            # handle json decode errors from parse_response
-            # this is useful in the identify call because the response is
-            # 'application/json' but the content is encoded
-            except:
-                return content
-        elif ct in ('application/xml', 'text/xml'):
-            # technically, text/xml is ascii based but because many
-            # implementations get that wrong and utf-8 is a superset
-            # of utf-8 anyways, so there is not much harm in assuming
-            # utf-8 here
-            charset = options.get('charset', 'utf-8')
-            return get_etree().fromstring(content.decode(charset))
-        elif ct != 'application/x-www-form-urlencoded':
-            if strict:
-                return content
-        charset = options.get('charset', 'utf-8')
-        return url_decode(content, charset=charset).to_dict()
-
-    # TODO: Even worse, definitely patch upstream or consider switching to rauth
-    nasty_patch_to_oauth.parse_response = better_parse_response
-
-    # TODO: patch upstream
-    # NOTE: a million thanks to Merlijn_van_Deen, author of
-    # https://wikitech.wikimedia.org/wiki/Setting_up_Flask_cgi_app_as_a_tool/OAuth
-    class MediaWikiOAuthRemoteApp(OAuthRemoteApp):
-        def handle_oauth1_response(self):
-            """
-            Handles an oauth1 authorization response.  The return value of
-            this method is forwarded as the first argument to the handling
-            view function.
-            """
-            client = self.make_client()
-            resp, content = client.request(
-                '{0}&oauth_verifier={1}'.format(
-                    self.expand_url(self.access_token_url),
-                    request.args['oauth_verifier'],
-                ),
-                self.access_token_method
-            )
-            data = nasty_patch_to_oauth.parse_response(resp, content)
-            if not self.status_okay(resp):
-                raise OAuthException(
-                    'Invalid response from ' + self.name,
-                    type='invalid_response',
-                    data=data
-                )
-            return data
-
-    global meta_mw
-    meta_mw_base_url = app.config['META_MW_BASE_URL']
-    meta_mw = MediaWikiOAuthRemoteApp(
-        oauth,
-        'meta_mw',
-        base_url=meta_mw_base_url,
-        request_token_url=meta_mw_base_url + app.config['META_MW_BASE_INDEX'],
-        request_token_params={
-            'title': 'Special:MWOAuth/initiate',
-            'oauth_callback': 'oob'
-        },
-        access_token_url=meta_mw_base_url + app.config['META_MW_TOKEN_URI'],
-        authorize_url=meta_mw_base_url + app.config['META_MW_AUTH_URI'],
-        consumer_key=app.config['META_MW_CONSUMER_KEY'],
-        consumer_secret=app.config['META_MW_CLIENT_SECRET'],
+    global mw_oauth_token
+    mw_oauth_token = ConsumerToken(
+        app.config['META_MW_CONSUMER_KEY'],
+        app.config['META_MW_CLIENT_SECRET'],
     )
-    oauth.remote_apps['meta_mw'] = meta_mw
 
 
 # TODO: look into making a single config object that has empty sections if
