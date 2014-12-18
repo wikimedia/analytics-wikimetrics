@@ -143,7 +143,10 @@ class ValidateCohort(object):
 
         deduplicated = deduplicate_by_key(
             wikiusers,
-            lambda r: (r.mediawiki_username, r.project)
+            lambda r: (
+                r.mediawiki_username,
+                normalize_project(r.project) or r.project
+            )
         )
 
         wikiusers_by_project = {}

@@ -12,10 +12,15 @@ from wikimetrics.models import (
 from wikimetrics.utils import parse_username
 
 
-def mock_normalize_project(project):
+def mock_normalize_project_pass(project):
     # does not check wrong project names
     # this will force database connection errors
     return project
+
+
+def mock_normalize_project_fixed(project):
+    # always returns the same value
+    return 'wiki'
 
 
 class MockCohort(object):
@@ -216,7 +221,42 @@ class ValidateCohortTest(WebTest):
         ), 2)
 
     @mock.patch('wikimetrics.models.validate_cohort.normalize_project',
-                side_effect=mock_normalize_project)
+                side_effect=mock_normalize_project_fixed)
+    def test_validate_cohorts_with_project_variations(self, mock):
+        self.helper_reset_validation()
+        self.cohort.validate_as_user_ids = False
+
+        wikiusers = self.session.query(WikiUserStore).all()
+        username = 'Same Name'
+        wikiusers[0].mediawiki_username = username
+        wikiusers[1].mediawiki_username = username
+        # set different project versions of the same project
+        # they will be normalized to 'wiki' by the normalize_project mock
+        wikiusers[0].project = 'en'
+        wikiusers[1].project = 'enwiki'
+        # add also the correspondent mediawiki user
+        self.mwSession.add(MediawikiUser(user_name=username))
+        self.mwSession.commit()
+
+        v = ValidateCohort(self.cohort)
+        v.validate_records(self.session, self.cohort)
+
+        assert_equal(self.cohort.validated, True)
+        assert_equal(len(
+            self.session.query(WikiUserStore)
+                .filter(WikiUserStore.validating_cohort == self.cohort.id)
+                .filter(WikiUserStore.valid)
+                .all()
+        ), 3)
+        assert_equal(len(
+            self.session.query(WikiUserStore)
+                .filter(WikiUserStore.validating_cohort == self.cohort.id)
+                .filter(WikiUserStore.valid.in_([False]))
+                .all()
+        ), 0)
+
+    @mock.patch('wikimetrics.models.validate_cohort.normalize_project',
+                side_effect=mock_normalize_project_pass)
     def test_validate_cohorts_when_invalid_project_causes_exception(self, mock):
         '''
         Mocks normalize_project to force an exception when accessing
