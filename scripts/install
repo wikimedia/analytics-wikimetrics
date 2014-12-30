@@ -1,22 +1,13 @@
 #!/bin/bash
 
-# installs dependencies
-
-# Need newer pip than comes with debian/ubuntu
-sudo pip install --upgrade pip
-
-# find newly installed pip
-pip=$(which pip)
-
-$pip install --upgrade --no-use-wheel setuptools
-
 # is it wikimetrics_dir=${$1:-$(pwd)}?
 wikimetrics_dir=${1:-$(pwd)}
 
 cd $wikimetrics_dir
-sudo $pip install -e .
+sudo pip install -e .
 echo "*** installed dependencies"
 
-echo "WARNING: If your pip becomes broken as a result of this script, try the following:"
-echo "http://stackoverflow.com/questions/7446187/no-module-named-pkg-resources"
-echo "http://stackoverflow.com/questions/6200056/pip-broke-how-to-fix-distributionnotfound-error"
+# make sure you have a recent setuptools and pip
+echo "*** If this fails, the usual suspects are old versions of pip and setuptools.
+          Known Working versions are: pip 1.5.6 and setuptools 9.1"
+
