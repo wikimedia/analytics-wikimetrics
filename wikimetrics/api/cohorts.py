@@ -5,7 +5,8 @@ from wikimetrics.exceptions import Unauthorized, InvalidCohort, DatabaseError
 from wikimetrics.models import cohort_classes, ValidatedCohort, WikiCohort
 from wikimetrics.models.storage import (
     CohortStore, CohortUserStore, UserStore,
-    WikiUserStore, WikiUserKey, CohortWikiUserStore
+    WikiUserStore, WikiUserKey, CohortWikiUserStore,
+    CohortTagStore
 )
 from wikimetrics.enums import CohortUserRole
 
@@ -391,3 +392,33 @@ class CohortService(object):
         except DatabaseError, e:
             session.rollback()
             raise e
+
+    def get_tag(self, db_session, tag, cohort_id, user_id):
+        """
+        Returns cohort tag if the cohort is owned by user.
+        Raises
+            Unauthorized    : user_id is not allowed to access this cohort
+        """
+        # raises Unauthorized error if the user has no permits on the cohort
+        self.is_owned_by_user(db_session, cohort_id, user_id, True)
+
+        return db_session.query(CohortTagStore) \
+            .filter(CohortTagStore.tag_id == tag.id) \
+            .filter(CohortTagStore.cohort_id == cohort_id) \
+            .all()
+
+    def add_tag(self, db_session, tag, cohort_id, user_id):
+        """
+        Adds tag to cohort.
+        Raises
+            Unauthorized    : user_id is not allowed to access this cohort
+        """
+        # raises Unauthorized error if the user has no permits on the cohort
+        self.is_owned_by_user(db_session, cohort_id, user_id, True)
+
+        cohort_tag = CohortTagStore(
+            tag_id=tag.id,
+            cohort_id=cohort_id,
+        )
+        db_session.add(cohort_tag)
+        db_session.commit()

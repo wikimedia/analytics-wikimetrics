@@ -407,19 +407,18 @@ def add_tag(cohort_id, tag):
             session.commit()
 
         # Check if cohort is already tagged with 'tag'
-        ct = session.query(CohortTagStore) \
-            .filter(CohortTagStore.tag_id == t.id) \
-            .filter(CohortTagStore.cohort_id == cohort_id) \
-            .all()
-        if ct:
-            return json_response(exists=True)
+        try:
+            if g.cohort_service.get_tag(session, t, cohort_id, current_user.id):
+                return json_response(exists=True)
+        except Unauthorized:
+            return json_error(message='You are not allowed to access this Cohort')
 
-        cohort_tag = CohortTagStore(
-            tag_id=t.id,
-            cohort_id=cohort_id,
-        )
-        session.add(cohort_tag)
-        session.commit()
+        # Add tag
+        try:
+            g.cohort_service.add_tag(session, t, cohort_id, current_user.id)
+        except Unauthorized:
+            return json_error(message='You are not allowed to access this Cohort')
+
         data['tags'] = populate_cohort_tags(cohort_id, session)
 
         tagsAutocompleteList = g.tag_service.get_all_tags(session)

@@ -6,7 +6,8 @@ from tests.fixtures import DatabaseTest, mediawiki_project
 from wikimetrics.api import CohortService
 from wikimetrics.exceptions import Unauthorized, InvalidCohort
 from wikimetrics.models import (
-    CohortStore, CohortUserStore, WikiUserStore, CohortWikiUserStore
+    CohortStore, CohortUserStore, WikiUserStore, CohortWikiUserStore,
+    CohortTagStore, TagStore
 )
 from wikimetrics.enums import CohortUserRole
 from wikimetrics.models.cohorts import Cohort
@@ -346,3 +347,79 @@ class CohortServiceTest(DatabaseTest):
             .one())
         self.cohort_service.is_owned_by_user(
             self.session, self.cohort.id, cohort_user.user_id + 1, True)
+
+    @raises(Unauthorized)
+    def test_get_tag_exception(self):
+        tag = TagStore(name='some_tag')
+        self.session.add(tag)
+        self.session.commit()
+
+        cohort_tag = CohortTagStore(
+            tag_id=tag.id,
+            cohort_id=self.empty_cohort.id,
+        )
+        self.session.add(cohort_tag)
+        self.session.commit()
+
+        cohort_user = (
+            self.session.query(CohortUserStore)
+            .filter(CohortUserStore.cohort_id == self.empty_cohort.id)
+            .one())
+
+        self.cohort_service.get_tag(self.session, tag, self.empty_cohort.id,
+                                    cohort_user.user_id + 1)
+
+    def test_get_tag(self):
+        tag = TagStore(name='some_tag')
+        self.session.add(tag)
+        self.session.commit()
+
+        cohort_tag = CohortTagStore(
+            tag_id=tag.id,
+            cohort_id=self.empty_cohort.id,
+        )
+        self.session.add(cohort_tag)
+        self.session.commit()
+
+        cohort_user = (
+            self.session.query(CohortUserStore)
+            .filter(CohortUserStore.cohort_id == self.empty_cohort.id)
+            .one())
+        cohort_tags = self.cohort_service.get_tag(
+            self.session, tag, self.empty_cohort.id, cohort_user.user_id)
+
+        assert_equals(len(cohort_tags), 1)
+
+    @raises(Unauthorized)
+    def test_add_tag_exception(self):
+        tag = TagStore(name='some_tag')
+        self.session.add(tag)
+        self.session.commit()
+
+        cohort_user = (
+            self.session.query(CohortUserStore)
+            .filter(CohortUserStore.cohort_id == self.empty_cohort.id)
+            .one())
+        self.cohort_service.add_tag(self.session, tag, self.empty_cohort.id,
+                                    cohort_user.user_id + 1)
+
+    def test_add_tag(self):
+        tag = TagStore(name='some_tag')
+        self.session.add(tag)
+        self.session.commit()
+
+        cohort_user = (
+            self.session.query(CohortUserStore)
+            .filter(CohortUserStore.cohort_id == self.empty_cohort.id)
+            .one())
+
+        cohort_tags = self.cohort_service.get_tag(
+            self.session, tag, self.empty_cohort.id, cohort_user.user_id)
+        assert_equals(len(cohort_tags), 0)
+
+        self.cohort_service.add_tag(
+            self.session, tag, self.empty_cohort.id, cohort_user.user_id)
+        cohort_tags = self.cohort_service.get_tag(
+            self.session, tag, self.empty_cohort.id, cohort_user.user_id)
+
+        assert_equals(len(cohort_tags), 1)
