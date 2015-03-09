@@ -1,4 +1,5 @@
 import json
+from copy import deepcopy
 from csv import DictWriter
 from StringIO import StringIO
 from sqlalchemy import or_
@@ -27,10 +28,9 @@ def setup_filemanager():
                 g.file_manager = PublicReportFileManager(
                     app.logger,
                     app.absolute_path_to_app_root)
-        if request.path.startswith('/reports/result/'):
-            cohort_service = getattr(g, 'cohort_service', None)
-            if cohort_service is None:
-                g.cohort_service = CohortService()
+        cohort_service = getattr(g, 'cohort_service', None)
+        if cohort_service is None:
+            g.cohort_service = CohortService()
 
 
 @app.route('/reports/unset-public/<int:report_id>', methods=['POST'])
@@ -179,7 +179,7 @@ def get_usernames_for_task_result(task_result):
     Parameters
         task_result : the result dictionary from Celery
     Returns
-         user_names : dictionary of user names (keyed by (user_id, project))
+         user_names : dictionary of user names (keyed by WikiUserKey)
                       empty if results are not detailed by user
 
     TODO: this function should move outside the controller,
@@ -297,7 +297,7 @@ def get_simple_csv(task_result, pj, parameters, user_names):
         task_result : the result dictionary from Celery
         pj          : a pointer to the permanent job
         parameters  : a dictionary of pj.parameters
-        user_names  : dictionary of user names (keyed by (user_id, project))
+        user_names  : dictionary of user names (keyed by WikiUserKey)
 
     Returns
         A StringIO instance representing simple CSV
@@ -379,10 +379,36 @@ def report_result_json(result_key):
     if celery_task.ready() and celery_task.successful():
         result = celery_task.get()
         json_result = pj.get_json_result(result)
-
-        return json_response(json_result)
+        if Aggregation.IND in result[result_key]:
+            user_names = get_usernames_for_task_result(result[result_key])
+            json_result_with_names = add_user_names_to_json(json_result,
+                                                            user_names)
+            return json_response(json_result_with_names)
+        else:
+            return json_response(json_result)
     else:
         return json_response(status=celery_task.status)
+
+
+def add_user_names_to_json(json_result, user_names):
+    """
+    Parameters
+        json_result : the result dictionary from pj.get_json_result
+        user_names  : dictionary of user names (keyed by WikiUserKey)
+    Returns
+        The result dict, with user names added to the WikiUserKey id strings
+    """
+    new_individual_ids = {}
+    for individual in json_result['result'][Aggregation.IND]:
+        user_name = user_names[WikiUserKey.fromstr(individual)]
+        new_id_string = '{}|{}'.format(user_name, individual)
+        new_individual_ids[individual] = new_id_string
+
+    json_with_names = deepcopy(json_result)
+    json_with_names['result'][Aggregation.IND] = {
+        new_individual_ids[key]: value for (key, value) in
+        json_result['result'][Aggregation.IND].items()}
+    return json_with_names
 
 
 #@app.route('/reports/kill/<result_key>')
@@ -391,7 +417,7 @@ def report_result_json(result_key):
     #db_session = db.get_session()
     #db_report = db_session.query(ReportStore).get(result_key)
     #if not db_report:
-        #return json_error('no task exists with id: {0}'.format(result_key))
+    #    return json_error('no task exists with id: {0}'.format(result_key))
     #celery_task = Report.task.AsyncResult(db_report.result_key)
     #app.logger.debug('revoking task: %s', celery_task.id)
     #from celery.task.control import revoke

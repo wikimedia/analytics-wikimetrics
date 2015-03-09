@@ -34,7 +34,7 @@ def filterStatus(collection, status):
 
 
 class ControllerAsyncTest(WebTest):
-    
+
     def setUp(self):
         # it is too bad but until we remove usage of AsyncResult in the codebase
         # there is no way to make these tests synchronous
@@ -42,14 +42,14 @@ class ControllerAsyncTest(WebTest):
         # use celery in async mode
         queue.conf['CELERY_ALWAYS_EAGER'] = False
         WebTest.setUp(self)
-    
+
     def tearDown(self):
         queue.conf['CELERY_ALWAYS_EAGER'] = True
         WebTest.tearDown(self)
 
 
 class ReportsControllerTest(ControllerAsyncTest):
-    
+
     def setUp(self):
         ControllerAsyncTest.setUp(self)
         # add reports just for testing
@@ -85,7 +85,7 @@ class ReportsControllerTest(ControllerAsyncTest):
             recurrent=True
         )
         self.past_date = date.today() - timedelta(days=60)
-        
+
         report_recurrent_two_months_ago = ReportStore(
             user_id=self.owner_user_id,
             status=celery.states.SUCCESS,
@@ -103,9 +103,9 @@ class ReportsControllerTest(ControllerAsyncTest):
             report_recurrent_two_months_ago,
         ])
         self.session.commit()
-        
+
     def test_full_report_create_and_result(self):
-        
+
         # Make the request
         desired_responses = [{
             'name': 'Edits - test',
@@ -146,7 +146,7 @@ class ReportsControllerTest(ControllerAsyncTest):
         # Get the result directly
         result = task.get()
         assert_true(result is not None)
-       
+
         # Check the status via get
         response = self.client.get('/reports/status/{0}'.format(result_key))
         assert_true(response.data.find('SUCCESS') >= 0)
@@ -474,6 +474,99 @@ class ReportsControllerTest(ControllerAsyncTest):
         cohort_size = 'Cohort Size,{0}'.format(len(self.cohort))
         assert_true(response.data.find(cohort_size) >= 0)
 
+    def test_report_result_json(self):
+        desired_responses = [{
+            'name': 'Edits - test',
+            'cohort': {
+                'id': self.cohort.id,
+                'name': self.cohort.name,
+            },
+            'metric': {
+                'name': 'NamespaceEdits',
+                'timeseries': 'month',
+                'namespaces': [0, 1, 2],
+                'start_date': '2013-01-01 00:00:00',
+                'end_date': '2013-05-01 00:00:00',
+                'individualResults': True,
+                'aggregateResults': True,
+                'aggregateSum': False,
+                'aggregateAverage': True,
+                'aggregateStandardDeviation': False,
+            },
+        }]
+        json_to_post = json.dumps(desired_responses)
+
+        response = self.client.post('/reports/create/', data=dict(
+            responses=json_to_post
+        ))
+
+        # Wait a second for the task to get processed
+        time.sleep(1)
+
+        # Check that the task has been created
+        response = self.client.get('/reports/list/')
+        parsed = json.loads(response.data)
+        result_key = parsed['reports'][-1]['result_key']
+        task, report = get_celery_task(result_key)
+
+        response = self.client.get('/reports/result/{0}.json'.format(result_key))
+
+    # Check that user names are included
+        assert_true(response.data.find(
+            '{0}|{1}|{2}|{3}'.format(
+                self.editors[0].user_name, self.editors[0].user_id,
+                mediawiki_project, self.cohort.id)
+        ) >= 0)
+        assert_true(response.data.find(
+            '{0}|{1}|{2}|{3}'.format(
+                self.editors[1].user_name, self.editors[1].user_id,
+                mediawiki_project, self.cohort.id)
+        ) >= 0)
+
+    def test_report_result_json_no_ind_results(self):
+        desired_responses = [{
+            'name': 'Edits - test',
+            'cohort': {
+                'id': self.cohort.id,
+                'name': self.cohort.name,
+            },
+            'metric': {
+                'name': 'NamespaceEdits',
+                'timeseries': 'month',
+                'namespaces': [0, 1, 2],
+                'start_date': '2013-01-01 00:00:00',
+                'end_date': '2013-05-01 00:00:00',
+                'individualResults': False,
+                'aggregateResults': True,
+                'aggregateSum': False,
+                'aggregateAverage': True,
+                'aggregateStandardDeviation': False,
+            },
+        }]
+        json_to_post = json.dumps(desired_responses)
+
+        response = self.client.post('/reports/create/', data=dict(
+            responses=json_to_post
+        ))
+
+        # Wait a second for the task to get processed
+        time.sleep(1)
+
+        # Check that the task has been created
+        response = self.client.get('/reports/list/')
+        parsed = json.loads(response.data)
+        result_key = parsed['reports'][-1]['result_key']
+        task, report = get_celery_task(result_key)
+
+        response = self.client.get('/reports/result/{0}.json'.format(result_key))
+
+    # Check for absence of user id string
+        assert_false(response.data.find(
+            '{0}|{1}|{2}'.format(
+                self.editors[0].user_id,
+                mediawiki_project, self.cohort.id)
+        ) >= 0)
+
     @raises(InvalidCohort)
     def test_report_does_not_run_on_invalid_cohort(self):
 
@@ -508,17 +601,17 @@ class ReportsControllerTest(ControllerAsyncTest):
 
 
 class MultiProjectTests(ControllerAsyncTest):
-    
+
     def setUp(self):
         ControllerAsyncTest.setUp(self)
-        
+
         # Prepare the second wiki database by adding a user with the same id as editor 0
         self.mwSession2.add(MediawikiUser(
             user_id=self.editors[0].user_id,
             user_name='',
         ))
         self.mwSession2.commit()
-        
+
         desired_responses = [{
             'name': 'Edits - test',
             'cohort': {
@@ -539,7 +632,7 @@ class MultiProjectTests(ControllerAsyncTest):
             },
         }]
         self.json_to_post = json.dumps(desired_responses)
-    
+
     def test_user_in_two_projects(self):
         same_name_different_project = WikiUserStore(
             mediawiki_userid=self.editors[0].user_id,
@@ -555,14 +648,14 @@ class MultiProjectTests(ControllerAsyncTest):
             wiki_user_id=same_name_different_project.id,
         ))
         self.session.commit()
-        
+
         response = self.client.post('/reports/create/', data=dict(
             responses=self.json_to_post
         ))
-        
+
         # Wait a second for the task to get processed
         time.sleep(1)
-        
+
         # Check that the task has been created
         response = self.client.get('/reports/list/')
         parsed = json.loads(response.data)
@@ -575,7 +668,7 @@ class MultiProjectTests(ControllerAsyncTest):
                 self.editors[0].user_id, 'Editor 0 in second wiki',
                 second_mediawiki_project)
         ) >= 0)
-    
+
     def test_two_users_same_id_same_cohort(self):
         same_id_same_cohort = WikiUserStore(
             mediawiki_userid=self.editors[0].user_id,
@@ -591,14 +684,14 @@ class MultiProjectTests(ControllerAsyncTest):
             wiki_user_id=same_id_same_cohort.id,
         ))
         self.session.commit()
-        
+
         response = self.client.post('/reports/create/', data=dict(
             responses=self.json_to_post
         ))
-        
+
         # Wait a second for the task to get processed
         time.sleep(1)
-        
+
         # Check that the task has been created
         response = self.client.get('/reports/list/')
         parsed = json.loads(response.data)
@@ -611,7 +704,7 @@ class MultiProjectTests(ControllerAsyncTest):
                 self.editors[0].user_id, 'Editor X with same id',
                 second_mediawiki_project)
         ) >= 0)
-    
+
     def test_two_users_same_id_different_cohort(self):
         second_cohort = CohortStore(
             name='second-cohort',
@@ -634,14 +727,14 @@ class MultiProjectTests(ControllerAsyncTest):
             wiki_user_id=same_id_different_cohort.id,
         ))
         self.session.commit()
-        
+
         response = self.client.post('/reports/create/', data=dict(
             responses=self.json_to_post
         ))
-        
+
         # Wait a second for the task to get processed
         time.sleep(1)
-        
+
         # Check that the task has been created
         response = self.client.get('/reports/list/')
         parsed = json.loads(response.data)
@@ -667,7 +760,7 @@ class BasicTests(unittest.TestCase):
         mock_report = ReportStore()
         failure = mock_report.get_result_safely('')
         assert_equal(failure['failure'], 'result not available')
-    
+
     def test_get_celery_task_result_when_empty(self):
         mock_report = ReportStore()
         failure = mock_report.get_result_safely('')
