@@ -44,7 +44,7 @@ def format_pretty_date(date_object):
 
 
 def json_string(obj):
-    return json.dumps(obj, cls=BetterEncoder, indent=4)
+    return json.dumps(obj, cls=BetterEncoder, indent=4, ensure_ascii=False)
 
 
 def stringify(*args, **kwargs):
@@ -60,7 +60,7 @@ def json_response(*args, **kwargs):
         * Decimal objects encoded via BetterEncoder
     """
     data = stringify(*args, **kwargs)
-    return Response(data, mimetype='application/json')
+    return Response(data, content_type='application/json; charset=utf-8')
 
 
 def json_error(message):
@@ -87,17 +87,16 @@ class BetterEncoder(json.JSONEncoder):
     dates properly.  You should make sure your client is happy with this serialization:
         print(json.dumps(obj, cls=BetterEncoder))
     """
-    
+
     def default(self, obj):
         if isinstance(obj, datetime):
             return format_pretty_date(obj)
-        
+
         if isinstance(obj, date):
             return format_pretty_date(obj)
-        
+
         if isinstance(obj, Decimal):
             return float(obj)
-        
         return json.JSONEncoder.default(self, obj)
 
 
@@ -127,7 +126,7 @@ def deduplicate_by_key(list_of_objects, key_function):
         key = key_function(o)
         if key not in uniques:
             uniques[key] = o
-    
+
     return uniques.values()
 
 
@@ -174,7 +173,7 @@ def diff_datewise(left, right, left_parse=None, right_parse=None):
         [0] : the datetime objects in left but not right
         [1] : the datetime objects in right but not left
     """
-    
+
     if left_parse:
         left_set = set([
             datetime.strptime(l.strip(), left_parse)
@@ -182,7 +181,7 @@ def diff_datewise(left, right, left_parse=None, right_parse=None):
         ])
     else:
         left_set = set(left)
-    
+
     if right_parse:
         right_set = set([
             datetime.strptime(r.strip(), right_parse)
@@ -190,18 +189,18 @@ def diff_datewise(left, right, left_parse=None, right_parse=None):
         ])
     else:
         right_set = set(right)
-    
+
     return (left_set - right_set, right_set - left_set)
 
 
 def timestamps_to_now(start, increment):
     """
     Generates timestamps from @start to datetime.now(), by @increment
-    
+
     Parameters
         start       : the first generated timestamp
         increment   : the timedelta between the generated timestamps
-    
+
     Returns
         A generator that goes from @start to datetime.now() - x,
         where x <= @increment
@@ -230,14 +229,14 @@ def parse_username(username):
     """
     parses uncapitalized, whitespace-padded, and weird-charactered mediawiki
     user names into ones that have a chance of being found in the database
-    
+
     needs to accept either a unicode or string input, returns str of bytes
     """
     # not pretty but python 2.7 is a box of
     # suprises when it comes to str versus unicode types
     if not isinstance(username, unicode):
         username = username.decode('utf8', errors='ignore')
-        
+
     parsed = username.strip()
     if len(parsed) != 0:
         parsed = parsed[0].upper() + parsed[1:]
