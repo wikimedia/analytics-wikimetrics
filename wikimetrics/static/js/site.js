@@ -7,7 +7,7 @@ var site = {
             }
         };
     },
-    
+
     isNormalResponse: function(response){
         if (response.isError){
             site.showError(response.message);
@@ -20,12 +20,12 @@ var site = {
         site.clearMessages();
         return true;
     },
-    
+
     confirmDanger: function(event, noQuestion){
         var title = $(event.target).attr('title');
         return confirm('Are you sure you want to ' + title + (noQuestion ? '' : '?') );
     },
-    
+
     showError: function (message, permanent){
         site.showMessage(message, 'error', permanent);
     },
@@ -40,7 +40,7 @@ var site = {
     },
     showMessage: function (message, category, permanent){
         site.clearMessages();
-        
+
         if (!site.messageTemplate){
             site.messageTemplate = $('.messageTemplate').html();
         }
@@ -55,20 +55,20 @@ var site = {
     clearMessages: function (){
         $('.site-messages').children().not('.permanent').remove();
     },
-    
+
     redirect: function (url){
         location.href = url;
     },
-    
+
     failure: function (error){
         site.showError('Wikimetrics is experiencing problems.  Visit the Support page for help if this persists.  You can also check the console for details.');
         console.log(error);
     },
-    
+
     hasValidationErrors: function(){
         return $('li.text-error').length > 0;
     },
-    
+
     /**
     * Make use of this function to throttle your ajax pulls
     * when tab is not visible to the user
@@ -83,17 +83,20 @@ var site = {
             }
         }
     },
-    
-    refreshEvery: 5,
+
+    /*
+    * Refresh rate for ajax polling
+    * enter seconds, this will be converted to ms
+    */
+    defaultRefreshRate: 5,
+
+    pollingActive: true,
+
     getRefreshRate: function() {
-        /* if not visible refresh rate is lower */
-        var rate = site.refreshEvery; /* enter seconds, this will be converted to ms*/
-        if (!site.isVisible()){
-            rate = rate * 10;
-        }
+        var rate = site.defaultRefreshRate;
         return rate*1000;
     },
-    
+
     // ***********************************************************
     // Data population - usually done with something like Sammy JS
     // ***********************************************************
@@ -104,22 +107,22 @@ var site = {
             }))
             .fail(site.failure);
     },
-    
-    populateMetrics: function(viewModel){ 
+
+    populateMetrics: function(viewModel){
         $.get('/metrics/list/')
             .done(site.handleWith(function(data){
                 viewModel.metrics(data.metrics);
             }))
             .fail(site.failure);
     },
-    
+
     populateReports: function(viewModel){
         $.get('/reports/list/')
             .done(site.handleWith(function(data){
-                //TODO this is a circular dependecy, reports depends on 
+                //TODO this is a circular dependecy, reports depends on
                 // list and list uses reports. this function
                 // should reside on reportList
-                
+
                 var reportsStr = JSON.stringify(data.reports);
                 var change = !viewModel.previousReportData || viewModel.previousReportData != reportsStr;
                 if (change){
@@ -137,7 +140,7 @@ var site = {
             }))
             .fail(site.failure);
     },
-    
+
     // persists the bootstrap tab hash in the url and navigates to it on page load
     enableTabNavigation: function(){
         $('ul.nav-tabs li a').on('shown', function (e) {
@@ -151,7 +154,7 @@ var site = {
             $('ul.nav-tabs li a').first().click();
         }
     },
-    
+
     // ***********************************************************
     // Just some util functions so I don't have to
     // import huge libraries like Underscore
@@ -159,13 +162,13 @@ var site = {
     keys: function(obj){
         var keys = [];
         var key;
-        
+
         for(key in obj){
             if(obj.hasOwnProperty(key)){
                 keys.push(key);
             }
         }
-        
+
         return keys;
     },
     //Serializes object to json and verifies is an empty string
@@ -174,6 +177,48 @@ var site = {
         return empty
     }
 };
+
+/*
+* Deealing with visibility API, looks like it is not available on jquery
+* Enable/disable pooling (global setting) based on visibility
+* From: https://developer.mozilla.org/en-US/docs/Web/Guide/User_experience/Using_the_Page_Visibility_API
+*/
+function detectVisibilityApiAndUpdatePollingSettings(obj){
+
+    var hidden, visibilityChange;
+    if (typeof document.hidden !== "undefined") { // Opera 12.10 and Firefox 18 and later support
+        hidden = "hidden";
+        visibilityChange = "visibilitychange";
+    } else if (typeof document.mozHidden !== "undefined") {
+        hidden = "mozHidden";
+        visibilityChange = "mozvisibilitychange";
+    } else if (typeof document.msHidden !== "undefined") {
+        hidden = "msHidden";
+        visibilityChange = "msvisibilitychange";
+    } else if (typeof document.webkitHidden !== "undefined") {
+        hidden = "webkitHidden";
+        visibilityChange = "webkitvisibilitychange";
+    }
+
+    /*
+    * Disable polling if UI
+    * is not visible
+    */
+    function handleVisibilityChange() {
+        if (document[hidden]) {
+          obj.pollingActive = false;
+       } else {
+          obj.pollingActive = true;
+       }
+    }
+
+    if (typeof document.addEventListener !== "undefined" || hidden !== "undefined") {
+            document.addEventListener(visibilityChange, handleVisibilityChange, false);
+    }
+}
+
+// detect visibility API and add events upon load
+$(document).ready(function(){detectVisibilityApiAndUpdatePollingSettings(site)})
 
 // moment configuration
 moment.lang('en', { calendar: {

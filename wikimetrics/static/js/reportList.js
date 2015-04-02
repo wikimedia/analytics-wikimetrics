@@ -1,12 +1,12 @@
 $(document).ready(function(){
     var viewModel = {
         reports: ko.observableArray([]),
-        
+
         updatePublic: function(report, event) {
             //TODO no csrf token, we need a request engine to wrap our ajax
             // requests
             if (!report.public()) {
-               
+
                 $.post('/reports/set-public/' + report.id)
                     .done(site.handleWith(function(){
                         report.public(true);
@@ -37,10 +37,12 @@ $(document).ready(function(){
             return moment(report2.created) - moment(report1.created);
         });
     }, viewModel);
-    
+
     // get reports from reports/detail/endpoint
     var getReports = function (once) {
-        site.populateReports(viewModel);
+        if (site.pollingActive) {
+            site.populateReports(viewModel);
+        }
         if (!once) {
             setTimeout(getReports, site.getRefreshRate());
         }
