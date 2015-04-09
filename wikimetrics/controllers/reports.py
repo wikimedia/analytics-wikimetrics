@@ -9,7 +9,7 @@ from flask.ext.login import current_user
 from sqlalchemy.exc import SQLAlchemyError
 from wikimetrics.configurables import app, db
 from wikimetrics.models import (
-    Report, RunReport, ReportStore, WikiUserStore, WikiUserKey,
+    Report, RunReport, ReportStore, WikiUserStore, WikiUserKey, TaskErrorStore
 )
 from wikimetrics.utils import (
     json_response, json_error, json_redirect, thirty_days_ago, stringify
@@ -100,19 +100,28 @@ def reports_request():
 @app.route('/reports/list/')
 def reports_list():
     db_session = db.get_session()
-    reports = db_session.query(ReportStore)\
+    # Joins with TaskError to get the error message for failed reports.
+    report_tuples = db_session.query(ReportStore, TaskErrorStore.message)\
+        .outerjoin(TaskErrorStore)\
         .filter(ReportStore.user_id == current_user.id)\
         .filter(or_(ReportStore.created > thirty_days_ago(), ReportStore.recurrent))\
         .filter(ReportStore.show_in_ui)\
+        .filter(or_(
+            TaskErrorStore.task_type == 'report',
+            TaskErrorStore.task_type == None))\
         .all()
     # TODO: update status for all reports at all times (not just show_in_ui ones)
-    # update status for each report
-    for report in reports:
+    # update status for each report and build response
+    reports = []
+    for report_tuple in report_tuples:
+        report = report_tuple.ReportStore
         report.update_status()
+        report_dict = report._asdict()
+        report_dict['error_message'] = report_tuple.message
+        reports.append(report_dict)
 
     # TODO fix json_response to deal with ReportStore objects
-    reports_json = json_response(reports=[report._asdict() for report in reports])
-    return reports_json
+    return json_response(reports=reports)
 
 
 def get_celery_task(result_key):

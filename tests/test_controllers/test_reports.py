@@ -11,7 +11,8 @@ from datetime import date, timedelta
 
 from tests.fixtures import WebTest, mediawiki_project, second_mediawiki_project
 from wikimetrics.models import (
-    ReportStore, WikiUserStore, CohortStore, CohortWikiUserStore, MediawikiUser
+    ReportStore, WikiUserStore, CohortStore,
+    CohortWikiUserStore, MediawikiUser, TaskErrorStore
 )
 from wikimetrics.api import PublicReportFileManager
 from wikimetrics.exceptions import InvalidCohort
@@ -197,6 +198,14 @@ class ReportsControllerTest(ControllerAsyncTest):
         )
         # data should display the report created a while back
         assert_true(str(self.past_date) in str(parsed))
+
+    def test_list_error_message(self):
+        report = self.session.query(ReportStore).first()
+        TaskErrorStore.add('report', report.id, 'message', 'traceback')
+        response = self.client.get('/reports/list/')
+        reports = json.loads(response.data)['reports']
+        assert_equal(reports[0]['error_message'], 'message')
+        assert_equal(reports[1]['error_message'], None)
 
     def test_report_request_get(self):
         response = self.client.get('/reports/create/')

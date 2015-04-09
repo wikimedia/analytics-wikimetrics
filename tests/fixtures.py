@@ -20,6 +20,7 @@ from wikimetrics.models import (
     TagStore,
     CohortTagStore,
     ReportStore,
+    TaskErrorStore,
     Revision,
     Page,
     MediawikiUser,
@@ -680,6 +681,7 @@ class DatabaseTest(unittest.TestCase):
         self.session.query(WikiUserStore).delete()
         self.session.query(CohortStore).delete()
         self.session.query(UserStore).delete()
+        self.session.query(TaskErrorStore).delete()
         self.session.query(ReportStore).delete()
         self.session.commit()
         self.session.remove()

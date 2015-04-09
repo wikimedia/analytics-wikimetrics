@@ -58,7 +58,7 @@
                 <span data-bind="text: status, css: {
                     'text-success': success,
                     'text-info': !success
-                }"></span>
+                }, attr: {'title': error_message}"></span>
             </td>
             <td data-bind="if: success">
                 <div class="btn-group">

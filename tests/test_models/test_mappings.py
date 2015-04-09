@@ -2,6 +2,7 @@ from nose.tools import assert_true, assert_equal, assert_not_equal
 import celery
 from wikimetrics.models import (
     ReportStore,
+    TaskErrorStore,
     UserStore,
     CohortStore,
     CohortUserStore,
@@ -33,6 +34,21 @@ class TestMappings(DatabaseTest):
         self.session.commit()
         row = self.session.query(ReportStore).get(pr.id)
         assert_equal(row.status, celery.states.PENDING)
+
+    def test_task_error(self):
+        pr = ReportStore(status=celery.states.PENDING)
+        self.session.add(pr)
+        self.session.commit()
+        te = TaskErrorStore(task_type='report', task_id=pr.id,
+                            message='m', traceback='t', count=1)
+        self.session.add(te)
+        self.session.commit()
+        row = self.session.query(TaskErrorStore).first()
+        assert_equal(row.task_type, 'report')
+        assert_equal(row.task_id, pr.id)
+        assert_equal(row.message, 'm')
+        assert_equal(row.traceback, 't')
+        assert_equal(row.count, 1)
     
     def test_user(self):
         u = self.session.query(UserStore).get(self.owner_user_id)
@@ -125,6 +141,17 @@ class TestMappings(DatabaseTest):
         self.session.commit()
         row = self.session.query(ReportStore).get(pr.id)
         assert_true(str(row).find('ReportStore') >= 0)
+
+    def test_task_error_repr(self):
+        pr = ReportStore(status=celery.states.PENDING)
+        self.session.add(pr)
+        self.session.commit()
+        te = TaskErrorStore(task_type='report', task_id=pr.id,
+                            message='m', traceback='t', count=1)
+        self.session.add(te)
+        self.session.commit()
+        row = self.session.query(TaskErrorStore).first()
+        assert_true(str(row).find('TaskErrorStore') >= 0)
     
     def test_user_repr(self):
         u = self.session.query(UserStore).first()

@@ -1,8 +1,8 @@
 # 101-108, 114, 130-145, 153
-from nose.tools import assert_equals, assert_true
+from nose.tools import assert_equals, assert_true, assert_raises
 from wikimetrics.metrics import metric_classes
 from wikimetrics.models import (
-    Report, ReportNode, ReportLeaf, MetricReport, ReportStore,
+    Report, ReportNode, ReportLeaf, MetricReport, ReportStore, TaskErrorStore
 )
 from wikimetrics.models import queue_task
 from ..fixtures import QueueDatabaseTest, DatabaseTest
@@ -58,6 +58,16 @@ class QueueTaskTest(QueueDatabaseTest):
         fr = FakeReport()
         result = queue_task(fr)
         assert_equals(result, 'hello world')
+
+    def test_queue_task_error(self):
+        def raise_error():
+            raise RuntimeError('message')
+
+        fr = FakeReport(raise_error)
+        assert_raises(RuntimeError, queue_task, fr)
+        te = self.session.query(TaskErrorStore).first()
+        assert_equals(te.task_id, fr.persistent_id)
+        assert_equals(te.message, 'RuntimeError: message')
     
     def test_set_status(self):
         fr = FakeReport()
@@ -80,10 +90,14 @@ class FakeReport(Report):
     """
     This just helps with some of the tests above
     """
-    def __init__(self):
+    def __init__(self, callback=None):
         # store param must be True so that the result is retrievable
         # this param only defaults to True for RunReport
         super(FakeReport, self).__init__(store=True)
+        self.callback = callback
 
     def run(self):
-        return 'hello world'
+        if self.callback is None:
+            return 'hello world'
+        else:
+            return self.callback()

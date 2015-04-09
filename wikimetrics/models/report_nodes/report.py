@@ -1,4 +1,5 @@
 import celery
+import traceback
 from uuid import uuid4
 from celery import current_task
 from datetime import datetime
@@ -11,7 +12,7 @@ from celery.utils.log import get_task_logger
 from flask.ext.login import current_user
 from wikimetrics.configurables import db, queue
 from wikimetrics.utils import stringify
-from wikimetrics.models.storage import ReportStore
+from wikimetrics.models.storage import ReportStore, TaskErrorStore
 
 
 __all__ = [
@@ -48,7 +49,15 @@ def queue_task(report):
         report,
         current_task.request.id,
     ))
-    return report.run()
+    try:
+        return report.run()
+    except Exception, e:
+        # Create a task error with the failure information.
+        if report.persistent_id is not None:
+            message = '%s: %s' % (type(e).__name__, e.message)
+            trace = traceback.format_exc()
+            TaskErrorStore.add('report', report.persistent_id, message, trace)
+        raise e
 
 
 class Report(object):
