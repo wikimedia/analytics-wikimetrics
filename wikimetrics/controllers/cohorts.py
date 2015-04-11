@@ -194,7 +194,13 @@ def populate_cohort_tags(cohort_id, db_session):
         .filter(CohortTagStore.tag_id == TagStore.id) \
         .all()
 
-    return [t._asdict() for t in tags]
+    prepared_tags = []
+    for t in tags:
+        tag_info = t._asdict()
+        if type(tag_info['name']) == unicode:
+            tag_info['name'] = tag_info['name'].encode('utf-8')
+        prepared_tags.append(tag_info)
+    return prepared_tags
 
 
 @app.route('/cohorts/upload', methods=['GET', 'POST'])

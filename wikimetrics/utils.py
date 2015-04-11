@@ -2,7 +2,7 @@ import json
 import os
 import os.path
 import collections
-
+import re
 from decimal import Decimal, ROUND_HALF_UP
 from datetime import datetime, timedelta, date
 from flask import Response
@@ -44,7 +44,7 @@ def format_pretty_date(date_object):
 
 
 def json_string(obj):
-    return json.dumps(obj, cls=BetterEncoder, indent=4)
+    return json.dumps(obj, cls=BetterEncoder, indent=4, ensure_ascii=False)
 
 
 def stringify(*args, **kwargs):
@@ -87,6 +87,42 @@ class BetterEncoder(json.JSONEncoder):
     dates properly.  You should make sure your client is happy with this serialization:
         print(json.dumps(obj, cls=BetterEncoder))
     """
+
+    def encode(self, o):
+        """
+        Please see https://hg.python.org/cpython/file/7ec9255d4189/Lib/json/encoder.py
+        we are overriding a "private" method to get rid
+        of encoding errors once and for all
+        when sending json responses
+        """
+        ESCAPE = re.compile(r'[\x00-\x1f\\"\b\f\n\r\t]')
+        ESCAPE_DCT = {
+            '\\': '\\\\',
+            '"': '\\"',
+            '\b': '\\b',
+            '\f': '\\f',
+            '\n': '\\n',
+            '\r': '\\r',
+            '\t': '\\t',
+        }
+
+        def encode_basestring(s):
+            """Return a JSON representation of a Python string"""
+            def replace(match):
+                return ESCAPE_DCT[match.group(0)]
+            return '"' + ESCAPE.sub(replace, s) + '"'
+
+        if isinstance(o, basestring):
+            return encode_basestring(o)
+
+        # This doesn't pass the iterator directly to ''.join() because the
+        # exceptions aren't as detailed.  The list call should be roughly
+        # equivalent to the PySequence_Fast that ''.join() would do.
+        chunks = self.iterencode(o, _one_shot=True)
+
+        if not isinstance(chunks, (list, tuple)):
+            chunks_decoded = [c.decode('utf-8') for c in chunks]
+        return u''.join(chunks_decoded)
 
     def default(self, obj):
         if isinstance(obj, datetime):
