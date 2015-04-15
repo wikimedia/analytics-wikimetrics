@@ -44,7 +44,7 @@ def format_pretty_date(date_object):
 
 
 def json_string(obj):
-    return json.dumps(obj, cls=BetterEncoder, indent=4, ensure_ascii=False)
+    return json.dumps(obj, cls=BetterEncoder, indent=4)
 
 
 def stringify(*args, **kwargs):
