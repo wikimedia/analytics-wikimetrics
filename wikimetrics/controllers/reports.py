@@ -402,12 +402,9 @@ def add_user_names_to_json(json_result, user_names):
     new_individual_ids = {}
     for individual in json_result['result'][Aggregation.IND]:
         user_name = user_names[WikiUserKey.fromstr(individual)]
-        # concatenating string and unicode types produces string types
-        # make sure to concatenate only unicode types
-        individual = individual.decode('utf-8')
-        user_name = user_name.decode('utf-8')
-
-        new_id_string = u'{}|{}'.format(user_name, individual)
+        
+        new_id_string = '{}|{}'.format(user_name, individual)
+        
         new_individual_ids[individual] = new_id_string
 
     json_with_names = deepcopy(json_result)
