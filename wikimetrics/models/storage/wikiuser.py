@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, Boolean
+from sqlalchemy import Column, Integer, String, Boolean, UniqueConstraint
 from wikimetrics.configurables import db
 
 
@@ -24,6 +24,13 @@ class WikiUserStore(db.WikimetricsBase):
     reason_invalid      = Column(String(200))
     # The cohort id that this wikiuser is being validated for
     validating_cohort   = Column(Integer)
+
+    __table_args__ = (
+        UniqueConstraint(
+            project, mediawiki_userid, validating_cohort,
+            name='ix_wiki_user_project'
+        ),
+    )
 
     def __repr__(self):
         return '<WikiUserStore("{0}")>'.format(self.id)

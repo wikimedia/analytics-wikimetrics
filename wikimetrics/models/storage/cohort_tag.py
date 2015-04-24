@@ -12,8 +12,8 @@ class CohortTagStore(db.WikimetricsBase):
     __tablename__ = 'cohort_tag'
 
     id        = Column(Integer, primary_key=True)
-    tag_id    = Column(Integer, ForeignKey('tag.id'))
-    cohort_id = Column(Integer, ForeignKey('cohort.id'))
+    tag_id    = Column(Integer, ForeignKey('tag.id'), nullable=False)
+    cohort_id = Column(Integer, ForeignKey('cohort.id'), nullable=False)
 
     def __repr__(self):
         return '<CohortTagStore("{0}")>'.format(self.id)

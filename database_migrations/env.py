@@ -88,14 +88,13 @@ def run_migrations_online():
 
     if db.config['DEBUG'] is True:
         test_config = setup_testing_config(deepcopy(config))
-        # add mediawiki_testing migrations
-        mw_test_engine = get_engine(test_config)
-        mw_test_metadata = db.WikimetricsBase.metadata
-        migrations.append((mw_test_engine, mw_test_metadata))
-        # add centralauth_testing migrations
-        ca_test_engine = get_engine(test_config, 'CENTRALAUTH_ENGINE_URL')
-        ca_test_metadata = db.CentralAuthBase.metadata
-        migrations.append((ca_test_engine, ca_test_metadata))
+        # add wikimetrics_testing migrations
+        test_engine = get_engine(test_config)
+        test_metadata = db.WikimetricsBase.metadata
+        migrations.append((test_engine, test_metadata))
+        # NOTE: centralauth and mediawiki schemas should be maintained
+        # manually and not managed with alembic, as they are not schemas
+        # we own
 
     for eng, meta_data in migrations:
         connection = eng.connect()

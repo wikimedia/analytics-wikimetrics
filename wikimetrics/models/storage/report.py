@@ -2,7 +2,7 @@ import celery
 import json
 from sqlalchemy import Column, Integer, String, DateTime, Boolean, func, ForeignKey
 from sqlalchemy.orm import Session
-from sqlalchemy.schema import UniqueConstraint
+from sqlalchemy.schema import UniqueConstraint, Index
 from sqlalchemy.sql.expression import and_
 from sqlalchemy.exc import SQLAlchemyError
 from wikimetrics.configurables import db, app
@@ -30,7 +30,16 @@ class ReportStore(db.WikimetricsBase):
     recurrent = Column(Boolean, default=False, nullable=False)
     recurrent_parent_id = Column(Integer, ForeignKey('report.id'))
 
-    UniqueConstraint('recurrent_parent_id', 'created', name='uix_report')
+    __table_args__ = (
+        UniqueConstraint(
+            recurrent_parent_id, created,
+            name='uix_report'
+        ),
+        Index(
+            'ix_report_recurrent',
+            recurrent
+        )
+    )
 
     def update_status(self):
         # if we don't have the result key leave as is
