@@ -95,15 +95,15 @@ def cohort_membership(cohort_id):
 def delete_cohort_wikiuser(cohort_id):
     """
     Deletes all WikiUsers from the given Cohort with
-    mediawiki_username == <username>. If the invalidOnly
+    raw_id_or_name == <raw_id_or_name>. If the invalidOnly
     flag is passed, it will delete the ones that are invalid only.
     """
-    username = request.form.get('username')
+    raw_id_or_name = request.form.get('raw_id_or_name')
     invalid_only = True if request.form.get('invalidOnly') == 'true' else False
     session = db.get_session()
     try:
-        g.cohort_service.delete_cohort_wikiuser(
-            username, cohort_id, current_user.id, session, invalid_only)
+        g.cohort_service.delete_cohort_wikiuser(raw_id_or_name, cohort_id,
+                                                current_user.id, session, invalid_only)
         return json_response(message='success')
     except Exception as e:
         app.logger.exception(str(e))

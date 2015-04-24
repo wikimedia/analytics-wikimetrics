@@ -25,8 +25,10 @@ class CohortUpload(WikimetricsSecureForm):
     project                 = StringField('Default Project',
                                           [Required(), ProjectExists()])
 
-    csv                     = FileField('Upload File', [RequiredIfNot('paste_username')])
-    paste_username          = TextAreaField('Paste Usernames', [RequiredIfNot('csv')])
+    csv                     = FileField('Upload File',
+                                        [RequiredIfNot('paste_ids_or_names')])
+    paste_ids_or_names      = TextAreaField('Paste User Names or IDs',
+                                            [RequiredIfNot('csv')])
     validate_as_user_ids    = RadioField('Validate As', [Required()], choices=[
         ('True', 'User Ids (Numbers found in the user_id column of the user table)'),
         ('False', 'User Names (Names found in the user_name column of the user table)')
@@ -58,7 +60,7 @@ class CohortUpload(WikimetricsSecureForm):
 
         else:
             # used upload box, note that wtforms returns unicode types here
-            csv_lines = parse_textarea_usernames(self.paste_username.data)
+            csv_lines = parse_textarea_ids_or_names(self.paste_ids_or_names.data)
 
         records = format_records(csv_lines, self.project.data)
 
@@ -72,7 +74,8 @@ class CohortUpload(WikimetricsSecureForm):
 def format_records(csv_lines, default_project):
     """
     Processes and formats lines read from a csv file or coming from the upload box.
-    i.e. "dan,en" becomes {'username': 'dan', 'project': 'en'}.
+    i.e. "dan,en" becomes {'raw_id_or_name': 'dan', 'project': 'en'}, and
+    "1, en" becomes {'raw_id_or_name': '1', 'project': 'en'}.
     Note this method assumes bytes (str) not unicode types as input
 
     Parameters
@@ -81,7 +84,7 @@ def format_records(csv_lines, default_project):
 
     Returns
         a list of the formatted records in which each element is of this form:
-        {'username':'parsed username', 'project':'as specified or default'}
+        {'raw_id_or_name':'parsed user name or id', 'project':'as specified or default'}
     """
     records = []
     for r in csv.reader(csv_lines):
@@ -92,16 +95,16 @@ def format_records(csv_lines, default_project):
             # so maybe require the project to be the first field
             # and the username to be the last or maybe change to a tsv format
             if len(r) > 1:
-                username = ",".join([str(p) for p in r[:-1]])
+                raw_id_or_name = ",".join([str(p) for p in r[:-1]])
                 project = r[-1].strip() or default_project
             else:
-                username = r[0]
+                raw_id_or_name = r[0]
                 project = default_project
 
-            if username is not None and len(username):
+            if raw_id_or_name is not None and len(raw_id_or_name):
                 records.append({
-                    'username'  : parse_username(username),
-                    'project'   : project,
+                    'raw_id_or_name'  : parse_username(raw_id_or_name),
+                    'project'         : project,
                 })
     return records
 
@@ -117,7 +120,7 @@ def normalize_newlines(lines):
             yield line
 
 
-def parse_textarea_usernames(textarea_contents):
+def parse_textarea_ids_or_names(textarea_contents):
     """
     Prepares text to go through format_records().
 

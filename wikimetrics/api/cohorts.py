@@ -333,7 +333,9 @@ class CohortService(object):
     def get_membership(self, cohort, session):
         wikiusers = (
             session.query(
+                WikiUserStore.raw_id_or_name,
                 WikiUserStore.mediawiki_username,
+                WikiUserStore.mediawiki_userid,
                 WikiUserStore.project,
                 WikiUserStore.valid,
                 WikiUserStore.reason_invalid
@@ -342,35 +344,43 @@ class CohortService(object):
             .all()
         )
 
-        by_username = {}
+        by_raw_id_or_name = {}
         for wikiuser in wikiusers:
-            wikiuser_info = by_username.get(wikiuser[0])
-            if not wikiuser_info:
-                wikiuser_info = {
-                    'username': wikiuser[0],
+            if wikiuser.raw_id_or_name not in by_raw_id_or_name:
+                by_raw_id_or_name[wikiuser.raw_id_or_name] = {
+                    'raw_id_or_name' : wikiuser.raw_id_or_name,
+                    'username': wikiuser.mediawiki_username,
+                    'userid' : wikiuser.mediawiki_userid,
                     'projects': [],
                     'invalidProjects': [],
                     'invalidReasons': []
                 }
-                by_username[wikiuser[0]] = wikiuser_info
+                
+            wikiuser_info = by_raw_id_or_name[wikiuser.raw_id_or_name]
+            wikiuser_info['projects'].append(wikiuser.project)
+            if not wikiuser.valid:
+                wikiuser_info['invalidProjects'].append(wikiuser.project)
+                wikiuser_info['invalidReasons'].append(wikiuser.reason_invalid)
+                # If the user is not valid, show the raw_id_or_name in the User
+                # id or name column, depending on the validate_as_user_ids value.
+                if cohort.validate_as_user_ids:
+                    wikiuser_info['userid'] = wikiuser.raw_id_or_name
+                else:
+                    wikiuser_info['username'] = wikiuser.raw_id_or_name
 
-            wikiuser_info['projects'].append(wikiuser[1])
-            if not wikiuser[2]:  # if not valid
-                wikiuser_info['invalidProjects'].append(wikiuser[1])
-                wikiuser_info['invalidReasons'].append(wikiuser[3])
-
-        membership = by_username.values()
+        membership = by_raw_id_or_name.values()
         membership.sort(key=lambda x: x['username'])
         return membership
 
     def delete_cohort_wikiuser(
-            self, username, cohort_id, user_id, session, invalid_only=False):
+            self, raw_id_or_name, cohort_id, current_user_id,
+            session, invalid_only=False):
         # raises Unauthorized error if the user has no permits on the cohort
-        self.is_owned_by_user(session, cohort_id, user_id, True)
+        self.is_owned_by_user(session, cohort_id, current_user_id, True)
         wikiusers = (
             session.query(WikiUserStore)
             .join(CohortWikiUserStore)
-            .filter(WikiUserStore.mediawiki_username == username)
+            .filter(WikiUserStore.raw_id_or_name == raw_id_or_name)
             .filter(CohortWikiUserStore.cohort_id == cohort_id)
             .all()
         )

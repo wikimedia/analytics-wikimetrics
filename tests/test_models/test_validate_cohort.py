@@ -94,7 +94,7 @@ class ValidateCohortEncodingTest(DatabaseTest):
 
         for name in names:
             cohort_upload.records.append({
-                'username'  : name,
+                'raw_id_or_name'  : name,
                 'project'   : mediawiki_project,
             })
 
@@ -118,7 +118,7 @@ class ValidateCohortEncodingTest(DatabaseTest):
         # retrieve the user that should not be valid, make sure it is not indeed
         wiki_user = self.session.query(WikiUserStore)\
             .filter(WikiUserStore.validating_cohort == cohort.id)\
-            .filter(WikiUserStore.mediawiki_username == not_valid_editor_name).one()
+            .filter(WikiUserStore.raw_id_or_name == not_valid_editor_name).one()
 
         assert_false(wiki_user.valid)
 
@@ -201,7 +201,7 @@ class ValidateCohortTest(WebTest):
         self.cohort.validate_as_user_ids = False
         wikiusers = self.session.query(WikiUserStore).all()
         wikiusers[0].project = 'blah'
-        wikiusers[1].mediawiki_username = 'blah'
+        wikiusers[1].raw_id_or_name = 'blah'
         self.session.commit()
         v = ValidateCohort(self.cohort)
         v.validate_records(self.session, self.cohort)
@@ -228,8 +228,8 @@ class ValidateCohortTest(WebTest):
 
         wikiusers = self.session.query(WikiUserStore).all()
         username = 'Same Name'
-        wikiusers[0].mediawiki_username = username
-        wikiusers[1].mediawiki_username = username
+        wikiusers[0].raw_id_or_name = username
+        wikiusers[1].raw_id_or_name = username
         # set different project versions of the same project
         # they will be normalized to 'wiki' by the normalize_project mock
         wikiusers[0].project = 'en'
@@ -307,12 +307,12 @@ class ValidateCohortQueueTest(QueueDatabaseTest):
         cohort_upload.project.data = mediawiki_project
         cohort_upload.records = [
             # two existing users
-            {'username': 'Editor test-specific-0', 'project': mediawiki_project},
-            {'username': 'Editor test-specific-1', 'project': mediawiki_project},
+            {'raw_id_or_name': 'Editor test-specific-0', 'project': mediawiki_project},
+            {'raw_id_or_name': 'Editor test-specific-1', 'project': mediawiki_project},
             # one invalid username
-            {'username': 'Nonexisting', 'project': mediawiki_project},
+            {'raw_id_or_name': 'Nonexisting', 'project': mediawiki_project},
             # one user with invalid project
-            {'username': 'Nonexisting2', 'project': 'Nonexisting'},
+            {'raw_id_or_name': 'Nonexisting2', 'project': 'Nonexisting'},
         ]
 
         v = ValidateCohort.from_upload(cohort_upload, self.owner_user_id)
@@ -320,17 +320,17 @@ class ValidateCohortQueueTest(QueueDatabaseTest):
         self.session.commit()
 
         assert_equal(self.session.query(WikiUserStore).filter(
-            WikiUserStore.mediawiki_username == 'Editor test-specific-0').one().valid,
+            WikiUserStore.raw_id_or_name == 'Editor test-specific-0').one().valid,
             True
         )
         assert_equal(self.session.query(WikiUserStore).filter(
-            WikiUserStore.mediawiki_username == 'Editor test-specific-1').one().valid,
+            WikiUserStore.raw_id_or_name == 'Editor test-specific-1').one().valid,
             True
         )
         assert_equal(self.session.query(WikiUserStore).filter(
-            WikiUserStore.mediawiki_username == 'Nonexisting').one().valid, False)
+            WikiUserStore.raw_id_or_name == 'Nonexisting').one().valid, False)
         assert_equal(self.session.query(WikiUserStore).filter(
-            WikiUserStore.mediawiki_username == 'Nonexisting2').one().valid, False)
+            WikiUserStore.raw_id_or_name == 'Nonexisting2').one().valid, False)
 
     def test_from_upload_exception(self):
         cohort_upload = CohortUpload()

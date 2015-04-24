@@ -64,7 +64,7 @@ $(document).ready(function () {
                 $.post(
                     window.location.pathname + '/delete',
                     {
-                        username: wikiuser.username,
+                        raw_id_or_name: wikiuser.raw_id_or_name,
                         invalidOnly: event.target.getAttribute('data-delete-invalid')
                     }
                 ).done(site.handleWith(function (data) {
@@ -92,7 +92,9 @@ $(document).ready(function () {
             return ko.utils.arrayMap(wikiusers, function (wikiuser) {
                 var formatted = {
                     // Username column
-                    username: wikiuser.username
+                    raw_id_or_name: wikiuser.raw_id_or_name,
+                    username: wikiuser.username,
+                    userid: wikiuser.userid
                 };
 
                 // Project column
@@ -178,7 +180,7 @@ $(document).ready(function () {
             selectedValidity = this.selectedValidity();
 
         var filtered = this.wikiusers().filter(function (wikiuser) {
-            var username = wikiuser.username.toLowerCase(),
+            var username = (wikiuser.username || "").toLowerCase(),
                 validity = (
                     wikiuser.valid === 'Yes' ?
                     validityOptions.valid :

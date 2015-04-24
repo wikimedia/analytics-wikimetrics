@@ -89,7 +89,7 @@ class ValidateCohort(object):
             session.execute(
                 WikiUserStore.__table__.insert(), [
                     {
-                        'mediawiki_username': record['username'],
+                        'raw_id_or_name'    : record['raw_id_or_name'],
                         'project'           : record['project'],
                         'valid'             : None,
                         'reason_invalid'    : '',
@@ -114,7 +114,7 @@ class ValidateCohort(object):
     def validate_records(self, session, cohort):
         """
         Fetches the wiki_user(s) already added for self.cohort_id and validates
-        their mediawiki_username against their stated project as either a user_id
+        their raw_id_or_name field against their stated project as either a user_id
         or user_name.  Once done, sets the valid state and deletes any duplicates.
         Then, it finishes filling in the data model by inserting corresponding
         records into the cohort_wiki_users table.
@@ -144,7 +144,7 @@ class ValidateCohort(object):
         deduplicated = deduplicate_by_key(
             wikiusers,
             lambda r: (
-                r.mediawiki_username,
+                r.raw_id_or_name,
                 normalize_project(r.project) or r.project
             )
         )
@@ -178,24 +178,19 @@ class ValidateCohort(object):
                 validate_users(wikiusers, project, self.validate_as_user_ids)
         session.commit()
 
-        unique_and_validated = deduplicate_by_key(
-            deduplicated,
-            lambda r: (r.mediawiki_username, r.project)
-        )
-
         session.execute(
             CohortWikiUserStore.__table__.insert(), [
                 {
                     'cohort_id'     : cohort.id,
                     'wiki_user_id'  : wu.id,
-                } for wu in unique_and_validated
+                } for wu in deduplicated
             ]
         )
 
         # clean up any duplicate wiki_user records
         session.execute(WikiUserStore.__table__.delete().where(and_(
             WikiUserStore.validating_cohort == cohort.id,
-            WikiUserStore.id.notin_([wu.id for wu in unique_and_validated])
+            WikiUserStore.id.notin_([wu.id for wu in deduplicated])
         )))
         cohort.validated = True
         session.commit()
@@ -232,7 +227,7 @@ def validate_users(wikiusers, project, validate_as_user_ids):
         validate_as_user_ids    : if True, records will be checked against user_id
                                   if False, records are checked against user_name
     """
-    users_dict = {wu.mediawiki_username: wu for wu in wikiusers}
+    users_dict = {wu.raw_id_or_name : wu for wu in wikiusers}
     valid_project = True
 
     # validate

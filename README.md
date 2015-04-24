@@ -41,7 +41,7 @@ directory:
 
 ````
 $ vagrant ssh
-$ cd /vagrant/wikimetrics
+$ cd /vagrant/srv/wikimetrics
 ````
 
 Then tell Alembic to bring you up to speed: `$ alembic upgrade head`.

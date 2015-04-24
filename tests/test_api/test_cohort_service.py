@@ -219,11 +219,11 @@ class CohortServiceTest(DatabaseTest):
         project_1, project_2 = 'Project 1', 'Project 2'
         reason_invalid_1 = 'Reason Invalid 1'
 
-        wikiusers[0].mediawiki_username = username_1
-        wikiusers[1].mediawiki_username = username_1
-        wikiusers[2].mediawiki_username = username_2
+        wikiusers[0].raw_id_or_name = username_1
+        wikiusers[1].raw_id_or_name = username_1
+        wikiusers[2].raw_id_or_name = username_2
         wikiusers[2].project = project_1
-        wikiusers[3].mediawiki_username = username_2
+        wikiusers[3].raw_id_or_name = username_2
         wikiusers[3].project = project_2
         wikiusers[3].valid = False
         wikiusers[3].reason_invalid = reason_invalid_1
@@ -232,8 +232,8 @@ class CohortServiceTest(DatabaseTest):
         membership = self.cohort_service.get_membership(self.cohort, self.session)
 
         assert_equals(len(membership), 2)
-        assert_equals(membership[0]['username'], username_1)
-        assert_equals(membership[1]['username'], username_2)
+        assert_equals(membership[0]['raw_id_or_name'], username_1)
+        assert_equals(membership[1]['raw_id_or_name'], username_2)
         assert_equals(membership[1]['projects'], [project_1, project_2])
         assert_equals(membership[1]['invalidProjects'], [project_2])
         assert_equals(membership[1]['invalidReasons'], [reason_invalid_1])
@@ -256,15 +256,15 @@ class CohortServiceTest(DatabaseTest):
     def test_delete_cohort_wikiuser(self):
         username = 'To Delete'
         wikiuser = self.session.query(WikiUserStore).first()
-        wikiuser.mediawiki_username = username
+        wikiuser.raw_id_or_name = username
         self.session.commit()
 
         self.cohort_service.delete_cohort_wikiuser(
-            username, self.cohort.id, self.owner_user_id, self.session)
+            wikiuser.raw_id_or_name, self.cohort.id, self.owner_user_id, self.session)
 
         wikiusers = (
             self.session.query(WikiUserStore)
-            .filter(WikiUserStore.mediawiki_username == username)
+            .filter(WikiUserStore.raw_id_or_name == username)
             .filter(WikiUserStore.validating_cohort == self.cohort.id)
             .all())
         assert_equals(len(wikiusers), 0)
@@ -278,8 +278,8 @@ class CohortServiceTest(DatabaseTest):
     def test_delete_cohort_wikiuser_invalid_only(self):
         username = 'To Delete'
         wikiusers = self.session.query(WikiUserStore).all()
-        wikiusers[0].mediawiki_username = username
-        wikiusers[1].mediawiki_username = username
+        wikiusers[0].raw_id_or_name = username
+        wikiusers[1].raw_id_or_name = username
         wikiusers[1].valid = False
         wikiuser_ids = [wikiusers[0].id, wikiusers[1]]
         self.session.commit()
@@ -289,7 +289,7 @@ class CohortServiceTest(DatabaseTest):
 
         wikiusers = (
             self.session.query(WikiUserStore)
-            .filter(WikiUserStore.mediawiki_username == username)
+            .filter(WikiUserStore.raw_id_or_name == username)
             .filter(WikiUserStore.validating_cohort == self.cohort.id)
             .all())
         assert_equals(len(wikiusers), 1)
@@ -303,7 +303,7 @@ class CohortServiceTest(DatabaseTest):
     def test_delete_cohort_wikiuser_utf8(self):
         username = '18Наталь'
         wikiuser = self.session.query(WikiUserStore).first()
-        wikiuser.mediawiki_username = username
+        wikiuser.raw_id_or_name = username
         self.session.commit()
 
         self.cohort_service.delete_cohort_wikiuser(
@@ -311,7 +311,7 @@ class CohortServiceTest(DatabaseTest):
 
         wikiusers = (
             self.session.query(WikiUserStore)
-            .filter(WikiUserStore.mediawiki_username == username)
+            .filter(WikiUserStore.raw_id_or_name == username)
             .filter(WikiUserStore.validating_cohort == self.cohort.id)
             .all())
         assert_equals(len(wikiusers), 0)

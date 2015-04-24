@@ -692,6 +692,7 @@ class MultiProjectTests(ControllerAsyncTest):
 
     def test_two_users_same_id_same_cohort(self):
         same_id_same_cohort = WikiUserStore(
+            raw_id_or_name=self.editors[0].user_id,
             mediawiki_userid=self.editors[0].user_id,
             mediawiki_username='Editor X with same id',
             project=second_mediawiki_project,
@@ -735,6 +736,7 @@ class MultiProjectTests(ControllerAsyncTest):
         )
         self.session.add(second_cohort)
         same_id_different_cohort = WikiUserStore(
+            raw_id_or_name=self.editors[0].user_id,
             mediawiki_userid=self.editors[0].user_id,
             mediawiki_username='Editor X should not show up',
             project=second_mediawiki_project,

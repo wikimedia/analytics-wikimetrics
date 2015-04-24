@@ -1,4 +1,5 @@
 from sqlalchemy import Column, Integer, String, Boolean, UniqueConstraint
+from sqlalchemy.dialects.mysql import VARBINARY
 from wikimetrics.configurables import db
 
 
@@ -14,6 +15,7 @@ class WikiUserStore(db.WikimetricsBase):
     __tablename__ = 'wiki_user'
 
     id                  = Column(Integer, primary_key=True)
+    raw_id_or_name      = Column(VARBINARY(255))
     mediawiki_username  = Column(String(255))
     mediawiki_userid    = Column(Integer)
     project             = Column(String(45))

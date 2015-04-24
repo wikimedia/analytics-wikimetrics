@@ -64,6 +64,11 @@
                     </div>
                 </div>
                 <div>
+                    <div class="btn-group" data-bind="if: has_validation_info && not_all_valid">
+                        <a data-bind="click: $root.validateWikiusers"
+                           class="btn"
+                           title="cancel and restart validation for this cohort">Validate Again</a>
+                    </div>
                     <div class="btn-group">
                         <a data-bind="attr:{href:'{{url_for('cohort_membership', cohort_id='id')}}'.replace('id', id)}" class="btn btn-primary">View Members</a>
                     </div>
@@ -71,18 +76,6 @@
                         <a data-bind="attr:{href:'{{url_for('reports_request')}}#'+id}"
                            class="btn btn-success">Create Report</a>
                     </div>
-                    <!-- TODO: IMPORTANT: "Validate Again" functionality is broken.
-                         See this task: https://phabricator.wikimedia.org/T78339
-                         A cohort which has some valid and some invalid users will end up with ALL invalid users if this functionality is used as is.
-                    <div class="btn-group pull-left" data-bind="if: has_validation_info">
-                        <span data-bind="if: not_all_valid">
-                            <p>
-                                <a data-bind="click: $root.validateWikiusers"
-                                   class="btn"
-                                   title="cancel and restart validation for this cohort">Validate Again</a>
-                            </p>
-                        </span>
-                    </div> -->
                     <div class="btn-group pull-right">
                         <a data-bind="click: $root.deleteCohort, attr: { title: delete_message }"
                            class="btn btn-danger">Remove Cohort</a>

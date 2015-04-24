@@ -231,6 +231,7 @@ class DatabaseTest(unittest.TestCase):
             self.session.bind.engine.execute(
                 WikiUserStore.__table__.insert(), [
                     {
+                        'raw_id_or_name'        : editor.user_name or editor.user_id,
                         'mediawiki_username'    : editor.user_name,
                         'mediawiki_userid'      : editor.user_id,
                         'project'               : project,

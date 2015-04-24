@@ -431,8 +431,8 @@ class CohortsControllerTest(WebTest):
         username_to_delete = 'To Delete'
 
         def delete_cohort_wikiuser_mock(
-                username, cohort_id, user_id, session, invalid_only):
-            assert_equal(username, username_to_delete)
+                raw_id_or_name, cohort_id, current_user_id, session, invalid_only):
+            assert_equal(raw_id_or_name, username_to_delete)
             assert_equal(cohort_id, unicode(self.cohort.id))
             assert_equal(invalid_only, False)
 
@@ -441,7 +441,7 @@ class CohortsControllerTest(WebTest):
         with cohort_service_set(app, cohort_service_mock):
             response = self.app.post(
                 '/cohorts/{0}/membership/delete'.format(self.cohort.id),
-                data={'username': username_to_delete}
+                data={'raw_id_or_name': username_to_delete}
             )
         assert_equal(response.status_code, 200)
         assert_equal(json.loads(response.data)['message'], 'success')
@@ -488,7 +488,7 @@ class CohortsControllerUploadTest(WebTest):
         response = self.app.post('/cohorts/upload', data=dict(
             name='new_cohort_name',
             project='wiki',
-            paste_username='actual validation tested elsewhere',
+            paste_ids_or_names='actual validation tested elsewhere',
             validate_as_user_ids='True',
         ))
         assert_equal(response.status_code, 302)
@@ -508,7 +508,7 @@ class CohortsControllerUploadTest(WebTest):
             name='new_cohort_name',
             project='wiki',
             csv=(StringIO('actual validation tested elsewhere'), 'cohort.csv'),
-            paste_username=('actual validation tested elsewhere'),
+            paste_ids_or_names=('actual validation tested elsewhere'),
             validate_as_user_ids='True',
         ))
         assert_equal(response.status_code, 200)
@@ -520,7 +520,7 @@ class CohortsControllerUploadTest(WebTest):
         centralauth_called = [False]
 
         def expand_via_ca_mock(cohort_users, session):
-            assert_equal(cohort_users[0]['username'], data)
+            assert_equal(cohort_users[0]['raw_id_or_name'], data)
             centralauth_called[0] = True
             return []
 

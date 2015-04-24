@@ -23,28 +23,28 @@ class CentralAuthServiceTest(DatabaseTest):
         self.caSession.commit()
 
         records = self.expand(
-            [{'username': username_1, 'project': wiki_1}],
+            [{'raw_id_or_name': username_1, 'project': wiki_1}],
             self.caSession
         )
         assert_equal([
-            {'username': username_1, 'project': wiki_1},
-            {'username': username_1, 'project': wiki_2},
-            {'username': username_1, 'project': wiki_3},
+            {'raw_id_or_name': username_1, 'project': wiki_1},
+            {'raw_id_or_name': username_1, 'project': wiki_2},
+            {'raw_id_or_name': username_1, 'project': wiki_3},
         ], records)
 
         records = self.expand(
-            [{'username': username_2, 'project': wiki_1}],
+            [{'raw_id_or_name': username_2, 'project': wiki_1}],
             self.caSession
         )
         assert_equal([
-            {'username': username_2, 'project': wiki_1},
-            {'username': username_2, 'project': wiki_2},
+            {'raw_id_or_name': username_2, 'project': wiki_1},
+            {'raw_id_or_name': username_2, 'project': wiki_2},
         ], records)
 
         records = self.expand(
             [
-                {'username': username_1, 'project': wiki_1},
-                {'username': username_2, 'project': wiki_1},
+                {'raw_id_or_name': username_1, 'project': wiki_1},
+                {'raw_id_or_name': username_2, 'project': wiki_1},
             ],
             self.caSession
         )
@@ -58,11 +58,11 @@ class CentralAuthServiceTest(DatabaseTest):
         '''
         username, wiki = 'Non-existent', 'notimportant'
         records = self.expand(
-            [{'username': username, 'project': wiki}],
+            [{'raw_id_or_name': username, 'project': wiki}],
             self.caSession
         )
         assert_equal(len(records), 1)
-        assert_equal(records[0]['username'], username)
+        assert_equal(records[0]['raw_id_or_name'], username)
 
     def test_expand_utf8_user(self):
         '''
@@ -77,12 +77,12 @@ class CentralAuthServiceTest(DatabaseTest):
         ])
         self.caSession.commit()
         records = self.expand(
-            [{'username': username, 'project': wiki_1}],
+            [{'raw_id_or_name': username, 'project': wiki_1}],
             self.caSession
         )
         assert_equal([
-            {'username': username, 'project': wiki_1},
-            {'username': username, 'project': wiki_2},
+            {'raw_id_or_name': username, 'project': wiki_1},
+            {'raw_id_or_name': username, 'project': wiki_2},
         ], records)
 
     def test_expand_user_without_duplicates(self):
@@ -99,12 +99,12 @@ class CentralAuthServiceTest(DatabaseTest):
         self.caSession.commit()
         records = self.expand(
             [
-                {'username': username, 'project': wiki_1},
-                {'username': username, 'project': wiki_1},
+                {'raw_id_or_name': username, 'project': wiki_1},
+                {'raw_id_or_name': username, 'project': wiki_1},
             ],
             self.caSession
         )
         assert_equal([
-            {'username': username, 'project': wiki_1},
-            {'username': username, 'project': wiki_2},
+            {'raw_id_or_name': username, 'project': wiki_1},
+            {'raw_id_or_name': username, 'project': wiki_2},
         ], records)

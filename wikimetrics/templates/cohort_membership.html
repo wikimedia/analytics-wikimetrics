@@ -14,6 +14,7 @@
 <table class="table table-striped">
     <thead>
         <tr>
+            <th>User ID</th>
             <th>Username</th>
             <th>Projects</th>
             <th>Valid</th>
@@ -21,6 +22,7 @@
     </thead>
     <tbody data-bind="foreach: filteredWikiusers">
         <tr>
+            <td><span data-bind="text: userid"></span></td>
             <td><span data-bind="text: username"></span></td>
             <td><span data-bind="text: project, attr: {title: projectTitle}"></span></td>
             <td><span data-bind="text: valid, attr: {title: validTitle}"></span></td>

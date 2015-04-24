@@ -52,12 +52,12 @@
         <label class="control-label">OR</label>
     </div>
     <div class="control-group">
-        <label for="paste_username" class="control-label" title="See below for format information"><strong>Paste Usernames</strong></label>
+        <label for="paste_ids_or_names" class="control-label" title="See below for format information"><strong>Paste User Names or IDs</strong></label>
         <div class="controls">
-            <textarea name="paste_username" id="paste_username"
+            <textarea name="paste_ids_or_names" id="paste_ids_or_names"
                       rows="4"
-                      cols="50">{{form.paste_username.data or ''}}</textarea>
-            {{ validation.messages(form.paste_username) }}
+                      cols="50">{{form.paste_ids_or_names.data or ''}}</textarea>
+            {{ validation.messages(form.paste_ids_or_names) }}
         </div>
     </div>
 

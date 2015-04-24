@@ -8,7 +8,7 @@ from wikimetrics.forms.cohort_upload import (
     format_records,
     parse_username,
     normalize_newlines,
-    parse_textarea_usernames,
+    parse_textarea_ids_or_names,
 )
 
 
@@ -47,9 +47,9 @@ class CohortsControllerTest(unittest.TestCase):
         assert_equal(lines[3], 'blahblah1')
         assert_equal(lines[4], 'blahblah2')
 
-    def test_parse_textarea_usernames(self):
+    def test_parse_textarea_ids_or_names(self):
         unparsed = 'dan,en\rv\n,\r\nsomething with spaces'
-        parsed = parse_textarea_usernames(unparsed)
+        parsed = parse_textarea_ids_or_names(unparsed)
         assert_equal(parsed[0], 'dan,en')
         assert_equal(parsed[1], 'v')
         assert_equal(parsed[2], ',')
@@ -58,7 +58,7 @@ class CohortsControllerTest(unittest.TestCase):
         # needs to deal with unicode types as that is what this
         # method will get from flask
         unparsed = u'تيسير سامى سلامة,en\rv\n,\r\nsomething with spaces'
-        parsed = parse_textarea_usernames(unparsed)
+        parsed = parse_textarea_ids_or_names(unparsed)
         username = parsed[0]
         # username will be just plain bytes, convert to unicode
         # to be able to compare
@@ -74,9 +74,9 @@ class CohortsControllerTest(unittest.TestCase):
             None
         )
         assert_equal(len(parsed), 3)
-        assert_equal(parsed[0]['username'], 'Dan')
+        assert_equal(parsed[0]['raw_id_or_name'], 'Dan')
         assert_equal(parsed[0]['project'], 'wiki')
-        assert_equal(parsed[1]['username'], 'V')
+        assert_equal(parsed[1]['raw_id_or_name'], 'V')
         assert_equal(parsed[1]['project'], 'wiki')
 
     def test_format_records_without_project(self):
@@ -85,9 +85,9 @@ class CohortsControllerTest(unittest.TestCase):
             'wiki'
         )
         assert_equal(len(parsed), 2)
-        assert_equal(parsed[0]['username'], 'Dan')
+        assert_equal(parsed[0]['raw_id_or_name'], 'Dan')
         assert_equal(parsed[0]['project'], 'wiki')
-        assert_equal(parsed[1]['username'], 'V')
+        assert_equal(parsed[1]['raw_id_or_name'], 'V')
         assert_equal(parsed[1]['project'], 'wiki')
 
     def test_format_records_with_shorthand_project(self):
@@ -96,7 +96,7 @@ class CohortsControllerTest(unittest.TestCase):
             None
         )
         assert_equal(len(parsed), 1)
-        assert_equal(parsed[0]['username'], 'Dan')
+        assert_equal(parsed[0]['raw_id_or_name'], 'Dan')
         assert_equal(parsed[0]['project'], 'en')
 
     def test_format_records_with_utf8(self):
@@ -110,7 +110,7 @@ class CohortsControllerTest(unittest.TestCase):
             None
         )
         assert_equal(len(parsed), 1)
-        assert_equal(parsed[0]['username'], u'Kán'.encode("utf-8"))
+        assert_equal(parsed[0]['raw_id_or_name'], u'Kán'.encode("utf-8"))
         assert_equal(parsed[0]['project'], 'en')
 
     def test_format_records_with_spaces_in_project(self):
@@ -119,5 +119,5 @@ class CohortsControllerTest(unittest.TestCase):
             None
         )
         assert_equal(len(parsed), 1)
-        assert_equal(parsed[0]['username'], 'Dan')
+        assert_equal(parsed[0]['raw_id_or_name'], 'Dan')
         assert_equal(parsed[0]['project'], 'en')
