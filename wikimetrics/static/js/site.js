@@ -130,6 +130,7 @@ var site = {
                     data.reports.forEach(function(report){
                         report.public = ko.observable(report.public);
                         report.success = report.status === 'SUCCESS';
+                        report.failure = report.status === 'FAILURE';
                         report.publicResult = report.recurrent ?
                             '/static/public/' + report.id + '/full_report.json' :
                             '/static/public/' + report.id + '.json';

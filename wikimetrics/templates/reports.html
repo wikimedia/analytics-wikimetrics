@@ -60,9 +60,10 @@
                     'text-info': !success
                 }, attr: {'title': error_message}"></span>
             </td>
-            <td data-bind="if: success">
+            <td>
+                <!-- ko if: success -->
                 <div class="btn-group">
-                    <button class="btn  dropdown-toggle btn-small" data-toggle="dropdown">
+                    <button class="btn dropdown-toggle btn-small btn-medium-width" data-toggle="dropdown">
                         Get Data
                         &nbsp;&nbsp;
                         <span class="caret"></span>
@@ -77,7 +78,16 @@
                         <!-- /ko -->
                     </ul>
                 </div>
-            </div>
+                <!-- /ko -->
+                <!-- ko if: failure -->
+                <div class="btn-group">
+                    <button type="submit"
+                            data-bind="click: $root.rerun, attr: { title: $root.rerunMessage }"
+                            class="btn btn-small btn-warning btn-medium-width">
+                        Rerun
+                    </button>
+                </div>
+                <!-- /ko -->
             </td>
         </tr>
     </tbody>

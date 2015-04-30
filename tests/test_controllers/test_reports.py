@@ -3,7 +3,7 @@ import celery
 import time
 import unittest
 import os.path
-from mock import Mock, MagicMock
+from mock import Mock, MagicMock, patch
 from contextlib import contextmanager
 from flask import appcontext_pushed, g
 from nose.tools import assert_true, assert_equal, assert_false, raises
@@ -607,6 +607,18 @@ class ReportsControllerTest(ControllerAsyncTest):
         self.client.post('/reports/create/', data=dict(
             responses=json_to_post
         ))
+
+    @patch('wikimetrics.models.RunReport.rerun')
+    def test_rerun_report(self, rerun_mock):
+        report = (
+            self.session.query(ReportStore)
+            .filter(ReportStore.status == celery.states.SUCCESS)
+            .first()
+        )
+        response = self.client.post('/reports/rerun/%d' % report.id)
+        rerun_mock.assert_called_with(report)
+        data = json.loads(response.data)
+        assert_equal(data['message'], 'Report scheduled for rerun')
 
 
 class MultiProjectTests(ControllerAsyncTest):

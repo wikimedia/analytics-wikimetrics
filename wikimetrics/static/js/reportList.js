@@ -1,4 +1,5 @@
 $(document).ready(function(){
+
     var viewModel = {
         reports: ko.observableArray([]),
 
@@ -25,7 +26,26 @@ $(document).ready(function(){
                     });
             }
             return true;
-        }
+        },
+
+        rerun: function(report, event) {
+            if (site.confirmDanger(event, true)) {
+                $.post('/reports/rerun/' + report.id)
+                    .done(site.handleWith(function(){
+                        getReports(true);
+                    }))
+                    .fail(function() {
+                        site.showError('Failed to rerun the report', true);
+                    });
+            }
+        },
+
+        rerunMessage: (
+            'rerun this report?\n\n' +
+            'If you just have rerun this report and still got a failure, ' +
+            'consider waiting some time before reruning it again; ' +
+            'the problems may be external to wikimetrics. Thanks!'
+        ),
     };
 
     viewModel.reports_sorted = ko.computed(function() {

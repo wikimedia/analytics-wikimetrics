@@ -4,6 +4,7 @@ from sqlalchemy import func
 from nose.tools import assert_equals, assert_true, raises
 from mock import patch
 from celery.exceptions import SoftTimeLimitExceeded
+from celery import states
 
 from tests.fixtures import QueueDatabaseTest, DatabaseTest
 from wikimetrics.api import ReplicationLagService
@@ -193,6 +194,16 @@ class RunReportClassMethodsTest(DatabaseTest):
             self.reports[3], self.session, no_more_than=self.no_more_than
         ))
         assert_equals(len(new_runs), self.no_more_than)
+
+    def test_rerun(self):
+        def count_report_stores():
+            return len(self.session.query(ReportStore).all())
+
+        prev_report_count = count_report_stores()
+        result = RunReport.rerun(self.reports[0]).get()
+        assert_equals(type(result), dict)
+        next_report_count = count_report_stores()
+        assert_equals(prev_report_count, next_report_count)
 
 
 class RunReportTest(QueueDatabaseTest):

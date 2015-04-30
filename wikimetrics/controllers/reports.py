@@ -421,6 +421,14 @@ def add_user_names_to_json(json_result, user_names):
     return json_with_names
 
 
+@app.route('/reports/rerun/<int:report_id>', methods=['POST'])
+def rerun_report(report_id):
+    session = db.get_session()
+    report = session.query(ReportStore).get(report_id)
+    RunReport.rerun(report)
+    return json_response(message='Report scheduled for rerun')
+
+
 #@app.route('/reports/kill/<result_key>')
 #def report_kill(result_key):
     #return 'not implemented'

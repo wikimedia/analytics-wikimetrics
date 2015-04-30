@@ -35,7 +35,12 @@ class RunReport(ReportNode):
 
     show_in_ui = True
 
-    def __init__(self, parameters, user_id=0, recurrent_parent_id=None, created=None):
+    def __init__(self,
+                 parameters,
+                 user_id=0,
+                 recurrent_parent_id=None,
+                 created=None,
+                 persistent_id=None):
         """
         Parameters:
             parameters          : dictionary containing the following required keys:
@@ -92,6 +97,7 @@ class RunReport(ReportNode):
             recurrent_parent_id=recurrent_parent_id,
             created=created,
             store=True,
+            persistent_id=persistent_id
         )
 
         self.recurrent_parent_id = recurrent_parent_id
@@ -249,3 +255,18 @@ class RunReport(ReportNode):
             raise Exception('More reports ran than were supposed to')
 
         return sorted(missed_days)
+
+    @classmethod
+    def rerun(cls, report):
+        """
+        Create an instance of RunReport from an existing ReportStore, and run it.
+        The persistent_id is passed to the constructor so that the existing
+        ReportStore is used instead of creating a new one.
+        """
+        rerun = RunReport(
+            json.loads(report.parameters),
+            user_id=report.user_id,
+            persistent_id=report.id
+        )
+        rerun.set_status(celery.states.PENDING)
+        return rerun.task.delay(rerun)

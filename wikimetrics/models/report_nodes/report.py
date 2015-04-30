@@ -76,7 +76,8 @@ class Report(object):
                  recurrent=False,
                  recurrent_parent_id=None,
                  created=None,
-                 store=False):
+                 store=False,
+                 persistent_id=None):
         
         if children is None:
             children = []
@@ -96,10 +97,10 @@ class Report(object):
         self.children = children
         self.public = public
         self.store = store
-        self.persistent_id = None
+        self.persistent_id = persistent_id
         self.created = None
 
-        if self.store is True:
+        if self.store is True and self.persistent_id is None:
             # store report to database
             # note that queue_result_key is always empty at this stage
             pj = ReportStore(user_id=self.user_id,
@@ -123,7 +124,7 @@ class Report(object):
                 raise
     
     def __repr__(self):
-        if self.store:
+        if self.persistent_id is not None:
             persistent_id = self.persistent_id
         else:
             persistent_id = 'no persistent id'
