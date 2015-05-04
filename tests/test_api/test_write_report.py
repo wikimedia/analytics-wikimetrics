@@ -23,6 +23,7 @@ class WriteReportTaskTest(unittest.TestCase):
         file_manager.remove_file = Mock()
         file_manager.get_public_report_path = MagicMock(return_value=self.fake_path)
         file_manager.coalesce_recurrent_reports = MagicMock(return_value=self.results)
+        file_manager.remove_old_report_files = MagicMock()
         self.file_manager = file_manager
     
     def test_happy_case(self):
@@ -37,6 +38,7 @@ class WriteReportTaskTest(unittest.TestCase):
         assert_equals(self.file_manager.write_data.call_count, 2)
         assert_equals(self.file_manager.get_public_report_path.call_count, 1)
         assert_equals(self.file_manager.coalesce_recurrent_reports.call_count, 1)
+        assert_equals(self.file_manager.remove_old_report_files.call_count, 1)
         self.file_manager.write_data.assert_called_with(concatenated_report_filepath,
                                                         json_string(self.results))
     

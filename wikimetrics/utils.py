@@ -35,6 +35,10 @@ def format_date_for_public_report_file(date_object):
     return date_object.strftime(PUBLIC_REPORT_FILE)
 
 
+def parse_date_from_public_report_file(date_string):
+    return datetime.strptime(date_string, PUBLIC_REPORT_FILE).date()
+
+
 def parse_pretty_date(date_string):
     return datetime.strptime(date_string, PRETTY_TIMESTAMP)
 

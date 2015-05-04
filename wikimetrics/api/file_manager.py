@@ -4,8 +4,9 @@ import json
 import shutil
 import collections
 
+from datetime import timedelta
 from wikimetrics.exceptions import PublicReportIOError
-from wikimetrics.utils import update_dict
+from wikimetrics.utils import update_dict, parse_date_from_public_report_file, today
 from wikimetrics.enums import Aggregation, TimeseriesChoices
 # TODO ultils imports flask response -> fix
 
@@ -156,6 +157,26 @@ class PublicReportFileManager():
             self.logger.exception(msg)
             raise PublicReportIOError(msg)
 
+    def remove_old_report_files(self, report_id, days_ago=10):
+        """
+        Removes the individual (single-day) report files from the report folder
+        that are older than 'days_ago'. The full report file will be left intact.
+        """
+        limit_day = today() - timedelta(days=days_ago)
+
+        path = self.get_public_report_path(report_id, recurrent=True)
+        if not os.path.isdir(path):
+            msg = '"{0}" is not a scheduled report'.format(path)
+            self.logger.exception(msg)
+            raise PublicReportIOError(msg)
+
+        for filename in os.listdir(path):
+            if filename != COALESCED_REPORT_FILE:
+                file_date = parse_date_from_public_report_file(filename)
+                if file_date <= limit_day:
+                    full_path = os.sep.join((path, filename))
+                    self.remove_file(full_path)
+
     def coalesce_recurrent_reports(self, report_id):
         """
         Coalesces a series of recurrent, public reports into a single JSON
@@ -177,9 +198,16 @@ class PublicReportFileManager():
                 self.logger.exception(msg)
                 raise PublicReportIOError(msg)
 
-            for f in os.listdir(path):
+            # Get a list of filenames with COALESCED_REPORT_FILE at 1st position,
+            # so that new individual reports override the current full report.
+            filenames = os.listdir(path)
+            if COALESCED_REPORT_FILE in filenames:
+                filenames.remove(COALESCED_REPORT_FILE)
+                filenames.insert(0, COALESCED_REPORT_FILE)
+
+            for f in filenames:
                 full_path = os.sep.join((path, f))
-                if os.path.isfile(full_path) and f != COALESCED_REPORT_FILE:
+                if os.path.isfile(full_path):
                     with open(full_path, 'r') as saved_report:
                         try:
                             data = json.load(saved_report)
@@ -217,23 +245,21 @@ def _merge_run(coalesced, data):
         date = data['parameters']['Metric_end_date']
         for aggregate in data['result']:
             if aggregate == Aggregation.IND:
-                # shape the data so it all looks like timeseries
-                data['result'][aggregate] = {
-                    user: {
-                        submetric: {
-                            date: data['result'][aggregate][user][submetric]
-                        }
-                        for submetric in data['result'][aggregate][user]
-                    }
-                    for user in data['result'][aggregate]
-                }
+                for user in data['result'][aggregate]:
+                    for submetric in data['result'][aggregate][user]:
+                        t = type(data['result'][aggregate][user][submetric])
+                        if t != dict:  # If it is not already a timeseries
+                            # Shape the data so it all looks like timeseries
+                            data['result'][aggregate][user][submetric] = {
+                                date: data['result'][aggregate][user][submetric]
+                            }
             else:
-                # shape the data so it all looks like timeseries
-                data['result'][aggregate] = {
-                    submetric: {
-                        date: data['result'][aggregate][submetric]
-                    }
-                    for submetric in data['result'][aggregate]
-                }
+                for submetric in data['result'][aggregate]:
+                    t = type(data['result'][aggregate][submetric])
+                    if t != dict:  # If it is not already a timeseries
+                        # Shape the data so it all looks like timeseries
+                        data['result'][aggregate][submetric] = {
+                            date: data['result'][aggregate][submetric]
+                        }
 
     update_dict(coalesced['result'], data['result'])

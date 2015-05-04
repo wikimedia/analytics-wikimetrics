@@ -74,6 +74,7 @@ class WriteReportTask(object):
             # TODO kind of cumbersome api on file_manager, look into simplifying
             self.file_manager.write_data(self.filepath, self.results)
             self.create_coalesced_report()
+            self.file_manager.remove_old_report_files(self.report_id)
         except SoftTimeLimitExceeded:
             task_logger.error('timeout exceeded for {0}'.format(
                 current_task.request.id
