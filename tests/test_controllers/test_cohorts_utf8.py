@@ -31,3 +31,21 @@ class CohortsControllerUTF8Test(WebTest):
         self.session.commit()
         t = self.session.query(TagStore).filter(TagStore.name == parsed_tag).first()
         assert_true(t is not None)
+
+    def test_upload_cohort_with_utf8_description(self):
+        '''
+        Uploading cohorts with utf-8 characters in the description
+        should not break cohort list request. Please, see encoding
+        on the 1st line of this file.
+        '''
+        description = '18Наталь'
+        response = self.app.post('/cohorts/upload', data=dict(
+            name='utf8 description cohort',
+            description=description,
+            project='wiki',
+            paste_ids_or_names='actual validation tested elsewhere',
+            validate_as_user_ids='True',
+        ))
+        response = self.app.get('/cohorts/list?include_invalid=true',
+                                follow_redirects=True)
+        assert_true(description in response.data)

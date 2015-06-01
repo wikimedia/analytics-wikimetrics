@@ -1,6 +1,7 @@
 import itertools
 from operator import itemgetter
 from sqlalchemy import Column, Integer, Boolean, DateTime, String, func
+from sqlalchemy.dialects.mysql import VARBINARY
 
 from wikimetrics.exceptions import Unauthorized
 from wikimetrics.configurables import db
@@ -27,7 +28,7 @@ class CohortStore(db.WikimetricsBase):
     class_name              = Column(String(50), default='FixedCohort', nullable=False)
     id                      = Column(Integer, primary_key=True)
     name                    = Column(String(50))
-    description             = Column(String(254))
+    description             = Column(VARBINARY(254))
     default_project         = Column(String(50))
     created                 = Column(DateTime, default=func.now())
     changed                 = Column(DateTime)

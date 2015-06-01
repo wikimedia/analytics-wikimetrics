@@ -63,7 +63,7 @@ class ValidateCohort(object):
         """
         cohort = CohortStore(
             name=cohort_upload.name.data,
-            description=cohort_upload.description.data,
+            description=cohort_upload.description.data.encode('utf-8'),
             default_project=cohort_upload.project.data,
             enabled=True,
             public=False,
