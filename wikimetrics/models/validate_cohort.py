@@ -61,9 +61,13 @@ class ValidateCohort(object):
         Returns:
             An instance of ValidateCohort
         """
+        cohort_description = cohort_upload.description.data
+        if cohort_description is not None:
+            cohort_description = cohort_description.encode('utf-8')
+
         cohort = CohortStore(
             name=cohort_upload.name.data,
-            description=cohort_upload.description.data.encode('utf-8'),
+            description=cohort_description,
             default_project=cohort_upload.project.data,
             enabled=True,
             public=False,

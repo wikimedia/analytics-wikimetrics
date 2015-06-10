@@ -91,6 +91,11 @@ def reports_request():
             parameters['recurrent'] = recurrent
             # NOTE: this is not a mistake.  Currently recurrent => public on creation
             parameters['public'] = recurrent
+            # Encode cohort description for the case it contains special characters
+            if ('description' in parameters['cohort'] and
+                    parameters['cohort']['description'] is not None):
+                encoded_description = parameters['cohort']['description'].encode('utf-8')
+                parameters['cohort']['description'] = encoded_description
             jr = RunReport(parameters, user_id=current_user.id)
             jr.task.delay(jr)
 
