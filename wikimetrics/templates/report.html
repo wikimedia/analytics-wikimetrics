@@ -6,19 +6,19 @@
 <label class="checkbox">
     <p><input type="checkbox"  data-bind="checked: request().recurrent"/>
     Make this a <b>Public Scheduled </b> Report.  This means that
-	it will run daily and compute results for each day it runs.
-	<p>
+    it will run daily and compute results for each day it runs.
+    <p>
     <p><small>Checking this box makes the results of this report <b>publicly</b> accessible.
-	There will be no way to stop the report once it starts.  When using this feature,
-	 make sure you understand these caveats or contact
-	 <a href mailto=wikimetrics@lists.wikimedia.org> wikimetrics@lists.wikimedia.org</a> for help.
+    There will be no way to stop the report once it starts.  When using this feature,
+     make sure you understand these caveats or contact
+     <a href mailto=wikimetrics@lists.wikimedia.org> wikimetrics@lists.wikimedia.org</a> for help.
  </small>
  </p>
 </label>
 </div>
 <div class="well well-small pick-cohorts">
     <div class="form-inline">
-        	<label class="control-label"> <h4>Pick Cohorts</h4> </label> &nbsp;
+            <label class="control-label"> <h4>Pick Cohorts</h4> </label> &nbsp;
             <input type="text"  placeholder="type to filter" data-bind="value: filter, valueUpdate:'afterkeydown'"/>
     </div>
     <div class="cohorts">
@@ -32,14 +32,83 @@
         </ul>
     </div>
 </div>
-<div class="well well-small pick-timezone">
-    <div class="form-inline">
-        <label class="control-label"> <h4>Pick Timezone</h4> </label> &nbsp;
-        <select data-bind="options: availableTimezones,
-             optionsText: function (item) {
-                 return item.value + ' ' + item.name;
-             },
-             value:timezone"></select>
+<div class="well well-small pick-defaults">
+    <h4>Pick Defaults</h4>
+
+    <p>For reports with multiple metrics, set defaults for common parameters here.
+    Leave a field blank to use the metric's defaults instead.</p>
+
+    <br/>
+    <div class="form-horizontal">
+        <div class="control-group">
+            <label for="default_timezone" class="control-label">Timezone</label>
+            <div class="controls">
+                <select name="default_timezone" id="default_timezone"
+                        data-bind="
+                            options: availableTimezones,
+                            optionsText: function (item) {
+                                return item.value + ' ' + item.name;
+                            },
+                            value: timezone"></select>
+            </div>
+        </div>
+
+        <!-- ko ifnot: $root.request().recurrent -->
+
+        <div class="control-group">
+            <label class="control-label" for="default_start_date">Start Date</label>
+            <div class="controls">
+                <div data-bind="datetimepicker: {
+                                    timezone: timezone,
+                                    value: defaults.start_date,
+                                    inputId: 'default_start_date'
+                                }">
+                </div>
+            </div>
+        </div>
+
+        <div class="control-group">
+            <label class="control-label" for="default_end_date">End Date / As of Date</label>
+            <div class="controls">
+                <div data-bind="datetimepicker: {
+                                    timezone: timezone,
+                                    value: defaults.end_date,
+                                    inputId: 'default_end_date'
+                                }">
+                </div>
+            </div>
+        </div>
+
+        <div class="control-group">
+            <label class="control-label" for="default_timeseries">Time Series by</label>
+            <div class="controls" title="Report results by year, month, day, or hour">
+                <select data-bind="value: defaults.timeseries"
+                        id="default_timeseries" name="default_timeseries">
+                    <option selected="" value="">(use metric default)</option>
+                    <option value="none">none</option>
+                    <option value="hour">hour</option>
+                    <option value="day">day</option>
+                    <option value="month">month</option>
+                    <option value="year">year</option>
+                </select>
+            </div>
+        </div>
+
+        <div class="control-group">
+            <label class="control-label" for="default_rolling_days">Rolling Days</label>
+            <div class="controls">
+                    <input data-bind="value: defaults.rolling_days" id="default_rolling_days" name="default_rolling_days" type="text">
+            </div>
+        </div>
+
+        <div class="control-group">
+            <label class="control-label" for="default_include_deleted">Include Deleted</label>
+            <div class="controls" title="Count revisions made on deleted pages">
+                    <input checked="" data-bind="checked: defaults.include_deleted" id="default_include_deleted" name="default_include_deleted" type="checkbox" value="y">
+            </div>
+        </div>
+
+        <!-- /ko -->
     </div>
 </div>
 <div class="well well-small pick-metrics">
@@ -58,7 +127,12 @@
                     <span data-bind="text: description">
                     </span>
                 </label>
-                <div class="configure-metric-form" data-bind="metricConfigurationForm: configure, attr: {id: tabId() + '-configure'}">
+                <div class="configure-metric-form"
+                     data-bind="metricConfigurationForm: {
+                                    content: configure,
+                                    defaults: $root.defaults
+                                },
+                                attr: {id: tabId() + '-configure'}">
                 </div>
             </div>
         </div>

@@ -1,4 +1,4 @@
-{% import 'forms/field_validation.html' as validation %}<form class="form-horizontal metric-configuration" method="POST" action="{{action}}" data-bind="submit: $root.saveMetricConfiguration">
+{% import 'forms/field_validation.html' as validation %}<form class="form-horizontal metric-configuration" method="POST" action="{{action}}" data-bind="submit: $root.validateMetricConfiguration">
     {% for f in form %}
     {% if f.name != 'csrf_token' %}
     <div class="control-group"
@@ -12,12 +12,19 @@
                 {% elif f.type == 'DateField' %}
                     {{ f(**{'type':'date', 'data-bind':'value: '+f.name}) }}
                 {% elif f.type == 'BetterDateTimeField' %}
-                    <div class="input-append date datetimepicker" title="{{f.description}}">
-                        {{ f(**{'type':'text', 'data-bind':'value: '+f.name, 'data-format':'yyyy-MM-dd hh:mm:ss'}) }}
-                        <span class="add-on">
-                            <i data-time-icon="icon-time" data-date-icon="icon-calendar">
-                            </i>
-                        </span>
+
+                    {# The name and data-value attributes are needed so the
+                        metric configurator binding can extract observables
+                    #}
+                    <div title="{{f.description}}" class="datetimepicker"
+                         name="{{f.name}}"
+                         data-value="{{f.data}}"
+                         data-bind="datetimepicker: {
+                             timezone: $root.timezone,
+                             value: {{f.name}},
+                             inputId: '{{f.name}}',
+                             defaultDate: '{{f.data}}'
+                         }">
                     </div>
                 {% else %}
                     {{ f(**{'data-bind':'value: '+f.name}) }}
