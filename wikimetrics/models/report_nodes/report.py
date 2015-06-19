@@ -106,7 +106,7 @@ class Report(object):
             pj = ReportStore(user_id=self.user_id,
                              status=self.status,
                              show_in_ui=self.show_in_ui,
-                             parameters=stringify(parameters),
+                             parameters=stringify(parameters).encode('utf-8'),
                              public=self.public,
                              recurrent=recurrent,
                              recurrent_parent_id=recurrent_parent_id,

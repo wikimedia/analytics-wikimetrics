@@ -5,6 +5,7 @@ from sqlalchemy.orm import Session
 from sqlalchemy.schema import UniqueConstraint, Index
 from sqlalchemy.sql.expression import and_
 from sqlalchemy.exc import SQLAlchemyError
+from sqlalchemy.dialects.mysql import VARBINARY
 from wikimetrics.configurables import db, app
 from wikimetrics.exceptions import UnauthorizedReportAccessError, PublicReportIOError
 
@@ -25,7 +26,7 @@ class ReportStore(db.WikimetricsBase):
     status = Column(String(50))
     name = Column(String(2000))
     show_in_ui = Column(Boolean)
-    parameters = Column(String(4000))
+    parameters = Column(VARBINARY(4000))
     public = Column(Boolean)
     recurrent = Column(Boolean, default=False, nullable=False)
     recurrent_parent_id = Column(Integer, ForeignKey('report.id'))
