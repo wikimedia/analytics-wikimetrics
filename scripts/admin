@@ -7,8 +7,6 @@ import json
 import traceback
 from datetime import datetime
 
-from wikimetrics.utils import stringify
-
 
 WIKIMETRICS_BOT_NAME = 'WikimetricsBot'
 PROJECT_FILE = re.compile(r'^(.*)\.json')
@@ -30,6 +28,7 @@ def description(name, length):
 def get_wikis_we_care_about(limit_to=None):
     """
     Queries site matrix and filters all wikis that aren't private
+    Also manually adds any aggregations that are known to exist
 
     Parameters
         limit_to  : limit output to wikis found in this set (default all wikis)
@@ -109,6 +108,12 @@ def get_wikis_we_care_about(limit_to=None):
         }
         if sites:
             length = len(sites)
+
+            # manually add the overall aggregate
+            if name == 'All Languages':
+                sites['totals'] = 'all'
+                length = length + 1
+
             languages.append({
                 'name': name,
                 'shortName': code,
@@ -134,6 +139,22 @@ def get_wikis_we_care_about(limit_to=None):
                     'project': project
                 }
 
+    # manually add the overall aggregate
+    projects['totals'] = {
+        'languages': {
+            'All Languages': 'all'
+        },
+        'count': 1,
+        'name': 'totals',
+        'description': [
+            '1 language'
+        ]
+    }
+    reverse['all'] = {
+        'language': 'All Languages',
+        'project': 'totals'
+    }
+
     return {
         'languages': languages,
         'projects': [v for k, v in projects.items()],
@@ -152,6 +173,7 @@ def get_wikis_we_care_about(limit_to=None):
             'wikiversity': 'Wikiversity',
             'wikivoyage': 'Wikivoyage',
             'wiktionary': 'Wiktionary',
+            'totals': 'Totals',
         },
     }
 
@@ -261,13 +283,13 @@ def make_dashiki_configs(args):
     if args.both or args.wikis_only:
         projects = get_wikis_we_care_about(limit_to=scheduled_projects)
         with open(projects_file, 'w') as projects_writer:
-            projects_writer.write(stringify(projects))
+            json.dump(projects, projects_writer, indent=4)
             print('... {} written'.format(projects_file))
 
     if args.both or args.metrics_only:
         metrics = get_metrics_by_category(limit_to=scheduled_metrics)
         with open(metrics_file, 'w') as metrics_writer:
-            metrics_writer.write(stringify(metrics))
+            json.dump(metrics, metrics_writer, indent=4)
             print('... {} written'.format(metrics_file))
 
 
