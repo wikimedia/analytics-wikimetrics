@@ -8,7 +8,7 @@ from setuptools import setup
 from pip.req import parse_requirements
 
 # parse_requirements() returns generator of pip.req.InstallRequirement objects
-INSTALL_REQS = parse_requirements('requirements.txt')
+INSTALL_REQS = parse_requirements('requirements.txt', session=False)
 
 # REQS is a list of requirement
 # e.g. ['flask==0.9', 'sqlalchemye==0.8.1']
