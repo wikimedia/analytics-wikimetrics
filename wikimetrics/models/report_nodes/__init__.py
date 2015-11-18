@@ -1,6 +1,7 @@
 from aggregate_report import *
 from metric_report import *
 from multi_project_metric_report import *
+from sum_aggregate_by_user_report import *
 from report import *
 from run_report import *
 
