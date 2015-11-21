@@ -51,8 +51,7 @@ $(document).ready(function(){
         });
     }
 
-    var utcTimezone = {name: 'UTC', value: '+00:00'},
-        viewModel = {
+    var viewModel = {
 
         filter: ko.observable(''),
         cohorts: ko.observableArray([]),
@@ -69,20 +68,9 @@ $(document).ready(function(){
             return true;
         },
 
-        // Add more timezones as necessary
-        availableTimezones : ko.observableArray([
-            {name: 'Central European Time', value: '+01:00'},
-            {name: 'Eastern European Time', value: '+02:00'},
-            {name: 'East Australian Standard Time', value: '+10:00'},
-            utcTimezone,
-            {name: 'Atlantic Standard Time', value: '-04:00'},
-            {name: 'Eastern Standard Time', value: '-05:00'},
-            {name: 'Central Standard Time', value: '-06:00'},
-            {name: 'Mountain Standard Time', value: '-07:00'},
-            {name: 'Pacific Standard Time', value: '-08:00'},
-            {name: 'Hawaii Standard Time', value: '-10:00'}
-        ]),
-        timezone: ko.observable(utcTimezone),
+        // Timezone list and defaults
+        availableTimezones : ko.observableArray(site.availableTimezones()),
+        timezone: ko.observable(site.utcTimezone),
 
         // global metric defaults, by property
         defaults: {

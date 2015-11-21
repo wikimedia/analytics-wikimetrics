@@ -1,0 +1,66 @@
+{% import 'forms/field_validation.html' as validation %}
+
+<form enctype="multipart/form-data"
+      action="{{url_for('global_reports_request')}}"
+      method="POST"
+      class="upload-cohort form-horizontal">
+
+    {{ form.csrf_token }}
+
+    <div class="navbar-inner">
+        <h3>Launch a global report</h3>
+    </div>
+    <!-- These fields are hidden since the user doesn't have to provide values for them -->
+    <input id="name" name="name" type="hidden" value="{{form.name.data}}"/>
+    <input id="centralauth" name="centralauth" type="hidden" checked value="{{form.centralauth.data}}"/>
+    <input id="project" name="project" type="hidden" value="{{form.project.data or ''}}"/>
+    <input id="validate_as_user_ids" name="validate_as_user_ids" type="hidden" value="{{form.validate_as_user_ids.data}}"/>
+
+    <div class="control-group">
+        <label for="paste_ids_or_names" class="control-label" title="See below for format information"><strong>Paste User Names</strong></label>
+        <div class="controls">
+            <textarea name="paste_ids_or_names" id="paste_ids_or_names"
+                      rows="4"
+                      cols="50">{{form.paste_ids_or_names.data or ''}}</textarea>
+            {{ validation.messages(form.paste_ids_or_names) }}
+        </div>
+    </div>
+
+    <div class="control-group">
+        <label for="timezone" class="control-label">Timezone</label>
+        <div class="controls">
+            <select name="timezone" id="timezone"
+                    data-bind="
+                        options: availableTimezones,
+                        optionsText: function (item) {
+                            return item.value + ' ' + item.name;
+                        },
+                        value: timezone"></select>
+        </div>
+    </div>
+    <div class="control-group">
+        <label class="control-label" for="start_date">Start Date</label>
+        <div class="controls">
+            <div data-bind="datetimepicker: {
+                                timezone: timezone,
+                                value: ko.observable('{{form.start_date.data}}'),
+                                inputId: 'start_date'
+                            }">
+            </div>
+        </div>
+    </div>
+    <div class="control-group">
+        <label class="control-label" for="end_date">End Date / As of Date</label>
+        <div class="controls">
+            <div data-bind="datetimepicker: {
+                                timezone: timezone,
+                                value: ko.observable('{{form.end_date.data}}'),
+                                inputId: 'end_date'
+                            }">
+            </div>
+        </div>
+    </div>
+    <div class="form-actions">
+        <input type="submit" class="btn btn-primary" value="Launch Global Report"/>
+    </div>
+</form>
