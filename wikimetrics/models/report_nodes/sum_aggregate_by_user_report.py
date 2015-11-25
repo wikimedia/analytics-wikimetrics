@@ -13,7 +13,7 @@ __all__ = ['SumAggregateByUserReport']
 class SumAggregateByUserReport(ReportNode):
     """
     A node responsible for aggregating the results of MultiProjectMetricReport
-    by user, and formatting them as expected by RunGlobalReport. It specifically
+    by user, and formatting them as expected by RunProgramMetricsReport. It specifically
     knows how to aggregate rolling active editor and newly registered metrics.
     """
     show_in_ui = False
@@ -43,6 +43,7 @@ class SumAggregateByUserReport(ReportNode):
         # The way of aggregating results accross different projects
         # is applying the OR operator. Read more in the Wikitech docs:
         # https://wikitech.wikimedia.org/wiki/Analytics/Wikimetrics/Global_metrics
+        # (TODO: Rename page to Program_metrics)
         aggregated_results = defaultdict(lambda: defaultdict(lambda: 0))
         for key_str, result in results.iteritems():
             key = WikiUserKey.fromstr(key_str)
@@ -57,4 +58,4 @@ class SumAggregateByUserReport(ReportNode):
                 summed_results[metric_name] += value
 
         # Encapsulate the results to be consistent with other metrics.
-        return {Aggregation.SUM: summed_results}
+        return {Aggregation.SUM: dict(summed_results)}

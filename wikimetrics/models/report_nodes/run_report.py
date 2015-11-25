@@ -18,7 +18,7 @@ from aggregate_report import AggregateReport
 from null_report import NullReport
 from validate_report import ValidateReport
 from metric_report import MetricReport
-from wikimetrics.api import write_report_task, CohortService
+from wikimetrics.api import ReportService, CohortService
 from wikimetrics.utils import stringify
 from wikimetrics.schedules import recurring_reports
 
@@ -145,16 +145,8 @@ class RunReport(ReportNode):
         if self.public is False:
             return
 
-        session = db.get_session()
-        db_report = session.query(ReportStore).get(self.persistent_id)
-
-        data = db_report.get_json_result(results)
-
-        # code below schedules an async task on celery to write the file
-        report_id_to_write = self.persistent_id
-        if self.recurrent_parent_id is not None:
-            report_id_to_write = self.recurrent_parent_id
-        write_report_task.delay(report_id_to_write, self.created, data)
+        rs = ReportService()
+        rs.write_report_to_file(self, results, db.get_session())
 
     # TODO, this method belongs on a different class and it should not be a class method
     @classmethod

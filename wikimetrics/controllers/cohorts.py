@@ -159,7 +159,7 @@ def populate_cohort_validation_status(cohort, db_session, number_of_wikiusers):
 
         if not task_key:
             validation['validation_status'] = 'UNKNOWN'
-            #TODO do these defaults really make sense?
+            # TODO do these defaults really make sense?
             validation['validated_count'] = number_of_wikiusers
             validation['total_count'] = number_of_wikiusers
             validation['valid_count'] = validation['total_count']
@@ -295,69 +295,6 @@ def get_role(session, cohort_id):
         raise DatabaseError('No role found in cohort user.')
 
 
-def delete_viewer_cohort(session, cohort_id):
-    """
-    Used when deleting a user's connection to a cohort. Currently used when user
-    is a VIEWER of a cohort and want to remove that cohort from their list.
-
-    Raises exception when viewer is duplicated, nonexistent, or can not be deleted.
-    """
-    cu = session.query(CohortUserStore) \
-        .filter(CohortUserStore.cohort_id == cohort_id) \
-        .filter(CohortUserStore.user_id == current_user.id) \
-        .filter(CohortUserStore.role == CohortUserRole.VIEWER) \
-        .delete()
-
-    if cu != 1:
-        session.rollback()
-        raise DatabaseError('Viewer attempt delete cohort failed.')
-
-
-def delete_owner_cohort(session, cohort_id):
-    """
-    Deletes the cohort and all associate records with that cohort if user is the
-    owner.
-
-    Raises an error if it cannot delete the cohort.
-    """
-    # Check that there's only one owner and delete it
-    cu = session.query(CohortUserStore) \
-        .filter(CohortUserStore.cohort_id == cohort_id) \
-        .filter(CohortUserStore.role == CohortUserRole.OWNER) \
-        .delete()
-
-    if cu != 1:
-        session.rollback()
-        raise DatabaseError('No owner or multiple owners in cohort.')
-    else:
-        try:
-            # Delete all other non-owners from cohort_user
-            session.query(CohortUserStore) \
-                .filter(CohortUserStore.cohort_id == cohort_id) \
-                .delete()
-            session.query(CohortWikiUserStore) \
-                .filter(CohortWikiUserStore.cohort_id == cohort_id) \
-                .delete()
-
-            session.query(WikiUserStore) \
-                .filter(WikiUserStore.validating_cohort == cohort_id) \
-                .delete()
-
-            # Delete tags related to the cohort
-            session.query(CohortTagStore) \
-                .filter(CohortTagStore.cohort_id == cohort_id) \
-                .delete()
-
-            c = session.query(CohortStore) \
-                .filter(CohortStore.id == cohort_id) \
-                .delete()
-            if c < 1:
-                raise DatabaseError
-        except DatabaseError:
-            session.rollback()
-            raise DatabaseError('Owner attempt to delete a cohort failed.')
-
-
 @app.route('/cohorts/delete/<int:cohort_id>', methods=['POST'])
 def delete_cohort(cohort_id):
     """
@@ -373,13 +310,13 @@ def delete_cohort(cohort_id):
         # Owner wants to delete, no other viewers or
         # Owner wants to delete, have other viewers, delete from other viewer's lists too
         if owner_and_viewers >= 1 and role == CohortUserRole.OWNER:
-            delete_owner_cohort(session, cohort_id)
+            g.cohort_service.delete_owner_cohort(session, cohort_id)
             session.commit()
             return json_redirect(url_for('cohorts_index'))
 
         # Viewer wants to delete cohort from their list, doesn't delete cohort from db;l,
         elif owner_and_viewers > 1 and role == CohortUserRole.VIEWER:
-            delete_viewer_cohort(session, cohort_id)
+            g.cohort_service.delete_viewer_cohort(session, current_user.id, cohort_id)
             session.commit()
             return json_redirect(url_for('cohorts_index'))
 

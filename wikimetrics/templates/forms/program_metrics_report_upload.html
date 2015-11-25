@@ -1,14 +1,14 @@
 {% import 'forms/field_validation.html' as validation %}
 
 <form enctype="multipart/form-data"
-      action="{{url_for('global_reports_request')}}"
+      action="{{url_for('program_metrics_reports_request')}}"
       method="POST"
       class="upload-cohort form-horizontal">
 
     {{ form.csrf_token }}
 
     <div class="navbar-inner">
-        <h3>Launch a global report</h3>
+        <h3>Launch a Program Global Metrics report</h3>
     </div>
     <!-- These fields are hidden since the user doesn't have to provide values for them -->
     <input id="name" name="name" type="hidden" value="{{form.name.data}}"/>
@@ -61,6 +61,6 @@
         </div>
     </div>
     <div class="form-actions">
-        <input type="submit" class="btn btn-primary" value="Launch Global Report"/>
+        <input type="submit" class="btn btn-primary" value="Launch Program Global Metrics Report"/>
     </div>
 </form>

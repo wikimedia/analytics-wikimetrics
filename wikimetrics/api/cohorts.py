@@ -1,5 +1,5 @@
 from sqlalchemy.orm.exc import NoResultFound
-from sqlalchemy import func
+from sqlalchemy import func, distinct
 from wikimetrics.configurables import db
 from wikimetrics.exceptions import Unauthorized, InvalidCohort, DatabaseError
 from wikimetrics.models import cohort_classes, ValidatedCohort, WikiCohort
@@ -100,6 +100,16 @@ class CohortService(object):
         """
         db_session = db.get_session()
         return db_session.query(CohortStore).get(cohort.id)
+
+    def fetch_by_id(self, cohort_id):
+        """
+        Fetches a CohortStore object from the database, without checking permissions
+
+        Parameters
+            cohort  : a logical Cohort object
+        """
+        db_session = db.get_session()
+        return db_session.query(CohortStore).get(cohort_id)
 
     def get_cohort_by_name(self, db_session, name):
         """
@@ -276,7 +286,7 @@ class CohortService(object):
             session.add(search)
             session.commit()
 
-    def get_validation_info(self, cohort, session):
+    def get_validation_info(self, cohort, session, unique_users=False):
         """
         Returns
             If the cohort has no validation information, an empty dictionary
@@ -286,6 +296,7 @@ class CohortService(object):
             valid_count         : number of valid users
             total_count         : number of users in the cohort
             not_validated_count : users in the cohort not yet validated at all
+            percentage_valid    : percentage of valid users in the cohort
         """
         if not cohort.has_validation_info:
             # make UI work as little as possible, do not return nulls
@@ -327,8 +338,21 @@ class CohortService(object):
 
         stats['total_count'] = sum(stats.values())
         stats['validated_count'] = stats['valid_count'] + stats['invalid_count']
-
+        stats['percentage_valid'] = (stats['valid_count'] /
+                                     float(stats['total_count']) * 100) \
+            if stats['total_count'] > 0 else 0
+        if unique_users:
+            stats['unique_users'] = self.get_unique_users(cohort, session)
         return stats
+
+    def get_unique_users(self, cohort, session):
+        """
+        Returns:
+            the number of users in this cohort
+        """
+        return session.query(func.count(distinct(WikiUserStore.mediawiki_username))) \
+            .filter(WikiUserStore.validating_cohort == cohort.id) \
+            .one()[0]
 
     def get_membership(self, cohort, session):
         wikiusers = (
@@ -432,3 +456,66 @@ class CohortService(object):
         )
         db_session.add(cohort_tag)
         db_session.commit()
+
+    def delete_owner_cohort(self, db_session, cohort_id):
+        """
+        Deletes the cohort and all associate records with that cohort if user is the
+        owner.
+
+        Raises an error if it cannot delete the cohort.
+        """
+        db_session = db.get_session() if not db_session else db_session
+        # Check that there's only one owner and delete it
+        cu = db_session.query(CohortUserStore) \
+            .filter(CohortUserStore.cohort_id == cohort_id) \
+            .filter(CohortUserStore.role == CohortUserRole.OWNER) \
+            .delete()
+
+        if cu != 1:
+            db_session.rollback()
+            raise DatabaseError('No owner or multiple owners in cohort.')
+        else:
+            try:
+                # Delete all other non-owners from cohort_user
+                db_session.query(CohortUserStore) \
+                    .filter(CohortUserStore.cohort_id == cohort_id) \
+                    .delete()
+                db_session.query(CohortWikiUserStore) \
+                    .filter(CohortWikiUserStore.cohort_id == cohort_id) \
+                    .delete()
+
+                db_session.query(WikiUserStore) \
+                    .filter(WikiUserStore.validating_cohort == cohort_id) \
+                    .delete()
+
+                # Delete tags related to the cohort
+                db_session.query(CohortTagStore) \
+                    .filter(CohortTagStore.cohort_id == cohort_id) \
+                    .delete()
+
+                c = db_session.query(CohortStore) \
+                    .filter(CohortStore.id == cohort_id) \
+                    .delete()
+                if c < 1:
+                    raise DatabaseError
+            except DatabaseError:
+                db_session.rollback()
+                raise DatabaseError('Owner attempt to delete a cohort failed.')
+
+    def delete_viewer_cohort(self, db_session, user_id, cohort_id):
+        """
+        Used when deleting a user's connection to a cohort. Currently used when user
+        is a VIEWER of a cohort and want to remove that cohort from their list.
+
+        Raises exception when viewer is duplicated, nonexistent, or can not be deleted.
+        """
+        db_session = db.get_session() if not db_session else db_session
+        cu = db_session.query(CohortUserStore) \
+            .filter(CohortUserStore.cohort_id == cohort_id) \
+            .filter(CohortUserStore.user_id == user_id) \
+            .filter(CohortUserStore.role == CohortUserRole.VIEWER) \
+            .delete()
+
+        if cu != 1:
+            db_session.rollback()
+            raise DatabaseError('Viewer attempt delete cohort failed.')

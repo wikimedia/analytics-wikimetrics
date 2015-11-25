@@ -2,7 +2,6 @@ import json
 import celery
 import time
 import unittest
-import os.path
 from mock import Mock, MagicMock, patch
 from contextlib import contextmanager
 from flask import appcontext_pushed, g
@@ -19,7 +18,7 @@ from wikimetrics.exceptions import InvalidCohort
 from wikimetrics.controllers.reports import (
     get_celery_task,
 )
-from wikimetrics.configurables import app, get_absolute_path, db, queue
+from wikimetrics.configurables import app, queue
 
 
 @contextmanager
@@ -788,3 +787,56 @@ class BasicTests(unittest.TestCase):
         mock_report = ReportStore()
         failure = mock_report.get_result_safely('')
         assert_equal(failure['failure'], 'result not available')
+
+
+class ProgramMetricsReportControllerTest(ControllerAsyncTest):
+
+    def setUp(self):
+        ControllerAsyncTest.setUp(self)
+
+    def test_report_fails_with_invalid_cohort(self):
+        response = self.client.post('/reports/program-global-metrics', data=dict(
+            name='TestCohort1',
+            project='wiki',
+            centralauth=True,
+            validate_as_user_ids=False,
+            paste_ids_or_names='test-specific-0\ntest-specific-1',
+            start_date='2015-11-01 00:00:00',
+            end_date='2015-11-30 00:00:00',
+        ))
+
+        assert_equal(response.status_code, 302)
+        assert_true(response.data.find('/reports/') >= 0)
+
+        # Wait for the task to get processed
+        time.sleep(3)
+
+        response = self.client.get('/reports/list/')
+        parsed = json.loads(response.data)
+        result_key = parsed['reports'][-1]['result_key']
+        task, report = get_celery_task(result_key)
+        assert_true(task is not None)
+
+    def test_report_create_and_result(self):
+
+        response = self.client.post('/reports/program-global-metrics', data=dict(
+            name='TestCohort2',
+            project='wiki',
+            centralauth=True,
+            validate_as_user_ids=False,
+            paste_ids_or_names='Editor test-specific-0\nEditor test-specific-1',
+            start_date='2015-11-01 00:00:00',
+            end_date='2015-11-30 00:00:00',
+        ))
+
+        assert_equal(response.status_code, 302)
+        assert_true(response.data.find('/reports/') >= 0)
+
+        # Wait for the task to get processed
+        time.sleep(3)
+
+        response = self.client.get('/reports/list/')
+        parsed = json.loads(response.data)
+        result_key = parsed['reports'][-1]['result_key']
+        task, report = get_celery_task(result_key)
+        assert_true(task is not None)

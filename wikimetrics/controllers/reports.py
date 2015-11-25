@@ -4,19 +4,19 @@ from csv import DictWriter
 from StringIO import StringIO
 from sqlalchemy import or_
 from sqlalchemy.orm.exc import NoResultFound
-from flask import render_template, request, redirect, url_for, Response, abort, g
+from flask import render_template, request, redirect, url_for, Response, g, flash
 from flask.ext.login import current_user
-from sqlalchemy.exc import SQLAlchemyError
 from wikimetrics.configurables import app, db
+from wikimetrics.forms import ProgramMetricsForm
 from wikimetrics.models import (
-    Report, RunReport, ReportStore, WikiUserStore, WikiUserKey, TaskErrorStore
+    Report, RunReport, RunProgramMetricsReport, ReportStore,
+    WikiUserKey, TaskErrorStore, ValidateCohort
 )
 from wikimetrics.utils import (
-    json_response, json_error, json_redirect, thirty_days_ago, stringify
+    json_response, json_error, json_redirect, thirty_days_ago
 )
 from wikimetrics.enums import Aggregation, TimeseriesChoices
-from wikimetrics.exceptions import UnauthorizedReportAccessError
-from wikimetrics.api import PublicReportFileManager, CohortService
+from wikimetrics.api import PublicReportFileManager, CohortService, CentralAuthService
 
 
 @app.before_request
@@ -29,8 +29,11 @@ def setup_filemanager():
                     app.logger,
                     app.absolute_path_to_app_root)
         cohort_service = getattr(g, 'cohort_service', None)
+        centralauth_service = getattr(g, 'centralauth_service', None)
         if cohort_service is None:
             g.cohort_service = CohortService()
+        if centralauth_service is None:
+                g.centralauth_service = CentralAuthService()
 
 
 @app.route('/reports/unset-public/<int:report_id>', methods=['POST'])
@@ -127,6 +130,42 @@ def reports_list():
 
     # TODO fix json_response to deal with ReportStore objects
     return json_response(reports=reports)
+
+
+@app.route('/reports/program-global-metrics', methods=['GET', 'POST'])
+def program_metrics_reports_request():
+    """
+    Renders a page that facilitates kicking off a new ProgramMetrics report
+    """
+    form = ProgramMetricsForm()
+
+    if request.method == 'POST':
+        form = ProgramMetricsForm.from_request(request)
+        try:
+            if not form.validate():
+                flash('Please fix validation problems.', 'warning')
+
+            else:
+                form.parse_records()
+                vc = ValidateCohort.from_upload(form, current_user.id)
+                gm = RunProgramMetricsReport(vc.cohort_id,
+                                             form.start_date.data,
+                                             form.end_date.data,
+                                             current_user.id)
+                # Validate the cohort, and on success, call the
+                # RunProgramMetricsReport task. No parameters are passed
+                # from ValidateCohort to the report, so we are using
+                # an immutable task signature in the link param.
+                vc.task.apply_async([vc], link=gm.task.si(gm))
+                return redirect(url_for('reports_index'))
+        except Exception, e:
+            app.logger.exception(str(e))
+            flash('Server error while processing your request', 'error')
+
+    return render_template(
+        'program_metrics_reports.html',
+        form=form,
+    )
 
 
 def get_celery_task(result_key):
@@ -434,22 +473,22 @@ def rerun_report(report_id):
     return json_response(message='Report scheduled for rerun')
 
 
-#@app.route('/reports/kill/<result_key>')
-#def report_kill(result_key):
-    #return 'not implemented'
-    #db_session = db.get_session()
-    #db_report = db_session.query(ReportStore).get(result_key)
-    #if not db_report:
-    #    return json_error('no task exists with id: {0}'.format(result_key))
-    #celery_task = Report.task.AsyncResult(db_report.result_key)
-    #app.logger.debug('revoking task: %s', celery_task.id)
-    #from celery.task.control import revoke
-    #celery_task.revoke()
-    # TODO figure out how to terminate tasks. this throws an error
-    # which I believe is related to https://github.com/celery/celery/issues/1153
-    # and which is fixed by a patch.  however, I can't get things running
-    # with development version
-    #revoke(celery_task.id, terminate=True)
-    #return json_response(status=celery_task.status)
+# @app.route('/reports/kill/<result_key>')
+# def report_kill(result_key):
+#     return 'not implemented'
+#     db_session = db.get_session()
+#     db_report = db_session.query(ReportStore).get(result_key)
+#     if not db_report:
+#        return json_error('no task exists with id: {0}'.format(result_key))
+#     celery_task = Report.task.AsyncResult(db_report.result_key)
+#     app.logger.debug('revoking task: %s', celery_task.id)
+#     from celery.task.control import revoke
+#     celery_task.revoke()
+#     TODO figure out how to terminate tasks. this throws an error
+#     which I believe is related to https://github.com/celery/celery/issues/1153
+#     and which is fixed by a patch.  however, I can't get things running
+#     with development version
+#     revoke(celery_task.id, terminate=True)
+#     return json_response(status=celery_task.status)
 
-########   Internal functions not available via HTTP ################################
+# #######   Internal functions not available via HTTP ################################

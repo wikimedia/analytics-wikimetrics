@@ -168,7 +168,6 @@ class ReportNode(Report):
         """
         self.set_status(celery.states.STARTED, task_id=current_task.request.id)
         results = []
-        
         if self.children:
             try:
                 child_results = [child.run() for child in self.children]
