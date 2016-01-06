@@ -4,7 +4,7 @@ Loads dependencies from requirements.txt and specifies installation details
 #!/usr/bin/env python
 # follow the frog
 
-from setuptools import setup
+from setuptools import setup, find_packages
 from pip.req import parse_requirements
 
 # parse_requirements() returns generator of pip.req.InstallRequirement objects
@@ -20,9 +20,7 @@ setup(
     description='Wikipedia Cohort Analysis Tool',
     url='http://www.github.com/wikimedia/analytics-wikimetrics',
     author='Andrew Otto, Dan Andreescu, Evan Rosen, Stefan Petrea',
-    packages=[
-        'wikimetrics',
-    ],
+    packages=find_packages(),
     install_requires=REQS,
     entry_points={
         'console_scripts': [
