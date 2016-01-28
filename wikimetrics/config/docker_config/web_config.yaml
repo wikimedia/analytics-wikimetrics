@@ -1,0 +1,36 @@
+# Not to worry, these values are not used in production
+# I just include them here so you can get up and running with
+# wikimetrics without too much configuration.  But different
+# SECRET_KEY and GOOGLE_CLIENT_SECRET are in use in production,
+# generated to work with the production URL.
+#
+# Reserved for Puppet to change:
+# PUBLIC_PATH
+#
+SECRET_KEY  : 'sw3lo(*A98ijwl3i3n&&JEK MSL IESKU* WSkl#iIREJSslsijsle ssie'
+DEBUG       : True
+
+GOOGLE_CLIENT_SECRET                : 'zKv0Qg7Zr6L3Q3CaWnIuVX4B'
+GOOGLE_BASE_URL                     : 'https://www.google.com/accounts/'
+GOOGLE_AUTH_URI                     : 'https://accounts.google.com/o/oauth2/auth'
+GOOGLE_TOKEN_URI                    : 'https://accounts.google.com/o/oauth2/token'
+GOOGLE_CLIENT_EMAIL                 : '133082872359@developer.gserviceaccount.com'
+GOOGLE_CLIENT_ID                    : '133082872359.apps.googleusercontent.com'
+GOOGLE_AUTH_PROVIDER_X509_CERT_URL  : 'https://www.googleapis.com/oauth2/v1/certs'
+GOOGLE_AUTH_SCOPE                   : 'https://www.googleapis.com/auth/userinfo.email'
+GOOGLE_USERINFO_URI                 : 'https://www.googleapis.com/oauth2/v1/userinfo'
+GOOGLE_REDIRECT_URI                 : 'http://localhost:5000/auth/google'
+GOOGLE_JAVASCRIPT_ORIGIN            : 'http://localhost:5000'
+
+META_MW_BASE_URL                    : 'https://meta.wikimedia.org/'
+META_MW_BASE_INDEX                  : 'w/index.php'
+META_MW_TOKEN_URI                   : 'w/index.php?title=Special:OAuth/token'
+META_MW_AUTH_URI                    : 'wiki/Special:OAuth/authorize'
+META_MW_USERINFO_URI                : 'w/api.php?action=query&meta=userinfo&format=json'
+META_MW_IDENTIFY_URI                : 'w/index.php?title=Special:OAuth/identify&format=json'
+META_MW_REDIRECT_URI                : 'http://localhost:5000/auth/meta_mw'
+META_MW_CONSUMER_KEY                : 'bad4e459823278bdffb5ecf0a206112d'
+META_MW_CLIENT_SECRET               : 'e312699be56f1d157657727a87ce3776e172501a'
+
+SERVER_HOST                         : 'web'
+SERVER_PORT                         : 5000

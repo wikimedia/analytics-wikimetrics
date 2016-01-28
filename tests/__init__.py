@@ -33,7 +33,7 @@ def setUp():
     # TODO have a more solid setup of celery for development
     #celery_out = open("/tmp/logCelery.txt", "w")
     celery_cmd = ['wikimetrics', '--mode', 'queue',
-                  '--override-config', 'wikimetrics/config/test_config.yaml']
+                  '--override-config', '/srv/wikimetrics/config/test_config.yaml']
     global celery_proc
     celery_proc = Popen(celery_cmd, stdout=celery_out, stderr=celery_out)
     

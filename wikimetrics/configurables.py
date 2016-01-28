@@ -30,7 +30,7 @@ def parse_db_connection_string(urlConnectionString):
 
 
 def setup_testing_config(db_config):
-    override_file = 'wikimetrics/config/test_config.yaml'
+    override_file = '/srv/wikimetrics/config/test_config.yaml'
     config_override = create_dict_from_text_config_file(override_file)
     test_config = update_config_from_override(db_config, config_override)
 

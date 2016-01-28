@@ -1,0 +1,113 @@
+data:
+    build: .
+    entrypoint: bash
+    volumes:
+        - .:/srv/wikimetrics:z
+        - ./wikimetrics/config/docker_config:/srv/wikimetrics/config:z
+
+web:
+    build: .
+    entrypoint:
+        - uwsgi
+        - --master
+        - --http
+        - :5000
+        - --py-autoreload
+        - "10"
+        - --wsgi-file
+        - wikimetrics/api.wsgi
+    volumes_from:
+        - data
+    ports:
+        - "5000:5000"
+    links:
+        - redis
+        - db
+        - create_db
+        - upgrade_db
+
+redis:
+    image: redis
+
+db:
+    image: mysql:5.5
+    environment:
+        - MYSQL_ALLOW_EMPTY_PASSWORD=yes
+        - MYSQL_USER=wikimetrics
+        - MYSQL_PASSWORD=wikimetrics
+    expose:
+        - "3306"
+
+create_db:
+    build: .
+    entrypoint:
+        - python
+        - dev_createdb.py
+    volumes_from:
+        - data
+    links:
+        - db
+
+upgrade_db:
+    build: .
+    entrypoint:
+        - alembic
+        - upgrade
+        - head
+    volumes_from:
+        - data
+    links:
+        - db
+        - create_db
+
+queue:
+    build: .
+    user: www-data
+    entrypoint:
+        - wikimetrics
+        - --mode
+        - queue
+        - --db-config
+        - /srv/wikimetrics/config/db_config.yaml
+        - --web-config
+        - /srv/wikimetrics/config/web_config.yaml
+        - --queue-config
+        - /srv/wikimetrics/config/queue_config.yaml
+    volumes_from:
+        - data
+    links:
+        - redis
+        - db
+
+scheduler:
+    build: .
+    entrypoint:
+        - wikimetrics
+        - --mode
+        - scheduler
+        - --db-config
+        - /srv/wikimetrics/config/db_config.yaml
+        - --web-config
+        - /srv/wikimetrics/config/web_config.yaml
+        - --queue-config
+        - /srv/wikimetrics/config/queue_config.yaml
+    volumes_from:
+        - data
+    links:
+        - redis
+        - db
+
+test:
+    build: .
+    environment:
+        - C_FORCE_ROOT="true"
+    entrypoint:
+        - bash
+    volumes_from:
+        - data
+    links:
+        - redis
+        - db
+        - create_db
+        - upgrade_db
+

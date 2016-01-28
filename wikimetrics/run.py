@@ -68,13 +68,13 @@ def setup_parser():
         ''',
     )
     # get defaults from environment variables
-    web_config = 'wikimetrics/config/web_config.yaml'
+    web_config = '/srv/wikimetrics/config/web_config.yaml'
     if 'WIKIMETRICS_WEB_CONFIG' in env:
         web_config = env['WIKIMETRICS_WEB_CONFIG']
-    db_config = 'wikimetrics/config/db_config.yaml'
+    db_config = '/srv/wikimetrics/config/db_config.yaml'
     if 'WIKIMETRICS_DB_CONFIG' in env:
         db_config = env['WIKIMETRICS_DB_CONFIG']
-    queue_config = 'wikimetrics/config/queue_config.yaml'
+    queue_config = '/srv/wikimetrics/config/queue_config.yaml'
     if 'WIKIMETRICS_QUEUE_CONFIG' in env:
         queue_config = env['WIKIMETRICS_QUEUE_CONFIG']
     

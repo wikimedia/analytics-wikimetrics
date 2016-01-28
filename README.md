@@ -10,50 +10,63 @@ Contents:
 Wikimetrics consists of a website that runs on Flask and an asynchronous queue implemented
 with Celery.  The Celery queue stores its results in Redis and the Flask website stores
 metadata in MySQL.  To set up your dev environment the old fashioned way, see old versions
-of this README.  To set it up the easy way with mediawiki-vagrant, follow the directions
-below:
+of this README.
 
-* Install [Mediawiki Vagrant](https://www.mediawiki.org/wiki/MediaWiki-Vagrant)
-* From your Mediawiki Vagrant directory, do this:
+To set it up using our new Docker setup, follow directions below. Please note that this setup is optimized for a dev environment only. To see how we deploy wikimetrics on WikimediaLabs, look at our [deploy repo](https://github.com/wikimedia/analytics-wikimetrics-deploy)
 
-````
-$ vagrant enable-role wikimetrics
-$ git submodule update --init
-````
+#### Setup docker engine, docker-machine, and docker-compose
 
-* Reload vagrant: `$ vagrant reload --provision`
-* Browse to [localhost:5000](http://localhost:5000)
+* [Docker engine](https://docs.docker.com/engine/installation/)
+* [Docker-machine](https://www.docker.com/products/docker-toolbox) - For MacOS/Windows - docker-machine is supported through docker-toolbox now
+* [Docker-compose](https://docs.docker.com/compose/install/)
 
-And you now have a fully working Wikimetrics environment.  The code it's running from is
-sym-linked locally in your Mediawiki Vagrant repository under `wikimetrics/` so you can do
-any development there and interact with it just like you would with any other WMF gerrit
-repository.  Contact us on freenode, channel #wikimedia-analytics if you have any
-questions.
+By now you should have docker running, and if you are using docker-machine, use `docker-machine ip machine-name` to find its ip. If you don't know the machine-name, `docker-machine ls` should find it for you.
 
-#### Ongoing Development
+Please note that this setup is tested with docker 1.9.1 and docker-compose 1.5.2 - it may throw some errors with older versions.
 
-Once you're up and running, there are a few things you need to know if you do ongoing
-development.  When you `git pull` new code, you'll need to potentially update the database
-and potentially update any dependencies.  To update the database, we use
-[Alembic](https://pypi.python.org/pypi/alembic/0.6.3).  So to upgrade to the latest
-version as defined by Alembic, first ssh into your vagrant box and go to the wikimetrics
-directory:
+#### Setup wikimetrics
 
-````
-$ vagrant ssh
-$ cd /vagrant/srv/wikimetrics
-````
+Let's go ahead and setup wikimetrics now
 
-Then tell Alembic to bring you up to speed: `$ alembic upgrade head`.
+* Get the code [here](https://gerrit.wikimedia.org/r/#/admin/projects/analytics/wikimetrics)
+* `cd` into the source directory
+* Build it all - `docker-compose build`
+    - This uses the instructions in the docker-compose.yml file to build all the containers and link them.
+* Run it all - `docker-compose up`
+    - You should see all the services start up now - if there are no errors you should be good to go
+    - Don't want to see all these logs at once or keep this running in the foreground? `docker-compose up -d` runs it in detached mode.
+    - Navigate to localhost:5000 and make sure it's running.
+    - If you are using docker-machine - it will be some thing like 192.168.99.100:5000
+      - The one tricky thing here is that oauth redirection on login will take you to localhost, at the moment we don't have a better solution than replacing localhost with the docker machine ip on redirect - but this works.
+* What is running? - `docker-compose ps`
+    - For the application to be running healthy - you should see db, queue, redis, scheduler, and web up. The other services run at startup and exit or are there for other purposes (will explain)
+* See logs - `docker-compose logs service`
+    - The service can be web, db, queue etc. You can find available services defined as keys in the `docker-compose.yml` file.
+* Run migrations
+    - The upgrade_db service does precisely that. `docker-compose run upgrade_db` should run migrations
+    - If you're making a change and need to generate an Alembic version, then after
+      you update the models in ````wikimetrics.models````,
+      `docker-compose run --entrypoint bash upgrade_db`. This should drop you into a bash shell. Then run,
+      `alembic revision --autogenerate`. Type `exit` to leave the session.
+* Run tests
+    - The test service helps with this. `docker-compose run test scripts/test` runs all the tests.
+    - You can also run specific tests like `docker-compose run test scripts/test tests/test_utils`, etc.
+    - Make sure that the queue service is not running when tests run, you can ensure this by doing `docker-compose stop` before running the `docker-compose run test` commands.
+* Test changes in source code
+    - The uwsgi web server is configured to autoreload on changes, so hopefully you don't have to restart the web server. If you need to - you can run `docker-compose restart web`.
+    - If you change code that affects the celery workers - you probably need to restart the queue. `docker-compose restart queue` does it.
+* Stop wikimetrics - `docker-compose stop`
 
-Similarly, if you're making a change and need to generate an Alembic version, then after
-you update the models in ````wikimetrics.models````, issue:
-`$ alembic revision --autogenerate`
+Other FAQ:
 
-To install new dependencies, ssh into your vagrant box as above, and issue:
-`$ scripts/install`
+* How do I access the database?
+    - `docker ps` to see the list of docker containers. You should find the container name for the database service, somehing like `wikimetrics_db_1`. Run `docker exec -i -t wikimetrics_db_1 mysql` to access the mysql host as root user, or pass appropriate user options to access as wikimetrics user.
+* Where is the config coming from?
+    - ./wikimetrics/config/docker_config. This is mounted as a volume at /srv/wikimetrics/config in the container. Look at the definition for the `data` service to see the volumes defined. This defines how the source code from the current directory gets mounted too.
+* Do I have to do `docker-compose build` everytime?
+    - Mostly not. Do rebuild if you change any of the requirements.txt files, or change the setup.py installation. Otherwise `docker-compose restart` should be enough.
 
-
+(Note: This setup is brand new - Please ping @madhuvishy on freenode #wikimedia-analytics or file a bug at https://phabricator.wikimedia.org/tag/analytics if you run into issues.)
 
 ### Architecture
 

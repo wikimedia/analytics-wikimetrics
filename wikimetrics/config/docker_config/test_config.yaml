@@ -1,0 +1,11 @@
+CELERYD_CONCURRENCY             : 10
+CELERY_ALWAYS_EAGER             : True
+TEST                            : True
+WIKIMETRICS_ENGINE_URL          : 'mysql://wikimetrics:wikimetrics@db/wikimetrics_testing'
+CENTRALAUTH_ENGINE_URL          : 'mysql://wikimetrics:wikimetrics@db/centralauth_testing'
+MEDIAWIKI_ENGINE_URL_TEMPLATE   : 'mysql://wikimetrics:wikimetrics@db/{0}_testing'
+CELERYBEAT_SCHEDULE                 :
+    'update-daily-recurring-reports':
+        'task'      : 'wikimetrics.schedules.daily.recurring_reports'
+        # The schedule can be set to 'daily' for a crontab-like daily recurrence
+        'schedule'  : 'test'
