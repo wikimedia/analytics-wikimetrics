@@ -1,3 +1,4 @@
+'use strict';
 /*global $:false */
 var site = {
     handleWith: function(callback){
@@ -47,7 +48,7 @@ var site = {
         var html = site.messageTemplate
             .replace('##message##', message)
             .replace(/##category##/g, category)
-            .replace(/##permanent##/, !!permanent ? ' permanent':'')
+            .replace(/##permanent##/, permanent ? ' permanent' : '')
             .replace('##punctuation##', category !== 'info' ? '!' : '');
         $('.site-messages').append(html);
         $('body').scrollTop(0);
@@ -94,7 +95,7 @@ var site = {
 
     getRefreshRate: function() {
         var rate = site.defaultRefreshRate;
-        return rate*1000;
+        return rate * 1000;
     },
 
     // ***********************************************************
@@ -124,7 +125,7 @@ var site = {
                 // should reside on reportList
 
                 var reportsStr = JSON.stringify(data.reports);
-                var change = !viewModel.previousReportData || viewModel.previousReportData != reportsStr;
+                var change = !viewModel.previousReportData || viewModel.previousReportData !== reportsStr;
                 if (change){
                     // clone the data so we don't change viewModel.previousReportData
                     data.reports.forEach(function(report){
@@ -150,7 +151,7 @@ var site = {
             window.scrollTo(0, 0);
         });
         if (location.hash){
-            $('ul.nav-tabs li a[href='+location.hash+']').click();
+            $('ul.nav-tabs li a[href=' + location.hash + ']').click();
         } else {
             $('ul.nav-tabs li a').first().click();
         }
@@ -174,28 +175,60 @@ var site = {
     },
     //Serializes object to json and verifies is an empty string
     isEmpty: function(obj){
-        var empty = JSON.stringify(obj) === "{}";
-        return empty
+        var empty = JSON.stringify(obj) === '{}';
+        return empty;
     },
 
     // ***********************************************************
     // List of timezones and default timezone
     // ***********************************************************
-    utcTimezone: {name: 'UTC', value: '+00:00'},
+    utcTimezone: {name: 'Coordinated Universal Time (UTC)', value: '+00:00'},
 
     // Add more timezones as necessary
-    availableTimezones : function() {return [
-        {name: 'Central European Time', value: '+01:00'},
-        {name: 'Eastern European Time', value: '+02:00'},
-        {name: 'East Australian Standard Time', value: '+10:00'},
-        this.utcTimezone,
-        {name: 'Atlantic Standard Time', value: '-04:00'},
-        {name: 'Eastern Standard Time', value: '-05:00'},
-        {name: 'Central Standard Time', value: '-06:00'},
-        {name: 'Mountain Standard Time', value: '-07:00'},
-        {name: 'Pacific Standard Time', value: '-08:00'},
-        {name: 'Hawaii Standard Time', value: '-10:00'},
-    ]},
+    availableTimezones : function() {
+        return [
+            {name: 'UTC -12:00', value: '-12:00'},
+            {name: 'UTC -11:00', value: '-11:00'},
+            {name: 'UTC -10:00', value: '-10:00'},
+            {name: 'UTC -09:30', value: '-09:30'},
+            {name: 'UTC -09:00', value: '-09:00'},
+            {name: 'UTC -08:00', value: '-08:00'},
+            {name: 'UTC -07:00', value: '-07:00'},
+            {name: 'UTC -06:00', value: '-06:00'},
+            {name: 'UTC -05:00', value: '-05:00'},
+            {name: 'UTC -04:30', value: '-04:30'},
+            {name: 'UTC -04:00', value: '-04:00'},
+            {name: 'UTC -03:30', value: '-03:30'},
+            {name: 'UTC -03:00', value: '-03:00'},
+            {name: 'UTC -02:00', value: '-02:00'},
+            {name: 'UTC -01:00', value: '-01:00'},
+            this.utcTimezone,
+            {name: 'UTC +01:00', value: '+01:00'},
+            {name: 'UTC +02:00', value: '+02:00'},
+            {name: 'UTC +03:00', value: '+03:00'},
+            {name: 'UTC +03:30', value: '+03:30'},
+            {name: 'UTC +04:00', value: '+04:00'},
+            {name: 'UTC +04:30', value: '+04:30'},
+            {name: 'UTC +05:00', value: '+05:00'},
+            {name: 'UTC +05:30', value: '+05:30'},
+            {name: 'UTC +05:45', value: '+05:45'},
+            {name: 'UTC +06:00', value: '+06:00'},
+            {name: 'UTC +06:30', value: '+06:30'},
+            {name: 'UTC +07:00', value: '+07:00'},
+            {name: 'UTC +08:00', value: '+08:00'},
+            {name: 'UTC +08:30', value: '+08:30'},
+            {name: 'UTC +08:45', value: '+08:45'},
+            {name: 'UTC +09:00', value: '+09:00'},
+            {name: 'UTC +09:30', value: '+09:30'},
+            {name: 'UTC +10:00', value: '+10:00'},
+            {name: 'UTC +10:30', value: '+10:30'},
+            {name: 'UTC +11:00', value: '+11:00'},
+            {name: 'UTC +12:00', value: '+12:00'},
+            {name: 'UTC +12:45', value: '+12:45'},
+            {name: 'UTC +13:00', value: '+13:00'},
+            {name: 'UTC +14:00', value: '+14:00'},
+        ];
+    },
 };
 
 /*
@@ -206,18 +239,18 @@ var site = {
 function detectVisibilityApiAndUpdatePollingSettings(obj){
 
     var hidden, visibilityChange;
-    if (typeof document.hidden !== "undefined") { // Opera 12.10 and Firefox 18 and later support
-        hidden = "hidden";
-        visibilityChange = "visibilitychange";
-    } else if (typeof document.mozHidden !== "undefined") {
-        hidden = "mozHidden";
-        visibilityChange = "mozvisibilitychange";
-    } else if (typeof document.msHidden !== "undefined") {
-        hidden = "msHidden";
-        visibilityChange = "msvisibilitychange";
-    } else if (typeof document.webkitHidden !== "undefined") {
-        hidden = "webkitHidden";
-        visibilityChange = "webkitvisibilitychange";
+    if (typeof document.hidden !== 'undefined') { // Opera 12.10 and Firefox 18 and later support
+        hidden = 'hidden';
+        visibilityChange = 'visibilitychange';
+    } else if (typeof document.mozHidden !== 'undefined') {
+        hidden = 'mozHidden';
+        visibilityChange = 'mozvisibilitychange';
+    } else if (typeof document.msHidden !== 'undefined') {
+        hidden = 'msHidden';
+        visibilityChange = 'msvisibilitychange';
+    } else if (typeof document.webkitHidden !== 'undefined') {
+        hidden = 'webkitHidden';
+        visibilityChange = 'webkitvisibilitychange';
     }
 
     /*
@@ -226,19 +259,19 @@ function detectVisibilityApiAndUpdatePollingSettings(obj){
     */
     function handleVisibilityChange() {
         if (document[hidden]) {
-          obj.pollingActive = false;
-       } else {
-          obj.pollingActive = true;
-       }
+            obj.pollingActive = false;
+        } else {
+            obj.pollingActive = true;
+        }
     }
 
-    if (typeof document.addEventListener !== "undefined" || hidden !== "undefined") {
-            document.addEventListener(visibilityChange, handleVisibilityChange, false);
+    if (typeof document.addEventListener !== 'undefined' || hidden !== 'undefined') {
+        document.addEventListener(visibilityChange, handleVisibilityChange, false);
     }
 }
 
 // detect visibility API and add events upon load
-$(document).ready(function(){detectVisibilityApiAndUpdatePollingSettings(site)})
+$(document).ready(function(){ detectVisibilityApiAndUpdatePollingSettings(site); });
 
 // moment configuration
 moment.lang('en', { calendar: {

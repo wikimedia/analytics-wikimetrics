@@ -32,10 +32,10 @@
             <select name="timezone" id="timezone"
                     data-bind="
                         options: availableTimezones,
-                        optionsText: function (item) {
-                            return item.value + ' ' + item.name;
-                        },
+                        optionsText: 'name',
                         value: timezone"></select>
+            (To find the UTC offset of your timezone go
+            <a href="https://en.wikipedia.org/wiki/List_of_UTC_time_offsets" target="_blank">here</a>)
         </div>
     </div>
     <div class="control-group">

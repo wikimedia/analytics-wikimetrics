@@ -214,10 +214,15 @@ ko.bindingHandlers.datetimepicker = {
                 return;
             }
 
+            var sign = zone.value.substr(0, 1),
+                hours = parseInt(sign + zone.value.substr(1, 3)),
+                minutes = parseInt(sign + zone.value.substr(4, 2));
+
             // do the opposite of above, get the local date from the zoned
-            var local = moment(zoned).add(
-                parseInt(zone.value), 'hours'
-            ).format(dateFormat);
+            var local = moment(zoned)
+                            .add(hours, 'hours')
+                            .add(minutes, 'minutes')
+                            .format(dateFormat);
 
             // because the dom disposal below doesn't work, just ignore these errors
             try {
