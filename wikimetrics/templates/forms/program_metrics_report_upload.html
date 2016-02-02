@@ -22,6 +22,8 @@
             <textarea name="paste_ids_or_names" id="paste_ids_or_names"
                       rows="4"
                       cols="50">{{form.paste_ids_or_names.data or ''}}</textarea>
+            &nbsp;&nbsp;
+            The usernames should be separated, one per line, like <img src="{{ url_for('static', filename='img/pasteUsers.png') }}"/>
             {{ validation.messages(form.paste_ids_or_names) }}
         </div>
     </div>
@@ -34,12 +36,13 @@
                         options: availableTimezones,
                         optionsText: 'name',
                         value: timezone"></select>
-            (To find the UTC offset of your timezone go
-            <a href="https://en.wikipedia.org/wiki/List_of_UTC_time_offsets" target="_blank">here</a>)
+            &nbsp;&nbsp;
+            To find your timezone and UTC offset, go
+            <a href="https://en.wikipedia.org/wiki/List_of_UTC_time_offsets" target="_blank">here</a>
         </div>
     </div>
     <div class="control-group">
-        <label class="control-label" for="start_date">Start Date</label>
+        <label class="control-label" for="start_date">Event Start Date</label>
         <div class="controls">
             <div data-bind="datetimepicker: {
                                 timezone: timezone,
@@ -50,7 +53,7 @@
         </div>
     </div>
     <div class="control-group">
-        <label class="control-label" for="end_date">End Date / As of Date</label>
+        <label class="control-label" for="end_date">Event End Date</label>
         <div class="controls">
             <div data-bind="datetimepicker: {
                                 timezone: timezone,
