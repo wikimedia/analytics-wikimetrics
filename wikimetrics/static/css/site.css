@@ -109,3 +109,10 @@ p.validated-users { font-size: medium }
 select {
     margin: 0;
 }
+
+span.textarea-label {
+    display: inline-block;
+    width: 30%;
+    vertical-align: bottom;
+    margin: 0 12px 0 12px;
+}

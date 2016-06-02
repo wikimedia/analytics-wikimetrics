@@ -22,9 +22,11 @@
             <textarea name="paste_ids_or_names" id="paste_ids_or_names"
                       rows="4"
                       cols="50">{{form.paste_ids_or_names.data or ''}}</textarea>
-            &nbsp;&nbsp;
-            The usernames should be separated, one per line, like <img src="{{ url_for('static', filename='img/pasteUsers.png') }}"/>
             {{ validation.messages(form.paste_ids_or_names) }}
+            <span class="textarea-label">
+            The usernames should be separated, one per line.  Names that include commas should be in double quotes.  See the example:
+            </span>
+            <img src="{{ url_for('static', filename='img/pasteUsers.png') }}"/>
         </div>
     </div>
 
