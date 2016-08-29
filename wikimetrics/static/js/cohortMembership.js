@@ -59,7 +59,7 @@ $(document).ready(function () {
          * and passes the invalidOnly parameter
          * if we want to delete only the user's invalid instances.
          */
-        deleteWikiuser: function (wikiuser) {
+        deleteWikiuser: function (wikiuser, event) {
             if (site.confirmDanger(event, true)){
                 $.post(
                     window.location.pathname + '/delete',
