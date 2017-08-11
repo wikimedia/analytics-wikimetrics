@@ -243,6 +243,7 @@ def validate_users(wikiusers, project, validate_as_user_ids):
         else:
             clause = MediawikiUser.user_name.in_(users_dict.keys())
         matches = session.query(MediawikiUser).filter(clause).all()
+        session.close()
 
     # no need to roll back session because it's just a query
     except OperationalError:
