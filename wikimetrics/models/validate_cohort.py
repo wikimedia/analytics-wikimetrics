@@ -250,6 +250,7 @@ def validate_users(wikiusers, project, validate_as_user_ids):
         # as it can be recovered, no need to reraise the error
         # but all users have to be marked as invalid
         msg = traceback.format_exc()
+        task_logger.warning('While validating users in ' + project)
         task_logger.warning(msg)
         matches = []
         valid_project = False
