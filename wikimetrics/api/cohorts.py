@@ -99,7 +99,9 @@ class CohortService(object):
             cohort  : a logical Cohort object
         """
         db_session = db.get_session()
-        return db_session.query(CohortStore).get(cohort.id)
+        cohort = db_session.query(CohortStore).get(cohort.id)
+        db_session.close()
+        return cohort
 
     def fetch_by_id(self, cohort_id):
         """
@@ -109,7 +111,9 @@ class CohortService(object):
             cohort  : a logical Cohort object
         """
         db_session = db.get_session()
-        return db_session.query(CohortStore).get(cohort_id)
+        cohort = db_session.query(CohortStore).get(cohort_id)
+        db_session.close()
+        return cohort
 
     def get_cohort_by_name(self, db_session, name):
         """
@@ -473,6 +477,7 @@ class CohortService(object):
 
         if cu != 1:
             db_session.rollback()
+            db_session.close()
             raise DatabaseError('No owner or multiple owners in cohort.')
         else:
             try:
@@ -501,6 +506,8 @@ class CohortService(object):
             except DatabaseError:
                 db_session.rollback()
                 raise DatabaseError('Owner attempt to delete a cohort failed.')
+            finally:
+                db_session.close()
 
     def delete_viewer_cohort(self, db_session, user_id, cohort_id):
         """
@@ -518,4 +525,7 @@ class CohortService(object):
 
         if cu != 1:
             db_session.rollback()
+            db_session.close()
             raise DatabaseError('Viewer attempt delete cohort failed.')
+        else:
+            db_session.close()

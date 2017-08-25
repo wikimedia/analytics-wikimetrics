@@ -32,6 +32,7 @@ class SumAggregateByUserReport(ReportNode):
         service = CohortService()
         session = db.get_session()
         self.usernames = service.get_wikiusernames_for_cohort(cohort.id, session)
+        session.close()
 
         self.children = [
             MultiProjectMetricReport(cohort, metric, *args, **kwargs)

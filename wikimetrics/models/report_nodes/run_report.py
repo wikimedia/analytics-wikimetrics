@@ -74,6 +74,7 @@ class RunReport(ReportNode):
         cohort_dict = parameters['cohort']
         session = db.get_session()
         cohort = cohort_service.get(session, user_id, by_id=cohort_dict['id'])
+        session.close()
 
         parameters['cohort']['size'] = cohort.size
 
@@ -146,7 +147,9 @@ class RunReport(ReportNode):
             return
 
         rs = ReportService()
-        rs.write_report_to_file(self, results, db.get_session())
+        db_session = db.get_session()
+        rs.write_report_to_file(self, results, db_session)
+        db_session.close()
 
     # TODO, this method belongs on a different class and it should not be a class method
     @classmethod

@@ -67,6 +67,7 @@ class CohortUpload(WikimetricsSecureForm):
         if self.centralauth.data is True:
             ca_session = db.get_ca_session()
             records = g.centralauth_service.expand_via_centralauth(records, ca_session)
+            ca_session.close()
 
         self.records = records
 

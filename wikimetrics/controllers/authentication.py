@@ -61,7 +61,9 @@ def load_user(user_id):
     Callback required by Flask-Login.  Gets the User object from the database.
     """
     db_session = db.get_session()
-    return UserStore.get(db_session, user_id)
+    user = UserStore.get(db_session, user_id)
+    db_session.close()
+    return user
 
 
 @login_manager.unauthorized_handler
@@ -86,6 +88,7 @@ def logout():
     if type(current_user) is UserStore:
         current_user.logout(db_session)
     logout_user()
+    db_session.close()
     return redirect(url_for('home_index'))
 
 
@@ -146,16 +149,20 @@ def auth_meta_mw():
                 db_session.commit()
             except:
                 db_session.rollback()
+                db_session.close()
                 raise
 
         except MultipleResultsFound:
             flash('Multiple users found with your id!!! Contact Administrator', 'error')
+            db_session.close()
             return redirect(url_for('login'))
 
         user.login(db_session)
         if login_user(user):
             user.detach_from(db_session)
             del session['request_token']
+
+        db_session.close()
 
     except Exception:
         flash('You need to grant the app permissions in order to login.', 'error')
@@ -218,9 +225,11 @@ def auth_google(resp):
                     db_session.commit()
                 except:
                     db_session.rollback()
+                    db_session.close()
                     raise
             
             except MultipleResultsFound:
+                db_session.close()
                 return 'Multiple users found with your id!!! Contact Administrator'
             
             user.login(db_session)
@@ -229,6 +238,8 @@ def auth_google(resp):
                 redirect_to = session.get('next') or url_for('home_index')
                 redirect_to = urllib2.unquote(redirect_to)
                 return redirect(redirect_to)
+
+            db_session.close()
     
     flash('Was not allowed to authenticate you with Google.', 'error')
     return redirect(url_for('login'))
@@ -249,4 +260,5 @@ if app.config['DEBUG']:
             user = db_session.query(UserStore).filter_by(email='test@test.com').one()
             user.login(db_session)
             login_user(user)
+            session.close()
             return ''

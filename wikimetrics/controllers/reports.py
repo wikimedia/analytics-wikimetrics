@@ -60,6 +60,7 @@ def set_public_report(report_id):
         .one()[0]
 
     data = report_result_json(result_key).data
+    db_session.close()
 
     # call would throw an exception if report cannot be made public
     ReportStore.make_report_public(
@@ -118,6 +119,7 @@ def reports_list():
             TaskErrorStore.task_type == 'report',
             TaskErrorStore.task_type == None))\
         .all()
+    db_session.close()
     # TODO: update status for all reports at all times (not just show_in_ui ones)
     # update status for each report and build response
     reports = []
@@ -187,8 +189,8 @@ def get_celery_task(result_key):
         pj = db_session.query(ReportStore)\
             .filter(ReportStore.result_key == result_key)\
             .one()
-
         celery_task = Report.task.AsyncResult(pj.queue_result_key)
+        db_session.close()
         return (celery_task, pj)
     except NoResultFound:
         # don't need to roll back session because it's just a query
@@ -252,6 +254,7 @@ def get_usernames_for_task_result(task_result):
             break
 
         user_names = g.cohort_service.get_wikiusernames_for_cohort(cohort_id, session)
+        session.close()
 
     return user_names
 
@@ -470,6 +473,7 @@ def rerun_report(report_id):
     session = db.get_session()
     report = session.query(ReportStore).get(report_id)
     RunReport.rerun(report)
+    session.close()
     return json_response(message='Report scheduled for rerun')
 
 
@@ -481,6 +485,7 @@ def rerun_report(report_id):
 #     if not db_report:
 #        return json_error('no task exists with id: {0}'.format(result_key))
 #     celery_task = Report.task.AsyncResult(db_report.result_key)
+#     db_session.close()
 #     app.logger.debug('revoking task: %s', celery_task.id)
 #     from celery.task.control import revoke
 #     celery_task.revoke()

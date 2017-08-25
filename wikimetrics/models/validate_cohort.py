@@ -107,12 +107,15 @@ class ValidateCohort(object):
             session.rollback()
             app.logger.error(str(e))
             return None
+        finally:
+            session.close()
 
     def run(self):
         session = db.get_session()
         cohort = session.query(CohortStore).get(self.cohort_id)
         cohort.validation_queue_key = current_task.request.id
         session.commit()
+        session.close()
         self.validate_records(session, cohort)
 
     def validate_records(self, session, cohort):
