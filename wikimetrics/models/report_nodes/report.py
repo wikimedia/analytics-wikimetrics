@@ -170,7 +170,11 @@ class ReportNode(Report):
         results = []
         if self.children:
             try:
-                child_results = [child.run() for child in self.children]
+                child_results = []
+                for child in self.children:
+                    child_results.append(child.run())
+                    for project, session in db.mediawiki_sessions.items():
+                        session.remove()
                 results = self.finish(child_results)
             except SoftTimeLimitExceeded:
                 self.set_status(celery.states.FAILURE)
