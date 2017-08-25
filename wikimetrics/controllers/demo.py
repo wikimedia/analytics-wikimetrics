@@ -15,10 +15,8 @@ if app.config['DEBUG']:
     def get_session_and_leave_open():
         session = db.get_session()
         session.query(ReportStore).all()
-        session.close()
         session2 = db.get_session()
         session2.query(ReportStore).all()
-        session2.close()
         return ''
 
     @app.route('/demo/create/fake-<string:project>-users/<int:n>')

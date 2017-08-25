@@ -47,7 +47,6 @@ def cohorts_index():
     """
     session = db.get_session()
     tags = g.tag_service.get_all_tags(session)
-    session.close()
     return render_template('cohorts.html', tags=json.dumps(tags))
 
 
@@ -60,7 +59,6 @@ def cohorts_list():
     else:
         cohorts = g.cohort_service.get_list(db_session, current_user.id)
 
-    db_session.close()
     return json_response(cohorts=[{
         'id': c.id,
         'name': c.name,
@@ -91,8 +89,6 @@ def cohort_membership(cohort_id):
         # don't need to roll back session because it's just a query
         app.logger.exception(str(e))
         return 'Error fetching membership for this cohort', 500
-    finally:
-        session.close()
 
 
 @app.route('/cohorts/<string:cohort_id>/membership/delete', methods=['POST'])
@@ -112,8 +108,6 @@ def delete_cohort_wikiuser(cohort_id):
     except Exception as e:
         app.logger.exception(str(e))
         return json_error(e.message)
-    finally:
-        session.close()
 
 
 @app.route('/cohorts/detail/<string:name_or_id>')
@@ -148,8 +142,6 @@ def cohort_detail(name_or_id):
         return 'You are not allowed to access this Cohort', 401
     except NoResultFound:
         return 'Could not find this Cohort', 404
-    finally:
-        db_session.close()
 
     return json_response(cohort_dict)
 
@@ -250,7 +242,6 @@ def validate_cohort_name_allowed():
     name = request.args.get('name')
     session = db.get_session()
     available = g.cohort_service.get_cohort_by_name(session, name) is None
-    session.close()
     return json.dumps(available)
 
 
@@ -280,8 +271,6 @@ def validate_cohort(cohort_id):
         return json_error('You are not allowed to access this cohort')
     except NoResultFound:
         return json_error('This cohort does not exist')
-    finally:
-        session.close()
 
 
 def num_users(session, cohort_id):
@@ -338,8 +327,6 @@ def delete_cohort(cohort_id):
     except DatabaseError as e:
         session.rollback()
         return json_error(e.message)
-    finally:
-        session.close()
 
 
 @app.route('/cohorts/<int:cohort_id>/tag/add/', defaults={'tag': None}, methods=['POST'])
@@ -383,8 +370,6 @@ def add_tag(cohort_id, tag):
     except DatabaseError as e:
         session.rollback()
         return json_error(e.message)
-    finally:
-        session.close()
 
     return json_response(data)
 
@@ -399,7 +384,6 @@ def cohort_tag_list(cohort_id):
         .filter(CohortTagStore.tag_id == TagStore.id) \
         .all()
     tag_names = [tag[0] for tag in tag_names]
-    session.close()
     return json.dumps(sorted(tag_names))
 
 
@@ -413,5 +397,4 @@ def delete_tag(cohort_id, tag_id):
     session.commit()
 
     tags = g.tag_service.get_all_tags(session)
-    session.close()
     return json_response(message='success', tagsAutocompleteList=json.dumps(tags))

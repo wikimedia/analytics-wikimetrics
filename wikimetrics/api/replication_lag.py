@@ -43,7 +43,6 @@ class ReplicationLagService():
             .order_by(Revision.rev_timestamp.desc())\
             .limit(1)\
             .scalar()
-        session.close()
 
         return timestamp is None or \
             timestamp < datetime.now() - self._lag_threshold

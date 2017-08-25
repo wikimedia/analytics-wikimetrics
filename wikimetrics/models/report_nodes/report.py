@@ -122,8 +122,6 @@ class Report(object):
             except:
                 session.rollback()
                 raise
-            finally:
-                session.close()
     
     def __repr__(self):
         if self.persistent_id is not None:
@@ -147,7 +145,6 @@ class Report(object):
             if task_id:
                 pj.queue_result_key = task_id
             session.commit()
-            session.close()
     
     def run(self):
         """
@@ -236,7 +233,6 @@ class ReportNode(Report):
             pj.result_key = self.result_key
             db_session.add(pj)
             db_session.commit()
-            db_session.close()
         
         merged = {self.result_key: results}
         for child_result in child_results:

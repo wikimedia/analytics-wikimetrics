@@ -55,9 +55,8 @@ class RunProgramMetricsReport(ReportNode):
         # First make sure this is a valid cohort
         if cohort_store_object is not None and cohort_store_object.validated:
             self.cohort = cohort_service.convert(cohort_store_object)
-            db_session = db.get_session()
             validate_report = ValidateProgramMetricsReport(self.cohort,
-                                                           db_session,
+                                                           db.get_session(),
                                                            user_id=self.user_id)
             self.cohort.size = validate_report.unique_users
             self.parameters = {
@@ -94,7 +93,6 @@ class RunProgramMetricsReport(ReportNode):
                                  self.get_bytes_added_report()]
             else:
                 self.children = [validate_report]
-            db_session.close()
             return super(RunProgramMetricsReport, self).run()
 
         else:
@@ -156,10 +154,7 @@ class RunProgramMetricsReport(ReportNode):
         if self.public is False:
             return
         rs = ReportService()
-
-        db_session = db.get_session()
-        rs.write_report_to_file(self, results, db_session)
-        db_session.close()
+        rs.write_report_to_file(self, results, db.get_session())
 
     def get_aggregate_by_user_report(self, parameters):
         metric_dict = parameters['metric']

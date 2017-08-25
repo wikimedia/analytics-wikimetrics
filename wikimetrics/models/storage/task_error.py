@@ -35,7 +35,6 @@ class TaskErrorStore(db.WikimetricsBase):
             TaskErrorStore.update(db_session, existing, message, traceback)
         else:
             TaskErrorStore.create(db_session, task_type, task_id, message, traceback)
-        db_session.close()
 
     @staticmethod
     def get(db_session, task_type, task_id):

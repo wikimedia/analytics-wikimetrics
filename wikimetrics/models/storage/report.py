@@ -53,10 +53,7 @@ class ReportStore(db.WikimetricsBase):
             if not existing_session:
                 existing_session = db.get_session()
                 existing_session.add(self)
-                existing_session.commit()
-                existing_session.close()
-            else:
-                existing_session.commit()
+            existing_session.commit()
 
     @staticmethod
     def update_reports(report_ids, owner_id, public=None, recurrent=None):

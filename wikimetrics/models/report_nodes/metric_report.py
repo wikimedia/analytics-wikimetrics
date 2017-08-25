@@ -35,7 +35,6 @@ class MetricReport(ReportLeaf):
             str(WikiUserKey(key, self.project, self.cohort_id)) : value
             for key, value in results_by_user.items()
         }
-        session.close()
         if not len(results):
             results = {NO_RESULTS : self.metric.default_result}
         return results

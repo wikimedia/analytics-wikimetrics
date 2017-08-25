@@ -19,9 +19,9 @@ class CohortNameUnused(object):
 
     def __call__(self, form, field):
         session = db.get_session()
+
         if CohortService().get_cohort_by_name(session, field.data) is not None:
             raise ValidationError('This cohort name is taken.')
-        session.close()
 
 
 class CohortNameLegalCharacters(object):

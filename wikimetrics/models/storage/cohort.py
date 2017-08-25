@@ -54,7 +54,6 @@ class CohortStore(db.WikimetricsBase):
         wikiusers = self.filter_wikiuser_query(
             db_session.query(WikiUserStore.mediawiki_userid)
         ).all()
-        db_session.close()
         return (r.mediawiki_userid for r in wikiusers)
 
     def __len__(self):
@@ -67,13 +66,11 @@ class CohortStore(db.WikimetricsBase):
             the number of users in this cohort
         """
         db_session = db.get_session()
-        length = db_session.query(func.count(CohortWikiUserStore.id)) \
+        return db_session.query(func.count(CohortWikiUserStore.id)) \
             .join(WikiUserStore) \
             .filter(CohortWikiUserStore.cohort_id == self.id) \
             .filter(WikiUserStore.valid) \
             .one()[0]
-        db_session.close()
-        return length
 
     def group_by_project(self):
         """
@@ -93,7 +90,6 @@ class CohortStore(db.WikimetricsBase):
         user_id_projects = self.filter_wikiuser_query(
             db_session.query(WikiUserStore.mediawiki_userid, WikiUserStore.project)
         ).order_by(WikiUserStore.project).all()
-        db_session.close()
 
         if not len(user_id_projects):
             return [(self.default_project, None)]

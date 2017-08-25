@@ -67,8 +67,6 @@ def recurring_reports(report_id=None):
         task_logger.error('Problem running recurring reports: {}'.format(
             traceback.format_exc()
         ))
-    finally:
-        session.close()
 
 
 if queue.conf.get('DEBUG'):
@@ -80,5 +78,3 @@ if queue.conf.get('DEBUG'):
         session2 = db.get_session()
         session2.query(ReportStore).first()
         session.query(ReportStore).first()
-        session.close()
-        session2.close()
