@@ -212,12 +212,12 @@ def normalize_project(project):
     the project_host_map returned by the database singleton, db
     """
     project = project.strip().lower()
-    if project in db.get_project_host_map():
+    if project in db.get_mw_projects():
         return project
     else:
         # try adding wiki to end
         new_proj = project + 'wiki'
-        if new_proj not in db.get_project_host_map():
+        if new_proj not in db.get_mw_projects():
             return None
         else:
             return new_proj

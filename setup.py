@@ -5,23 +5,24 @@ Loads dependencies from requirements.txt and specifies installation details
 # follow the frog
 
 from setuptools import setup, find_packages
-from pip.req import parse_requirements
 
-# parse_requirements() returns generator of pip.req.InstallRequirement objects
-INSTALL_REQS = parse_requirements('requirements.txt', session=False)
 
-# REQS is a list of requirement
-# e.g. ['flask==0.9', 'sqlalchemye==0.8.1']
-REQS = [str(ir.req) for ir in INSTALL_REQS]
+def parse_requirements(filename):
+    """ load requirements from a pip requirements file """
+    lineiter = (line.strip() for line in open(filename))
+    return [line for line in lineiter if line and not line.startswith("#")]
+
+
+INSTALL_REQS = parse_requirements('requirements.txt')
 
 setup(
     name='wikimetrics',
     version='0.0.1',
     description='Wikipedia Cohort Analysis Tool',
     url='http://www.github.com/wikimedia/analytics-wikimetrics',
-    author='Andrew Otto, Dan Andreescu, Evan Rosen, Stefan Petrea',
+    author='Andrew Otto,Dan Andreescu,Evan Rosen,Marcel Ruiz,Nuria Ruiz,Stefan Petrea',
     packages=find_packages(),
-    install_requires=REQS,
+    install_requires=INSTALL_REQS,
     entry_points={
         'console_scripts': [
             'wikimetrics = wikimetrics.run:main'

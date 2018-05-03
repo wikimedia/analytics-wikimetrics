@@ -30,7 +30,7 @@ Let's go ahead and setup wikimetrics now
 
 * Get the code [here](https://gerrit.wikimedia.org/r/#/admin/projects/analytics/wikimetrics)
 * `cd` into the source directory
-* Build it all - `docker-compose build`
+* Build it all - `docker-compose build` (if this doesn't work, you may need to run `$ eval "$(docker-machine env default)"`)
     - This uses the instructions in the docker-compose.yml file to build all the containers and link them.
 * Run it all - `docker-compose up`
     - You should see all the services start up now - if there are no errors you should be good to go

@@ -4,6 +4,7 @@ TEST                            : True
 WIKIMETRICS_ENGINE_URL          : 'mysql://wikimetrics:wikimetrics@db/wikimetrics_testing'
 CENTRALAUTH_ENGINE_URL          : 'mysql://wikimetrics:wikimetrics@db/centralauth_testing'
 MEDIAWIKI_ENGINE_URL_TEMPLATE   : 'mysql://wikimetrics:wikimetrics@db/{0}_testing'
+MEDIAWIKI_PROJECT_LIST          : 'https://noc.wikimedia.org/conf/dblists/all.dblist'
 CELERYBEAT_SCHEDULE                 :
     'update-daily-recurring-reports':
         'task'      : 'wikimetrics.schedules.daily.recurring_reports'

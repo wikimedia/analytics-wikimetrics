@@ -6,27 +6,22 @@ from sqlalchemy.event import listen
 
 from tests.fixtures import QueueTest, mediawiki_project
 from wikimetrics.configurables import db, parse_db_connection_string, queue
-from wikimetrics.database import get_host_projects, get_host_projects_map
+from wikimetrics.database import fetch_mw_projects
 from wikimetrics.schedules.daily import get_session_and_leave_open
 from wikimetrics.models import ReportStore, MediawikiUser
 
 
 class DatabaseSetupTest(TestCase):
     """"
-    These tests access the 'live' project_host_map
+    This first test accesses the 'live' mw_projects_set
     thus they make an http connection to get it.
-    The rest of the tests should would offline as they do not access
-    the function get_host_projects directly.
+    The rest of the tests should work offline
     """
-    def test_get_host_projects(self):
-        (host_one, projects) = get_host_projects(1)
-        assert_equals(host_one, 1)
-        assert_true('enwiki' in projects)
     
-    def test_get_host_projects_map(self):
-        project_host_map = get_host_projects_map()
-        assert_true('enwiki' in project_host_map)
-        assert_true('dewiki' in project_host_map)
+    def test_get_mw_projects_set(self):
+        mw_projects_set = db.fetch_mw_projects()
+        assert_true('enwiki' in mw_projects_set)
+        assert_true('dewiki' in mw_projects_set)
     
     def test_parse_db_connection_string(self):
         url = 'mysql://wikimetrics:wikimetrics@localhost/wikimetrics'
@@ -44,7 +39,7 @@ class DatabaseSetupTest(TestCase):
             s.commit()
             r.id = None
             s.commit()
-        except:
+        except():
             pass
         
         # if the session is not cleaned up properly, this will throw an exception
@@ -58,7 +53,7 @@ class DatabaseSetupTest(TestCase):
             s.commit()
             u.user_id = None
             s.commit()
-        except:
+        except():
             pass
         
         # if the session is not cleaned up properly, this will throw an exception
@@ -66,16 +61,16 @@ class DatabaseSetupTest(TestCase):
         s.execute('select 1').fetchall()
     
     #def test_get_fresh_project_host_map(self):
-        #project_host_map_cache_file = 'project_host_map.json'
-        ## make sure any cached file is deleted
+        #project_host_map_cache_file = 'mw_projects_set.json'
+        # # make sure any cached file is deleted
         #if os.path.exists(project_host_map_cache_file):
         #os.remove(project_host_map_cache_file)
         
-        #db.get_project_host_map(usecache=True)
+        #db.get_mw_projects(usecache=True)
         #assert_true(os.path.exists(project_host_map_cache_file))
         
         #os.remove(project_host_map_cache_file)
-        #db.get_project_host_map(usecache=False)
+        #db.get_mw_projects(usecache=False)
         #assert_true(os.path.exists(project_host_map_cache_file))
 
 

@@ -48,7 +48,7 @@ class ProjectExists(object):
 
     def __call__(self, form, field):
 
-        if field.data not in db.get_project_host_map():
+        if field.data not in db.get_mw_projects():
             raise ValidationError('That project does not exist.')
 
 

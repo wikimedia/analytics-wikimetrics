@@ -228,7 +228,7 @@ def cohort_upload():
 
     return render_template(
         'csv_upload.html',
-        projects=json.dumps(sorted(db.get_project_host_map().keys())),
+        projects=json.dumps(sorted(db.get_mw_projects().keys())),
         form=form,
     )
 
@@ -252,7 +252,7 @@ def validate_cohort_project_allowed():
     static/js/cohortUpload.js.
     """
     project = request.args.get('project')
-    valid = project in db.get_project_host_map()
+    valid = project in db.get_mw_projects()
     return json.dumps(valid)
 
 

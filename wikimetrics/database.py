@@ -37,26 +37,6 @@ class SerializableBase(object):
         return {c.name : getattr(self, c.name) for c in self.__table__.columns}
 
 
-def get_host_projects(host_id):
-    cluster_url_fmt = 'https://noc.wikimedia.org/conf/s{0}.dblist'
-    url = cluster_url_fmt.format(host_id)
-    projects = urlopen(url).read().splitlines()
-    return (host_id, projects)
-
-
-def get_host_projects_map():
-    project_host_map = {}
-    # TODO: these numbers are hardcoded, is that ok?
-    num_hosts = 7
-    host_projects = map(get_host_projects, range(1, num_hosts + 1))
-    host_fmt = 's{0}'
-    for host_id, projects in host_projects:
-        host = host_fmt.format(host_id)
-        for project in projects:
-            project_host_map[project] = host
-    return project_host_map
-
-
 class Database(object):
     """
     Basically a collection of all database related objects and methods.
@@ -88,8 +68,8 @@ class Database(object):
         self.centralauth_sessionmaker = None
         self.centralauth_session = None
 
-        # we instantiate project_host_map lazily
-        self._project_host_map = None
+        # we instantiate mw_project_set lazily
+        self.mw_project_set = None
 
     def get_engine(self):
         """
@@ -243,10 +223,13 @@ class Database(object):
             )
         return self.centralauth_engine
 
-    def get_project_host_map(self, usecache=True):
+    def fetch_mw_projects(self):
+        return set(urlopen(self.config['MEDIAWIKI_PROJECT_LIST']).read().splitlines())
+
+    def get_mw_projects(self, usecache=True):
         """
         Retrieves the list of mediawiki projects from noc.wikimedia.org.
-        If we are on development or testing project_host_map
+        If we are on development or testing mw_project_set
         does not access the network to verify project names.
         Project names are hardcoded.
 
@@ -259,31 +242,30 @@ class Database(object):
 
         """
         with lock:
-            if self._project_host_map is None or usecache is False:
-                project_host_map = {}
+            if self.mw_project_set is None or usecache is False:
+                mw_project_set = set()
 
                 if self.config.get('DEBUG'):
                     # tests/__init__.py overrides this setting if needed
-                    for p in self.config.get('PROJECT_HOST_NAMES'):
-                        project_host_map[p] = 'localhost'
+                    mw_project_set = set(self.config.get('PROJECT_HOST_NAMES'))
                 else:
-                    cache_name = 'project_host_map.json'
+                    cache_name = 'mw_project_set.json'
                     if not exists(cache_name) or not usecache:
-                        project_host_map = get_host_projects_map()
+                        mw_project_set = self.fetch_mw_projects()
                         if usecache and os.access(cache_name, os.W_OK):
                             try:
-                                json.dump(project_host_map, open(cache_name, 'w'))
-                            except:
+                                json.dump(mw_project_set, open(cache_name, 'w'))
+                            except():
                                 print('No rights to write {0}'.format(
                                     os.path.abspath(cache_name)
                                 ))
                     elif os.access(cache_name, os.R_OK):
-                        project_host_map = json.load(open(cache_name))
+                        mw_project_set = json.load(open(cache_name))
                     else:
                         raise Exception('Project host map could not be fetched or read')
 
-                self._project_host_map = project_host_map
-            return self._project_host_map
+                self.mw_project_set = mw_project_set
+            return self.mw_project_set
 
 
 @event.listens_for(Pool, "checkout")
@@ -296,7 +278,7 @@ def ping_connection(dbapi_connection, connection_record, connection_proxy):
     cursor = dbapi_connection.cursor()
     try:
         cursor.execute("SELECT 1")
-    except:
+    except():
         # optional - dispose the whole pool
         # instead of invalidating one at a time
         # connection_proxy._pool.dispose()
