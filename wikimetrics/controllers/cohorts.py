@@ -228,7 +228,7 @@ def cohort_upload():
 
     return render_template(
         'csv_upload.html',
-        projects=json.dumps(sorted(db.get_mw_projects().keys())),
+        projects=json.dumps(sorted(db.get_mw_projects())),
         form=form,
     )
 
@@ -290,7 +290,7 @@ def get_role(session, cohort_id):
             .filter(CohortUserStore.user_id == current_user.id) \
             .one()[0]
         return cohort_user
-    except:
+    except():
         session.rollback()
         raise DatabaseError('No role found in cohort user.')
 

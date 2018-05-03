@@ -87,7 +87,7 @@ class NotGreater(object):
                 field.gettext("Invalid field name '%s'.") % self.field_name)
 
         # make sure both values are of the same type
-        if type(field.data) != type(other.data):
+        if not isinstance(field.data, type(other.data)):
             raise ValidationError(
                 'Cannot compare the two fields: they are of different types.')
 
