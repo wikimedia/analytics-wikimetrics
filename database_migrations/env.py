@@ -50,7 +50,7 @@ def get_engine(config, url_field='WIKIMETRICS_ENGINE_URL'):
         config[url_field],
         echo=config['SQL_ECHO'],
         connect_args={"charset" : "utf8"},
-        pool_size=config['WIKIMETRICS_POOL_SIZE'],
+        # pool_size=config['WIKIMETRICS_POOL_SIZE'],
         poolclass=NullPool,
     )
 

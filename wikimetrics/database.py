@@ -86,7 +86,7 @@ class Database(object):
                 self.config['WIKIMETRICS_ENGINE_URL'],
                 echo=self.config['SQL_ECHO'],
                 connect_args={"charset" : "utf8"},
-                pool_size=self.config['WIKIMETRICS_POOL_SIZE'],
+                # pool_size=self.config['WIKIMETRICS_POOL_SIZE'],
                 poolclass=NullPool,
             )
 
