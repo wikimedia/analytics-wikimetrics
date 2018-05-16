@@ -2,7 +2,8 @@ from __future__ import with_statement
 from copy import deepcopy
 from os import environ, path
 from alembic import context
-from sqlalchemy import engine_from_config, pool, create_engine
+from sqlalchemy import engine_from_config, create_engine
+from sqlalchemy.pool import NullPool
 from logging.config import fileConfig
 
 # try to link puppet config files to be used by wikimetrics
@@ -50,6 +51,7 @@ def get_engine(config, url_field='WIKIMETRICS_ENGINE_URL'):
         echo=config['SQL_ECHO'],
         connect_args={"charset" : "utf8"},
         pool_size=config['WIKIMETRICS_POOL_SIZE'],
+        poolclass=NullPool,
     )
 
 

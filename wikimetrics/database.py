@@ -16,7 +16,7 @@ from sqlalchemy.orm import sessionmaker, scoped_session
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy import exc
 from sqlalchemy import event
-from sqlalchemy.pool import Pool, NullPool
+from sqlalchemy.pool import NullPool
 
 __all__ = [
     'Database',
@@ -87,6 +87,7 @@ class Database(object):
                 echo=self.config['SQL_ECHO'],
                 connect_args={"charset" : "utf8"},
                 pool_size=self.config['WIKIMETRICS_POOL_SIZE'],
+                poolclass=NullPool,
             )
 
         return self.wikimetrics_engine
@@ -266,25 +267,3 @@ class Database(object):
 
                 self.mw_project_set = mw_project_set
             return self.mw_project_set
-
-
-@event.listens_for(Pool, "checkout")
-def ping_connection(dbapi_connection, connection_record, connection_proxy):
-    """
-    Pings the connection on checkout, making sure that it hasn't gone stale.
-    This prevents error (OperationalError) (2006, 'MySQL server has gone away').
-    This fix can be tested with tests/manual/connection_survives_server_restart.py
-    """
-    cursor = dbapi_connection.cursor()
-    try:
-        cursor.execute("SELECT 1")
-    except():
-        # optional - dispose the whole pool
-        # instead of invalidating one at a time
-        # connection_proxy._pool.dispose()
-
-        # raise DisconnectionError - pool will try
-        # connecting again up to three times before raising.
-        raise exc.DisconnectionError()
-    finally:
-        cursor.close()

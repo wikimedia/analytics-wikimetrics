@@ -246,8 +246,9 @@ def get_wikimetrics_version():
         latest, err = p.communicate()
         if err is not None:
             latest = 'unknown'
-    except:
-        pass
+    except():
+        print('Unable to check git log in ' + path)
+        raise
     finally:
         os.chdir(orig_wd)
     return version, latest
