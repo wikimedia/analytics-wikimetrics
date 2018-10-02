@@ -22,7 +22,7 @@ To set it up using our new Docker setup, follow directions below. Please note th
 
 By now you should have docker running, and if you are using docker-machine, use `docker-machine ip machine-name` to find its ip. If you don't know the machine-name, `docker-machine ls` should find it for you.
 
-Please note that this setup is tested with docker 1.9.1 and docker-compose 1.5.2 - it may throw some errors with older versions.
+Please note that this setup is tested with docker 18.06.1-ce and docker-compose 1.22.0 - it may throw some errors with older versions.
 
 #### Setup wikimetrics
 

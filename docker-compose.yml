@@ -1,113 +1,122 @@
-data:
+version: '3'
+
+services: 
+  data:
     build: .
     entrypoint: bash
     volumes:
-        - .:/srv/wikimetrics:z
-        - ./wikimetrics/config/docker_config:/srv/wikimetrics/config:z
+      - .:/srv/wikimetrics:z
+      - ./wikimetrics/config/docker_config:/srv/wikimetrics/config:z
 
-web:
+  web:
     build: .
     entrypoint:
-        - uwsgi
-        - --master
-        - --http
-        - :5000
-        - --py-autoreload
-        - "10"
-        - --wsgi-file
-        - wikimetrics/api.wsgi
-    volumes_from:
-        - data
+      - uwsgi
+      - --master
+      - --http
+      - :5000
+      - --py-autoreload
+      - "10"
+      - --wsgi-file
+      - wikimetrics/api.wsgi
+    volumes:
+      - .:/srv/wikimetrics:z
+      - ./wikimetrics/config/docker_config:/srv/wikimetrics/config:z
     ports:
-        - "5000:5000"
+      - "5000:5000"
     links:
-        - redis
-        - db
-        - create_db
-        - upgrade_db
+      - redis
+      - db
+      - create_db
+      - upgrade_db
 
-redis:
+  redis:
     image: redis
 
-db:
+  db:
     image: mysql:5.5
     environment:
-        - MYSQL_ALLOW_EMPTY_PASSWORD=yes
-        - MYSQL_USER=wikimetrics
-        - MYSQL_PASSWORD=wikimetrics
+      - MYSQL_ALLOW_EMPTY_PASSWORD=yes
+      - MYSQL_USER=wikimetrics
+      - MYSQL_PASSWORD=wikimetrics
+    volumes:
+      - .:/srv/wikimetrics:z
+      - ./wikimetrics/config/docker_config:/srv/wikimetrics/config:z
     expose:
-        - "3306"
+       - "3306"
 
-create_db:
+  create_db:
     build: .
     entrypoint:
-        - python
-        - dev_createdb.py
-    volumes_from:
-        - data
+      - python
+      - dev_createdb.py
+    volumes:
+      - .:/srv/wikimetrics:z
+      - ./wikimetrics/config/docker_config:/srv/wikimetrics/config:z
     links:
-        - db
+      - db
 
-upgrade_db:
+  upgrade_db:
     build: .
     entrypoint:
-        - alembic
-        - upgrade
-        - head
-    volumes_from:
-        - data
+      - alembic
+      - upgrade
+      - head
+    volumes:
+      - .:/srv/wikimetrics:z
+      - ./wikimetrics/config/docker_config:/srv/wikimetrics/config:z
     links:
-        - db
-        - create_db
+      - db
+      - create_db
 
-queue:
+  queue:
     build: .
     user: www-data
     entrypoint:
-        - wikimetrics
-        - --mode
-        - queue
-        - --db-config
-        - /srv/wikimetrics/config/db_config.yaml
-        - --web-config
-        - /srv/wikimetrics/config/web_config.yaml
-        - --queue-config
-        - /srv/wikimetrics/config/queue_config.yaml
-    volumes_from:
-        - data
+      - wikimetrics
+      - --mode
+      - queue
+      - --db-config
+      - ./wikimetrics/config/db_config.yaml
+      - --web-config
+      - ./wikimetrics/config/web_config.yaml
+      - --queue-config
+      - ./wikimetrics/config/queue_config.yaml
+    volumes:
+      - .:/srv/wikimetrics:z
     links:
-        - redis
-        - db
+      - redis
+      - db
 
-scheduler:
+  scheduler:
     build: .
     entrypoint:
-        - wikimetrics
-        - --mode
-        - scheduler
-        - --db-config
-        - /srv/wikimetrics/config/db_config.yaml
-        - --web-config
-        - /srv/wikimetrics/config/web_config.yaml
-        - --queue-config
-        - /srv/wikimetrics/config/queue_config.yaml
-    volumes_from:
-        - data
+      - wikimetrics
+      - --mode
+      - scheduler
+      - --db-config
+      - ./wikimetrics/config/db_config.yaml
+      - --web-config
+      - ./wikimetrics/config/web_config.yaml
+      - --queue-config
+      - ./wikimetrics/config/queue_config.yaml
+    volumes:
+      - .:/srv/wikimetrics:z
     links:
-        - redis
-        - db
+      - redis
+      - db
 
-test:
+  test:
     build: .
     environment:
-        - C_FORCE_ROOT="true"
+      - C_FORCE_ROOT="true"
     entrypoint:
-        - bash
-    volumes_from:
-        - data
+      - bash
+    volumes:
+      - .:/srv/wikimetrics:z
+      - ./wikimetrics/config/docker_config:/srv/wikimetrics/config:z
     links:
-        - redis
-        - db
-        - create_db
-        - upgrade_db
-
+      - redis
+      - db
+      - create_db
+      - upgrade_db
