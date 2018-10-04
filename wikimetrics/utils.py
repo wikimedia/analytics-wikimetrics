@@ -190,7 +190,7 @@ def link_to_user_page(username, project):
     except UnicodeEncodeError:
         try:
             return user_link.format(project, username.decode('utf8'))
-        except:
+        except Exception:
             return user_not_found_link.format(project)
 
 

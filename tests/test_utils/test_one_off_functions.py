@@ -104,9 +104,9 @@ class UtilsTest(TestCase):
 
 class TestUtil(TestCase):
     def test_diff_datewise(self):
-        l = []
+        left = []
         l_just_dates = []
-        r = []
+        right = []
         r_just_dates = []
         lp = 'blah%Y...%m...%d...%Hblahblah'
         rp = 'neenee%Y%m%d%Hneenee'
@@ -121,17 +121,17 @@ class TestUtil(TestCase):
                     for h in range(0, 24):
                         x = datetime(y, m, d, h)
                         if x not in expect1:
-                            l.append(datetime.strftime(x, lp))
+                            left.append(datetime.strftime(x, lp))
                             l_just_dates.append(x)
                         if x not in expect0:
-                            r.append(datetime.strftime(x, rp))
+                            right.append(datetime.strftime(x, rp))
                             r_just_dates.append(x)
         
-        result = diff_datewise(l, r, left_parse=lp, right_parse=rp)
+        result = diff_datewise(left, right, left_parse=lp, right_parse=rp)
         self.assertEqual(result[0], expect0)
         self.assertEqual(result[1], expect1)
         
-        result = diff_datewise(l_just_dates, r, right_parse=rp)
+        result = diff_datewise(l_just_dates, right, right_parse=rp)
         self.assertEqual(result[0], expect0)
         self.assertEqual(result[1], expect1)
         

@@ -119,7 +119,7 @@ class Report(object):
                 self.created = pj.created
                 pj.name = self.name or str(self)
                 session.commit()
-            except:
+            except Exception:
                 session.rollback()
                 raise
     

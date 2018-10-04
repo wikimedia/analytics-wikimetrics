@@ -99,8 +99,7 @@ class BytesAdded(TimeseriesMetric):
             Revision.rev_timestamp,
             label(
                 'byte_change',
-                cast(Revision.rev_len, Integer)
-                -
+                cast(Revision.rev_len, Integer) -
                 cast(func.coalesce(PreviousRevision.c.rev_len, 0), Integer)
             ),
         )\

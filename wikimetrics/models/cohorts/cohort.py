@@ -31,7 +31,7 @@ class Cohort(object):
         for k, p in getmembers(self.__class__, lambda p: type(p) == CohortProperty):
             try:
                 setattr(self, k, getattr(data, k))
-            except:
+            except Exception:
                 raise
 
     id                  = CohortProperty()

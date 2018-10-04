@@ -38,9 +38,9 @@ class PublicReportFileMangerTest(unittest.TestCase):
         absolute_report_path = self.api.get_public_report_path('fake-report-id')
         fake_path = 'static/public/fake-report-id.json'
         # should end with 'static/public/fake-report-id.json'
-        l = len(fake_path)
+        length = len(fake_path)
         path_len = len(absolute_report_path)
-        substr = absolute_report_path[path_len - l:path_len]
+        substr = absolute_report_path[path_len - length:path_len]
         assert_equal(substr, fake_path)
 
     @raises(PublicReportIOError)

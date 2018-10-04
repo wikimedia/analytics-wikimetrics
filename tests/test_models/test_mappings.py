@@ -79,10 +79,10 @@ class TestMappings(DatabaseTest):
     # Mapping tests for mediawiki tables
     #***********
     def test_mediawiki_logging(self):
-        l = Logging(log_user_text='Reedy', log_user=self.editors[0].user_id)
-        self.mwSession.add(l)
+        logging = Logging(log_user_text='Reedy', log_user=self.editors[0].user_id)
+        self.mwSession.add(logging)
         self.mwSession.commit()
-        row = self.mwSession.query(Logging).get(l.log_id)
+        row = self.mwSession.query(Logging).get(logging.log_id)
         assert_equal(row.log_user_text, 'Reedy')
     
     def test_mediawiki_user(self):

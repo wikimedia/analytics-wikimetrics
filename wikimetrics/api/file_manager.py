@@ -112,8 +112,8 @@ class PublicReportFileManager():
             raise PublicReportIOError(msg)
 
     def sanitize_path(self, name_string):
-        return ''.join(c if c not in RESERVED_FILENAME_CHARACTERS
-                       and ord(c) > 31 else '_' for c in name_string)
+        return ''.join(c if c not in RESERVED_FILENAME_CHARACTERS and ord(c) > 31 else
+                       '_' for c in name_string)
 
     def create_file_name(self, name_string, date_object=None):
         """

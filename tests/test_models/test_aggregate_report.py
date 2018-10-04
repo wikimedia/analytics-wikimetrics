@@ -308,6 +308,7 @@ class AggregateReportTimeseriesTest(QueueDatabaseTest):
             {'date3': r(1.15), 'date4': r(1.7)}
         )
 
+
 """
 NOTE: a sample output of AggregateReport:
 {

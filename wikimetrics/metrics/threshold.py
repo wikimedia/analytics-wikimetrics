@@ -91,8 +91,8 @@ class Threshold(Metric):
             }
         """
         
-        threshold_hours = int(self.threshold_hours.data)
-        threshold_secs  = threshold_hours * 3600
+        thresh_hours = int(self.threshold_hours.data)
+        thresh_secs  = thresh_hours * 3600
         number_of_edits = int(self.number_of_edits.data)
         
         Revision2 = aliased(Revision, name='r2')
@@ -116,7 +116,7 @@ class Threshold(Metric):
             .filter(Page.page_namespace.in_(self.namespaces.data)) \
             .filter(
                 func.unix_timestamp(Revision.rev_timestamp) -
-                func.unix_timestamp(MediawikiUser.user_registration) <= threshold_secs
+                func.unix_timestamp(MediawikiUser.user_registration) <= thresh_secs
             )
         
         o_r = self.filter(ordered_revisions, user_ids).subquery()
@@ -140,8 +140,7 @@ class Threshold(Metric):
                 o_r.c.rev_timestamp != None,
                 0,
                 func.IF(
-                    func.unix_timestamp(MediawikiUser.user_registration) + threshold_secs
-                    >
+                    func.unix_timestamp(MediawikiUser.user_registration) + thresh_secs >
                     func.unix_timestamp(func.now()),
                     1,
                     0

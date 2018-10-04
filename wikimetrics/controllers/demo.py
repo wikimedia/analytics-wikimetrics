@@ -21,7 +21,8 @@ if app.config['DEBUG']:
 
     @app.route('/demo/create/fake-<string:project>-users/<int:n>')
     def add_fake_wiki_users(project, n):
-        name_formatter = lambda x: 'FakeUser{0}'.format(x)
+        def name_formatter(x):
+            return 'FakeUser{0}'.format(x)
         generate_mediawiki_users(project, n, name_formatter)
         generate_centralauth_users(project, n, name_formatter)
         return 'Up to {0} records created in {1} and centralauth'.format(n, project)

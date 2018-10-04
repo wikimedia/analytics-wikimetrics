@@ -150,10 +150,11 @@ class CohortService(object):
             .filter(UserStore.id == user_id)\
             .filter(CohortStore.enabled)
 
-        if by_id is not None:
-            f = lambda q: q.filter(CohortStore.id == by_id)
-        if by_name is not None:
-            f = lambda q: q.filter(CohortStore.name == by_name)
+        def f(q):
+            if by_id is not None:
+                return q.filter(CohortStore.id == by_id)
+            if by_name is not None:
+                return q.filter(CohortStore.name == by_name)
 
         try:
             cohort, role = f(query).one()

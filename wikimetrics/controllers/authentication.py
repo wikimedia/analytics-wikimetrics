@@ -46,10 +46,10 @@ def default_to_private():
         return json_error('Please Login to access {0}'.format(request.path))
     
     if (
-        request.endpoint
-        and not request.path.startswith('/static/')
-        and not request.path == 'favicon.ico'
-        and not getattr(app.view_functions[request.endpoint], 'is_public', False)
+        request.endpoint and
+        not request.path.startswith('/static/') and
+        not request.path == 'favicon.ico' and
+        not getattr(app.view_functions[request.endpoint], 'is_public', False)
     ):
         flash('Please Login before visiting {0}'.format(request.path), 'info')
         return redirect(url_for('login', next=request.path))
@@ -144,7 +144,7 @@ def auth_meta_mw():
                 )
                 db_session.add(user)
                 db_session.commit()
-            except:
+            except Exception:
                 db_session.rollback()
                 raise
 
@@ -216,7 +216,7 @@ def auth_google(resp):
                     )
                     db_session.add(user)
                     db_session.commit()
-                except:
+                except Exception:
                     db_session.rollback()
                     raise
             

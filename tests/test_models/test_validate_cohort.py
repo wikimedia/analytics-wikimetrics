@@ -270,7 +270,7 @@ class ValidateCohortTest(WebTest):
         v = ValidateCohort(self.cohort)
         try:
             v.validate_records(self.session, self.cohort)
-        except:
+        except Exception:
             assert_true(False, 'validate_records should not raise an exception')
         else:
             assert_equal(self.cohort.validated, True)

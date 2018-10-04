@@ -68,5 +68,6 @@ class WikiUserKey(object):
         return hash(((self.user_id, self.user_project), self.cohort_id))
         
     def __eq__(self, other):
-        return (other.user_id == self.user_id and other.user_project == self.user_project
-                and other.cohort_id == self.cohort_id)
+        return (other.user_id == self.user_id and
+                other.user_project == self.user_project and
+                other.cohort_id == self.cohort_id)
