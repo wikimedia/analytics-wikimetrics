@@ -1,3 +1,7 @@
+<div class="alert alert-danger" style="font-weight:bold">
+WARNING: As of March 25th 2019 Wikimetrics is no longer maintained by the WMF's Analytics team. See: https://phabricator.wikimedia.org/T211835. Please consider using  https://eventmetrics.wmflabs.org to calculate your metrics.
+</div>
+
 Contents:
 
 * [Setting up your Development Environment](#development-environment)
@@ -106,9 +110,9 @@ from sqlalchemy import func
 class YourNewMetric(Metric):
     """
     Explanation of Your New Metric (in this case I'm just duplicating namespace edits)
-    
+
     SQL query:
-    
+
      select r.rev_user, r.count(*)
        from revision r
                 inner join
